@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Moon, Sun, Palette, ArrowRight, RotateCcw, TreePine, Cherry, Flower2, ChevronLeft } from "lucide-react";
-import productOrNoir from "@/assets/product-or-noir.jpg";
-import productTresor from "@/assets/product-tresor.jpg";
-import productNectar from "@/assets/product-nectar.jpg";
-import productVelvet from "@/assets/product-velvet.jpg";
+import { recommendationMatrix, type Product } from "@/data/products";
 
 type IntentionId = "detente" | "creativite" | "sommeil" | "energie";
 type TasteId = "boise" | "fruite" | "floral";
@@ -21,12 +18,6 @@ interface Taste {
   label: string;
   description: string;
   icon: React.ReactNode;
-}
-
-interface Recommendation {
-  name: string;
-  description: string;
-  image: string;
 }
 
 const intentions: Intention[] = [
@@ -77,78 +68,6 @@ const tastes: Taste[] = [
   },
 ];
 
-// Matrice de recommandations : intention + goût → produit
-const recommendations: Record<IntentionId, Record<TasteId, Recommendation>> = {
-  detente: {
-    boise: {
-      name: "L'Or Noir",
-      description: "Ses notes profondes de bois précieux et de terre humide vous envelopperont dans une relaxation totale.",
-      image: productOrNoir,
-    },
-    fruite: {
-      name: "Nectar des Rois",
-      description: "Sa douceur fruitée et ses arômes de baies sauvages adoucissent l'esprit pour un repos délicieux.",
-      image: productNectar,
-    },
-    floral: {
-      name: "Velvet Crown",
-      description: "Ses accents floraux de lavande et d'épices douces créent une atmosphère apaisante.",
-      image: productVelvet,
-    },
-  },
-  creativite: {
-    boise: {
-      name: "Trésor Oublié",
-      description: "Ses notes terreuses et mystérieuses éveilleront votre imagination créative.",
-      image: productTresor,
-    },
-    fruite: {
-      name: "Nectar des Rois",
-      description: "Son bouquet fruité et stimulant libérera vos idées les plus audacieuses.",
-      image: productNectar,
-    },
-    floral: {
-      name: "Velvet Crown",
-      description: "Ses arômes floraux épicés inspireront des créations uniques et raffinées.",
-      image: productVelvet,
-    },
-  },
-  sommeil: {
-    boise: {
-      name: "L'Or Noir",
-      description: "Ses notes boisées profondes vous guideront vers un sommeil réparateur.",
-      image: productOrNoir,
-    },
-    fruite: {
-      name: "Trésor Oublié",
-      description: "Sa douceur sucrée et apaisante préparera votre esprit au repos nocturne.",
-      image: productTresor,
-    },
-    floral: {
-      name: "Velvet Crown",
-      description: "Ses effluves de lavande et d'épices douces sont le prélude parfait à une nuit sereine.",
-      image: productVelvet,
-    },
-  },
-  energie: {
-    boise: {
-      name: "Trésor Oublié",
-      description: "Ses notes terreuses et vivifiantes vous donneront l'élan pour conquérir la journée.",
-      image: productTresor,
-    },
-    fruite: {
-      name: "Nectar des Rois",
-      description: "Son explosion fruitée et énergisante sera votre allié pour un réveil dynamique.",
-      image: productNectar,
-    },
-    floral: {
-      name: "L'Or Noir",
-      description: "Ses notes épicées et complexes stimuleront votre concentration matinale.",
-      image: productOrNoir,
-    },
-  },
-};
-
 const SommelierSection = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedIntention, setSelectedIntention] = useState<Intention | null>(null);
@@ -179,9 +98,9 @@ const SommelierSection = () => {
     setSelectedTaste(null);
   };
 
-  const getRecommendation = (): Recommendation | null => {
+  const getRecommendation = (): Product | null => {
     if (!selectedIntention || !selectedTaste) return null;
-    return recommendations[selectedIntention.id][selectedTaste.id];
+    return recommendationMatrix[selectedIntention.id]?.[selectedTaste.id] || null;
   };
 
   return (
@@ -383,61 +302,77 @@ const SommelierSection = () => {
                     </span>
                   </motion.div>
 
-                  <div className="grid md:grid-cols-2 gap-8 items-center">
-                    {/* Product image */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.3 }}
-                      className="relative"
-                    >
-                      <div className="absolute inset-0 bg-gradient-gold-radial opacity-50 blur-2xl" />
-                      <img
-                        src={getRecommendation()?.image}
-                        alt={getRecommendation()?.name}
-                        className="relative w-full max-w-sm mx-auto rounded-lg shadow-luxury"
-                      />
-                    </motion.div>
+                  {getRecommendation() && (
+                    <div className="grid md:grid-cols-2 gap-8 items-center">
+                      {/* Product image */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="relative"
+                      >
+                        <div className="absolute inset-0 bg-gradient-gold-radial opacity-50 blur-2xl" />
+                        <img
+                          src={getRecommendation()!.image}
+                          alt={getRecommendation()!.name}
+                          className="relative w-full max-w-sm mx-auto rounded-lg shadow-luxury"
+                        />
+                      </motion.div>
 
-                    {/* Recommendation text */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="text-left"
-                    >
-                      <p className="text-primary/80 text-sm uppercase tracking-wider mb-2">
-                        Pour votre {selectedIntention.label.toLowerCase()} • {selectedTaste.label}
-                      </p>
-                      <h3 className="font-display text-3xl md:text-4xl text-gold-gradient mb-4">
-                        {getRecommendation()?.name}
-                      </h3>
-                      <p className="text-muted-foreground text-lg mb-8 font-body">
-                        {getRecommendation()?.description}
-                      </p>
+                      {/* Recommendation text */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="text-left"
+                      >
+                        <p className="text-primary/80 text-sm uppercase tracking-wider mb-2">
+                          Pour votre {selectedIntention.label.toLowerCase()} • {selectedTaste.label}
+                        </p>
+                        <h3 className="font-display text-3xl md:text-4xl text-gold-gradient mb-4">
+                          {getRecommendation()!.name}
+                        </h3>
+                        <p className="text-muted-foreground text-lg mb-4 font-body">
+                          {getRecommendation()!.description}
+                        </p>
+                        
+                        {/* Product details */}
+                        <div className="flex gap-4 mb-6">
+                          <div className="bg-primary/10 px-3 py-1 rounded-full">
+                            <span className="text-primary text-sm font-medium">
+                              CBD {getRecommendation()!.cbdPercentage}
+                            </span>
+                          </div>
+                          <div className="bg-primary/10 px-3 py-1 rounded-full">
+                            <span className="text-primary text-sm font-medium">
+                              {getRecommendation()!.price}€/g
+                            </span>
+                          </div>
+                        </div>
 
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <motion.a
-                          href="#collection"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="btn-luxury shimmer inline-flex items-center justify-center gap-2"
-                        >
-                          Découvrir
-                          <ArrowRight className="w-4 h-4" />
-                        </motion.a>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={handleReset}
-                          className="btn-luxury-outline inline-flex items-center justify-center gap-2"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          Recommencer
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  </div>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                          <motion.a
+                            href="#collection"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="btn-luxury shimmer inline-flex items-center justify-center gap-2"
+                          >
+                            Découvrir
+                            <ArrowRight className="w-4 h-4" />
+                          </motion.a>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleReset}
+                            className="btn-luxury-outline inline-flex items-center justify-center gap-2"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            Recommencer
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

@@ -1,58 +1,19 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import ProductCard from "./ProductCard";
-import productOrNoir from "@/assets/product-or-noir.jpg";
-import productTresor from "@/assets/product-tresor.jpg";
-import productNectar from "@/assets/product-nectar.jpg";
-import productVelvet from "@/assets/product-velvet.jpg";
+import { flowers, resins, type Product } from "@/data/products";
 
-const products = [
-  {
-    id: "or-noir",
-    name: "L'Or Noir",
-    subtitle: "Collection Signature",
-    description: "Une variété d'exception aux reflets dorés, offrant des notes profondes de pin et de citron. Pour les moments de pure contemplation.",
-    price: 12,
-    cbdPercentage: "18%",
-    image: productOrNoir,
-    terpenes: { boise: 85, fruite: 60, epice: 40, terreux: 70 },
-    mood: "Relaxation",
-  },
-  {
-    id: "tresor-oublie",
-    name: "Trésor Oublié",
-    subtitle: "Édition Limitée",
-    description: "Un héritage génétique rare, aux arômes complexes de fruits rouges et d'épices orientales. Une expérience sensorielle unique.",
-    price: 15,
-    cbdPercentage: "22%",
-    image: productTresor,
-    terpenes: { boise: 50, fruite: 90, epice: 75, terreux: 45 },
-    mood: "Créativité",
-  },
-  {
-    id: "nectar-des-rois",
-    name: "Nectar des Rois",
-    subtitle: "Collection Prestige",
-    description: "La quintessence de notre savoir-faire. Une résine dorée aux propriétés exceptionnelles, réservée aux palais les plus raffinés.",
-    price: 25,
-    cbdPercentage: "45%",
-    image: productNectar,
-    terpenes: { boise: 70, fruite: 55, epice: 80, terreux: 90 },
-    mood: "Méditation",
-  },
-  {
-    id: "velvet-crown",
-    name: "Velvet Crown",
-    subtitle: "Indoor Premium",
-    description: "Cultivée avec une attention méticuleuse, cette fleur veloutée révèle des notes subtiles de lavande et de bois précieux.",
-    price: 14,
-    cbdPercentage: "20%",
-    image: productVelvet,
-    terpenes: { boise: 75, fruite: 70, epice: 55, terreux: 60 },
-    mood: "Sérénité",
-  },
-];
+type CategoryFilter = "all" | "fleur" | "resine";
 
 const ProductSection = () => {
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
+
+  const getFilteredProducts = (): Product[] => {
+    if (activeCategory === "fleur") return flowers.slice(0, 8);
+    if (activeCategory === "resine") return resins.slice(0, 8);
+    return [...flowers.slice(0, 4), ...resins.slice(0, 4)];
+  };
+
   return (
     <section id="collection" className="relative py-32 overflow-hidden">
       {/* Background */}
@@ -69,7 +30,7 @@ const ProductSection = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="text-center mb-12"
         >
           <motion.p
             initial={{ opacity: 0 }}
@@ -93,18 +54,52 @@ const ProductSection = () => {
             className="w-32 h-px bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-6"
           />
 
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg font-body">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg font-body mb-8">
             Chaque variété est sélectionnée avec une rigueur absolue pour vous offrir 
             une expérience sensorielle d'exception.
           </p>
+
+          {/* Category filters */}
+          <div className="flex justify-center gap-4 flex-wrap">
+            {[
+              { id: "all" as CategoryFilter, label: "Tout", count: flowers.length + resins.length },
+              { id: "fleur" as CategoryFilter, label: "Fleurs", count: flowers.length },
+              { id: "resine" as CategoryFilter, label: "Résines", count: resins.length },
+            ].map((cat) => (
+              <motion.button
+                key={cat.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`px-6 py-2 rounded-full border transition-all duration-300 ${
+                  activeCategory === cat.id
+                    ? "border-primary bg-primary/20 text-primary"
+                    : "border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary"
+                }`}
+              >
+                <span className="font-body">{cat.label}</span>
+                <span className="ml-2 text-xs opacity-70">({cat.count})</span>
+              </motion.button>
+            ))}
+          </div>
         </motion.div>
 
         {/* Product grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((product, index) => (
-            <ProductCard key={product.id} product={product} index={index} />
+        <motion.div
+          layout
+          className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
+          {getFilteredProducts().map((product, index) => (
+            <ProductCard 
+              key={product.id} 
+              product={{
+                ...product,
+                terpenes: product.terpenes
+              }} 
+              index={index} 
+            />
           ))}
-        </div>
+        </motion.div>
 
         {/* View all button */}
         <motion.div
