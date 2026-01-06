@@ -1,12 +1,41 @@
-import { useState, useRef, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, Minus, ShoppingCart, ZoomIn, RotateCcw } from "lucide-react";
+import { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowLeft, Plus, Minus, ShoppingCart } from "lucide-react";
 import { allProducts } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerpeneRadar from "@/components/TerpeneRadar";
+
+// Calculate similarity between two products based on terpenes
+const calculateTerpeneSimilarity = (
+  terpenes1: Record<string, number>,
+  terpenes2: Record<string, number>
+): number => {
+  const allKeys = new Set([...Object.keys(terpenes1), ...Object.keys(terpenes2)]);
+  let similarity = 0;
+  
+  allKeys.forEach((key) => {
+    const val1 = terpenes1[key] || 0;
+    const val2 = terpenes2[key] || 0;
+    similarity += 1 - Math.abs(val1 - val2) / 100;
+  });
+  
+  return similarity / allKeys.size;
+};
+
+const getSimilarProducts = (currentProduct: typeof allProducts[0], count: number = 4) => {
+  const similarities = allProducts
+    .filter((p) => p.id !== currentProduct.id)
+    .map((p) => ({
+      product: p,
+      similarity: calculateTerpeneSimilarity(currentProduct.terpenes, p.terpenes),
+    }))
+    .sort((a, b) => b.similarity - a.similarity);
+
+  return similarities.slice(0, count).map((s) => s.product);
+};
 
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,51 +43,7 @@ const ProductPage = () => {
   const { addToCart } = useCart();
   
   const product = allProducts.find((p) => p.id === id);
-  
   const [quantity, setQuantity] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [showLoupe, setShowLoupe] = useState(false);
-  const [loupePosition, setLoupePosition] = useState({ x: 0, y: 0 });
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  
-  const imageRef = useRef<HTMLDivElement>(null);
-  const dragStartX = useRef(0);
-  const lastRotation = useRef(0);
-
-  // 360° rotation handling
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (showLoupe) return;
-    setIsDragging(true);
-    dragStartX.current = e.clientX;
-    lastRotation.current = rotation;
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && !showLoupe) {
-      const deltaX = e.clientX - dragStartX.current;
-      setRotation(lastRotation.current + deltaX * 0.5);
-    }
-    
-    // Loupe position
-    if (showLoupe && imageRef.current) {
-      const rect = imageRef.current.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      setLoupePosition({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
-      setMousePosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    const handleGlobalMouseUp = () => setIsDragging(false);
-    window.addEventListener("mouseup", handleGlobalMouseUp);
-    return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
-  }, []);
 
   const handleAddToCart = () => {
     if (product) {
@@ -79,6 +64,8 @@ const ProductPage = () => {
     );
   }
 
+  const similarProducts = getSimilarProducts(product, 4);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -97,81 +84,18 @@ const ProductPage = () => {
           </motion.button>
 
           <div className="grid lg:grid-cols-2 gap-12">
-            {/* Product Image with 360° and Loupe */}
+            {/* Product Image - Simple */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="relative"
             >
-              <div
-                ref={imageRef}
-                className={`relative aspect-square bg-card rounded-2xl overflow-hidden border border-border cursor-${showLoupe ? 'zoom-in' : 'grab'} ${isDragging ? 'cursor-grabbing' : ''}`}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={() => setIsDragging(false)}
-              >
-                <motion.img
+              <div className="aspect-square bg-card rounded-2xl overflow-hidden border border-border">
+                <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-full object-cover"
-                  style={{
-                    transform: `rotateY(${rotation}deg) scale(1.1)`,
-                    transformStyle: "preserve-3d",
-                  }}
-                  draggable={false}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
-                
-                {/* Loupe overlay */}
-                <AnimatePresence>
-                  {showLoupe && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute w-40 h-40 border-2 border-primary rounded-full overflow-hidden pointer-events-none shadow-lg"
-                      style={{
-                        left: mousePosition.x - 80,
-                        top: mousePosition.y - 80,
-                        backgroundImage: `url(${product.image})`,
-                        backgroundSize: "400%",
-                        backgroundPosition: `${loupePosition.x}% ${loupePosition.y}%`,
-                      }}
-                    />
-                  )}
-                </AnimatePresence>
-
-                {/* Controls overlay */}
-                <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowLoupe(!showLoupe);
-                      }}
-                      className={`p-3 rounded-full border transition-all ${
-                        showLoupe
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background/80 border-border hover:border-primary"
-                      }`}
-                    >
-                      <ZoomIn className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRotation(0);
-                      }}
-                      className="p-3 rounded-full bg-background/80 border border-border hover:border-primary transition-all"
-                    >
-                      <RotateCcw className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <span className="text-xs text-muted-foreground bg-background/80 px-3 py-1 rounded-full">
-                    {showLoupe ? "Mode loupe actif" : "Glissez pour pivoter"}
-                  </span>
-                </div>
               </div>
             </motion.div>
 
@@ -251,6 +175,64 @@ const ProductPage = () => {
               </div>
             </motion.div>
           </div>
+
+          {/* Similar Products Section */}
+          <motion.section
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mt-20"
+          >
+            <h2 className="font-display text-3xl text-foreground text-center mb-2">
+              Produits Similaires
+            </h2>
+            <p className="text-muted-foreground text-center mb-10">
+              Basé sur le profil terpénique de {product.name}
+            </p>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {similarProducts.map((similarProduct, index) => (
+                <motion.div
+                  key={similarProduct.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
+                >
+                  <Link
+                    to={`/produit/${similarProduct.id}`}
+                    className="group block"
+                  >
+                    <div className="relative aspect-square bg-card rounded-xl overflow-hidden border border-border group-hover:border-primary/50 transition-all duration-300">
+                      <img
+                        src={similarProduct.image}
+                        alt={similarProduct.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span className="text-xs text-primary uppercase tracking-wider">
+                          {similarProduct.category === "fleur" ? "Fleur" : "Résine"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <h3 className="font-display text-lg text-foreground group-hover:text-primary transition-colors">
+                        {similarProduct.name}
+                      </h3>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-primary font-medium">
+                          {similarProduct.price}€/g
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {similarProduct.cbdPercentage} CBD
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
         </div>
       </main>
 
