@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Moon, Sun, Palette, ArrowRight, RotateCcw, TreePine, Cherry, Flower2, ChevronLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Sparkles, Moon, Sun, Palette, ArrowRight, RotateCcw, TreePine, Cherry, Flower2, ChevronLeft, ShoppingCart } from "lucide-react";
 import { recommendationMatrix, type Product } from "@/data/products";
+import { useCart } from "@/contexts/CartContext";
 
 type IntentionId = "detente" | "creativite" | "sommeil" | "energie";
 type TasteId = "boise" | "fruite" | "floral";
@@ -72,6 +74,7 @@ const SommelierSection = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedIntention, setSelectedIntention] = useState<Intention | null>(null);
   const [selectedTaste, setSelectedTaste] = useState<Taste | null>(null);
+  const { addToCart } = useCart();
 
   const handleIntentionSelect = (intention: Intention) => {
     setSelectedIntention(intention);
@@ -351,15 +354,22 @@ const SommelierSection = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4">
-                          <motion.a
-                            href="#collection"
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                          <Link
+                            to={`/produit/${getRecommendation()!.id}`}
                             className="btn-luxury shimmer inline-flex items-center justify-center gap-2"
                           >
                             Découvrir
                             <ArrowRight className="w-4 h-4" />
-                          </motion.a>
+                          </Link>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => addToCart(getRecommendation()!)}
+                            className="btn-luxury-outline inline-flex items-center justify-center gap-2"
+                          >
+                            <ShoppingCart className="w-4 h-4" />
+                            Ajouter au panier
+                          </motion.button>
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}

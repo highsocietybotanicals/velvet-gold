@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
 import { flowers, resins, type Product } from "@/data/products";
 
@@ -109,9 +110,9 @@ const ProductSection = () => {
           transition={{ delay: 0.5 }}
           className="text-center mt-16"
         >
-          <a href="#" className="btn-luxury shimmer">
+          <Link to="/catalogue" className="btn-luxury shimmer">
             Voir Toute la Collection
-          </a>
+          </Link>
         </motion.div>
       </div>
     </section>

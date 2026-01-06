@@ -1,23 +1,13 @@
 import { motion } from "framer-motion";
-import { Star, Leaf, Sparkles } from "lucide-react";
-
+import { Link } from "react-router-dom";
+import { Leaf, Sparkles, ShoppingCart } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { Product } from "@/data/products";
 interface TerpeneProfile {
   boise: number;
   fruite: number;
   epice: number;
   terreux: number;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  subtitle: string;
-  description: string;
-  price: number;
-  cbdPercentage: string;
-  image: string;
-  terpenes: TerpeneProfile;
-  mood: string;
 }
 
 interface ProductCardProps {
@@ -134,82 +124,88 @@ const TerpeneRadar = ({ terpenes }: { terpenes: TerpeneProfile }) => {
 };
 
 const ProductCard = ({ product, index }: ProductCardProps) => {
+  const { addToCart } = useCart();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.15 }}
-      className="group product-card bg-card rounded-lg border border-border/50 overflow-hidden"
+      className="group product-card bg-card rounded-lg border border-border/50 overflow-hidden relative"
     >
-      {/* Image container */}
-      <div className="relative aspect-square overflow-hidden bg-carbon-deep">
-        <div className="absolute inset-0 bg-gradient-gold-radial opacity-0 group-hover:opacity-40 transition-opacity duration-500" />
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
-        
-        {/* Mood badge */}
-        <div className="absolute top-4 left-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-primary/30">
-          <Sparkles className="w-3 h-3 text-primary" />
-          <span className="text-xs text-primary font-medium">{product.mood}</span>
-        </div>
-
-        {/* CBD badge */}
-        <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full">
-          <span className="text-xs font-bold">{product.cbdPercentage} CBD</span>
-        </div>
-
-        {/* Magnifier overlay on hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-20 h-20 rounded-full border-2 border-primary/50 flex items-center justify-center bg-background/20 backdrop-blur-sm">
-            <Leaf className="w-8 h-8 text-primary" />
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-6">
-        {/* Title */}
-        <div className="mb-4">
-          <h3 className="font-display text-2xl text-primary mb-1">
-            {product.name}
-          </h3>
-          <p className="text-sm text-muted-foreground italic">
-            {product.subtitle}
-          </p>
-        </div>
-
-        {/* Description */}
-        <p className="text-sm text-muted-foreground mb-6 line-clamp-2 font-body">
-          {product.description}
-        </p>
-
-        {/* Terpene radar and price */}
-        <div className="flex items-end justify-between">
-          <TerpeneRadar terpenes={product.terpenes} />
+      <Link to={`/produit/${product.id}`}>
+        {/* Image container */}
+        <div className="relative aspect-square overflow-hidden bg-carbon-deep">
+          <div className="absolute inset-0 bg-gradient-gold-radial opacity-0 group-hover:opacity-40 transition-opacity duration-500" />
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
           
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-              À partir de
-            </p>
-            <p className="font-display text-3xl text-gold-gradient">
-              {product.price}€
-            </p>
+          {/* Mood badge */}
+          <div className="absolute top-4 left-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-primary/30">
+            <Sparkles className="w-3 h-3 text-primary" />
+            <span className="text-xs text-primary font-medium">{product.mood}</span>
+          </div>
+
+          {/* CBD badge */}
+          <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full">
+            <span className="text-xs font-bold">{product.cbdPercentage} CBD</span>
+          </div>
+
+          {/* Magnifier overlay on hover */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="w-20 h-20 rounded-full border-2 border-primary/50 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+              <Leaf className="w-8 h-8 text-primary" />
+            </div>
           </div>
         </div>
 
-        {/* Action button */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full mt-6 btn-luxury-outline text-xs py-3"
-        >
-          Découvrir
-        </motion.button>
-      </div>
+        {/* Content */}
+        <div className="p-6">
+          {/* Title */}
+          <div className="mb-4">
+            <h3 className="font-display text-2xl text-primary mb-1">
+              {product.name}
+            </h3>
+            <p className="text-sm text-muted-foreground italic">
+              {product.subtitle}
+            </p>
+          </div>
+
+          {/* Description */}
+          <p className="text-sm text-muted-foreground mb-6 line-clamp-2 font-body">
+            {product.description}
+          </p>
+
+          {/* Terpene radar and price */}
+          <div className="flex items-end justify-between">
+            <TerpeneRadar terpenes={product.terpenes} />
+            
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                À partir de
+              </p>
+              <p className="font-display text-3xl text-gold-gradient">
+                {product.price}€
+              </p>
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      {/* Add to cart button */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          addToCart(product);
+        }}
+        className="absolute bottom-6 right-6 p-3 bg-primary text-primary-foreground rounded-full opacity-0 group-hover:opacity-100 transition-all hover:glow-gold hover:scale-110"
+      >
+        <ShoppingCart className="w-5 h-5" />
+      </button>
     </motion.div>
   );
 };
