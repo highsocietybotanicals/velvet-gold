@@ -1,12 +1,52 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Minus, ShoppingCart } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Gift, Package } from "lucide-react";
 import { allProducts } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerpeneRadar from "@/components/TerpeneRadar";
+import { Input } from "@/components/ui/input";
+
+// Weight tier discounts
+const WEIGHT_TIERS = [
+  { min: 0, max: 9.99, discount: 0, label: "0%" },
+  { min: 10, max: 24.99, discount: 0.25, label: "-25%" },
+  { min: 25, max: 49.99, discount: 0.375, label: "-37.5%" },
+  { min: 50, max: 99.99, discount: 0.458, label: "-45.8%" },
+  { min: 100, max: Infinity, discount: 0.625, label: "-62.5%" },
+];
+
+const PRESET_WEIGHTS = [2.5, 10, 25, 50, 100];
+
+const getDiscountTier = (weight: number) => {
+  return WEIGHT_TIERS.find(tier => weight >= tier.min && weight <= tier.max) || WEIGHT_TIERS[0];
+};
+
+const calculatePrice = (basePrice: number, weight: number) => {
+  const tier = getDiscountTier(weight);
+  const rawPrice = basePrice * weight;
+  const discountedPrice = rawPrice * (1 - tier.discount);
+  return {
+    rawPrice: rawPrice.toFixed(2),
+    finalPrice: discountedPrice.toFixed(2),
+    discount: tier.discount,
+    discountLabel: tier.label,
+    savings: (rawPrice - discountedPrice).toFixed(2),
+  };
+};
+
+const getGifts = (weight: number) => {
+  if (weight >= 100) {
+    return { type: "kit", count: 1, label: "Kit Professionnel HSB" };
+  }
+  const packs = Math.floor(weight / 10);
+  if (packs > 0) {
+    return { type: "pack", count: packs, label: `${packs} Pack${packs > 1 ? "s" : ""} Accessoires` };
+  }
+  return null;
+};
 
 // Calculate similarity between two products based on terpenes
 const calculateTerpeneSimilarity = (
@@ -43,11 +83,34 @@ const ProductPage = () => {
   const { addToCart } = useCart();
   
   const product = allProducts.find((p) => p.id === id);
-  const [quantity, setQuantity] = useState(1);
+  const [selectedWeight, setSelectedWeight] = useState<number>(2.5);
+  const [customWeight, setCustomWeight] = useState<string>("2.5");
+
+  const priceInfo = useMemo(() => {
+    if (!product) return null;
+    return calculatePrice(product.price, selectedWeight);
+  }, [product?.price, selectedWeight]);
+
+  const gifts = useMemo(() => {
+    return getGifts(selectedWeight);
+  }, [selectedWeight]);
+
+  const handlePresetClick = (weight: number) => {
+    setSelectedWeight(weight);
+    setCustomWeight(weight.toString());
+  };
+
+  const handleCustomWeightChange = (value: string) => {
+    setCustomWeight(value);
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue > 0 && numValue <= 1000) {
+      setSelectedWeight(numValue);
+    }
+  };
 
   const handleAddToCart = () => {
     if (product) {
-      addToCart(product, quantity);
+      addToCart(product, selectedWeight);
     }
   };
 
@@ -126,43 +189,114 @@ const ProductPage = () => {
                 </span>
               </div>
 
-              <p className="text-muted-foreground leading-relaxed mb-8">
+              <p className="text-muted-foreground leading-relaxed mb-6">
                 {product.description}
               </p>
 
               {/* Mood tag */}
-              <div className="mb-8">
+              <div className="mb-6">
                 <span className="text-sm text-muted-foreground">Ambiance</span>
                 <span className="ml-3 px-4 py-2 bg-card border border-border rounded-full text-foreground">
                   {product.mood}
                 </span>
               </div>
 
-              {/* Quantity & Add to cart */}
-              <div className="flex items-center gap-4 mb-8">
-                <div className="flex items-center bg-card border border-border rounded-full">
-                  <button
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="p-4 hover:text-primary transition-colors"
-                  >
-                    <Minus className="w-5 h-5" />
-                  </button>
-                  <span className="w-12 text-center font-medium">{quantity}g</span>
-                  <button
-                    onClick={() => setQuantity((q) => q + 1)}
-                    className="p-4 hover:text-primary transition-colors"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
+              {/* Weight Selection */}
+              <div className="bg-card border border-border rounded-xl p-5 mb-6 space-y-4">
+                <h4 className="text-sm font-medium text-foreground uppercase tracking-wider">
+                  Choisissez votre grammage
+                </h4>
+                
+                {/* Preset weight buttons */}
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_WEIGHTS.map((weight) => (
+                    <button
+                      key={weight}
+                      onClick={() => handlePresetClick(weight)}
+                      className={`px-4 py-2.5 text-sm rounded-lg border transition-all ${
+                        selectedWeight === weight
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border text-muted-foreground hover:border-primary/50 hover:text-primary"
+                      }`}
+                    >
+                      {weight}g
+                    </button>
+                  ))}
                 </div>
-                <button
-                  onClick={handleAddToCart}
-                  className="flex-1 btn-luxury flex items-center justify-center gap-3"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  Ajouter au panier
-                </button>
+
+                {/* Custom weight input */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">ou saisissez un poids précis :</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0.5"
+                      max="1000"
+                      step="0.5"
+                      value={customWeight}
+                      onChange={(e) => handleCustomWeightChange(e.target.value)}
+                      className="w-24 h-10 text-center border-primary/30 focus:border-primary bg-background"
+                    />
+                    <span className="text-sm text-muted-foreground">grammes</span>
+                  </div>
+                </div>
+
+                {/* Price display */}
+                <div className="pt-4 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-sm text-muted-foreground mb-1">Prix total</span>
+                      <div className="flex items-baseline gap-3">
+                        <span className="font-display text-3xl text-primary font-bold">
+                          {priceInfo?.finalPrice}€
+                        </span>
+                        {priceInfo && priceInfo.discount > 0 && (
+                          <>
+                            <span className="text-lg text-muted-foreground line-through">
+                              {priceInfo.rawPrice}€
+                            </span>
+                            <span className="text-sm bg-green-500/20 text-green-400 px-2 py-1 rounded-md font-medium">
+                              {priceInfo.discountLabel}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {priceInfo && priceInfo.discount > 0 && (
+                        <span className="text-sm text-green-400 mt-1">
+                          Vous économisez {priceInfo.savings}€
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gifts display */}
+                {gifts && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20"
+                  >
+                    {gifts.type === "kit" ? (
+                      <Package className="w-5 h-5 text-primary" />
+                    ) : (
+                      <Gift className="w-5 h-5 text-primary" />
+                    )}
+                    <span className="text-sm text-primary font-medium">
+                      + {gifts.label} offert{gifts.count > 1 ? "s" : ""}
+                    </span>
+                  </motion.div>
+                )}
               </div>
+
+              {/* Add to cart button */}
+              <button
+                onClick={handleAddToCart}
+                className="w-full btn-luxury flex items-center justify-center gap-3 py-4"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Ajouter au panier ({selectedWeight}g)
+              </button>
 
               {/* Terpene Radar */}
               <div className="bg-card border border-border rounded-2xl p-6">
