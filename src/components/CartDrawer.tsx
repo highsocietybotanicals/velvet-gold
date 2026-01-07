@@ -1,18 +1,47 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, ShoppingBag, Trash2 } from "lucide-react";
-import { useCart } from "@/contexts/CartContext";
+import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package } from "lucide-react";
+import { useCart, calculateItemPrice } from "@/contexts/CartContext";
+import { Input } from "@/components/ui/input";
+
+// Weight tier discounts
+const WEIGHT_TIERS = [
+  { min: 0, max: 9.99, discount: 0, label: "0%" },
+  { min: 10, max: 24.99, discount: 0.25, label: "-25%" },
+  { min: 25, max: 49.99, discount: 0.375, label: "-37.5%" },
+  { min: 50, max: 99.99, discount: 0.458, label: "-45.8%" },
+  { min: 100, max: Infinity, discount: 0.625, label: "-62.5%" },
+];
+
+const getDiscountLabel = (weight: number) => {
+  const tier = WEIGHT_TIERS.find(t => weight >= t.min && weight <= t.max);
+  return tier?.label || "0%";
+};
+
+const getGifts = (weight: number) => {
+  if (weight >= 100) {
+    return { type: "kit", count: 1, label: "Kit Professionnel HSB" };
+  }
+  const packs = Math.floor(weight / 10);
+  if (packs > 0) {
+    return { type: "pack", count: packs, label: `${packs} Pack${packs > 1 ? "s" : ""} Accessoires` };
+  }
+  return null;
+};
 
 const CartDrawer = () => {
   const {
     items,
     removeFromCart,
-    updateQuantity,
+    updateWeight,
     clearCart,
     totalItems,
+    totalWeight,
     totalPrice,
     isCartOpen,
     setIsCartOpen,
   } = useCart();
+
+  const totalGifts = getGifts(totalWeight);
 
   return (
     <AnimatePresence>
@@ -43,7 +72,7 @@ const CartDrawer = () => {
                   Mon Panier
                 </h2>
                 <span className="text-sm text-muted-foreground">
-                  ({totalItems} articles)
+                  ({totalItems} article{totalItems > 1 ? "s" : ""} · {totalWeight.toFixed(1)}g)
                 </span>
               </div>
               <button
@@ -68,68 +97,89 @@ const CartDrawer = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {items.map((item) => (
-                    <motion.div
-                      key={item.product.id}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="flex gap-4 p-4 bg-muted/30 rounded-lg border border-border/50"
-                    >
-                      <img
-                        src={item.product.image}
-                        alt={item.product.name}
-                        className="w-20 h-20 object-cover rounded-lg"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-display text-foreground truncate">
-                          {item.product.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {item.product.cbdPercentage} CBD
-                        </p>
-                        <p className="text-primary font-medium mt-1">
-                          {item.product.price}€/g
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <button
-                          onClick={() => removeFromCart(item.product.id)}
-                          className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        <div className="flex items-center gap-2 bg-background rounded-full border border-border">
-                          <button
-                            onClick={() =>
-                              updateQuantity(
-                                item.product.id,
-                                item.quantity - 1
-                              )
-                            }
-                            className="p-2 hover:text-primary transition-colors"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="w-6 text-center text-sm">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() =>
-                              updateQuantity(
-                                item.product.id,
-                                item.quantity + 1
-                              )
-                            }
-                            className="p-2 hover:text-primary transition-colors"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
+                  {items.map((item) => {
+                    const priceInfo = calculateItemPrice(item.product.price, item.weight);
+                    const discountLabel = getDiscountLabel(item.weight);
+                    
+                    return (
+                      <motion.div
+                        key={item.product.id}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="flex gap-4 p-4 bg-muted/30 rounded-lg border border-border/50"
+                      >
+                        <img
+                          src={item.product.image}
+                          alt={item.product.name}
+                          className="w-20 h-20 object-cover rounded-lg"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-display text-foreground truncate">
+                            {item.product.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {item.product.cbdPercentage} CBD · {item.product.price}€/g
+                          </p>
+                          
+                          {/* Weight input */}
+                          <div className="flex items-center gap-2 mt-2">
+                            <button
+                              onClick={() => updateWeight(item.product.id, Math.max(0.5, item.weight - 2.5))}
+                              className="p-1 hover:text-primary transition-colors bg-background rounded border border-border"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <Input
+                              type="number"
+                              min="0.5"
+                              max="1000"
+                              step="0.5"
+                              value={item.weight}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                if (!isNaN(val) && val > 0) {
+                                  updateWeight(item.product.id, val);
+                                }
+                              }}
+                              className="h-7 w-16 text-center text-sm border-primary/30"
+                            />
+                            <span className="text-xs text-muted-foreground">g</span>
+                            <button
+                              onClick={() => updateWeight(item.product.id, item.weight + 2.5)}
+                              className="p-1 hover:text-primary transition-colors bg-background rounded border border-border"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                        <div className="flex flex-col items-end gap-2">
+                          <button
+                            onClick={() => removeFromCart(item.product.id)}
+                            className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <div className="text-right">
+                            <p className="font-display text-lg text-primary font-bold">
+                              {priceInfo.finalPrice.toFixed(2)}€
+                            </p>
+                            {priceInfo.discount > 0 && (
+                              <>
+                                <p className="text-xs text-muted-foreground line-through">
+                                  {priceInfo.rawPrice.toFixed(2)}€
+                                </p>
+                                <span className="text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">
+                                  {discountLabel}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -137,8 +187,22 @@ const CartDrawer = () => {
             {/* Footer */}
             {items.length > 0 && (
               <div className="p-6 border-t border-border space-y-4">
+                {/* Gifts display */}
+                {totalGifts && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    {totalGifts.type === "kit" ? (
+                      <Package className="w-5 h-5 text-primary" />
+                    ) : (
+                      <Gift className="w-5 h-5 text-primary" />
+                    )}
+                    <span className="text-sm text-primary font-medium">
+                      + {totalGifts.label} offert{totalGifts.count > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Total</span>
+                  <span className="text-muted-foreground">Total ({totalWeight.toFixed(1)}g)</span>
                   <span className="font-display text-2xl text-primary">
                     {totalPrice.toFixed(2)}€
                   </span>

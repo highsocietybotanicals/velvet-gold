@@ -253,7 +253,7 @@ const CataloguePage = () => {
                   <button
                     onClick={(e) => {
                       e.preventDefault();
-                      addToCart(product);
+                      addToCart(product, 2.5);
                     }}
                     className={`${
                       viewMode === "grid"
