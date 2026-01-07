@@ -1,18 +1,43 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Product } from "@/data/products";
 
-interface CartItem {
+// Weight tier discounts
+const WEIGHT_TIERS = [
+  { min: 0, max: 9.99, discount: 0 },
+  { min: 10, max: 24.99, discount: 0.25 },
+  { min: 25, max: 49.99, discount: 0.375 },
+  { min: 50, max: 99.99, discount: 0.458 },
+  { min: 100, max: Infinity, discount: 0.625 },
+];
+
+const getDiscountTier = (weight: number) => {
+  return WEIGHT_TIERS.find(tier => weight >= tier.min && weight <= tier.max) || WEIGHT_TIERS[0];
+};
+
+export const calculateItemPrice = (basePrice: number, weight: number) => {
+  const tier = getDiscountTier(weight);
+  const rawPrice = basePrice * weight;
+  const discountedPrice = rawPrice * (1 - tier.discount);
+  return {
+    rawPrice,
+    finalPrice: discountedPrice,
+    discount: tier.discount,
+  };
+};
+
+export interface CartItem {
   product: Product;
-  quantity: number;
+  weight: number; // Weight in grams
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: Product, weight: number) => void;
   removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  updateWeight: (productId: string, weight: number) => void;
   clearCart: () => void;
   totalItems: number;
+  totalWeight: number;
   totalPrice: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
@@ -31,32 +56,33 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("cart", JSON.stringify(items));
   }, [items]);
 
-  const addToCart = (product: Product, quantity = 1) => {
+  const addToCart = (product: Product, weight: number) => {
     setItems((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
         return prev.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, weight: item.weight + weight }
             : item
         );
       }
-      return [...prev, { product, quantity }];
+      return [...prev, { product, weight }];
     });
+    setIsCartOpen(true);
   };
 
   const removeFromCart = (productId: string) => {
     setItems((prev) => prev.filter((item) => item.product.id !== productId));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
+  const updateWeight = (productId: string, weight: number) => {
+    if (weight <= 0) {
       removeFromCart(productId);
       return;
     }
     setItems((prev) =>
       prev.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
+        item.product.id === productId ? { ...item, weight } : item
       )
     );
   };
@@ -65,11 +91,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems([]);
   };
 
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  );
+  const totalItems = items.length;
+  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+  const totalPrice = items.reduce((sum, item) => {
+    const { finalPrice } = calculateItemPrice(item.product.price, item.weight);
+    return sum + finalPrice;
+  }, 0);
 
   return (
     <CartContext.Provider
@@ -77,9 +104,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         items,
         addToCart,
         removeFromCart,
-        updateQuantity,
+        updateWeight,
         clearCart,
         totalItems,
+        totalWeight,
         totalPrice,
         isCartOpen,
         setIsCartOpen,

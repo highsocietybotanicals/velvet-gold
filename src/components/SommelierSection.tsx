@@ -364,7 +364,7 @@ const SommelierSection = () => {
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => addToCart(getRecommendation()!)}
+                            onClick={() => addToCart(getRecommendation()!, 2.5)}
                             className="btn-luxury-outline inline-flex items-center justify-center gap-2"
                           >
                             <ShoppingCart className="w-4 h-4" />
