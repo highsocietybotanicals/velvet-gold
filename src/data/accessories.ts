@@ -1,10 +1,15 @@
 // Accessory data for "LES ESSENTIELS DE L'INITIÉ" section
 
-import pochonPetit from "@/assets/accessories/pochon-petit.jpg";
-import pochonMoyen from "@/assets/accessories/pochon-moyen.jpg";
-import pochonGrand from "@/assets/accessories/pochon-grand.jpg";
-import feuillesSlim from "@/assets/accessories/feuilles-slim.jpg";
-import briquetHSB from "@/assets/accessories/briquet-hsb.jpg";
+// Corrected image assignments:
+// - pochon-petit.jpg actually contains briquet image
+// - briquet-hsb.jpg actually contains petit pochon image
+// - pochon-moyen.jpg actually contains feuilles slim image
+// - feuilles-slim.jpg actually contains moyen pochon image
+import pochonPetit from "@/assets/accessories/briquet-hsb.jpg"; // swapped
+import pochonMoyen from "@/assets/accessories/feuilles-slim.jpg"; // swapped
+import pochonGrand from "@/assets/accessories/pochon-grand.jpg"; // new correct image
+import feuillesSlim from "@/assets/accessories/pochon-moyen.jpg"; // swapped
+import briquetHSB from "@/assets/accessories/pochon-petit.jpg"; // swapped
 import type { Accessory } from "@/contexts/CartContext";
 
 // Re-export the Accessory type for convenience
