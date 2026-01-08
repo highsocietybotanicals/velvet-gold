@@ -137,25 +137,26 @@ const ProductPage = () => {
                     e.currentTarget.src = '/placeholder.svg';
                   }}
                 />
-                
-                {/* Pochon indicator */}
-                <motion.div
-                  key={pochonImage}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute bottom-4 right-4 bg-background/95 backdrop-blur-sm rounded-xl p-3 border border-primary/30 shadow-lg"
-                >
-                  <img
-                    src={pochonImage}
-                    alt={pochonLabel}
-                    className="w-16 h-16 object-cover rounded-lg"
-                  />
-                  <p className="text-xs text-center text-primary mt-2 font-medium">
-                    {pochonLabel}
-                  </p>
-                </motion.div>
               </div>
+              
+              {/* Pochon indicator - separate section below image */}
+              <motion.div
+                key={pochonImage}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 flex items-center gap-4 p-4 bg-card/80 backdrop-blur-sm rounded-xl border border-border/50"
+              >
+                <img
+                  src={pochonImage}
+                  alt={pochonLabel}
+                  className="w-12 h-12 object-cover rounded-lg border border-primary/20"
+                />
+                <div>
+                  <p className="text-sm font-medium text-foreground">{pochonLabel}</p>
+                  <p className="text-xs text-muted-foreground">Inclus avec votre commande</p>
+                </div>
+              </motion.div>
             </motion.div>
 
             {/* Product Info */}

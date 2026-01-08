@@ -4,10 +4,8 @@ import { useCart } from "@/contexts/CartContext";
 import { Input } from "@/components/ui/input";
 import { calculateItemPrice, getDiscountLabel, getGifts, calculateAccessoryPrice } from "@/lib/pricing";
 
-// Import accessory images for gift display
-import pochonMoyen from "@/assets/accessories/pochon-moyen.jpg";
-import feuillesSlim from "@/assets/accessories/feuilles-slim.jpg";
-import briquetHSB from "@/assets/accessories/briquet-hsb.jpg";
+// Import corrected accessory images from accessories data
+import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
 
 const CartDrawer = () => {
   const {

@@ -65,6 +65,9 @@ export const pochonImages = {
   grand: pochonGrand,
 };
 
+// Export individual corrected images for use in CartDrawer
+export { pochonMoyen, feuillesSlim, briquetHSB };
+
 // Get pochon image based on weight
 export const getPochonImage = (weight: number): string => {
   if (weight < 10) return pochonPetit;
