@@ -5,15 +5,10 @@ import pochonMoyen from "@/assets/accessories/pochon-moyen.jpg";
 import pochonGrand from "@/assets/accessories/pochon-grand.jpg";
 import feuillesSlim from "@/assets/accessories/feuilles-slim.jpg";
 import briquetHSB from "@/assets/accessories/briquet-hsb.jpg";
+import type { Accessory } from "@/contexts/CartContext";
 
-export interface Accessory {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  description: string;
-  category: "pochon" | "accessoire";
-}
+// Re-export the Accessory type for convenience
+export type { Accessory };
 
 export const accessories: Accessory[] = [
   {

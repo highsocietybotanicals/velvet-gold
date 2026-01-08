@@ -1,7 +1,16 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Product } from "@/data/products";
-import { Accessory } from "@/data/accessories";
 import { calculateItemPrice, calculateAccessoryPrice } from "@/lib/pricing";
+
+// Define Accessory interface locally to avoid circular dependency
+export interface Accessory {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
+  category: "pochon" | "accessoire";
+}
 
 export interface CartItem {
   product: Product;
@@ -32,17 +41,21 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Safe localStorage parsing
+const safeParseJSON = <T,>(key: string, fallback: T): T => {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem("cart");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [accessoryItems, setAccessoryItems] = useState<AccessoryCartItem[]>(() => {
-    const saved = localStorage.getItem("cart-accessories");
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [items, setItems] = useState<CartItem[]>(() => safeParseJSON("cart", []));
+  const [accessoryItems, setAccessoryItems] = useState<AccessoryCartItem[]>(() => 
+    safeParseJSON("cart-accessories", [])
+  );
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
