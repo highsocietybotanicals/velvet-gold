@@ -1,9 +1,8 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Plus, Minus, ShoppingCart } from "lucide-react";
-import { Accessory } from "@/data/accessories";
+import { useCart, Accessory } from "@/contexts/CartContext";
 import { calculateAccessoryPrice, ACCESSORY_BULK_THRESHOLD } from "@/lib/pricing";
-import { useCart } from "@/contexts/CartContext";
 
 interface AccessoryCardProps {
   accessory: Accessory;
