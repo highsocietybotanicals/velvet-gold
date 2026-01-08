@@ -34,6 +34,13 @@ import rosinPress from "@/assets/resins/rosin-press.jpg";
 
 export type ProductCategory = "fleur" | "resine";
 
+export interface TerpeneProfile {
+  boise: number;
+  fruite: number;
+  epice: number;
+  terreux: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -42,7 +49,7 @@ export interface Product {
   price: number;
   cbdPercentage: string;
   image: string;
-  terpenes: { boise: number; fruite: number; epice: number; terreux: number };
+  terpenes: TerpeneProfile;
   mood: string;
   category: ProductCategory;
   intentionMatch: string[];

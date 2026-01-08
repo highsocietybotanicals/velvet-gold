@@ -1,32 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package } from "lucide-react";
-import { useCart, calculateItemPrice } from "@/contexts/CartContext";
+import { useCart } from "@/contexts/CartContext";
 import { Input } from "@/components/ui/input";
-
-// Weight tier discounts
-const WEIGHT_TIERS = [
-  { min: 0, max: 9.99, discount: 0, label: "0%" },
-  { min: 10, max: 24.99, discount: 0.25, label: "-25%" },
-  { min: 25, max: 49.99, discount: 0.375, label: "-37.5%" },
-  { min: 50, max: 99.99, discount: 0.458, label: "-45.8%" },
-  { min: 100, max: Infinity, discount: 0.625, label: "-62.5%" },
-];
-
-const getDiscountLabel = (weight: number) => {
-  const tier = WEIGHT_TIERS.find(t => weight >= t.min && weight <= t.max);
-  return tier?.label || "0%";
-};
-
-const getGifts = (weight: number) => {
-  if (weight >= 100) {
-    return { type: "kit", count: 1, label: "Kit Professionnel HSB" };
-  }
-  const packs = Math.floor(weight / 10);
-  if (packs > 0) {
-    return { type: "pack", count: packs, label: `${packs} Pack${packs > 1 ? "s" : ""} Accessoires` };
-  }
-  return null;
-};
+import { calculateItemPrice, getDiscountLabel, getGifts } from "@/lib/pricing";
 
 const CartDrawer = () => {
   const {
@@ -114,6 +90,9 @@ const CartDrawer = () => {
                           src={item.product.image}
                           alt={item.product.name}
                           className="w-20 h-20 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
                         />
                         <div className="flex-1 min-w-0">
                           <h3 className="font-display text-foreground truncate">
@@ -126,7 +105,11 @@ const CartDrawer = () => {
                           {/* Weight input */}
                           <div className="flex items-center gap-2 mt-2">
                             <button
-                              onClick={() => updateWeight(item.product.id, Math.max(0.5, item.weight - 2.5))}
+                              onClick={() => {
+                                // Smarter decrement: use smaller steps for small weights
+                                const step = item.weight <= 2.5 ? 0.5 : 2.5;
+                                updateWeight(item.product.id, Math.max(0.5, item.weight - step));
+                              }}
                               className="p-1 hover:text-primary transition-colors bg-background rounded border border-border"
                             >
                               <Minus className="w-3 h-3" />

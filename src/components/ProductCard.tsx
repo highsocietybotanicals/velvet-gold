@@ -3,59 +3,14 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Leaf, Sparkles, ShoppingCart, Gift, Package } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { Product } from "@/data/products";
+import { Product, TerpeneProfile } from "@/data/products";
 import { Input } from "@/components/ui/input";
-
-interface TerpeneProfile {
-  boise: number;
-  fruite: number;
-  epice: number;
-  terreux: number;
-}
+import { PRESET_WEIGHTS, calculatePrice, getGifts } from "@/lib/pricing";
 
 interface ProductCardProps {
   product: Product;
   index: number;
 }
-
-// Weight tier discounts
-const WEIGHT_TIERS = [
-  { min: 0, max: 9.99, discount: 0, label: "0%" },
-  { min: 10, max: 24.99, discount: 0.25, label: "-25%" },
-  { min: 25, max: 49.99, discount: 0.375, label: "-37.5%" },
-  { min: 50, max: 99.99, discount: 0.458, label: "-45.8%" },
-  { min: 100, max: Infinity, discount: 0.625, label: "-62.5%" },
-];
-
-const PRESET_WEIGHTS = [2.5, 10, 25, 50, 100];
-
-const getDiscountTier = (weight: number) => {
-  return WEIGHT_TIERS.find(tier => weight >= tier.min && weight <= tier.max) || WEIGHT_TIERS[0];
-};
-
-const calculatePrice = (basePrice: number, weight: number) => {
-  const tier = getDiscountTier(weight);
-  const rawPrice = basePrice * weight;
-  const discountedPrice = rawPrice * (1 - tier.discount);
-  return {
-    rawPrice: rawPrice.toFixed(2),
-    finalPrice: discountedPrice.toFixed(2),
-    discount: tier.discount,
-    discountLabel: tier.label,
-    savings: (rawPrice - discountedPrice).toFixed(2),
-  };
-};
-
-const getGifts = (weight: number) => {
-  if (weight >= 100) {
-    return { type: "kit", count: 1, label: "Kit Professionnel HSB" };
-  }
-  const packs = Math.floor(weight / 10);
-  if (packs > 0) {
-    return { type: "pack", count: packs, label: `${packs} Pack${packs > 1 ? "s" : ""} Accessoires` };
-  }
-  return null;
-};
 
 const TerpeneRadar = ({ terpenes }: { terpenes: TerpeneProfile }) => {
   const labels = [
@@ -180,6 +135,10 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
   const handleCustomWeightChange = (value: string) => {
     setCustomWeight(value);
+    // Allow empty or zero temporarily for typing
+    if (value === '' || value === '0') {
+      return;
+    }
     const numValue = parseFloat(value);
     if (!isNaN(numValue) && numValue > 0 && numValue <= 1000) {
       setSelectedWeight(numValue);
@@ -208,6 +167,9 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             src={product.image}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            onError={(e) => {
+              e.currentTarget.src = '/placeholder.svg';
+            }}
           />
           
           {/* Mood badge */}

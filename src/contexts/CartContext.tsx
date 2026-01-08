@@ -1,29 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Product } from "@/data/products";
-
-// Weight tier discounts
-const WEIGHT_TIERS = [
-  { min: 0, max: 9.99, discount: 0 },
-  { min: 10, max: 24.99, discount: 0.25 },
-  { min: 25, max: 49.99, discount: 0.375 },
-  { min: 50, max: 99.99, discount: 0.458 },
-  { min: 100, max: Infinity, discount: 0.625 },
-];
-
-const getDiscountTier = (weight: number) => {
-  return WEIGHT_TIERS.find(tier => weight >= tier.min && weight <= tier.max) || WEIGHT_TIERS[0];
-};
-
-export const calculateItemPrice = (basePrice: number, weight: number) => {
-  const tier = getDiscountTier(weight);
-  const rawPrice = basePrice * weight;
-  const discountedPrice = rawPrice * (1 - tier.discount);
-  return {
-    rawPrice,
-    finalPrice: discountedPrice,
-    discount: tier.discount,
-  };
-};
+import { calculateItemPrice } from "@/lib/pricing";
 
 export interface CartItem {
   product: Product;
