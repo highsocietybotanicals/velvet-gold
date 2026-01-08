@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Leaf, Sparkles, ShoppingCart, Gift, Package } from "lucide-react";
+import { Leaf, Sparkles, ShoppingCart, Gift, Package, ChevronDown } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { Product, TerpeneProfile } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { PRESET_WEIGHTS, calculatePrice, getGifts } from "@/lib/pricing";
+import { getPochonImage, getPochonLabel } from "@/data/accessories";
 
 interface ProductCardProps {
   product: Product;
@@ -128,6 +129,14 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
     return getGifts(selectedWeight);
   }, [selectedWeight]);
 
+  const pochonImage = useMemo(() => {
+    return getPochonImage(selectedWeight);
+  }, [selectedWeight]);
+
+  const pochonLabel = useMemo(() => {
+    return getPochonLabel(selectedWeight);
+  }, [selectedWeight]);
+
   const handlePresetClick = (weight: number) => {
     setSelectedWeight(weight);
     setCustomWeight(weight.toString());
@@ -160,7 +169,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       className="group product-card bg-card rounded-lg border border-border/50 overflow-hidden relative"
     >
       <Link to={`/produit/${product.id}`}>
-        {/* Image container */}
+        {/* Image container with pochon overlay */}
         <div className="relative aspect-square overflow-hidden bg-carbon-deep">
           <div className="absolute inset-0 bg-gradient-gold-radial opacity-0 group-hover:opacity-40 transition-opacity duration-500" />
           <img
@@ -171,6 +180,24 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
               e.currentTarget.src = '/placeholder.svg';
             }}
           />
+          
+          {/* Pochon indicator - bottom right */}
+          <motion.div
+            key={pochonImage}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm rounded-lg p-1.5 border border-primary/30"
+          >
+            <img
+              src={pochonImage}
+              alt={pochonLabel}
+              className="w-10 h-10 object-cover rounded"
+            />
+            <p className="text-[8px] text-center text-primary mt-0.5 font-medium truncate max-w-12">
+              {pochonLabel}
+            </p>
+          </motion.div>
           
           {/* Mood badge */}
           <div className="absolute top-4 left-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-primary/30">
@@ -292,18 +319,32 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 p-2 rounded-md bg-primary/10 border border-primary/20"
+            className="p-2 rounded-md bg-primary/10 border border-primary/20"
           >
-            {gifts.type === "kit" ? (
-              <Package className="w-4 h-4 text-primary" />
-            ) : (
-              <Gift className="w-4 h-4 text-primary" />
-            )}
-            <span className="text-xs text-primary font-medium">
-              + {gifts.label} offert{gifts.count > 1 ? "s" : ""}
-            </span>
+            <div className="flex items-center gap-2">
+              {gifts.type === "kit" ? (
+                <Package className="w-4 h-4 text-primary" />
+              ) : (
+                <Gift className="w-4 h-4 text-primary" />
+              )}
+              <span className="text-xs text-primary font-medium">
+                + {gifts.label} offert{gifts.count > 1 ? "s" : ""}
+              </span>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1 ml-6">
+              ({gifts.contents.pochonMoyen}x Pochon, {gifts.contents.feuillesSlim}x Slim, {gifts.contents.briquetHSB}x Briquet)
+            </p>
           </motion.div>
         )}
+
+        {/* Link to accessories */}
+        <a
+          href="#accessoires"
+          className="flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors pt-1"
+        >
+          Besoin d'un pochon en plus ?
+          <ChevronDown className="w-3 h-3" />
+        </a>
       </div>
     </motion.div>
   );

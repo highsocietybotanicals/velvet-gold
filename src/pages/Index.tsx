@@ -3,6 +3,7 @@ import AgeGate from "@/components/AgeGate";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import ProductSection from "@/components/ProductSection";
+import AccessoriesSection from "@/components/AccessoriesSection";
 import SommelierSection from "@/components/SommelierSection";
 import AboutSection from "@/components/AboutSection";
 import Footer from "@/components/Footer";
@@ -44,6 +45,7 @@ const Index = () => {
         <SommelierSection />
         <HeroSection />
         <ProductSection />
+        <AccessoriesSection />
         <AboutSection />
       </main>
       <Footer />
