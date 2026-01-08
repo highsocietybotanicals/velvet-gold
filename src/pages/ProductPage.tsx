@@ -8,61 +8,23 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerpeneRadar from "@/components/TerpeneRadar";
 import { Input } from "@/components/ui/input";
-
-// Weight tier discounts
-const WEIGHT_TIERS = [
-  { min: 0, max: 9.99, discount: 0, label: "0%" },
-  { min: 10, max: 24.99, discount: 0.25, label: "-25%" },
-  { min: 25, max: 49.99, discount: 0.375, label: "-37.5%" },
-  { min: 50, max: 99.99, discount: 0.458, label: "-45.8%" },
-  { min: 100, max: Infinity, discount: 0.625, label: "-62.5%" },
-];
-
-const PRESET_WEIGHTS = [2.5, 10, 25, 50, 100];
-
-const getDiscountTier = (weight: number) => {
-  return WEIGHT_TIERS.find(tier => weight >= tier.min && weight <= tier.max) || WEIGHT_TIERS[0];
-};
-
-const calculatePrice = (basePrice: number, weight: number) => {
-  const tier = getDiscountTier(weight);
-  const rawPrice = basePrice * weight;
-  const discountedPrice = rawPrice * (1 - tier.discount);
-  return {
-    rawPrice: rawPrice.toFixed(2),
-    finalPrice: discountedPrice.toFixed(2),
-    discount: tier.discount,
-    discountLabel: tier.label,
-    savings: (rawPrice - discountedPrice).toFixed(2),
-  };
-};
-
-const getGifts = (weight: number) => {
-  if (weight >= 100) {
-    return { type: "kit", count: 1, label: "Kit Professionnel HSB" };
-  }
-  const packs = Math.floor(weight / 10);
-  if (packs > 0) {
-    return { type: "pack", count: packs, label: `${packs} Pack${packs > 1 ? "s" : ""} Accessoires` };
-  }
-  return null;
-};
+import { PRESET_WEIGHTS, calculatePrice, getGifts } from "@/lib/pricing";
 
 // Calculate similarity between two products based on terpenes
 const calculateTerpeneSimilarity = (
-  terpenes1: Record<string, number>,
-  terpenes2: Record<string, number>
+  terpenes1: { boise: number; fruite: number; epice: number; terreux: number },
+  terpenes2: { boise: number; fruite: number; epice: number; terreux: number }
 ): number => {
-  const allKeys = new Set([...Object.keys(terpenes1), ...Object.keys(terpenes2)]);
+  const keys = ["boise", "fruite", "epice", "terreux"] as const;
   let similarity = 0;
   
-  allKeys.forEach((key) => {
-    const val1 = terpenes1[key] || 0;
-    const val2 = terpenes2[key] || 0;
+  keys.forEach((key) => {
+    const val1 = terpenes1[key];
+    const val2 = terpenes2[key];
     similarity += 1 - Math.abs(val1 - val2) / 100;
   });
   
-  return similarity / allKeys.size;
+  return similarity / keys.length;
 };
 
 const getSimilarProducts = (currentProduct: typeof allProducts[0], count: number = 4) => {
@@ -102,6 +64,10 @@ const ProductPage = () => {
 
   const handleCustomWeightChange = (value: string) => {
     setCustomWeight(value);
+    // Allow empty or zero temporarily for typing
+    if (value === '' || value === '0') {
+      return;
+    }
     const numValue = parseFloat(value);
     if (!isNaN(numValue) && numValue > 0 && numValue <= 1000) {
       setSelectedWeight(numValue);
@@ -158,6 +124,9 @@ const ProductPage = () => {
                   src={product.image}
                   alt={product.name}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder.svg';
+                  }}
                 />
               </div>
             </motion.div>
@@ -341,6 +310,9 @@ const ProductPage = () => {
                         src={similarProduct.image}
                         alt={similarProduct.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
