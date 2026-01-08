@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Gift, Package } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Gift, Package, ChevronDown } from "lucide-react";
 import { allProducts } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import Header from "@/components/Header";
@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import TerpeneRadar from "@/components/TerpeneRadar";
 import { Input } from "@/components/ui/input";
 import { PRESET_WEIGHTS, calculatePrice, getGifts } from "@/lib/pricing";
+import { getPochonImage, getPochonLabel } from "@/data/accessories";
 
 // Calculate similarity between two products based on terpenes
 const calculateTerpeneSimilarity = (
@@ -55,6 +56,14 @@ const ProductPage = () => {
 
   const gifts = useMemo(() => {
     return getGifts(selectedWeight);
+  }, [selectedWeight]);
+
+  const pochonImage = useMemo(() => {
+    return getPochonImage(selectedWeight);
+  }, [selectedWeight]);
+
+  const pochonLabel = useMemo(() => {
+    return getPochonLabel(selectedWeight);
   }, [selectedWeight]);
 
   const handlePresetClick = (weight: number) => {
@@ -113,13 +122,13 @@ const ProductPage = () => {
           </motion.button>
 
           <div className="grid lg:grid-cols-2 gap-12">
-            {/* Product Image - Simple */}
+            {/* Product Image with Pochon indicator */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="aspect-square bg-card rounded-2xl overflow-hidden border border-border">
+              <div className="relative aspect-square bg-card rounded-2xl overflow-hidden border border-border">
                 <img
                   src={product.image}
                   alt={product.name}
@@ -128,6 +137,24 @@ const ProductPage = () => {
                     e.currentTarget.src = '/placeholder.svg';
                   }}
                 />
+                
+                {/* Pochon indicator */}
+                <motion.div
+                  key={pochonImage}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute bottom-4 right-4 bg-background/95 backdrop-blur-sm rounded-xl p-3 border border-primary/30 shadow-lg"
+                >
+                  <img
+                    src={pochonImage}
+                    alt={pochonLabel}
+                    className="w-16 h-16 object-cover rounded-lg"
+                  />
+                  <p className="text-xs text-center text-primary mt-2 font-medium">
+                    {pochonLabel}
+                  </p>
+                </motion.div>
               </div>
             </motion.div>
 
@@ -244,16 +271,21 @@ const ProductPage = () => {
                   <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20"
+                    className="p-3 rounded-lg bg-primary/10 border border-primary/20"
                   >
-                    {gifts.type === "kit" ? (
-                      <Package className="w-5 h-5 text-primary" />
-                    ) : (
-                      <Gift className="w-5 h-5 text-primary" />
-                    )}
-                    <span className="text-sm text-primary font-medium">
-                      + {gifts.label} offert{gifts.count > 1 ? "s" : ""}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      {gifts.type === "kit" ? (
+                        <Package className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Gift className="w-5 h-5 text-primary" />
+                      )}
+                      <span className="text-sm text-primary font-medium">
+                        + {gifts.label} offert{gifts.count > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 ml-8">
+                      Contenu : {gifts.contents.pochonMoyen}x Pochon Moyen, {gifts.contents.feuillesSlim}x Feuilles Slim, {gifts.contents.briquetHSB}x Briquet HSB, {gifts.contents.elastique}x Élastique
+                    </p>
                   </motion.div>
                 )}
               </div>
@@ -267,8 +299,17 @@ const ProductPage = () => {
                 Ajouter au panier ({selectedWeight}g)
               </button>
 
+              {/* Link to accessories */}
+              <Link
+                to="/#accessoires"
+                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mt-4"
+              >
+                Besoin d'un pochon en plus ?
+                <ChevronDown className="w-4 h-4" />
+              </Link>
+
               {/* Terpene Radar */}
-              <div className="bg-card border border-border rounded-2xl p-6">
+              <div className="bg-card border border-border rounded-2xl p-6 mt-6">
                 <h3 className="font-display text-lg text-foreground mb-4 text-center">
                   Profil Terpénique
                 </h3>

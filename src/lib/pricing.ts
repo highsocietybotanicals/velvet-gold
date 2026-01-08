@@ -15,10 +15,25 @@ export interface PriceInfo {
   savings: string;
 }
 
+export interface GiftContents {
+  pochonMoyen: number;
+  feuillesSlim: number;
+  briquetHSB: number;
+  elastique: number;
+}
+
 export interface GiftInfo {
   type: "kit" | "pack";
   count: number;
   label: string;
+  contents: GiftContents;
+}
+
+export interface AccessoryPriceInfo {
+  rawTotal: number;
+  finalTotal: number;
+  discount: number;
+  discountLabel: string | null;
 }
 
 // Weight tier discounts
@@ -31,6 +46,10 @@ export const WEIGHT_TIERS: WeightTier[] = [
 ];
 
 export const PRESET_WEIGHTS = [2.5, 10, 25, 50, 100];
+
+// Accessory bulk discount threshold
+export const ACCESSORY_BULK_THRESHOLD = 10;
+export const ACCESSORY_BULK_DISCOUNT = 0.33;
 
 export const getDiscountTier = (weight: number): WeightTier => {
   return WEIGHT_TIERS.find(tier => weight >= tier.min && weight <= tier.max) || WEIGHT_TIERS[0];
@@ -78,17 +97,52 @@ export const calculateItemPrice = (basePrice: number, weight: number) => {
   };
 };
 
+// Calculate accessory price with bulk discount
+export const calculateAccessoryPrice = (unitPrice: number, quantity: number): AccessoryPriceInfo => {
+  if (!quantity || quantity <= 0 || isNaN(quantity)) {
+    return { rawTotal: 0, finalTotal: 0, discount: 0, discountLabel: null };
+  }
+
+  const discount = quantity >= ACCESSORY_BULK_THRESHOLD ? ACCESSORY_BULK_DISCOUNT : 0;
+  const rawTotal = unitPrice * quantity;
+  const finalTotal = rawTotal * (1 - discount);
+
+  return {
+    rawTotal,
+    finalTotal,
+    discount,
+    discountLabel: discount > 0 ? "-33%" : null,
+  };
+};
+
+// Get gifts based on total flower weight - 1 Pack Initié every 10g
 export const getGifts = (weight: number): GiftInfo | null => {
-  if (!weight || weight <= 0) return null;
+  if (!weight || weight <= 0 || weight < 10) return null;
   
+  const packCount = Math.floor(weight / 10);
+  
+  const contents: GiftContents = {
+    pochonMoyen: packCount,
+    feuillesSlim: packCount,
+    briquetHSB: packCount,
+    elastique: packCount,
+  };
+
   if (weight >= 100) {
-    return { type: "kit", count: 1, label: "Kit Professionnel HSB" };
+    return {
+      type: "kit",
+      count: packCount,
+      label: `Kit Revendeur HSB (${packCount} Packs)`,
+      contents,
+    };
   }
-  const packs = Math.floor(weight / 10);
-  if (packs > 0) {
-    return { type: "pack", count: packs, label: `${packs} Pack${packs > 1 ? "s" : ""} Accessoires` };
-  }
-  return null;
+  
+  return {
+    type: "pack",
+    count: packCount,
+    label: `${packCount} Pack${packCount > 1 ? "s" : ""} Initié`,
+    contents,
+  };
 };
 
 export const getDiscountLabel = (weight: number): string => {
