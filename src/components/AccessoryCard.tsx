@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Minus, ShoppingCart } from "lucide-react";
+import { Plus, Minus, ShoppingCart, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useCart, Accessory } from "@/contexts/CartContext";
 import { calculateAccessoryPrice, ACCESSORY_BULK_THRESHOLD } from "@/lib/pricing";
 
@@ -33,12 +34,12 @@ const AccessoryCard = ({ accessory, index }: AccessoryCardProps) => {
       transition={{ duration: 0.4, delay: index * 0.1 }}
       className="group bg-card rounded-lg border border-border/50 overflow-hidden"
     >
-      {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-carbon-deep">
+      {/* Image - clickable to product page */}
+      <Link to={`/accessoire/${accessory.id}`} className="block relative aspect-square overflow-hidden bg-carbon-deep group/img">
         <img
           src={accessory.image}
           alt={accessory.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110"
           onError={(e) => {
             e.currentTarget.src = "/placeholder.svg";
           }}
@@ -48,18 +49,20 @@ const AccessoryCard = ({ accessory, index }: AccessoryCardProps) => {
             -33%
           </div>
         )}
-      </div>
+        <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center">
+          <ExternalLink className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity" />
+        </div>
+      </Link>
 
-      {/* Content */}
       <div className="p-3 space-y-2">
-        <div>
-          <h4 className="font-display text-sm text-primary truncate">
+        <Link to={`/accessoire/${accessory.id}`} className="block group/title">
+          <h4 className="font-display text-sm text-primary truncate group-hover/title:underline">
             {accessory.name}
           </h4>
           <p className="text-xs text-muted-foreground truncate">
             {accessory.description}
           </p>
-        </div>
+        </Link>
 
         {/* Price */}
         <div className="flex items-baseline gap-2">

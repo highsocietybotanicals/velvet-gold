@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index";
 import CataloguePage from "./pages/CataloguePage";
 import ProductPage from "./pages/ProductPage";
+import AccessoryPage from "./pages/AccessoryPage";
 import NotFound from "./pages/NotFound";
 import CartDrawer from "./components/CartDrawer";
 
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/catalogue" element={<CataloguePage />} />
             <Route path="/produit/:id" element={<ProductPage />} />
+            <Route path="/accessoire/:id" element={<AccessoryPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
