@@ -22,13 +22,21 @@ export interface AccessoryCartItem {
   quantity: number;
 }
 
+export interface SampleItem {
+  product: Product;
+  weight: 1; // Always 1g
+}
+
 interface CartContextType {
   items: CartItem[];
   accessoryItems: AccessoryCartItem[];
+  sampleItems: SampleItem[];
   addToCart: (product: Product, weight: number) => void;
   addAccessory: (accessory: Accessory, quantity: number) => void;
+  addSample: (product: Product) => void;
   removeFromCart: (productId: string) => void;
   removeAccessory: (accessoryId: string) => void;
+  removeSample: (productId: string) => void;
   updateWeight: (productId: string, weight: number) => void;
   updateAccessoryQuantity: (accessoryId: string, quantity: number) => void;
   clearCart: () => void;
@@ -56,6 +64,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [accessoryItems, setAccessoryItems] = useState<AccessoryCartItem[]>(() => 
     safeParseJSON("cart-accessories", [])
   );
+  const [sampleItems, setSampleItems] = useState<SampleItem[]>(() => 
+    safeParseJSON("cart-samples", [])
+  );
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
@@ -65,6 +76,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem("cart-accessories", JSON.stringify(accessoryItems));
   }, [accessoryItems]);
+
+  useEffect(() => {
+    localStorage.setItem("cart-samples", JSON.stringify(sampleItems));
+  }, [sampleItems]);
+
+  // Auto-adjust samples when flower weight changes
+  useEffect(() => {
+    const currentWeight = items.reduce((sum, item) => sum + item.weight, 0);
+    const allowedSamples = Math.floor(currentWeight / 12);
+    
+    // If we have more samples than allowed, remove excess
+    if (sampleItems.length > allowedSamples) {
+      setSampleItems(prev => prev.slice(0, allowedSamples));
+    }
+  }, [items, sampleItems.length]);
 
   const addToCart = (product: Product, weight: number) => {
     setItems((prev) => {
@@ -96,12 +122,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setIsCartOpen(true);
   };
 
+  const addSample = (product: Product) => {
+    const currentWeight = items.reduce((sum, item) => sum + item.weight, 0);
+    const allowedSamples = Math.floor(currentWeight / 12);
+    
+    // Check if we can add more samples
+    if (sampleItems.length >= allowedSamples) return;
+    
+    // Check if this product is already a sample
+    const alreadyExists = sampleItems.some(item => item.product.id === product.id);
+    if (alreadyExists) return;
+    
+    setSampleItems((prev) => [...prev, { product, weight: 1 }]);
+  };
+
   const removeFromCart = (productId: string) => {
     setItems((prev) => prev.filter((item) => item.product.id !== productId));
   };
 
   const removeAccessory = (accessoryId: string) => {
     setAccessoryItems((prev) => prev.filter((item) => item.accessory.id !== accessoryId));
+  };
+
+  const removeSample = (productId: string) => {
+    setSampleItems((prev) => prev.filter((item) => item.product.id !== productId));
   };
 
   const updateWeight = (productId: string, weight: number) => {
@@ -131,9 +175,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const clearCart = () => {
     setItems([]);
     setAccessoryItems([]);
+    setSampleItems([]);
   };
 
-  const totalItems = items.length + accessoryItems.length;
+  const totalItems = items.length + accessoryItems.length + sampleItems.length;
   const totalFlowerWeight = items.reduce((sum, item) => sum + item.weight, 0);
   
   const totalPrice = 
@@ -147,16 +192,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const { finalTotal } = calculateAccessoryPrice(item.accessory.price, item.quantity);
       return sum + finalTotal;
     }, 0);
+    // Sample items are FREE (0€)
 
   return (
     <CartContext.Provider
       value={{
         items,
         accessoryItems,
+        sampleItems,
         addToCart,
         addAccessory,
+        addSample,
         removeFromCart,
         removeAccessory,
+        removeSample,
         updateWeight,
         updateAccessoryQuantity,
         clearCart,

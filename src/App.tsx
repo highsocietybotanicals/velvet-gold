@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import CataloguePage from "./pages/CataloguePage";
 import ProductPage from "./pages/ProductPage";
 import AccessoryPage from "./pages/AccessoryPage";
+import SampleSelectionPage from "./pages/SampleSelectionPage";
 import NotFound from "./pages/NotFound";
 import CartDrawer from "./components/CartDrawer";
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/catalogue" element={<CataloguePage />} />
             <Route path="/produit/:id" element={<ProductPage />} />
             <Route path="/accessoire/:id" element={<AccessoryPage />} />
+            <Route path="/echantillon" element={<SampleSelectionPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
