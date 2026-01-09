@@ -1,18 +1,20 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Filter, Grid, List, Search, ShoppingCart } from "lucide-react";
+import { Filter, Grid, List, Search, ShoppingCart, Package } from "lucide-react";
 import { flowers, resins, ProductCategory } from "@/data/products";
+import { accessories } from "@/data/accessories";
 import { useCart } from "@/contexts/CartContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 type ViewMode = "grid" | "list";
 type SortOption = "name" | "price-asc" | "price-desc" | "cbd";
+type CategoryFilter = "all" | ProductCategory | "accessoire";
 
 const CataloguePage = () => {
-  const { addToCart } = useCart();
-  const [category, setCategory] = useState<"all" | ProductCategory>("all");
+  const { addToCart, addAccessory } = useCart();
+  const [category, setCategory] = useState<CategoryFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("name");
@@ -21,6 +23,9 @@ const CataloguePage = () => {
   const allProducts = useMemo(() => [...flowers, ...resins], []);
 
   const filteredProducts = useMemo(() => {
+    // If accessoires category is selected, return empty (accessories handled separately)
+    if (category === "accessoire") return [];
+
     let products = allProducts;
 
     // Filter by category
@@ -58,6 +63,37 @@ const CataloguePage = () => {
     return products;
   }, [allProducts, category, searchQuery, sortBy]);
 
+  const filteredAccessories = useMemo(() => {
+    if (category !== "all" && category !== "accessoire") return [];
+
+    let items = [...accessories];
+
+    // Filter by search
+    if (searchQuery) {
+      items = items.filter(
+        (a) =>
+          a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          a.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Sort
+    switch (sortBy) {
+      case "price-asc":
+        items = items.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        items = items.sort((a, b) => b.price - a.price);
+        break;
+      default:
+        items = items.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return items;
+  }, [category, searchQuery, sortBy]);
+
+  const totalResults = filteredProducts.length + filteredAccessories.length;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -74,8 +110,8 @@ const CataloguePage = () => {
               Le Coffre
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Découvrez notre collection complète de fleurs et résines CBD
-              d'exception, sélectionnées avec soin pour les connaisseurs.
+              Découvrez notre collection complète de fleurs, résines CBD et accessoires
+              d'exception, sélectionnés avec soin pour les connaisseurs.
             </p>
           </motion.div>
 
@@ -99,10 +135,11 @@ const CataloguePage = () => {
                 { key: "all", label: "Tous" },
                 { key: "fleur", label: "Fleurs" },
                 { key: "resine", label: "Résines" },
+                { key: "accessoire", label: "Accessoires" },
               ].map((cat) => (
                 <button
                   key={cat.key}
-                  onClick={() => setCategory(cat.key as typeof category)}
+                  onClick={() => setCategory(cat.key as CategoryFilter)}
                   className={`px-4 py-2 rounded-full text-sm transition-all ${
                     category === cat.key
                       ? "bg-primary text-primary-foreground"
@@ -172,7 +209,9 @@ const CataloguePage = () => {
                         <option value="name">Nom</option>
                         <option value="price-asc">Prix croissant</option>
                         <option value="price-desc">Prix décroissant</option>
-                        <option value="cbd">Taux CBD</option>
+                        {category !== "accessoire" && (
+                          <option value="cbd">Taux CBD</option>
+                        )}
                       </select>
                     </div>
                   </div>
@@ -183,7 +222,7 @@ const CataloguePage = () => {
 
           {/* Results count */}
           <p className="text-muted-foreground mb-6">
-            {filteredProducts.length} produit{filteredProducts.length > 1 ? "s" : ""} trouvé{filteredProducts.length > 1 ? "s" : ""}
+            {totalResults} produit{totalResults > 1 ? "s" : ""} trouvé{totalResults > 1 ? "s" : ""}
           </p>
 
           {/* Product Grid */}
@@ -196,6 +235,7 @@ const CataloguePage = () => {
             }
           >
             <AnimatePresence mode="popLayout">
+              {/* Flowers & Resins */}
               {filteredProducts.map((product, index) => (
                 <motion.div
                   key={product.id}
@@ -265,10 +305,82 @@ const CataloguePage = () => {
                   </button>
                 </motion.div>
               ))}
+
+              {/* Accessories */}
+              {filteredAccessories.map((accessory, index) => (
+                <motion.div
+                  key={accessory.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: (filteredProducts.length + index) * 0.03 }}
+                  className={
+                    viewMode === "grid"
+                      ? "product-card group bg-card border border-border rounded-xl overflow-hidden"
+                      : "product-card group bg-card border border-border rounded-xl overflow-hidden flex"
+                  }
+                >
+                  <Link
+                    to={`/accessoire/${accessory.id}`}
+                    className={viewMode === "list" ? "flex flex-1" : "block"}
+                  >
+                    <div
+                      className={
+                        viewMode === "grid"
+                          ? "relative aspect-square overflow-hidden"
+                          : "relative w-32 h-32 flex-shrink-0 overflow-hidden"
+                      }
+                    >
+                      <img
+                        src={accessory.image}
+                        alt={accessory.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className={viewMode === "grid" ? "p-4" : "flex-1 p-4 flex items-center justify-between"}>
+                      <div>
+                        <span className="text-xs text-primary tracking-wider uppercase flex items-center gap-1">
+                          <Package className="w-3 h-3" />
+                          Accessoire
+                        </span>
+                        <h3 className="font-display text-lg text-foreground mt-1">
+                          {accessory.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                          {accessory.description}
+                        </p>
+                      </div>
+                      <div className={viewMode === "list" ? "text-right" : "flex justify-between items-center mt-4"}>
+                        <span className="text-sm text-primary font-medium">
+                          -33% dès 10
+                        </span>
+                        <span className="text-lg font-display text-primary">
+                          {accessory.price.toFixed(2)}€
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      addAccessory(accessory, 1);
+                    }}
+                    className={`${
+                      viewMode === "grid"
+                        ? "absolute bottom-4 right-4 opacity-0 group-hover:opacity-100"
+                        : "m-4 flex-shrink-0"
+                    } p-3 bg-primary text-primary-foreground rounded-full transition-all hover:glow-gold`}
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                  </button>
+                </motion.div>
+              ))}
             </AnimatePresence>
           </motion.div>
 
-          {filteredProducts.length === 0 && (
+          {totalResults === 0 && (
             <div className="text-center py-20">
               <p className="text-muted-foreground text-lg">
                 Aucun produit trouvé
