@@ -149,3 +149,8 @@ export const getDiscountLabel = (weight: number): string => {
   const tier = getDiscountTier(weight);
   return tier.label;
 };
+
+// Calculate sample allowance based on total flower weight (1 sample per 12g)
+export const calculateSampleAllowance = (totalFlowerWeight: number): number => {
+  return Math.floor(totalFlowerWeight / 12);
+};
