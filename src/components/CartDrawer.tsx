@@ -1,15 +1,21 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package, Leaf, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProPrices } from "@/hooks/useProPrices";
 import { Input } from "@/components/ui/input";
-import { calculateItemPrice, getDiscountLabel, getGifts, calculateAccessoryPrice } from "@/lib/pricing";
+import { calculateItemPrice, getDiscountLabel, getGifts, calculateAccessoryPrice, calculateProItemPrice } from "@/lib/pricing";
+import DeliverySection from "./DeliverySection";
 
 // Import corrected accessory images from accessories data
 import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
 
 const CartDrawer = () => {
   const navigate = useNavigate();
+  const { isPro, isProValidated } = useAuth();
+  const { getProPrice, isProActive } = useProPrices();
   const {
     items,
     accessoryItems,
@@ -22,10 +28,17 @@ const CartDrawer = () => {
     clearCart,
     totalItems,
     totalFlowerWeight,
-    totalPrice,
     isCartOpen,
     setIsCartOpen,
   } = useCart();
+
+  // Delivery state
+  const [deliveryType, setDeliveryType] = useState<"postal" | "personal">("postal");
+  const [isWithin100km, setIsWithin100km] = useState(false);
+  const [address, setAddress] = useState("");
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
+  const [scheduledTime, setScheduledTime] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
 
   const totalGifts = getGifts(totalFlowerWeight);
   
@@ -33,6 +46,25 @@ const CartDrawer = () => {
   const sampleAllowance = Math.floor(totalFlowerWeight / 12);
   const samplesChosen = sampleItems.length;
   const samplesRemaining = sampleAllowance - samplesChosen;
+
+  // Calculate total price based on Pro status
+  const totalPrice = 
+    items.reduce((sum, item) => {
+      const proPrice = getProPrice(item.product.id);
+      if (isProActive && proPrice !== null) {
+        // Pro: fixed price, no discount
+        const { finalPrice } = calculateProItemPrice(proPrice, item.weight);
+        return sum + finalPrice;
+      } else {
+        // Regular: with weight-based discounts
+        const { finalPrice } = calculateItemPrice(item.product.price, item.weight);
+        return sum + finalPrice;
+      }
+    }, 0) +
+    accessoryItems.reduce((sum, item) => {
+      const { finalTotal } = calculateAccessoryPrice(item.accessory.price, item.quantity);
+      return sum + finalTotal;
+    }, 0);
 
   const handleGoToSampleSelection = () => {
     setIsCartOpen(false);
@@ -104,8 +136,14 @@ const CartDrawer = () => {
                       </div>
                       <div className="space-y-3">
                         {items.map((item) => {
-                          const priceInfo = calculateItemPrice(item.product.price, item.weight);
-                          const discountLabel = getDiscountLabel(item.weight);
+                          const proPrice = getProPrice(item.product.id);
+                          const useProPricing = isProActive && proPrice !== null;
+                          
+                          const priceInfo = useProPricing
+                            ? calculateProItemPrice(proPrice, item.weight)
+                            : calculateItemPrice(item.product.price, item.weight);
+                          const discountLabel = useProPricing ? null : getDiscountLabel(item.weight);
+                          const hasDiscount = !useProPricing && 'discount' in priceInfo && (priceInfo as { discount: number }).discount > 0;
                           
                           return (
                             <motion.div
@@ -129,7 +167,11 @@ const CartDrawer = () => {
                                   {item.product.name}
                                 </h4>
                                 <p className="text-xs text-muted-foreground">
-                                  {item.product.price}€/g
+                                  {useProPricing ? (
+                                    <span className="text-primary font-medium">{proPrice}€/g PRO</span>
+                                  ) : (
+                                    <>{item.product.price}€/g</>
+                                  )}
                                 </p>
                                 
                                 {/* Weight controls */}
@@ -176,15 +218,20 @@ const CartDrawer = () => {
                                 <p className="font-display text-sm text-primary font-bold">
                                   {priceInfo.finalPrice.toFixed(2)}€
                                 </p>
-                                {priceInfo.discount > 0 && (
+                                {hasDiscount && discountLabel && (
                                   <>
                                     <p className="text-xs text-muted-foreground line-through">
                                       {priceInfo.rawPrice.toFixed(2)}€
                                     </p>
-                                    <span className="text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">
+                                    <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">
                                       {discountLabel}
                                     </span>
                                   </>
+                                )}
+                                {useProPricing && (
+                                  <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">
+                                    PRO
+                                  </span>
                                 )}
                               </div>
                             </motion.div>
@@ -430,12 +477,33 @@ const CartDrawer = () => {
 
             {/* Footer */}
             {(items.length > 0 || accessoryItems.length > 0) && (
-              <div className="p-6 border-t border-border space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Total</span>
-                  <span className="font-display text-2xl text-primary">
-                    {totalPrice.toFixed(2)}€
-                  </span>
+              <div className="p-6 border-t border-border space-y-4 max-h-[50vh] overflow-y-auto">
+                {/* Delivery Section */}
+                <DeliverySection
+                  deliveryType={deliveryType}
+                  setDeliveryType={setDeliveryType}
+                  isWithin100km={isWithin100km}
+                  setIsWithin100km={setIsWithin100km}
+                  address={address}
+                  setAddress={setAddress}
+                  scheduledDate={scheduledDate}
+                  setScheduledDate={setScheduledDate}
+                  scheduledTime={scheduledTime}
+                  setScheduledTime={setScheduledTime}
+                  contactPhone={contactPhone}
+                  setContactPhone={setContactPhone}
+                />
+
+                <div className="pt-4 border-t border-border">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Total</span>
+                    <span className="font-display text-2xl text-primary">
+                      {totalPrice.toFixed(2)}€
+                    </span>
+                  </div>
+                  {isProActive && (
+                    <p className="text-xs text-primary mt-1">Prix professionnel appliqué</p>
+                  )}
                 </div>
                 <button className="w-full btn-luxury py-4">
                   Procéder au paiement

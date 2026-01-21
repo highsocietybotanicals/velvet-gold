@@ -1,8 +1,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingCart } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Menu, X, ShoppingCart, User, LogOut, ChevronDown } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import logo from "@/assets/logo.jpeg";
 
 const navLinks = [
@@ -16,7 +24,14 @@ const navLinks = [
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
+  const { user, isPro, isProValidated, signOut, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   const handleNavClick = (href: string) => {
     setIsMenuOpen(false);
@@ -110,8 +125,50 @@ const Header = () => {
             {navLinks.map((link, i) => renderLink(link, i))}
           </nav>
 
-          {/* Cart & CTA */}
-          <div className="flex items-center gap-4">
+          {/* Cart & User & CTA */}
+          <div className="flex items-center gap-3">
+            {/* User menu */}
+            {!loading && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                {user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-2 p-2 hover:bg-muted rounded-full transition-colors">
+                        <User className="w-5 h-5 text-foreground" />
+                        {isPro && isProValidated && (
+                          <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-bold">
+                            PRO
+                          </span>
+                        )}
+                        <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => navigate("/profil")}>
+                        <User className="w-4 h-4 mr-2" />
+                        Mon Profil
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Déconnexion
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Link
+                    to="/auth"
+                    className="p-2 hover:bg-muted rounded-full transition-colors"
+                  >
+                    <User className="w-5 h-5 text-foreground" />
+                  </Link>
+                )}
+              </motion.div>
+            )}
+
             {/* Cart button */}
             <motion.button
               initial={{ opacity: 0, x: 20 }}

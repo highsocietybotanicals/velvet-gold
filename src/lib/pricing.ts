@@ -154,3 +154,15 @@ export const getDiscountLabel = (weight: number): string => {
 export const calculateSampleAllowance = (totalFlowerWeight: number): number => {
   return Math.floor(totalFlowerWeight / 12);
 };
+
+// Pro pricing - simple fixed price calculation (NO weight-based discounts)
+export const calculateProItemPrice = (proUnitPrice: number, weight: number) => {
+  if (!weight || weight <= 0 || isNaN(weight)) {
+    return { rawPrice: 0, finalPrice: 0 };
+  }
+  const total = proUnitPrice * weight;
+  return {
+    rawPrice: total,
+    finalPrice: total,
+  };
+};
