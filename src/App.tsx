@@ -12,6 +12,7 @@ import AccessoryPage from "./pages/AccessoryPage";
 import SampleSelectionPage from "./pages/SampleSelectionPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 import CartDrawer from "./components/CartDrawer";
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/echantillon" element={<SampleSelectionPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/profil" element={<ProfilePage />} />
+              <Route path="/admin" element={<AdminPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingCart, User, LogOut, ChevronDown } from "lucide-react";
+import { Menu, X, ShoppingCart, User, LogOut, ChevronDown, Shield } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +24,7 @@ const navLinks = [
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
-  const { user, isPro, isProValidated, signOut, loading } = useAuth();
+  const { user, isPro, isProValidated, isAdmin, signOut, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -151,6 +151,15 @@ const Header = () => {
                         <User className="w-4 h-4 mr-2" />
                         Mon Profil
                       </DropdownMenuItem>
+                      {isAdmin && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => navigate("/admin")}>
+                            <Shield className="w-4 h-4 mr-2" />
+                            Administration
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                         <LogOut className="w-4 h-4 mr-2" />
