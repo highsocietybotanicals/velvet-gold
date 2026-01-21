@@ -30,6 +30,7 @@ const ProfilePage = () => {
   // Pro form
   const [companyName, setCompanyName] = useState("");
   const [siret, setSiret] = useState("");
+  const [vatNumber, setVatNumber] = useState("");
   const [proSubmitting, setProSubmitting] = useState(false);
   const [proError, setProError] = useState<string | null>(null);
 
@@ -43,6 +44,7 @@ const ProfilePage = () => {
       setPostalCode(profile.postal_code || "");
       setCompanyName(profile.company_name || "");
       setSiret(profile.siret || "");
+      setVatNumber(profile.vat_number || "");
     }
   }, [profile]);
 
@@ -254,27 +256,70 @@ const ProfilePage = () => {
               </div>
 
               {isPro && isProValidated ? (
-                <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                  <CheckCircle className="w-6 h-6 text-green-500" />
-                  <div>
-                    <p className="font-medium text-foreground">Compte Pro validé</p>
-                    <p className="text-sm text-muted-foreground">
-                      {profile?.company_name} - SIRET: {profile?.siret}
-                    </p>
-                    <p className="text-sm text-green-400 mt-1">
-                      Vous bénéficiez de tarifs professionnels exclusifs
-                    </p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/30 rounded-lg">
+                    <CheckCircle className="w-6 h-6 text-primary" />
+                    <div>
+                      <p className="font-medium text-foreground">Compte Pro validé</p>
+                      <p className="text-sm text-muted-foreground">
+                        {profile?.company_name} - SIRET: {profile?.siret}
+                      </p>
+                      {profile?.vat_number && (
+                        <p className="text-sm text-muted-foreground">
+                          TVA: {profile.vat_number}
+                        </p>
+                      )}
+                      <p className="text-sm text-primary mt-1">
+                        {profile?.vat_number 
+                          ? "Vous bénéficiez de prix HT exclusifs"
+                          : "Ajoutez votre numéro de TVA pour des prix HT"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* TVA form for Pro users */}
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">
+                      N° TVA intracommunautaire
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={vatNumber}
+                        onChange={(e) => setVatNumber(e.target.value)}
+                        placeholder="FR12345678901"
+                        maxLength={14}
+                      />
+                      <Button
+                        onClick={async () => {
+                          const vatClean = vatNumber.replace(/\s/g, "").toUpperCase();
+                          if (vatClean && !/^[A-Z]{2}[A-Z0-9]{2,12}$/.test(vatClean)) {
+                            setProError("Format de TVA invalide");
+                            return;
+                          }
+                          await updateProfile({ vat_number: vatClean || null });
+                          setProError(null);
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Enregistrer
+                      </Button>
+                    </div>
+                    {proError && (
+                      <p className="text-destructive text-sm">{proError}</p>
+                    )}
                   </div>
                 </div>
               ) : profile?.siret ? (
-                <div className="flex items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                  <Clock className="w-6 h-6 text-amber-500" />
+                <div className="flex items-center gap-3 p-4 bg-muted/50 border border-border rounded-lg">
+                  <Clock className="w-6 h-6 text-muted-foreground" />
                   <div>
                     <p className="font-medium text-foreground">Demande en cours</p>
                     <p className="text-sm text-muted-foreground">
                       {profile?.company_name} - SIRET: {profile?.siret}
                     </p>
-                    <p className="text-sm text-amber-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Validation sous 48h ouvrées
                     </p>
                   </div>
@@ -302,6 +347,21 @@ const ProfilePage = () => {
                       placeholder="123 456 789 00012"
                       maxLength={17}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">
+                      N° TVA intracommunautaire <span className="text-xs">(optionnel)</span>
+                    </label>
+                    <Input
+                      value={vatNumber}
+                      onChange={(e) => setVatNumber(e.target.value)}
+                      placeholder="FR12345678901"
+                      maxLength={14}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Renseignez votre TVA pour bénéficier de prix HT
+                    </p>
                   </div>
 
                   {proError && (
