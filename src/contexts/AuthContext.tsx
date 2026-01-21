@@ -30,6 +30,7 @@ interface AuthContextType {
   profile: Profile | null;
   isPro: boolean;
   isProValidated: boolean;
+  isAdmin: boolean;
   loading: boolean;
   signUp: (
     email: string, 
@@ -52,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [isProValidated, setIsProValidated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -89,9 +91,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.rpc("has_role", { 
+        _user_id: userId, 
+        _role: "admin" 
+      });
+      if (error) throw error;
+      setIsAdmin(data || false);
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setIsAdmin(false);
+    }
+  };
+
   const refreshProfile = async () => {
     if (user?.id) {
-      await Promise.all([fetchProfile(user.id), checkProStatus(user.id)]);
+      await Promise.all([
+        fetchProfile(user.id), 
+        checkProStatus(user.id),
+        checkAdminStatus(user.id)
+      ]);
     }
   };
 
@@ -107,11 +127,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setTimeout(() => {
             fetchProfile(session.user.id);
             checkProStatus(session.user.id);
+            checkAdminStatus(session.user.id);
           }, 0);
         } else {
           setProfile(null);
           setIsPro(false);
           setIsProValidated(false);
+          setIsAdmin(false);
         }
         setLoading(false);
       }
@@ -124,6 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         fetchProfile(session.user.id);
         checkProStatus(session.user.id);
+        checkAdminStatus(session.user.id);
       }
       setLoading(false);
     });
@@ -202,6 +225,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null);
     setIsPro(false);
     setIsProValidated(false);
+    setIsAdmin(false);
     toast({
       title: "Déconnexion",
       description: "À bientôt !",
@@ -266,6 +290,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         profile,
         isPro,
         isProValidated,
+        isAdmin,
         loading,
         signUp,
         signIn,

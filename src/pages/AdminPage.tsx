@@ -1,0 +1,335 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAdmin, ProRequest, AdminOrder } from "@/hooks/useAdmin";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { 
+  Shield, 
+  CheckCircle, 
+  XCircle, 
+  Package, 
+  Users, 
+  Loader2,
+  Building,
+  Clock
+} from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+
+const ORDER_STATUSES = [
+  { value: "pending", label: "En attente", color: "bg-muted text-muted-foreground" },
+  { value: "preparing", label: "En préparation", color: "bg-amber-500/20 text-amber-500" },
+  { value: "shipped", label: "Expédiée", color: "bg-blue-500/20 text-blue-500" },
+  { value: "in_delivery", label: "En livraison", color: "bg-purple-500/20 text-purple-500" },
+  { value: "delivered", label: "Livrée", color: "bg-green-500/20 text-green-500" },
+  { value: "cancelled", label: "Annulée", color: "bg-destructive/20 text-destructive" },
+];
+
+const ProRequestCard = ({ 
+  request, 
+  onValidate, 
+  onReject,
+  isValidating,
+  isRejecting
+}: { 
+  request: ProRequest; 
+  onValidate: () => void; 
+  onReject: () => void;
+  isValidating: boolean;
+  isRejecting: boolean;
+}) => (
+  <Card className="border-gold/20 bg-card/50 backdrop-blur">
+    <CardContent className="p-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Building className="h-4 w-4 text-gold" />
+            <span className="font-semibold text-foreground">{request.company_name}</span>
+          </div>
+          <p className="text-sm text-muted-foreground">{request.email}</p>
+          <div className="flex items-center gap-4 text-sm">
+            <span className="text-muted-foreground">
+              SIRET: <span className="font-mono text-foreground">{request.siret}</span>
+            </span>
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {format(new Date(request.created_at), "dd MMM yyyy", { locale: fr })}
+            </span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onReject}
+            disabled={isRejecting || isValidating}
+            className="border-destructive/50 text-destructive hover:bg-destructive/10"
+          >
+            {isRejecting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <XCircle className="h-4 w-4 mr-1" />
+                Refuser
+              </>
+            )}
+          </Button>
+          <Button
+            size="sm"
+            onClick={onValidate}
+            disabled={isValidating || isRejecting}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            {isValidating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Valider Pro
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const OrderRow = ({ 
+  order, 
+  onStatusChange,
+  isUpdating
+}: { 
+  order: AdminOrder; 
+  onStatusChange: (status: string) => void;
+  isUpdating: boolean;
+}) => {
+  const status = ORDER_STATUSES.find(s => s.value === order.status) || ORDER_STATUSES[0];
+  
+  return (
+    <TableRow>
+      <TableCell className="font-mono font-semibold">
+        #{order.order_number.toString().padStart(4, '0')}
+      </TableCell>
+      <TableCell>
+        <div>
+          <p className="text-sm">{order.user_email}</p>
+          <p className="text-xs text-muted-foreground">
+            {format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}
+          </p>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="text-sm">
+          {order.order_items?.map((item, idx) => (
+            <div key={idx} className="text-muted-foreground">
+              {item.product_name} {item.weight ? `(${item.weight}g)` : `x${item.quantity}`}
+            </div>
+          ))}
+        </div>
+      </TableCell>
+      <TableCell className="font-semibold text-gold">
+        {order.total_amount.toFixed(2)}€
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline" className="capitalize">
+          {order.delivery_type === "personal" ? "Livraison perso" : "Point relais"}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        <Select
+          value={order.status}
+          onValueChange={onStatusChange}
+          disabled={isUpdating}
+        >
+          <SelectTrigger className={`w-[160px] ${status.color}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ORDER_STATUSES.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+    </TableRow>
+  );
+};
+
+const AdminPage = () => {
+  const navigate = useNavigate();
+  const { user, isAdmin, loading } = useAuth();
+  const { 
+    proRequests, 
+    allOrders, 
+    loadingProRequests, 
+    loadingOrders,
+    validatePro,
+    rejectPro,
+    updateOrderStatus,
+    isValidating,
+    isRejecting,
+    isUpdatingOrder
+  } = useAdmin();
+
+  useEffect(() => {
+    if (!loading && (!user || !isAdmin)) {
+      navigate("/");
+    }
+  }, [user, isAdmin, loading, navigate]);
+
+  if (loading || loadingProRequests || loadingOrders) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gold" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="pt-24 pb-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <Shield className="h-8 w-8 text-gold" />
+              <h1 className="text-3xl font-bold gold-text">Administration</h1>
+            </div>
+            <p className="text-muted-foreground">
+              Gérez les demandes Pro et les commandes
+            </p>
+          </motion.div>
+
+          {/* Section Demandes Pro */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-12"
+          >
+            <Card className="border-gold/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-gold" />
+                  Demandes Pro en attente
+                  {proRequests.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {proRequests.length}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {proRequests.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    Aucune demande Pro en attente
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {proRequests.map((request) => (
+                      <ProRequestCard
+                        key={request.id}
+                        request={request}
+                        onValidate={() => validatePro(request.id)}
+                        onReject={() => rejectPro(request.id)}
+                        isValidating={isValidating}
+                        isRejecting={isRejecting}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.section>
+
+          {/* Section Commandes */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="border-gold/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-gold" />
+                  Toutes les commandes
+                  <Badge variant="secondary" className="ml-2">
+                    {allOrders.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {allOrders.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    Aucune commande pour le moment
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>N°</TableHead>
+                          <TableHead>Client</TableHead>
+                          <TableHead>Articles</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Livraison</TableHead>
+                          <TableHead>Statut</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allOrders.map((order) => (
+                          <OrderRow
+                            key={order.id}
+                            order={order}
+                            onStatusChange={(status) => updateOrderStatus(order.id, status)}
+                            isUpdating={isUpdatingOrder}
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.section>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default AdminPage;
