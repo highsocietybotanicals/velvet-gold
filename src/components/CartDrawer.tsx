@@ -509,9 +509,16 @@ const CartDrawer = () => {
                     <p className="text-xs text-primary mt-1">Prix professionnel appliqué</p>
                   )}
                 </div>
-                <button className="w-full btn-luxury py-4">
-                  Procéder au paiement
+                <button 
+                  className="w-full btn-luxury py-4 opacity-75 cursor-not-allowed"
+                  disabled
+                  title="Paiement en ligne bientôt disponible"
+                >
+                  Paiement bientôt disponible
                 </button>
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  Contactez-nous pour passer commande
+                </p>
                 <button
                   onClick={clearCart}
                   className="w-full text-sm text-muted-foreground hover:text-destructive transition-colors"
