@@ -130,12 +130,12 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   const basePrice = dbPrice?.price ?? product.price;
   const proPrice = dbPrice?.pro_price;
 
-  // Check if user qualifies for Pro HT pricing
-  const isProWithVat = isPro && isProValidated && !!profile?.vat_number;
+  // Check if user qualifies for Pro HT pricing (requires VAT validated by admin)
+  const isProWithValidatedVat = isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated;
 
   const priceInfo = useMemo(() => {
-    if (isProWithVat && proPrice) {
-      // Pro with VAT: flat HT price per gram, no tiered discounts
+    if (isProWithValidatedVat && proPrice) {
+      // Pro with validated VAT: flat HT price per gram, no tiered discounts
       const total = proPrice * selectedWeight;
       return {
         finalPrice: total.toFixed(2),
@@ -151,13 +151,13 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       ...calculatePrice(basePrice, selectedWeight),
       isHT: false,
     };
-  }, [basePrice, proPrice, selectedWeight, isProWithVat]);
+  }, [basePrice, proPrice, selectedWeight, isProWithValidatedVat]);
 
   const gifts = useMemo(() => {
-    // No gifts for Pro users
-    if (isProWithVat) return null;
+    // No gifts for Pro users with validated VAT
+    if (isProWithValidatedVat) return null;
     return getGifts(selectedWeight);
-  }, [selectedWeight, isProWithVat]);
+  }, [selectedWeight, isProWithValidatedVat]);
 
 
   const handlePresetClick = (weight: number) => {
@@ -242,10 +242,10 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             
             <div className="text-right">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                Prix/g {isProWithVat && proPrice ? "HT" : ""}
+                Prix/g {isProWithValidatedVat && proPrice ? "HT" : ""}
               </p>
               <p className="font-display text-lg text-primary">
-                {isProWithVat && proPrice ? proPrice : basePrice}€
+                {isProWithValidatedVat && proPrice ? proPrice : basePrice}€
               </p>
             </div>
           </div>

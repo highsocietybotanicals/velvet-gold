@@ -8,8 +8,9 @@ interface ProPrice {
 }
 
 export const useProPrices = () => {
-  const { isPro, isProValidated } = useAuth();
-  const shouldFetch = isPro && isProValidated;
+  const { isPro, isProValidated, profile } = useAuth();
+  // Only activate Pro pricing if VAT number is validated by admin
+  const shouldFetch = isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated;
 
   const { data: proPrices, isLoading } = useQuery({
     queryKey: ["pro-prices"],

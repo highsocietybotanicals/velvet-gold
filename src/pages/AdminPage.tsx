@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAdmin, ProRequest, AdminOrder } from "@/hooks/useAdmin";
+import { useAdmin, ProRequest, AdminOrder, VatRequest } from "@/hooks/useAdmin";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PriceManagement from "@/components/admin/PriceManagement";
@@ -33,7 +33,8 @@ import {
   Loader2,
   Building,
   Clock,
-  FileText
+  FileText,
+  Receipt
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -123,6 +124,73 @@ const ProRequestCard = ({
   </Card>
 );
 
+const VatRequestCard = ({ 
+  request, 
+  onValidate, 
+  onReject,
+  isValidating,
+  isRejecting
+}: { 
+  request: VatRequest; 
+  onValidate: () => void; 
+  onReject: () => void;
+  isValidating: boolean;
+  isRejecting: boolean;
+}) => (
+  <Card className="border-primary/20 bg-card/50 backdrop-blur">
+    <CardContent className="p-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Building className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-foreground">{request.company_name}</span>
+          </div>
+          <p className="text-sm text-muted-foreground">{request.email}</p>
+          <div className="flex items-center gap-2 text-sm">
+            <Receipt className="h-4 w-4 text-primary" />
+            <span className="text-muted-foreground">
+              TVA: <span className="font-mono text-primary font-semibold">{request.vat_number}</span>
+            </span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onReject}
+            disabled={isRejecting || isValidating}
+            className="border-destructive/50 text-destructive hover:bg-destructive/10"
+          >
+            {isRejecting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <XCircle className="h-4 w-4 mr-1" />
+                Refuser
+              </>
+            )}
+          </Button>
+          <Button
+            size="sm"
+            onClick={onValidate}
+            disabled={isValidating || isRejecting}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            {isValidating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Valider TVA
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 const OrderRow = ({ 
   order, 
   onStatusChange,
@@ -191,14 +259,20 @@ const AdminPage = () => {
   const { user, isAdmin, loading } = useAuth();
   const { 
     proRequests, 
+    vatRequests,
     allOrders, 
-    loadingProRequests, 
+    loadingProRequests,
+    loadingVatRequests, 
     loadingOrders,
     validatePro,
     rejectPro,
+    validateVat,
+    rejectVat,
     updateOrderStatus,
     isValidating,
     isRejecting,
+    isValidatingVat,
+    isRejectingVat,
     isUpdatingOrder
   } = useAdmin();
 
@@ -208,7 +282,7 @@ const AdminPage = () => {
     }
   }, [user, isAdmin, loading, navigate]);
 
-  if (loading || loadingProRequests || loadingOrders) {
+  if (loading || loadingProRequests || loadingVatRequests || loadingOrders) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gold" />
@@ -285,7 +359,47 @@ const AdminPage = () => {
             </Card>
           </motion.section>
 
-          {/* Section Commandes */}
+          {/* Section Validation TVA */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mb-12"
+          >
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5 text-primary" />
+                  TVA à valider
+                  {vatRequests.length > 0 && (
+                    <Badge variant="secondary" className="ml-2 bg-primary/20 text-primary">
+                      {vatRequests.length}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {vatRequests.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    Aucune demande TVA en attente
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {vatRequests.map((request) => (
+                      <VatRequestCard
+                        key={request.id}
+                        request={request}
+                        onValidate={() => validateVat(request.id)}
+                        onReject={() => rejectVat(request.id)}
+                        isValidating={isValidatingVat}
+                        isRejecting={isRejectingVat}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.section>
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

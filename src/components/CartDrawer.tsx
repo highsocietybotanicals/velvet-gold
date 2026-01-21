@@ -14,8 +14,11 @@ import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
 
 const CartDrawer = () => {
   const navigate = useNavigate();
-  const { isPro, isProValidated } = useAuth();
+  const { isPro, isProValidated, profile } = useAuth();
   const { getProPrice, isProActive } = useProPrices();
+  
+  // Check if user is Pro with validated VAT (no gifts for them)
+  const isProWithValidatedVat = isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated;
   const {
     items,
     accessoryItems,
@@ -40,10 +43,11 @@ const CartDrawer = () => {
   const [scheduledTime, setScheduledTime] = useState("");
   const [contactPhone, setContactPhone] = useState("");
 
-  const totalGifts = getGifts(totalFlowerWeight);
+  // No gifts for Pro users with validated VAT
+  const totalGifts = isProWithValidatedVat ? null : getGifts(totalFlowerWeight);
   
-  // Calculate sample allowance
-  const sampleAllowance = Math.floor(totalFlowerWeight / 12);
+  // Calculate sample allowance - no samples for Pro users with validated VAT
+  const sampleAllowance = isProWithValidatedVat ? 0 : Math.floor(totalFlowerWeight / 12);
   const samplesChosen = sampleItems.length;
   const samplesRemaining = sampleAllowance - samplesChosen;
 
