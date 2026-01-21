@@ -105,7 +105,7 @@ const DeliverySection = ({
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Je me déplace chez vous (moins de 100km)
+                Je me déplace chez vous (rayon de 100km autour de Puceul - 44170)
               </p>
               {!canAccessPersonalDelivery && (
                 <div className="flex items-center gap-1 mt-2 text-xs text-amber-500">
@@ -158,10 +158,10 @@ const DeliverySection = ({
             />
             <div>
               <p className="text-sm font-medium text-foreground">
-                Je confirme être situé à moins de 100km
+                Je confirme être situé à moins de 100km de Puceul (44170)
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Cette option est basée sur votre déclaration. Nous vous contacterons pour confirmer.
+                Distance calculée depuis Puceul (44170). Nous vous contacterons pour confirmer le rendez-vous.
               </p>
             </div>
           </label>
