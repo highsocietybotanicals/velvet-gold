@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2, User, Building2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+type AccountType = "classic" | "pro";
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -17,6 +19,11 @@ const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Registration specific
+  const [accountType, setAccountType] = useState<AccountType>("classic");
+  const [companyName, setCompanyName] = useState("");
+  const [siret, setSiret] = useState("");
 
   // Redirect if already logged in
   if (user) {
@@ -40,17 +47,50 @@ const AuthPage = () => {
       return;
     }
 
-    const result = type === "login" 
-      ? await signIn(email, password)
-      : await signUp(email, password);
+    if (type === "register" && accountType === "pro") {
+      if (!companyName.trim()) {
+        setError("Veuillez entrer le nom de votre entreprise");
+        setLoading(false);
+        return;
+      }
+      const siretClean = siret.replace(/\s/g, "");
+      if (!/^\d{14}$/.test(siretClean)) {
+        setError("Le SIRET doit contenir exactement 14 chiffres");
+        setLoading(false);
+        return;
+      }
+    }
 
-    if (result.error) {
-      setError(result.error.message);
+    if (type === "login") {
+      const result = await signIn(email, password);
+      if (result.error) {
+        setError(result.error.message);
+      } else {
+        navigate("/profil");
+      }
     } else {
-      navigate("/profil");
+      const proInfo = accountType === "pro" 
+        ? { companyName, siret: siret.replace(/\s/g, "") }
+        : undefined;
+      
+      const result = await signUp(email, password, accountType, proInfo);
+      if (result.error) {
+        setError(result.error.message);
+      } else {
+        navigate("/profil");
+      }
     }
 
     setLoading(false);
+  };
+
+  const resetForm = () => {
+    setEmail("");
+    setPassword("");
+    setError(null);
+    setAccountType("classic");
+    setCompanyName("");
+    setSiret("");
   };
 
   return (
@@ -74,7 +114,7 @@ const AuthPage = () => {
             </div>
 
             <div className="bg-card border border-border rounded-xl p-6">
-              <Tabs defaultValue="login" className="w-full">
+              <Tabs defaultValue="login" className="w-full" onValueChange={() => resetForm()}>
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="login">Connexion</TabsTrigger>
                   <TabsTrigger value="register">Inscription</TabsTrigger>
@@ -117,7 +157,10 @@ const AuthPage = () => {
                   </div>
 
                   {error && (
-                    <p className="text-sm text-destructive">{error}</p>
+                    <div className="flex items-center gap-2 text-destructive text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {error}
+                    </div>
                   )}
 
                   <Button
@@ -134,6 +177,55 @@ const AuthPage = () => {
                 </TabsContent>
 
                 <TabsContent value="register" className="space-y-4">
+                  {/* Account Type Selector */}
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">Type de compte</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setAccountType("classic")}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          accountType === "classic"
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-muted-foreground"
+                        }`}
+                      >
+                        <User className={`w-6 h-6 mx-auto mb-2 ${
+                          accountType === "classic" ? "text-primary" : "text-muted-foreground"
+                        }`} />
+                        <p className={`text-sm font-medium ${
+                          accountType === "classic" ? "text-primary" : "text-foreground"
+                        }`}>
+                          Classique
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Particulier
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAccountType("pro")}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          accountType === "pro"
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-muted-foreground"
+                        }`}
+                      >
+                        <Building2 className={`w-6 h-6 mx-auto mb-2 ${
+                          accountType === "pro" ? "text-primary" : "text-muted-foreground"
+                        }`} />
+                        <p className={`text-sm font-medium ${
+                          accountType === "pro" ? "text-primary" : "text-foreground"
+                        }`}>
+                          Professionnel
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Tarifs exclusifs
+                        </p>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <label className="text-sm text-muted-foreground">Email</label>
                     <div className="relative">
@@ -172,8 +264,48 @@ const AuthPage = () => {
                     </p>
                   </div>
 
+                  {/* Pro fields */}
+                  {accountType === "pro" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-4 pt-2 border-t border-border"
+                    >
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Nom de l'entreprise</label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            placeholder="Ma Société SARL"
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">SIRET (14 chiffres)</label>
+                        <Input
+                          value={siret}
+                          onChange={(e) => setSiret(e.target.value)}
+                          placeholder="123 456 789 00012"
+                          maxLength={17}
+                        />
+                      </div>
+
+                      <p className="text-xs text-amber-500 bg-amber-500/10 p-3 rounded-lg">
+                        Votre demande Pro sera examinée sous 48h. En attendant, vous pourrez utiliser votre compte normalement.
+                      </p>
+                    </motion.div>
+                  )}
+
                   {error && (
-                    <p className="text-sm text-destructive">{error}</p>
+                    <div className="flex items-center gap-2 text-destructive text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {error}
+                    </div>
                   )}
 
                   <Button
@@ -183,6 +315,8 @@ const AuthPage = () => {
                   >
                     {loading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : accountType === "pro" ? (
+                      "Créer mon compte Pro"
                     ) : (
                       "Créer mon compte"
                     )}

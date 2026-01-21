@@ -14,6 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_id: string
+          product_id: string
+          product_name: string
+          product_type: string
+          quantity: number | null
+          total_price: number
+          unit_price: number
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_id: string
+          product_id: string
+          product_name: string
+          product_type: string
+          quantity?: number | null
+          total_price: number
+          unit_price: number
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          product_id?: string
+          product_name?: string
+          product_type?: string
+          quantity?: number | null
+          total_price?: number
+          unit_price?: number
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          contact_phone: string | null
+          created_at: string | null
+          delivery_address: string | null
+          delivery_date: string | null
+          delivery_time: string | null
+          delivery_type: string
+          id: string
+          order_number: number
+          status: string
+          total_amount: number
+          total_flower_weight: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_phone?: string | null
+          created_at?: string | null
+          delivery_address?: string | null
+          delivery_date?: string | null
+          delivery_time?: string | null
+          delivery_type: string
+          id?: string
+          order_number?: number
+          status?: string
+          total_amount: number
+          total_flower_weight?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_phone?: string | null
+          created_at?: string | null
+          delivery_address?: string | null
+          delivery_date?: string | null
+          delivery_time?: string | null
+          delivery_type?: string
+          id?: string
+          order_number?: number
+          status?: string
+          total_amount?: number
+          total_flower_weight?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       pro_prices: {
         Row: {
           created_at: string | null
@@ -46,11 +141,13 @@ export type Database = {
           company_name: string | null
           created_at: string | null
           email: string
+          free_grams_available: number | null
           full_name: string | null
           id: string
           is_pro_validated: boolean | null
           phone: string | null
           postal_code: string | null
+          qualifying_orders_count: number | null
           siret: string | null
           updated_at: string | null
         }
@@ -61,11 +158,13 @@ export type Database = {
           company_name?: string | null
           created_at?: string | null
           email: string
+          free_grams_available?: number | null
           full_name?: string | null
           id: string
           is_pro_validated?: boolean | null
           phone?: string | null
           postal_code?: string | null
+          qualifying_orders_count?: number | null
           siret?: string | null
           updated_at?: string | null
         }
@@ -76,11 +175,13 @@ export type Database = {
           company_name?: string | null
           created_at?: string | null
           email?: string
+          free_grams_available?: number | null
           full_name?: string | null
           id?: string
           is_pro_validated?: boolean | null
           phone?: string | null
           postal_code?: string | null
+          qualifying_orders_count?: number | null
           siret?: string | null
           updated_at?: string | null
         }

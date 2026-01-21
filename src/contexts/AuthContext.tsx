@@ -15,6 +15,13 @@ interface Profile {
   company_name: string | null;
   siret: string | null;
   is_pro_validated: boolean;
+  qualifying_orders_count: number;
+  free_grams_available: number;
+}
+
+interface ProInfo {
+  companyName: string;
+  siret: string;
 }
 
 interface AuthContextType {
@@ -24,7 +31,12 @@ interface AuthContextType {
   isPro: boolean;
   isProValidated: boolean;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string, 
+    password: string, 
+    accountType?: 'classic' | 'pro',
+    proInfo?: ProInfo
+  ) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -54,7 +66,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
       
       if (data) {
-        setProfile(data as Profile);
+        setProfile({
+          ...data,
+          qualifying_orders_count: data.qualifying_orders_count ?? 0,
+          free_grams_available: data.free_grams_available ?? 0,
+        } as Profile);
         setIsProValidated(data.is_pro_validated || false);
       }
     } catch (error) {
@@ -115,9 +131,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (
+    email: string, 
+    password: string,
+    accountType: 'classic' | 'pro' = 'classic',
+    proInfo?: ProInfo
+  ) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -125,9 +146,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
       if (error) throw error;
+
+      // If Pro account, update profile with company info
+      if (accountType === 'pro' && proInfo && data.user) {
+        // Wait a bit for the profile to be created by the trigger
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            company_name: proInfo.companyName,
+            siret: proInfo.siret,
+            is_pro_validated: false, // Admin will validate
+          })
+          .eq("id", data.user.id);
+
+        if (profileError) {
+          console.error("Error updating pro info:", profileError);
+        }
+      }
+
       toast({
-        title: "Compte créé !",
-        description: "Bienvenue chez High Society Botanicals.",
+        title: accountType === 'pro' ? "Demande Pro envoyée !" : "Compte créé !",
+        description: accountType === 'pro' 
+          ? "Votre demande sera examinée sous 48h."
+          : "Bienvenue chez High Society Botanicals.",
       });
       return { error: null };
     } catch (error) {
