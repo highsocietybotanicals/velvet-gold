@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ShoppingCart, Gift, Package, ChevronDown } from "lucide-react";
 import { allProducts } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProducts } from "@/hooks/useProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerpeneRadar from "@/components/TerpeneRadar";
@@ -44,19 +46,47 @@ const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { isPro, isProValidated, profile } = useAuth();
+  const { getPrice } = useProducts();
   
   const product = allProducts.find((p) => p.id === id);
   const [selectedWeight, setSelectedWeight] = useState<number>(2.5);
   const [customWeight, setCustomWeight] = useState<string>("2.5");
 
+  // Get dynamic price from database
+  const dbPrice = product ? getPrice(product.id) : null;
+  const basePrice = dbPrice?.price ?? product?.price ?? 0;
+  const proPrice = dbPrice?.pro_price;
+
+  // Check if user qualifies for Pro HT pricing (requires VAT validated by admin)
+  const isProWithValidatedVat = isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated;
+
   const priceInfo = useMemo(() => {
     if (!product) return null;
-    return calculatePrice(product.price, selectedWeight);
-  }, [product?.price, selectedWeight]);
+    if (isProWithValidatedVat && proPrice) {
+      // Pro with validated VAT: flat HT price per gram, no tiered discounts
+      const total = proPrice * selectedWeight;
+      return {
+        finalPrice: total.toFixed(2),
+        rawPrice: (basePrice * selectedWeight).toFixed(2),
+        discount: 0,
+        discountLabel: "",
+        savings: ((basePrice * selectedWeight) - total).toFixed(2),
+        isHT: true,
+      };
+    }
+    // Standard pricing with tiered discounts
+    return {
+      ...calculatePrice(basePrice, selectedWeight),
+      isHT: false,
+    };
+  }, [product, basePrice, proPrice, selectedWeight, isProWithValidatedVat]);
 
   const gifts = useMemo(() => {
+    // No gifts for Pro users with validated VAT
+    if (isProWithValidatedVat) return null;
     return getGifts(selectedWeight);
-  }, [selectedWeight]);
+  }, [selectedWeight, isProWithValidatedVat]);
 
   const pochonImage = useMemo(() => {
     return getPochonImage(selectedWeight);
@@ -178,9 +208,14 @@ const ProductPage = () => {
 
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-3xl font-display text-primary">
-                  {product.price}€
+                  {isProWithValidatedVat && proPrice ? proPrice : basePrice}€
                 </span>
                 <span className="text-muted-foreground">/gramme</span>
+                {isProWithValidatedVat && proPrice && (
+                  <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">
+                    HT
+                  </span>
+                )}
                 <span className="ml-auto px-4 py-1 bg-secondary/50 rounded-full text-sm text-foreground">
                   {product.cbdPercentage} CBD
                 </span>
@@ -242,12 +277,19 @@ const ProductPage = () => {
                 <div className="pt-4 border-t border-border/50">
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-sm text-muted-foreground mb-1">Prix total</span>
+                      <span className="text-sm text-muted-foreground mb-1">
+                        {priceInfo?.isHT ? "Prix total HT" : "Prix total"}
+                      </span>
                       <div className="flex items-baseline gap-3">
                         <span className="font-display text-3xl text-primary font-bold">
                           {priceInfo?.finalPrice}€
                         </span>
-                        {priceInfo && priceInfo.discount > 0 && (
+                        {priceInfo?.isHT && (
+                          <span className="text-sm bg-primary/20 text-primary px-2 py-1 rounded-md font-medium">
+                            HT
+                          </span>
+                        )}
+                        {priceInfo && !priceInfo.isHT && priceInfo.discount > 0 && (
                           <>
                             <span className="text-lg text-muted-foreground line-through">
                               {priceInfo.rawPrice}€
@@ -258,7 +300,12 @@ const ProductPage = () => {
                           </>
                         )}
                       </div>
-                      {priceInfo && priceInfo.discount > 0 && (
+                      {priceInfo?.isHT && (
+                        <span className="text-sm text-primary mt-1">
+                          Prix professionnel • Économie: {priceInfo.savings}€ vs TTC
+                        </span>
+                      )}
+                      {priceInfo && !priceInfo.isHT && priceInfo.discount > 0 && (
                         <span className="text-sm text-green-400 mt-1">
                           Vous économisez {priceInfo.savings}€
                         </span>
@@ -267,7 +314,7 @@ const ProductPage = () => {
                   </div>
                 </div>
 
-                {/* Gifts display */}
+                {/* Gifts display - only for non-Pro users */}
                 {gifts && (
                   <motion.div
                     initial={{ opacity: 0, y: 5 }}
@@ -288,6 +335,15 @@ const ProductPage = () => {
                       Contenu : {gifts.contents.pochonMoyen}x Pochon Moyen, {gifts.contents.feuillesSlim}x Feuilles Slim, {gifts.contents.briquetHSB}x Briquet HSB, {gifts.contents.elastique}x Élastique
                     </p>
                   </motion.div>
+                )}
+
+                {/* Pro with validated VAT notice */}
+                {isProWithValidatedVat && (
+                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <p className="text-sm text-primary font-medium">
+                      ✓ Prix professionnel HT appliqué
+                    </p>
+                  </div>
                 )}
               </div>
 

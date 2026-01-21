@@ -16,6 +16,7 @@ interface Profile {
   siret: string | null;
   vat_number: string | null;
   is_pro_validated: boolean;
+  is_vat_validated: boolean;
   qualifying_orders_count: number;
   free_grams_available: number;
 }
@@ -74,6 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           ...data,
           qualifying_orders_count: data.qualifying_orders_count ?? 0,
           free_grams_available: data.free_grams_available ?? 0,
+          is_vat_validated: data.is_vat_validated ?? false,
         } as Profile);
         setIsProValidated(data.is_pro_validated || false);
       }

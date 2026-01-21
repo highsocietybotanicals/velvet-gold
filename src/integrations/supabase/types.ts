@@ -178,6 +178,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_pro_validated: boolean | null
+          is_vat_validated: boolean
           phone: string | null
           postal_code: string | null
           qualifying_orders_count: number | null
@@ -196,6 +197,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_pro_validated?: boolean | null
+          is_vat_validated?: boolean
           phone?: string | null
           postal_code?: string | null
           qualifying_orders_count?: number | null
@@ -214,6 +216,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_pro_validated?: boolean | null
+          is_vat_validated?: boolean
           phone?: string | null
           postal_code?: string | null
           qualifying_orders_count?: number | null

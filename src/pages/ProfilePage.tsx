@@ -265,14 +265,29 @@ const ProfilePage = () => {
                         {profile?.company_name} - SIRET: {profile?.siret}
                       </p>
                       {profile?.vat_number && (
-                        <p className="text-sm text-muted-foreground">
-                          TVA: {profile.vat_number}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm text-muted-foreground">
+                            TVA: {profile.vat_number}
+                          </p>
+                          {profile?.is_vat_validated ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary rounded-full text-xs font-medium">
+                              <CheckCircle className="w-3 h-3" />
+                              Validée
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-500 rounded-full text-xs font-medium">
+                              <Clock className="w-3 h-3" />
+                              En attente
+                            </span>
+                          )}
+                        </div>
                       )}
-                      <p className="text-sm text-primary mt-1">
-                        {profile?.vat_number 
-                          ? "Vous bénéficiez de prix HT exclusifs"
-                          : "Ajoutez votre numéro de TVA pour des prix HT"
+                      <p className="text-sm text-primary mt-2">
+                        {profile?.is_vat_validated 
+                          ? "✓ Vous bénéficiez de prix HT exclusifs"
+                          : profile?.vat_number
+                            ? "Votre TVA est en cours de validation par notre équipe"
+                            : "Ajoutez votre numéro de TVA pour des prix HT"
                         }
                       </p>
                     </div>
