@@ -3,15 +3,20 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { User, Building2, Phone, MapPin, Loader2, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrders } from "@/hooks/useOrders";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import LoyaltyCard from "@/components/LoyaltyCard";
+import OrderTracking from "@/components/OrderTracking";
+import OrderHistory from "@/components/OrderHistory";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, profile, isPro, isProValidated, loading, signOut, updateProfile, submitProRequest } = useAuth();
+  const { currentOrder, orderHistory, isLoading: ordersLoading } = useOrders();
 
   // Profile form
   const [fullName, setFullName] = useState("");
@@ -96,6 +101,9 @@ const ProfilePage = () => {
     navigate("/");
   };
 
+  // Check if user is classic (not pro or pro not validated)
+  const isClassicUser = !isPro || !isProValidated;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -123,7 +131,33 @@ const ProfilePage = () => {
                   <span className="text-sm font-medium">Compte PRO</span>
                 </div>
               )}
+              {profile?.siret && !isProValidated && (
+                <div className="flex items-center gap-2 bg-amber-500/20 text-amber-500 px-4 py-2 rounded-full">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm font-medium">Pro en attente</span>
+                </div>
+              )}
             </div>
+
+            {/* Loyalty Card - Only for classic users */}
+            {isClassicUser && (
+              <LoyaltyCard
+                qualifyingOrdersCount={profile?.qualifying_orders_count ?? 0}
+                freeGramsAvailable={profile?.free_grams_available ?? 0}
+              />
+            )}
+
+            {/* Current Order Tracking */}
+            {!ordersLoading && currentOrder && (
+              <OrderTracking order={currentOrder} />
+            )}
+
+            {/* Order History */}
+            {!ordersLoading && orderHistory && orderHistory.length > 0 && (
+              <div className="mb-6">
+                <OrderHistory orders={orderHistory} />
+              </div>
+            )}
 
             {/* Personal Info */}
             <div className="bg-card border border-border rounded-xl p-6 mb-6">
