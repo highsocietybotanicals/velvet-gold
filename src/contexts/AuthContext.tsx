@@ -14,6 +14,7 @@ interface Profile {
   postal_code: string | null;
   company_name: string | null;
   siret: string | null;
+  vat_number: string | null;
   is_pro_validated: boolean;
   qualifying_orders_count: number;
   free_grams_available: number;
@@ -22,6 +23,7 @@ interface Profile {
 interface ProInfo {
   companyName: string;
   siret: string;
+  vatNumber?: string;
 }
 
 interface AuthContextType {
@@ -180,6 +182,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .update({
             company_name: proInfo.companyName,
             siret: proInfo.siret,
+            vat_number: proInfo.vatNumber || null,
             is_pro_validated: false, // Admin will validate
           })
           .eq("id", data.user.id);

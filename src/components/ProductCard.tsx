@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Leaf, Sparkles, ShoppingCart, Gift, Package, ChevronDown } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProducts } from "@/hooks/useProducts";
 import { Product, TerpeneProfile } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { PRESET_WEIGHTS, calculatePrice, getGifts } from "@/lib/pricing";
@@ -118,16 +120,44 @@ const TerpeneRadar = ({ terpenes }: { terpenes: TerpeneProfile }) => {
 
 const ProductCard = ({ product, index }: ProductCardProps) => {
   const { addToCart } = useCart();
+  const { isPro, isProValidated, profile } = useAuth();
+  const { getPrice } = useProducts();
   const [selectedWeight, setSelectedWeight] = useState<number>(2.5);
   const [customWeight, setCustomWeight] = useState<string>("2.5");
 
+  // Get dynamic price from database
+  const dbPrice = getPrice(product.id);
+  const basePrice = dbPrice?.price ?? product.price;
+  const proPrice = dbPrice?.pro_price;
+
+  // Check if user qualifies for Pro HT pricing
+  const isProWithVat = isPro && isProValidated && !!profile?.vat_number;
+
   const priceInfo = useMemo(() => {
-    return calculatePrice(product.price, selectedWeight);
-  }, [product.price, selectedWeight]);
+    if (isProWithVat && proPrice) {
+      // Pro with VAT: flat HT price per gram, no tiered discounts
+      const total = proPrice * selectedWeight;
+      return {
+        finalPrice: total.toFixed(2),
+        rawPrice: (basePrice * selectedWeight).toFixed(2),
+        discount: 0,
+        discountLabel: "",
+        savings: ((basePrice * selectedWeight) - total).toFixed(2),
+        isHT: true,
+      };
+    }
+    // Standard pricing with tiered discounts
+    return {
+      ...calculatePrice(basePrice, selectedWeight),
+      isHT: false,
+    };
+  }, [basePrice, proPrice, selectedWeight, isProWithVat]);
 
   const gifts = useMemo(() => {
+    // No gifts for Pro users
+    if (isProWithVat) return null;
     return getGifts(selectedWeight);
-  }, [selectedWeight]);
+  }, [selectedWeight, isProWithVat]);
 
 
   const handlePresetClick = (weight: number) => {
@@ -212,10 +242,10 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             
             <div className="text-right">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                Prix/g
+                Prix/g {isProWithVat && proPrice ? "HT" : ""}
               </p>
               <p className="font-display text-lg text-primary">
-                {product.price}€
+                {isProWithVat && proPrice ? proPrice : basePrice}€
               </p>
             </div>
           </div>
@@ -263,19 +293,29 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
               <span className="font-display text-2xl text-primary font-bold">
                 {priceInfo.finalPrice}€
               </span>
-              {priceInfo.discount > 0 && (
+              {priceInfo.isHT && (
+                <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">
+                  HT
+                </span>
+              )}
+              {!priceInfo.isHT && priceInfo.discount > 0 && (
                 <>
                   <span className="text-sm text-muted-foreground line-through">
                     {priceInfo.rawPrice}€
                   </span>
-                  <span className="text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">
+                  <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">
                     {priceInfo.discountLabel}
                   </span>
                 </>
               )}
             </div>
-            {priceInfo.discount > 0 && (
-              <span className="text-xs text-green-400">
+            {priceInfo.isHT && (
+              <span className="text-xs text-primary">
+                Économie: {priceInfo.savings}€ vs TTC
+              </span>
+            )}
+            {!priceInfo.isHT && priceInfo.discount > 0 && (
+              <span className="text-xs text-primary">
                 Économie: {priceInfo.savings}€
               </span>
             )}

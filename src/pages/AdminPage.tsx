@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin, ProRequest, AdminOrder } from "@/hooks/useAdmin";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PriceManagement from "@/components/admin/PriceManagement";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +32,8 @@ import {
   Users, 
   Loader2,
   Building,
-  Clock
+  Clock,
+  FileText
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -63,14 +65,20 @@ const ProRequestCard = ({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Building className="h-4 w-4 text-gold" />
+            <Building className="h-4 w-4 text-primary" />
             <span className="font-semibold text-foreground">{request.company_name}</span>
           </div>
           <p className="text-sm text-muted-foreground">{request.email}</p>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-wrap items-center gap-4 text-sm">
             <span className="text-muted-foreground">
               SIRET: <span className="font-mono text-foreground">{request.siret}</span>
             </span>
+            {request.vat_number && (
+              <span className="text-muted-foreground flex items-center gap-1">
+                <FileText className="h-3 w-3" />
+                TVA: <span className="font-mono text-foreground">{request.vat_number}</span>
+              </span>
+            )}
             <span className="text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {format(new Date(request.created_at), "dd MMM yyyy", { locale: fr })}
@@ -231,6 +239,9 @@ const AdminPage = () => {
               Gérez les demandes Pro et les commandes
             </p>
           </motion.div>
+
+          {/* Section Gestion des Prix */}
+          <PriceManagement />
 
           {/* Section Demandes Pro */}
           <motion.section

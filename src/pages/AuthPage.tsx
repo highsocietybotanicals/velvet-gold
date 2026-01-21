@@ -24,6 +24,7 @@ const AuthPage = () => {
   const [accountType, setAccountType] = useState<AccountType>("classic");
   const [companyName, setCompanyName] = useState("");
   const [siret, setSiret] = useState("");
+  const [vatNumber, setVatNumber] = useState("");
 
   // Redirect if already logged in
   if (user) {
@@ -59,6 +60,15 @@ const AuthPage = () => {
         setLoading(false);
         return;
       }
+      // Optional VAT validation (FR + 11 chars or other EU formats)
+      if (vatNumber.trim()) {
+        const vatClean = vatNumber.replace(/\s/g, "").toUpperCase();
+        if (!/^[A-Z]{2}[A-Z0-9]{2,12}$/.test(vatClean)) {
+          setError("Format de numéro de TVA invalide (ex: FR12345678901)");
+          setLoading(false);
+          return;
+        }
+      }
     }
 
     if (type === "login") {
@@ -70,7 +80,11 @@ const AuthPage = () => {
       }
     } else {
       const proInfo = accountType === "pro" 
-        ? { companyName, siret: siret.replace(/\s/g, "") }
+        ? { 
+            companyName, 
+            siret: siret.replace(/\s/g, ""),
+            vatNumber: vatNumber.replace(/\s/g, "").toUpperCase() || undefined,
+          }
         : undefined;
       
       const result = await signUp(email, password, accountType, proInfo);
@@ -91,6 +105,7 @@ const AuthPage = () => {
     setAccountType("classic");
     setCompanyName("");
     setSiret("");
+    setVatNumber("");
   };
 
   return (
@@ -295,7 +310,22 @@ const AuthPage = () => {
                         />
                       </div>
 
-                      <p className="text-xs text-amber-500 bg-amber-500/10 p-3 rounded-lg">
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">
+                          N° TVA intracommunautaire <span className="text-xs">(optionnel)</span>
+                        </label>
+                        <Input
+                          value={vatNumber}
+                          onChange={(e) => setVatNumber(e.target.value)}
+                          placeholder="FR12345678901"
+                          maxLength={14}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Renseignez votre TVA pour bénéficier de prix HT
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-primary/80 bg-primary/10 p-3 rounded-lg">
                         Votre demande Pro sera examinée sous 48h. En attendant, vous pourrez utiliser votre compte normalement.
                       </p>
                     </motion.div>

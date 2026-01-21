@@ -9,6 +9,7 @@ export interface ProRequest {
   full_name: string | null;
   company_name: string | null;
   siret: string | null;
+  vat_number: string | null;
   is_pro_validated: boolean;
   created_at: string;
 }
@@ -49,7 +50,7 @@ export const useAdmin = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, email, full_name, company_name, siret, is_pro_validated, created_at")
+        .select("id, email, full_name, company_name, siret, vat_number, is_pro_validated, created_at")
         .not("siret", "is", null)
         .eq("is_pro_validated", false)
         .order("created_at", { ascending: false });

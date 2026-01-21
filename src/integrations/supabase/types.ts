@@ -133,6 +133,39 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          pro_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id: string
+          is_active?: boolean
+          name: string
+          price: number
+          pro_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          pro_price?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address_line1: string | null
@@ -150,6 +183,7 @@ export type Database = {
           qualifying_orders_count: number | null
           siret: string | null
           updated_at: string | null
+          vat_number: string | null
         }
         Insert: {
           address_line1?: string | null
@@ -167,6 +201,7 @@ export type Database = {
           qualifying_orders_count?: number | null
           siret?: string | null
           updated_at?: string | null
+          vat_number?: string | null
         }
         Update: {
           address_line1?: string | null
@@ -184,6 +219,7 @@ export type Database = {
           qualifying_orders_count?: number | null
           siret?: string | null
           updated_at?: string | null
+          vat_number?: string | null
         }
         Relationships: []
       }
