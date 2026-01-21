@@ -80,7 +80,7 @@ export const useAdminProducts = () => {
       });
     },
     onError: (error) => {
-      console.error("Error updating price:", error);
+      if (import.meta.env.DEV) console.error("Error updating price:", error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le prix.",
@@ -113,7 +113,7 @@ export const useAdminProducts = () => {
       });
     },
     onError: (error) => {
-      console.error("Error toggling product:", error);
+      if (import.meta.env.DEV) console.error("Error toggling product:", error);
       toast({
         title: "Erreur",
         description: "Impossible de modifier le produit.",

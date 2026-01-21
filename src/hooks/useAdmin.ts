@@ -148,7 +148,7 @@ export const useAdmin = () => {
       });
     },
     onError: (error) => {
-      console.error("Error validating pro:", error);
+      if (import.meta.env.DEV) console.error("Error validating pro:", error);
       toast({
         title: "Erreur",
         description: "Impossible de valider le compte Pro.",
@@ -179,7 +179,7 @@ export const useAdmin = () => {
       });
     },
     onError: (error) => {
-      console.error("Error rejecting pro:", error);
+      if (import.meta.env.DEV) console.error("Error rejecting pro:", error);
       toast({
         title: "Erreur",
         description: "Impossible de refuser la demande.",
@@ -206,7 +206,7 @@ export const useAdmin = () => {
       });
     },
     onError: (error) => {
-      console.error("Error updating order status:", error);
+      if (import.meta.env.DEV) console.error("Error updating order status:", error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le statut.",
@@ -233,7 +233,7 @@ export const useAdmin = () => {
       });
     },
     onError: (error) => {
-      console.error("Error validating VAT:", error);
+      if (import.meta.env.DEV) console.error("Error validating VAT:", error);
       toast({
         title: "Erreur",
         description: "Impossible de valider la TVA.",
@@ -263,7 +263,7 @@ export const useAdmin = () => {
       });
     },
     onError: (error) => {
-      console.error("Error rejecting VAT:", error);
+      if (import.meta.env.DEV) console.error("Error rejecting VAT:", error);
       toast({
         title: "Erreur",
         description: "Impossible de refuser la TVA.",

@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsProValidated(data.is_pro_validated || false);
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      if (import.meta.env.DEV) console.error("Error fetching profile:", error);
     }
   };
 
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
       setIsPro(data || false);
     } catch (error) {
-      console.error("Error checking pro status:", error);
+      if (import.meta.env.DEV) console.error("Error checking pro status:", error);
       setIsPro(false);
     }
   };
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
       setIsAdmin(data || false);
     } catch (error) {
-      console.error("Error checking admin status:", error);
+      if (import.meta.env.DEV) console.error("Error checking admin status:", error);
       setIsAdmin(false);
     }
   };
@@ -189,7 +189,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           })
           .eq("id", data.user.id);
 
-        if (profileError) {
+        if (profileError && import.meta.env.DEV) {
           console.error("Error updating pro info:", profileError);
         }
       }
@@ -202,7 +202,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       return { error: null };
     } catch (error) {
-      console.error("Signup error:", error);
+      if (import.meta.env.DEV) console.error("Signup error:", error);
       return { error: error as Error };
     }
   };
@@ -220,7 +220,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       return { error: null };
     } catch (error) {
-      console.error("Signin error:", error);
+      if (import.meta.env.DEV) console.error("Signin error:", error);
       return { error: error as Error };
     }
   };
@@ -255,7 +255,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       return { error: null };
     } catch (error) {
-      console.error("Update profile error:", error);
+      if (import.meta.env.DEV) console.error("Update profile error:", error);
       return { error: error as Error };
     }
   };
@@ -282,7 +282,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       return { error: null };
     } catch (error) {
-      console.error("Pro request error:", error);
+      if (import.meta.env.DEV) console.error("Pro request error:", error);
       return { error: error as Error };
     }
   };
