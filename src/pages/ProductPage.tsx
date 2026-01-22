@@ -425,7 +425,7 @@ const ProductPage = () => {
                       </h3>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-primary font-medium">
-                          {similarProduct.price}€/g
+                          {getPrice(similarProduct.id)?.price ?? similarProduct.price}€/g
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {similarProduct.cbdPercentage} CBD
