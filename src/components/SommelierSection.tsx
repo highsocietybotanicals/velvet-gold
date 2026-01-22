@@ -249,7 +249,7 @@ const SommelierSection = () => {
                     Quel goût préférez-vous ?
                   </h3>
 
-                  <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     {tastes.map((taste, index) => (
                       <motion.button
                         key={taste.id}
