@@ -192,7 +192,7 @@ const SommelierSection = () => {
                     Quelle est votre intention du moment ?
                   </h3>
 
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     {intentions.map((intention, index) => (
                       <motion.button
                         key={intention.id}
