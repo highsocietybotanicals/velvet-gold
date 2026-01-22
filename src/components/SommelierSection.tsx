@@ -192,7 +192,7 @@ const SommelierSection = () => {
                     Quelle est votre intention du moment ?
                   </h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
                     {intentions.map((intention, index) => (
                       <motion.button
                         key={intention.id}
@@ -202,25 +202,21 @@ const SommelierSection = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleIntentionSelect(intention)}
-                        className={`p-6 rounded-xl border transition-all duration-300 text-left group ${
+                        className={`p-4 sm:p-6 rounded-xl border transition-all duration-300 text-center group aspect-square flex flex-col items-center justify-center ${
                           selectedIntention?.id === intention.id
                             ? "border-primary bg-primary/10"
                             : "border-border/50 hover:border-primary/50 hover:bg-primary/5"
                         }`}
                       >
-                        <div className="flex items-start gap-4">
-                          <div className="text-primary/70 group-hover:text-primary transition-colors">
-                            {intention.icon}
-                          </div>
-                          <div>
-                            <h4 className="font-display text-xl text-foreground mb-1">
-                              {intention.label}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {intention.description}
-                            </p>
-                          </div>
+                        <div className="text-primary/70 group-hover:text-primary transition-colors mb-3">
+                          {intention.icon}
                         </div>
+                        <h4 className="font-display text-lg sm:text-xl text-foreground mb-1">
+                          {intention.label}
+                        </h4>
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                          {intention.description}
+                        </p>
                       </motion.button>
                     ))}
                   </div>
