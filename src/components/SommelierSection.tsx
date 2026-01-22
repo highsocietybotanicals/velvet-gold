@@ -192,7 +192,7 @@ const SommelierSection = () => {
                     Quelle est votre intention du moment ?
                   </h3>
 
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
+                  <div className="flex flex-col gap-4 max-w-xl mx-auto">
                     {intentions.map((intention, index) => (
                       <motion.button
                         key={intention.id}
@@ -202,21 +202,25 @@ const SommelierSection = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleIntentionSelect(intention)}
-                        className={`p-4 sm:p-6 rounded-xl border transition-all duration-300 text-center group aspect-square flex flex-col items-center justify-center ${
+                        className={`p-6 rounded-xl border transition-all duration-300 text-left group ${
                           selectedIntention?.id === intention.id
                             ? "border-primary bg-primary/10"
                             : "border-border/50 hover:border-primary/50 hover:bg-primary/5"
                         }`}
                       >
-                        <div className="text-primary/70 group-hover:text-primary transition-colors mb-3">
-                          {intention.icon}
+                        <div className="flex items-center gap-4">
+                          <div className="text-primary/70 group-hover:text-primary transition-colors">
+                            {intention.icon}
+                          </div>
+                          <div>
+                            <h4 className="font-display text-xl text-foreground mb-1">
+                              {intention.label}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {intention.description}
+                            </p>
+                          </div>
                         </div>
-                        <h4 className="font-display text-lg sm:text-xl text-foreground mb-1">
-                          {intention.label}
-                        </h4>
-                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                          {intention.description}
-                        </p>
                       </motion.button>
                     ))}
                   </div>
@@ -245,7 +249,7 @@ const SommelierSection = () => {
                     Quel goût préférez-vous ?
                   </h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-4 max-w-xl mx-auto">
                     {tastes.map((taste, index) => (
                       <motion.button
                         key={taste.id}
@@ -255,21 +259,21 @@ const SommelierSection = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleTasteSelect(taste)}
-                        className={`p-6 rounded-xl border transition-all duration-300 text-center group ${
+                        className={`p-6 rounded-xl border transition-all duration-300 text-left group ${
                           selectedTaste?.id === taste.id
                             ? "border-primary bg-primary/10"
                             : "border-border/50 hover:border-primary/50 hover:bg-primary/5"
                         }`}
                       >
-                        <div className="flex flex-col items-center gap-3">
+                        <div className="flex items-center gap-4">
                           <div className="text-primary/70 group-hover:text-primary transition-colors">
                             {taste.icon}
                           </div>
                           <div>
-                            <h4 className="font-display text-lg text-foreground mb-1">
+                            <h4 className="font-display text-xl text-foreground mb-1">
                               {taste.label}
                             </h4>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                               {taste.description}
                             </p>
                           </div>
