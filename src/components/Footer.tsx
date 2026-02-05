@@ -132,8 +132,11 @@ const Footer = () => {
             <p className="text-xs text-muted-foreground/60 font-body text-center md:text-left">
               © 2024 High Society Botanicals - SASU au capital de 1€ - Paris
             </p>
+            <p className="text-xs text-muted-foreground/60 font-body text-center">
+              Fleurs de collection issues de variétés Cannabis Sativa L. autorisées, &lt;0.3% THC
+            </p>
             <p className="text-xs text-muted-foreground/60 font-body">
-              Produit réservé aux personnes majeures • CBD &lt; 0.3% THC
+              Produit réservé aux personnes majeures
             </p>
           </div>
         </div>
