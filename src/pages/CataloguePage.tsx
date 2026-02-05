@@ -129,13 +129,13 @@ const CataloguePage = () => {
               />
             </div>
 
-            {/* Category tabs */}
+            {/* Category tabs - Accessoires masqué temporairement */}
             <div className="flex items-center gap-2 bg-card border border-border rounded-full p-1">
               {[
                 { key: "all", label: "Tous" },
                 { key: "fleur", label: "Fleurs" },
                 { key: "resine", label: "Résines" },
-                { key: "accessoire", label: "Accessoires" },
+                // { key: "accessoire", label: "Accessoires" }, // Masqué - rupture de stock
               ].map((cat) => (
                 <button
                   key={cat.key}
@@ -306,77 +306,10 @@ const CataloguePage = () => {
                 </motion.div>
               ))}
 
-              {/* Accessories */}
-              {filteredAccessories.map((accessory, index) => (
-                <motion.div
-                  key={accessory.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: (filteredProducts.length + index) * 0.03 }}
-                  className={
-                    viewMode === "grid"
-                      ? "product-card group bg-card border border-border rounded-xl overflow-hidden"
-                      : "product-card group bg-card border border-border rounded-xl overflow-hidden flex"
-                  }
-                >
-                  <Link
-                    to={`/accessoire/${accessory.id}`}
-                    className={viewMode === "list" ? "flex flex-1" : "block"}
-                  >
-                    <div
-                      className={
-                        viewMode === "grid"
-                          ? "relative aspect-square overflow-hidden"
-                          : "relative w-32 h-32 flex-shrink-0 overflow-hidden"
-                      }
-                    >
-                      <img
-                        src={accessory.image}
-                        alt={accessory.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <div className={viewMode === "grid" ? "p-4" : "flex-1 p-4 flex items-center justify-between"}>
-                      <div>
-                        <span className="text-xs text-primary tracking-wider uppercase flex items-center gap-1">
-                          <Package className="w-3 h-3" />
-                          Accessoire
-                        </span>
-                        <h3 className="font-display text-lg text-foreground mt-1">
-                          {accessory.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                          {accessory.description}
-                        </p>
-                      </div>
-                      <div className={viewMode === "list" ? "text-right" : "flex justify-between items-center mt-4"}>
-                        <span className="text-sm text-primary font-medium">
-                          -33% dès 10
-                        </span>
-                        <span className="text-lg font-display text-primary">
-                          {accessory.price.toFixed(2)}€
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      addAccessory(accessory, 1);
-                    }}
-                    className={`${
-                      viewMode === "grid"
-                        ? "absolute bottom-4 right-4 opacity-0 group-hover:opacity-100"
-                        : "m-4 flex-shrink-0"
-                    } p-3 bg-primary text-primary-foreground rounded-full transition-all hover:glow-gold`}
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                  </button>
-                </motion.div>
-              ))}
+              {/* Accessories - Masqué temporairement - rupture de stock */}
+              {/* {filteredAccessories.map((accessory, index) => (
+                ... code conservé pour réactivation future ...
+              ))} */}
             </AnimatePresence>
           </motion.div>
 

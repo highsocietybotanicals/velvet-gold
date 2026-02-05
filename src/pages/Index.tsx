@@ -45,7 +45,8 @@ const Index = () => {
         <SommelierSection />
         <HeroSection />
         <ProductSection />
-        <AccessoriesSection />
+        {/* AccessoriesSection masqué temporairement - rupture de stock */}
+        {/* <AccessoriesSection /> */}
         <AboutSection />
       </main>
       <Footer />

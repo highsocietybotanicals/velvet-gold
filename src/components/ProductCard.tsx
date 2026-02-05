@@ -5,9 +5,9 @@ import { Leaf, Sparkles, ShoppingCart, Gift, Package, ChevronDown } from "lucide
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
-import { Product, TerpeneProfile } from "@/data/products";
+import { Product, TerpeneProfile, PriceGroup } from "@/data/products";
 import { Input } from "@/components/ui/input";
-import { PRESET_WEIGHTS, calculatePrice, getGifts } from "@/lib/pricing";
+import { PRESET_WEIGHTS, calculatePrice } from "@/lib/pricing";
 
 
 interface ProductCardProps {
@@ -133,6 +133,9 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   // Check if user qualifies for Pro HT pricing (requires VAT validated by admin)
   const isProWithValidatedVat = isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated;
 
+  // Get price group from product (default to A if not defined)
+  const priceGroup: PriceGroup = (product as any).priceGroup || "A";
+
   const priceInfo = useMemo(() => {
     if (isProWithValidatedVat && proPrice) {
       // Pro with validated VAT: flat HT price per gram, no tiered discounts
@@ -146,18 +149,15 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         isHT: true,
       };
     }
-    // Standard pricing with tiered discounts
+    // Standard pricing with tiered discounts based on price group
     return {
-      ...calculatePrice(basePrice, selectedWeight),
+      ...calculatePrice(basePrice, selectedWeight, priceGroup),
       isHT: false,
     };
-  }, [basePrice, proPrice, selectedWeight, isProWithValidatedVat]);
+  }, [basePrice, proPrice, selectedWeight, isProWithValidatedVat, priceGroup]);
 
-  const gifts = useMemo(() => {
-    // No gifts for Pro users with validated VAT
-    if (isProWithValidatedVat) return null;
-    return getGifts(selectedWeight);
-  }, [selectedWeight, isProWithValidatedVat]);
+  // Cadeaux désactivés temporairement - accessoires en rupture
+  const gifts = null;
 
 
   const handlePresetClick = (weight: number) => {
@@ -204,12 +204,17 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             }}
           />
           
-          
-          {/* Mood badge */}
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-primary/30">
-            <Sparkles className="w-3 h-3 text-primary" />
-            <span className="text-xs text-primary font-medium">{product.mood}</span>
-          </div>
+          {/* Badge produit (Cali Genetics, etc.) */}
+          {(product as any).badge && (
+            <div className={`absolute top-4 left-4 flex items-center gap-2 backdrop-blur-sm px-3 py-1.5 rounded-full border ${
+              (product as any).badge === "Cali Genetics" 
+                ? "bg-gradient-to-r from-yellow-500/20 to-primary/20 border-yellow-500/50 text-yellow-400"
+                : "bg-background/90 border-primary/30 text-primary"
+            }`}>
+              <Sparkles className="w-3 h-3" />
+              <span className="text-xs font-medium">{(product as any).badge}</span>
+            </div>
+          )}
 
           {/* CBD badge */}
           <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full">
@@ -353,14 +358,14 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           </motion.div>
         )}
 
-        {/* Link to accessories */}
-        <a
+        {/* Lien accessoires masqué temporairement - rupture de stock */}
+        {/* <a
           href="#accessoires"
           className="flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors pt-1"
         >
           Besoin d'un pochon en plus ?
           <ChevronDown className="w-3 h-3" />
-        </a>
+        </a> */}
       </div>
     </motion.div>
   );
