@@ -1,75 +1,107 @@
 
-# Integration des Images Produits Authentiques
+
+# Generation d'Images Produits Professionnelles
 
 ## Objectif
-Remplacer les images placeholder par les vraies photos de vos 4 varietes, avec un fond noir uniforme pour toutes.
+Utiliser l'IA de generation d'images (Lovable AI) pour editer les 4 photos de fleurs que vous avez fournies et les transformer en images professionnelles avec un fond noir uniforme style "High Society Botanicals".
 
 ---
 
-## Images Recues
+## Images a Transformer
 
-| Variete | Fichier | Fond Actuel |
-|---------|---------|-------------|
-| Blue Mango | Screenshot_20260206_112915_Drive.jpg | Noir |
-| 911 OG | Screenshot_20260206_112753_Drive.jpg | Noir |
-| Mint Kush | Screenshot_20260206_112644_Drive.jpg | Blanc |
-| Platinum OG | Screenshot_20260206_112627_Drive.jpg | Blanc |
+| Produit | Etat Actuel | Transformation |
+|---------|-------------|----------------|
+| Blue Mango | Fond noir (OK) | Amelioration eclairage + style luxe |
+| 911 OG | Fond noir (OK) | Amelioration eclairage + style luxe |
+| Mint Kush | Fond BLANC | Remplacement fond noir + style luxe |
+| Platinum OG | Fond BLANC | Remplacement fond noir + style luxe |
 
 ---
 
-## Actions
+## Approche Technique
 
-### Etape 1 : Copie des Images
+### Edge Function pour Edition d'Images
 
-Copier les 4 images dans le dossier `src/assets/flowers/` avec des noms propres :
+Creation d'une edge function `edit-product-image` qui :
+1. Recoit l'image originale en base64
+2. Envoie a l'API Lovable AI (modele `google/gemini-3-pro-image-preview` pour qualite maximale)
+3. Prompt d'edition : "Transform this cannabis flower photo into a luxury product shot with a pure black background, professional studio lighting, golden highlights reflecting premium quality, sharp focus on the flower details. Keep the exact same flower, only change the background and lighting."
+4. Retourne l'image editee
 
-- `user-uploads://Screenshot_20260206_112915_Drive.jpg` vers `src/assets/flowers/blue-mango-real.jpg`
-- `user-uploads://Screenshot_20260206_112753_Drive.jpg` vers `src/assets/flowers/911-og-real.jpg`
-- `user-uploads://Screenshot_20260206_112644_Drive.jpg` vers `src/assets/flowers/mint-kush-real.jpg`
-- `user-uploads://Screenshot_20260206_112627_Drive.jpg` vers `src/assets/flowers/platinum-og-real.jpg`
+### Workflow
 
-### Etape 2 : Mise a Jour de `src/data/products.ts`
-
-Modifier les imports et references pour les 4 produits :
-
-```typescript
-// Remplacer les anciens imports par les vrais
-import blueMango from "@/assets/flowers/blue-mango-real.jpg";
-import nineOneOne from "@/assets/flowers/911-og-real.jpg";
-import mintKush from "@/assets/flowers/mint-kush-real.jpg";
-import platinumOG from "@/assets/flowers/platinum-og-real.jpg";
-
-// Puis utiliser ces images dans les objets produits correspondants
+```text
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Image Originale │ --> │  Lovable AI API  │ --> │  Image Editee   │
+│  (votre photo)   │     │  gemini-3-pro    │     │  (fond noir)    │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
-### Etape 3 : Harmonisation du Fond
+---
 
-Les 2 images sur fond blanc (Mint Kush et Platinum OG) apparaitront sur les cartes produit qui ont deja un fond sombre grace au CSS du site. Le contraste sera visible mais acceptable.
+## Implementation
 
-Pour une uniformite parfaite, je peux :
-- Option A : Utiliser les images telles quelles (le fond blanc deviendra un cercle clair autour du produit)
-- Option B : Appliquer un style CSS `mix-blend-mode: multiply` pour fusionner le fond blanc avec le noir
-- Option C : Vous pourriez fournir des versions sur fond noir/transparent de ces 2 images
+### Etape 1 : Creer l'Edge Function
+
+Fichier : `supabase/functions/edit-product-image/index.ts`
+
+```typescript
+// Recoit l'image, envoie a Lovable AI pour edition
+// Prompt specifique pour fond noir + eclairage studio luxe
+// Retourne l'image transformee en base64
+```
+
+### Etape 2 : Creer un Composant d'Edition Admin
+
+Fichier : `src/components/admin/ImageEditor.tsx`
+
+- Interface pour charger une image
+- Bouton "Transformer en style HSB"
+- Preview avant/apres
+- Telechargement de l'image finale
+
+### Etape 3 : Executer les Transformations
+
+Pour chaque image :
+1. Charger l'image originale
+2. Appeler l'edge function avec le prompt d'edition
+3. Sauvegarder l'image generee dans `src/assets/flowers/`
+4. Mettre a jour les references dans `products.ts`
 
 ---
 
-## Fichiers Modifies
+## Prompt d'Edition IA
+
+```text
+Transform this cannabis/CBD flower product photo into a premium luxury 
+product shot. Requirements:
+- Pure black background (#000000)
+- Professional studio lighting with soft shadows
+- Subtle golden/amber highlights reflecting premium quality
+- Sharp focus on flower details and texture
+- Keep the EXACT same flower - do not modify the product itself
+- Style: High-end luxury cannabis boutique aesthetic
+```
+
+---
+
+## Fichiers a Creer/Modifier
 
 | Fichier | Action |
 |---------|--------|
-| `src/assets/flowers/blue-mango-real.jpg` | Nouvelle image |
-| `src/assets/flowers/911-og-real.jpg` | Nouvelle image |
-| `src/assets/flowers/mint-kush-real.jpg` | Nouvelle image |
-| `src/assets/flowers/platinum-og-real.jpg` | Nouvelle image |
-| `src/data/products.ts` | Mise a jour des imports et references |
+| `supabase/functions/edit-product-image/index.ts` | Nouvelle edge function |
+| `src/components/admin/ImageEditor.tsx` | Nouveau composant admin |
+| `src/assets/flowers/*-real.jpg` | 4 images a remplacer |
+| `src/data/products.ts` | Supprimer `hasWhiteBg` apres transformation |
 
 ---
 
-## Note sur les 3 Produits Manquants
+## Resultat Attendu
 
-Vous avez fourni 4 images sur 7 produits. Il manque :
-- **Amnesia "Signature Oniria"** (conservera l'image actuelle)
-- **Ice O Lator** (conservera l'image actuelle)
-- **Golden CBN** (conservera l'image actuelle)
+4 images produits avec :
+- Fond noir uniforme
+- Eclairage studio professionnel
+- Reflets dores subtils
+- Meme fleur exacte que vos photos originales
+- Style coherent "High Society Botanicals"
 
-Si vous avez ces images, vous pourrez les ajouter ensuite.
