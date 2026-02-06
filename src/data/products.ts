@@ -1,11 +1,13 @@
 // Images pour les 7 produits
+// Vraies images produits
+import blueMango from "@/assets/flowers/blue-mango-real.jpg";
+import nineOneOne from "@/assets/flowers/911-og-real.jpg";
+import mintKush from "@/assets/flowers/mint-kush-real.jpg";
+import platinumOG from "@/assets/flowers/platinum-og-real.jpg";
+// Images placeholder pour les 3 produits restants
 import amnesiaHaze from "@/assets/flowers/amnesia-haze.jpg";
-import ogKush from "@/assets/flowers/og-kush.jpg";
-import northernLights from "@/assets/flowers/northern-lights.jpg";
 import bubbleHash from "@/assets/resins/bubble-hash.jpg";
 import charas from "@/assets/resins/charas.jpg";
-import gorillaGlue from "@/assets/flowers/gorilla-glue.jpg";
-import blueDream from "@/assets/flowers/blue-dream.jpg";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
@@ -27,6 +29,7 @@ export interface Product {
   priceGroup: PriceGroup;
   cbdPercentage: string;
   image: string;
+  hasWhiteBg?: boolean; // Pour les images sur fond blanc qui nécessitent mix-blend-mode
   terpenes: TerpeneProfile;
   mood: string;
   category: ProductCategory;
@@ -64,7 +67,8 @@ const groupA: Product[] = [
     price: 12,
     priceGroup: "A",
     cbdPercentage: "22%",
-    image: ogKush,
+    image: platinumOG,
+    hasWhiteBg: true, // Image sur fond blanc - nécessite mix-blend-mode
     terpenes: { boise: 90, fruite: 45, epice: 35, terreux: 80 },
     mood: "Relaxation",
     category: "fleur",
@@ -80,7 +84,8 @@ const groupA: Product[] = [
     price: 12,
     priceGroup: "A",
     cbdPercentage: "20%",
-    image: northernLights,
+    image: mintKush,
+    hasWhiteBg: true, // Image sur fond blanc - nécessite mix-blend-mode
     terpenes: { boise: 70, fruite: 40, epice: 75, terreux: 55 },
     mood: "Fraîcheur",
     category: "fleur",
@@ -135,7 +140,7 @@ const groupB: Product[] = [
     price: 14,
     priceGroup: "B",
     cbdPercentage: "50%",
-    image: gorillaGlue,
+    image: nineOneOne,
     terpenes: { boise: 85, fruite: 30, epice: 60, terreux: 90 },
     mood: "Puissance",
     category: "fleur",
@@ -151,7 +156,7 @@ const groupB: Product[] = [
     price: 14,
     priceGroup: "B",
     cbdPercentage: "30%",
-    image: blueDream,
+    image: blueMango,
     terpenes: { boise: 35, fruite: 95, epice: 45, terreux: 40 },
     mood: "Tropical",
     category: "fleur",
