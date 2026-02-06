@@ -198,9 +198,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           <img
             src={product.image}
             alt={product.name}
-            className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${
-              (product as any).hasWhiteBg ? "mix-blend-multiply" : ""
-            }`}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             onError={(e) => {
               e.currentTarget.src = '/placeholder.svg';
             }}

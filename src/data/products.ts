@@ -29,7 +29,6 @@ export interface Product {
   priceGroup: PriceGroup;
   cbdPercentage: string;
   image: string;
-  hasWhiteBg?: boolean; // Pour les images sur fond blanc qui nécessitent mix-blend-mode
   terpenes: TerpeneProfile;
   mood: string;
   category: ProductCategory;
@@ -68,7 +67,6 @@ const groupA: Product[] = [
     priceGroup: "A",
     cbdPercentage: "22%",
     image: platinumOG,
-    hasWhiteBg: true, // Image sur fond blanc - nécessite mix-blend-mode
     terpenes: { boise: 90, fruite: 45, epice: 35, terreux: 80 },
     mood: "Relaxation",
     category: "fleur",
@@ -85,7 +83,6 @@ const groupA: Product[] = [
     priceGroup: "A",
     cbdPercentage: "20%",
     image: mintKush,
-    hasWhiteBg: true, // Image sur fond blanc - nécessite mix-blend-mode
     terpenes: { boise: 70, fruite: 40, epice: 75, terreux: 55 },
     mood: "Fraîcheur",
     category: "fleur",
