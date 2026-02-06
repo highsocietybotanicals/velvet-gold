@@ -1,179 +1,75 @@
 
-# Plan de Configuration Finale "High Society Botanicals"
+# Integration des Images Produits Authentiques
 
 ## Objectif
-Finaliser la boutique avec un catalogue épuré de 7 variétés "Haute Couture", une grille de prix rentable (minimum x2), et une gestion "ghost" des accessoires.
+Remplacer les images placeholder par les vraies photos de vos 4 varietes, avec un fond noir uniforme pour toutes.
 
 ---
 
-## Etape 1 : Refonte du Catalogue (7 Variétés Exclusives)
+## Images Recues
 
-### Remplacement des produits dans `src/data/products.ts`
-
-Suppression des 20 fleurs et 10 résines actuelles, remplacées par exactement 7 produits :
-
-**GROUPE A - Standard Luxury (Base 30€ / 2.5g = 12€/g)**
-
-| ID | Nom | Badge | Description | Image |
-|----|-----|-------|-------------|-------|
-| amnesia-signature-oniria | Amnesia "Signature Oniria" | Artiste Edition | Fleur d'artiste par Oniria | amnesia-haze.jpg |
-| platinum-og | Platinum OG | Cali Genetics | Génétique Californienne Premium | og-kush.jpg |
-| mint-kush | Mint Kush | Cali Genetics | Génétique Californienne Premium | northern-lights.jpg |
-| ice-o-lator | Ice O Lator | 60% Extraction | Résine pure 60% CBD | bubble-hash.jpg |
-| golden-cbn | Golden CBN | Royal Sleep | 25% CBD / 10% CBN / 10% CBG | charas.jpg |
-
-**GROUPE B - Ultra Premium (Base 35€ / 2.5g = 14€/g)**
-
-| ID | Nom | Badge | Description | Image |
-|----|-----|-------|-------------|-------|
-| 911-og-indoor | 911 OG "Indoor Master" | Magic Sauce 50% | Edition Limitée Indoor | gorilla-glue.jpg |
-| blue-mango-indoor | Blue Mango "Indoor Master" | Rare 10-OH+ | Collection Rare Indoor 30% | blue-dream.jpg |
-
-### Nouveau type Product
-
-Ajout d'un champ `priceGroup: "A" | "B"` pour différencier la logique de pricing.
+| Variete | Fichier | Fond Actuel |
+|---------|---------|-------------|
+| Blue Mango | Screenshot_20260206_112915_Drive.jpg | Noir |
+| 911 OG | Screenshot_20260206_112753_Drive.jpg | Noir |
+| Mint Kush | Screenshot_20260206_112644_Drive.jpg | Blanc |
+| Platinum OG | Screenshot_20260206_112627_Drive.jpg | Blanc |
 
 ---
 
-## Etape 2 : Nouvelle Logique de Prix
+## Actions
 
-### Modification de `src/lib/pricing.ts`
+### Etape 1 : Copie des Images
 
-**GROUPE A (Base 12€/g) - Objectif 6€/g à 100g**
+Copier les 4 images dans le dossier `src/assets/flowers/` avec des noms propres :
 
-| Poids | Remise | Prix final |
-|-------|--------|------------|
-| 2.5g | 0% | 30.00€ |
-| 10g | -15% | 102.00€ |
-| 25g | -25% | 225.00€ |
-| 50g | -35% | 390.00€ |
-| 100g | -50% | 600.00€ |
+- `user-uploads://Screenshot_20260206_112915_Drive.jpg` vers `src/assets/flowers/blue-mango-real.jpg`
+- `user-uploads://Screenshot_20260206_112753_Drive.jpg` vers `src/assets/flowers/911-og-real.jpg`
+- `user-uploads://Screenshot_20260206_112644_Drive.jpg` vers `src/assets/flowers/mint-kush-real.jpg`
+- `user-uploads://Screenshot_20260206_112627_Drive.jpg` vers `src/assets/flowers/platinum-og-real.jpg`
 
-**GROUPE B (Base 14€/g) - Objectif ~9€/g à 100g**
+### Etape 2 : Mise a Jour de `src/data/products.ts`
 
-| Poids | Remise | Prix final |
-|-------|--------|------------|
-| 2.5g | 0% | 35.00€ |
-| 10g | -10% | 126.00€ |
-| 25g | -20% | 280.00€ |
-| 50g | -25% | 525.00€ |
-| 100g | -35% | 910.00€ |
+Modifier les imports et references pour les 4 produits :
 
-### Fonctions modifiées
+```typescript
+// Remplacer les anciens imports par les vrais
+import blueMango from "@/assets/flowers/blue-mango-real.jpg";
+import nineOneOne from "@/assets/flowers/911-og-real.jpg";
+import mintKush from "@/assets/flowers/mint-kush-real.jpg";
+import platinumOG from "@/assets/flowers/platinum-og-real.jpg";
 
-- `calculatePrice()` : Prendra en compte le groupe (A/B)
-- `getDiscountTier()` : Deux sets de tiers selon le groupe
-- Export de `WEIGHT_TIERS_A` et `WEIGHT_TIERS_B`
-
----
-
-## Etape 3 : Gestion "Ghost" des Accessoires
-
-### Fichiers concernés
-
-1. **`src/pages/Index.tsx`**
-   - Commenter `<AccessoriesSection />` (pas de suppression)
-   - L'import reste présent pour réactivation future
-
-2. **`src/components/ProductCard.tsx`**
-   - Masquer le lien "Besoin d'un pochon en plus ?" (lignes 357-364)
-   - Conserver le code des cadeaux car il fonctionne en fond
-
-3. **`src/components/CartDrawer.tsx`**
-   - Masquer l'affichage des cadeaux/packs (section Gift) avec condition
-   - La logique de calcul reste intacte pour éviter les erreurs
-
-4. **`src/pages/CataloguePage.tsx`**
-   - Masquer l'onglet "Accessoires" dans les filtres
-
-**Conservation intégrale de** :
-- `src/components/AccessoriesSection.tsx`
-- `src/data/accessories.ts`
-- Logique des cadeaux dans `CartContext.tsx`
-
----
-
-## Etape 4 : Qualité et Finitions
-
-### Badges dorés
-
-Vérification dans `ProductCard.tsx` que les badges utilisent les classes :
-```text
-bg-primary/20 text-primary border-primary/30
+// Puis utiliser ces images dans les objets produits correspondants
 ```
 
-Pour les badges spéciaux "Cali Genetics" : ajout d'un style distinctif doré.
+### Etape 3 : Harmonisation du Fond
 
-### Mention légale Footer
+Les 2 images sur fond blanc (Mint Kush et Platinum OG) apparaitront sur les cartes produit qui ont deja un fond sombre grace au CSS du site. Le contraste sera visible mais acceptable.
 
-Modification de `src/components/Footer.tsx` :
-
-Texte à ajouter dans la section bottom bar :
-```
-"Fleurs de collection issues de variétés Cannabis Sativa L. autorisées, <0.3% THC."
-```
-
-### Vérification Admin
-
-L'accès à `/admin` fonctionne correctement via le hook `useAdmin` et la vérification `isAdmin`. Aucune modification nécessaire.
+Pour une uniformite parfaite, je peux :
+- Option A : Utiliser les images telles quelles (le fond blanc deviendra un cercle clair autour du produit)
+- Option B : Appliquer un style CSS `mix-blend-mode: multiply` pour fusionner le fond blanc avec le noir
+- Option C : Vous pourriez fournir des versions sur fond noir/transparent de ces 2 images
 
 ---
 
-## Fichiers Modifiés
+## Fichiers Modifies
 
 | Fichier | Action |
 |---------|--------|
-| `src/data/products.ts` | Refonte complète - 7 produits avec groupes A/B |
-| `src/lib/pricing.ts` | Nouvelles grilles tarifaires par groupe |
-| `src/pages/Index.tsx` | Commentaire AccessoriesSection |
-| `src/components/ProductCard.tsx` | Masquage lien pochon, adaptation pricing groupe |
-| `src/components/CartDrawer.tsx` | Masquage visuel cadeaux |
-| `src/pages/CataloguePage.tsx` | Masquage onglet Accessoires |
-| `src/components/Footer.tsx` | Ajout mention légale CBD |
-| `src/components/SommelierSection.tsx` | Adaptation recommandations aux 7 produits |
+| `src/assets/flowers/blue-mango-real.jpg` | Nouvelle image |
+| `src/assets/flowers/911-og-real.jpg` | Nouvelle image |
+| `src/assets/flowers/mint-kush-real.jpg` | Nouvelle image |
+| `src/assets/flowers/platinum-og-real.jpg` | Nouvelle image |
+| `src/data/products.ts` | Mise a jour des imports et references |
 
 ---
 
-## Details Techniques
+## Note sur les 3 Produits Manquants
 
-### Structure du nouveau Product
+Vous avez fourni 4 images sur 7 produits. Il manque :
+- **Amnesia "Signature Oniria"** (conservera l'image actuelle)
+- **Ice O Lator** (conservera l'image actuelle)
+- **Golden CBN** (conservera l'image actuelle)
 
-```typescript
-interface Product {
-  id: string;
-  name: string;
-  subtitle: string;
-  badge: string;           // Nouveau : "Cali Genetics", "Royal Sleep", etc.
-  description: string;
-  price: number;           // Prix base par gramme (12 ou 14)
-  priceGroup: "A" | "B";   // Nouveau : groupe tarifaire
-  cbdPercentage: string;
-  image: string;
-  terpenes: TerpeneProfile;
-  mood: string;
-  category: ProductCategory;
-  intentionMatch: string[];
-  tasteMatch: string[];
-}
-```
-
-### Logique de calcul adaptée
-
-```typescript
-export const calculatePrice = (
-  basePrice: number, 
-  weight: number, 
-  priceGroup: "A" | "B" = "A"
-): PriceInfo => {
-  const tiers = priceGroup === "A" ? WEIGHT_TIERS_A : WEIGHT_TIERS_B;
-  // ... calcul avec les bons tiers
-}
-```
-
----
-
-## Points de Vigilance
-
-- La base de données `products` en Supabase n'a que 2 colonnes de prix (`price`, `pro_price`). La logique de groupe sera gérée côté frontend via le fichier `products.ts`
-- Le Sommelier (`recommendationMatrix`) devra pointer vers les nouveaux IDs de produits
-- Les échantillons gratuits continueront de fonctionner avec les 7 produits restants
+Si vous avez ces images, vous pourrez les ajouter ensuite.
