@@ -1,13 +1,13 @@
-// Images pour les 7 produits
-// Vraies images produits
+// Images pour les 7 produits - Style Haute Joaillerie
+// Fleurs Premium
 import blueMango from "@/assets/flowers/blue-mango-real.jpg";
 import nineOneOne from "@/assets/flowers/911-og-real.jpg";
 import mintKush from "@/assets/flowers/mint-kush-real.jpg";
 import platinumOG from "@/assets/flowers/platinum-og-real.jpg";
-// Images placeholder pour les 3 produits restants
-import amnesiaHaze from "@/assets/flowers/amnesia-haze.jpg";
-import bubbleHash from "@/assets/resins/bubble-hash.jpg";
-import charas from "@/assets/resins/charas.jpg";
+import amnesiaOniria from "@/assets/flowers/amnesia-oniria-real.jpg";
+// Résines Premium
+import iceOLator from "@/assets/resins/ice-o-lator-real.jpg";
+import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
@@ -50,7 +50,7 @@ const groupA: Product[] = [
     price: 12,
     priceGroup: "A",
     cbdPercentage: "18%",
-    image: amnesiaHaze,
+    image: amnesiaOniria,
     terpenes: { boise: 40, fruite: 85, epice: 50, terreux: 60 },
     mood: "Énergie",
     category: "fleur",
@@ -98,7 +98,7 @@ const groupA: Product[] = [
     price: 12,
     priceGroup: "A",
     cbdPercentage: "60%",
-    image: bubbleHash,
+    image: iceOLator,
     terpenes: { boise: 50, fruite: 70, epice: 45, terreux: 55 },
     mood: "Pureté",
     category: "resine",
@@ -114,7 +114,7 @@ const groupA: Product[] = [
     price: 12,
     priceGroup: "A",
     cbdPercentage: "25%",
-    image: charas,
+    image: goldenCBN,
     terpenes: { boise: 60, fruite: 45, epice: 90, terreux: 70 },
     mood: "Sommeil",
     category: "resine",
