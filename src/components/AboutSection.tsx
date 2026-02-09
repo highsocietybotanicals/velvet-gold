@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Shield, Leaf, Award, Heart } from "lucide-react";
 
 const values = [
@@ -78,16 +79,16 @@ const AboutSection = () => {
               </p>
             </div>
 
-            <motion.a
-              href="#contact"
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.5 }}
-              className="inline-block mt-8 btn-luxury-outline"
             >
-              En Savoir Plus
-            </motion.a>
+              <Link to="/contact" className="inline-block mt-8 btn-luxury-outline">
+                En Savoir Plus
+              </Link>
+            </motion.div>
           </motion.div>
 
           {/* Values grid */}

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
 import GoldParticles from "./GoldParticles";
 import pochon from "@/assets/pochon.jpeg";
 
@@ -74,12 +75,12 @@ const HeroSection = () => {
               transition={{ delay: 1 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              <a href="#collection" className="btn-luxury shimmer">
+              <Link to="/catalogue" className="btn-luxury shimmer">
                 Explorer la Collection
-              </a>
-              <a href="#sommelier" className="btn-luxury-outline">
+              </Link>
+              <Link to="/sommelier" className="btn-luxury-outline">
                 Le Sommelier
-              </a>
+              </Link>
             </motion.div>
           </motion.div>
 

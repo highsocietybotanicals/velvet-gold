@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Instagram, Facebook, Mail, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo.jpeg";
 
 const Footer = () => {
@@ -49,14 +50,20 @@ const Footer = () => {
           >
             <h4 className="font-display text-lg text-foreground mb-6">Navigation</h4>
             <ul className="space-y-3">
-              {["Accueil", "La Collection", "Le Sommelier", "La Société"].map((item) => (
-                <li key={item}>
-                  <a
-                    href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
+              {[
+                { label: "Accueil", href: "/" },
+                { label: "La Collection", href: "/catalogue" },
+                { label: "Le Sommelier", href: "/sommelier" },
+                { label: "La Société", href: "/societe" },
+                { label: "Contact", href: "/contact" },
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link
+                    to={item.href}
                     className="text-muted-foreground hover:text-primary transition-colors text-sm font-body"
                   >
-                    {item}
-                  </a>
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -6,6 +6,9 @@ import CataloguePage from "@/pages/CataloguePage";
 import ProductPage from "@/pages/ProductPage";
 import AccessoryPage from "@/pages/AccessoryPage";
 import SampleSelectionPage from "@/pages/SampleSelectionPage";
+import SommelierPage from "@/pages/SommelierPage";
+import SocietePage from "@/pages/SocietePage";
+import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
 import ProfilePage from "@/pages/ProfilePage";
 import AdminPage from "@/pages/AdminPage";
@@ -22,6 +25,9 @@ const AnimatedRoutes = () => {
         <Route path="/produit/:id" element={<PageTransition><ProductPage /></PageTransition>} />
         <Route path="/accessoire/:id" element={<PageTransition><AccessoryPage /></PageTransition>} />
         <Route path="/echantillon" element={<PageTransition><SampleSelectionPage /></PageTransition>} />
+        <Route path="/sommelier" element={<PageTransition><SommelierPage /></PageTransition>} />
+        <Route path="/societe" element={<PageTransition><SocietePage /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
         <Route path="/profil" element={<PageTransition><ProfilePage /></PageTransition>} />
         <Route path="/admin" element={<PageTransition><AdminPage /></PageTransition>} />
