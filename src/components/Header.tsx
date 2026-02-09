@@ -41,7 +41,7 @@ const Header = () => {
       const sectionId = href.substring(2);
       
       if (location.pathname === "/") {
-        // Already on home page, just scroll
+        // Already on home page, scroll to section
         const element = document.getElementById(sectionId);
         if (element) {
           element.scrollIntoView({ behavior: "smooth" });
@@ -56,6 +56,9 @@ const Header = () => {
           }
         }, 500);
       }
+    } else if (href === "/" && location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -92,13 +95,7 @@ const Header = () => {
       >
         <Link
           to={link.href}
-          onClick={(e) => {
-            setIsMenuOpen(false);
-            if (location.pathname === link.href) {
-              e.preventDefault();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-          }}
+          onClick={(e) => handleNavClick(e, link.href)}
           className={
             isMobile
               ? `text-lg hover:text-primary transition-colors py-2 font-display ${isActive ? "text-primary" : "text-foreground"}`
