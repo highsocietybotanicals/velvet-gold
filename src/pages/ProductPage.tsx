@@ -50,8 +50,8 @@ const ProductPage = () => {
   const { getPrice } = useProducts();
   
   const product = allProducts.find((p) => p.id === id);
-  const [selectedWeight, setSelectedWeight] = useState<number>(2.5);
-  const [customWeight, setCustomWeight] = useState<string>("2.5");
+  const [selectedWeight, setSelectedWeight] = useState<number>(1);
+  const [customWeight, setCustomWeight] = useState<string>("1");
 
   // Get dynamic price from database
   const dbPrice = product ? getPrice(product.id) : null;

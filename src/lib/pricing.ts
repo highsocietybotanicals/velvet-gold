@@ -64,7 +64,7 @@ export const WEIGHT_TIERS_B: WeightTier[] = [
 // Ancien système pour compatibilité (utilise Groupe A par défaut)
 export const WEIGHT_TIERS: WeightTier[] = WEIGHT_TIERS_A;
 
-export const PRESET_WEIGHTS = [2.5, 10, 25, 50, 100];
+export const PRESET_WEIGHTS = [1, 2.5, 10, 25, 50, 100];
 
 // Accessory bulk discount threshold
 export const ACCESSORY_BULK_THRESHOLD = 10;
