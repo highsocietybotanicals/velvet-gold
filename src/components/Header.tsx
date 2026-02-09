@@ -37,28 +37,35 @@ const Header = () => {
     setIsMenuOpen(false);
     
     if (href.startsWith("/#")) {
-      e.preventDefault();
       const sectionId = href.substring(2);
       
       if (location.pathname === "/") {
-        // Already on home page, scroll to section
+        // Already on home page — manually scroll since browser won't re-trigger for same hash
+        e.preventDefault();
         const element = document.getElementById(sectionId);
         if (element) {
           element.scrollIntoView({ behavior: "smooth" });
+        } else {
+          // Fallback: set hash so browser tries
+          window.location.hash = sectionId;
         }
       } else {
-        // Navigate to home page, then scroll after render
+        // From another page: navigate home, then scroll
+        e.preventDefault();
         navigate("/");
         setTimeout(() => {
           const element = document.getElementById(sectionId);
           if (element) {
             element.scrollIntoView({ behavior: "smooth" });
           }
-        }, 500);
+        }, 600);
       }
-    } else if (href === "/" && location.pathname === "/") {
-      e.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (href === "/") {
+      if (location.pathname === "/") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      // else: let <Link> handle normal navigation
     }
   };
 
