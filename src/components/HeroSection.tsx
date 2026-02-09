@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import GoldParticles from "./GoldParticles";
-import pochon from "@/assets/pochon.jpeg";
+import heroImage from "@/assets/hero-flowers-resin.jpg";
 
 const HeroSection = () => {
   return (
@@ -102,8 +102,8 @@ const HeroSection = () => {
                 className="relative"
               >
                 <img
-                  src={pochon}
-                  alt="Collection High Society Botanicals"
+                  src={heroImage}
+                  alt="Collection High Society Botanicals - Fleurs et résines CBD"
                   className="w-full max-w-lg mx-auto rounded-lg shadow-luxury"
                 />
               </motion.div>
