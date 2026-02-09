@@ -122,8 +122,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   const { addToCart } = useCart();
   const { isPro, isProValidated, profile } = useAuth();
   const { getPrice } = useProducts();
-  const [selectedWeight, setSelectedWeight] = useState<number>(2.5);
-  const [customWeight, setCustomWeight] = useState<string>("2.5");
+  const [selectedWeight, setSelectedWeight] = useState<number>(1);
+  const [customWeight, setCustomWeight] = useState<string>("1");
 
   // Get dynamic price from database
   const dbPrice = getPrice(product.id);
