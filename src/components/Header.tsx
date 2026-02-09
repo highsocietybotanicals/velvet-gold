@@ -33,14 +33,28 @@ const Header = () => {
     navigate("/");
   };
 
-  const handleNavClick = (href: string) => {
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
     setIsMenuOpen(false);
     
-    // If it's a hash link and we're on the home page, scroll to section
-    if (href.startsWith("/#") && location.pathname === "/") {
-      const element = document.getElementById(href.substring(2));
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+    if (href.startsWith("/#")) {
+      e.preventDefault();
+      const sectionId = href.substring(2);
+      
+      if (location.pathname === "/") {
+        // Already on home page, just scroll
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      } else {
+        // Navigate to home page, then scroll after render
+        navigate("/");
+        setTimeout(() => {
+          const element = document.getElementById(sectionId);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 500);
       }
     }
   };
@@ -57,7 +71,7 @@ const Header = () => {
           initial={{ opacity: 0, y: isMobile ? 0 : -10, x: isMobile ? -20 : 0 }}
           animate={{ opacity: 1, y: 0, x: 0 }}
           transition={{ delay: isMobile ? 0.05 * index : 0.1 * index }}
-          onClick={() => handleNavClick(link.href)}
+          onClick={(e) => handleNavClick(e, link.href)}
           className={
             isMobile
               ? "text-lg text-foreground hover:text-primary transition-colors py-2 font-display"
