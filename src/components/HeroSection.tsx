@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import GoldParticles from "./GoldParticles";
-import HeroOrbitCSS from "./HeroOrbitCSS";
 
 const HeroSection = () => {
   return (
@@ -24,89 +23,56 @@ const HeroSection = () => {
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-6 pt-24">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Text content */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-center lg:text-left"
+        <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-primary/80 tracking-[0.3em] uppercase text-sm mb-4 font-body"
           >
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-primary/80 tracking-[0.3em] uppercase text-sm mb-4 font-body"
-            >
-              Collection Exclusive
-            </motion.p>
+            Collection Exclusive
+          </motion.p>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight mb-6"
-            >
-              <span className="text-gold-gradient">L'Excellence</span>
-              <br />
-              <span className="text-foreground">Botanique</span>
-            </motion.h1>
-
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ delay: 0.7, duration: 0.8 }}
-              className="w-32 h-px bg-gradient-to-r from-primary to-transparent mb-6 mx-auto lg:mx-0"
-            />
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="text-lg md:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0 mb-8 font-body leading-relaxed"
-            >
-              Découvrez notre sélection raffinée de fleurs et résines CBD, 
-              cultivées avec passion pour les connaisseurs les plus exigeants.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-            >
-              <Link to="/catalogue" className="btn-luxury shimmer">
-                Explorer la Collection
-              </Link>
-              <Link to="/sommelier" className="btn-luxury-outline">
-                Le Sommelier
-              </Link>
-            </motion.div>
-          </motion.div>
-
-          {/* Orbiting products composition */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="relative"
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight mb-6"
           >
-            <HeroOrbitCSS />
+            <span className="text-gold-gradient">L'Excellence</span>
+            <br />
+            <span className="text-foreground">Botanique</span>
+          </motion.h1>
 
-            {/* Floating badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 1.2 }}
-              className="absolute -bottom-4 right-0 md:bottom-0 md:right-4 bg-card border border-primary/30 rounded-lg p-4 shadow-gold backdrop-blur-sm"
-            >
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                Qualité Premium
-              </p>
-              <p className="text-primary font-display text-lg">
-                CBD &lt; 0.3% THC
-              </p>
-            </motion.div>
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+            className="w-32 h-px bg-gradient-to-r from-primary via-primary to-transparent mb-6"
+          />
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="text-lg md:text-xl text-muted-foreground max-w-lg mb-8 font-body leading-relaxed"
+          >
+            Découvrez notre sélection raffinée de fleurs et résines CBD, 
+            cultivées avec passion pour les connaisseurs les plus exigeants.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1 }}
+            className="flex flex-col sm:flex-row gap-4"
+          >
+            <Link to="/catalogue" className="btn-luxury shimmer">
+              Explorer la Collection
+            </Link>
+            <Link to="/sommelier" className="btn-luxury-outline">
+              Le Sommelier
+            </Link>
           </motion.div>
         </div>
 
