@@ -16,9 +16,9 @@ import logo from "@/assets/logo.jpeg";
 const navLinks = [
   { href: "/", label: "Accueil" },
   { href: "/catalogue", label: "Le Coffre" },
-  { href: "/#sommelier", label: "Le Sommelier" },
-  { href: "/#societe", label: "La Société" },
-  { href: "/#contact", label: "Contact" },
+  { href: "/sommelier", label: "Le Sommelier" },
+  { href: "/societe", label: "La Société" },
+  { href: "/contact", label: "Contact" },
 ];
 
 const Header = () => {
@@ -33,65 +33,12 @@ const Header = () => {
     navigate("/");
   };
 
-  const handleNavClick = (e: React.MouseEvent, href: string) => {
+  const handleNavClick = () => {
     setIsMenuOpen(false);
-    
-    if (href.startsWith("/#")) {
-      const sectionId = href.substring(2);
-      
-      if (location.pathname === "/") {
-        // Already on home page — manually scroll since browser won't re-trigger for same hash
-        e.preventDefault();
-        const element = document.getElementById(sectionId);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        } else {
-          // Fallback: set hash so browser tries
-          window.location.hash = sectionId;
-        }
-      } else {
-        // From another page: navigate home, then scroll
-        e.preventDefault();
-        navigate("/");
-        setTimeout(() => {
-          const element = document.getElementById(sectionId);
-          if (element) {
-            element.scrollIntoView({ behavior: "smooth" });
-          }
-        }, 600);
-      }
-    } else if (href === "/") {
-      if (location.pathname === "/") {
-        e.preventDefault();
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-      // else: let <Link> handle normal navigation
-    }
   };
 
   const renderLink = (link: { href: string; label: string }, index: number, isMobile = false) => {
-    const isHashLink = link.href.startsWith("/#");
-    const isActive = location.pathname === link.href || (location.pathname === "/" && link.href === "/");
-
-    if (isHashLink) {
-      return (
-        <motion.a
-          key={link.href}
-          href={link.href}
-          initial={{ opacity: 0, y: isMobile ? 0 : -10, x: isMobile ? -20 : 0 }}
-          animate={{ opacity: 1, y: 0, x: 0 }}
-          transition={{ delay: isMobile ? 0.05 * index : 0.1 * index }}
-          onClick={(e) => handleNavClick(e, link.href)}
-          className={
-            isMobile
-              ? "text-lg text-foreground hover:text-primary transition-colors py-2 font-display"
-              : "text-sm text-muted-foreground hover:text-primary transition-colors duration-300 tracking-wide uppercase font-body"
-          }
-        >
-          {link.label}
-        </motion.a>
-      );
-    }
+    const isActive = location.pathname === link.href;
 
     return (
       <motion.div
@@ -102,7 +49,7 @@ const Header = () => {
       >
         <Link
           to={link.href}
-          onClick={(e) => handleNavClick(e, link.href)}
+          onClick={handleNavClick}
           className={
             isMobile
               ? `text-lg hover:text-primary transition-colors py-2 font-display ${isActive ? "text-primary" : "text-foreground"}`
