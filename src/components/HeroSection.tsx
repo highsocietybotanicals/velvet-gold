@@ -1,102 +1,10 @@
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { lazy, Suspense } from "react";
 import GoldParticles from "./GoldParticles";
-import heroBook from "@/assets/hero-book.jpg";
 
-// Real product images
-import amnesiaOniria from "@/assets/flowers/amnesia-oniria-real.jpg";
-import platinumOg from "@/assets/flowers/platinum-og-real.jpg";
-import mintKush from "@/assets/flowers/mint-kush-real.jpg";
-import blueMango from "@/assets/flowers/blue-mango-real.jpg";
-import og911 from "@/assets/flowers/911-og-real.jpg";
-import iceOlator from "@/assets/resins/ice-o-lator-real.jpg";
-import goldenCbn from "@/assets/resins/golden-cbn-real.jpg";
-
-const orbitProducts = [
-  { src: amnesiaOniria, name: "Amnesia Oniria" },
-  { src: platinumOg, name: "Platinum OG" },
-  { src: mintKush, name: "Mint Kush" },
-  { src: blueMango, name: "Blue Mango" },
-  { src: og911, name: "911 OG" },
-  { src: iceOlator, name: "Ice O Lator" },
-  { src: goldenCbn, name: "Golden CBN" },
-];
-
-const OrbitComposition = () => {
-  const [angle, setAngle] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAngle((prev) => (prev + 0.15) % 360);
-    }, 16);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="relative w-[320px] h-[320px] md:w-[480px] md:h-[480px] mx-auto">
-      {/* Glow behind book */}
-      <div className="absolute inset-0 bg-gradient-gold-radial opacity-60 blur-3xl scale-110" />
-
-      {/* Central book */}
-      <motion.div
-        animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute inset-0 flex items-center justify-center z-10"
-      >
-        <img
-          src={heroBook}
-          alt="Livre illuminé"
-          className="w-32 h-32 md:w-44 md:h-44 object-contain drop-shadow-[0_0_30px_rgba(212,175,55,0.6)]"
-        />
-      </motion.div>
-
-      {/* Orbiting products */}
-      {orbitProducts.map((product, i) => {
-        const baseAngle = (360 / orbitProducts.length) * i;
-        const currentAngle = ((baseAngle + angle) * Math.PI) / 180;
-        const radiusX = typeof window !== "undefined" && window.innerWidth < 768 ? 120 : 190;
-        const radiusY = radiusX * 0.85;
-        const x = Math.cos(currentAngle) * radiusX;
-        const y = Math.sin(currentAngle) * radiusY;
-        const floatOffset = Math.sin(Date.now() / 1000 + i * 1.2) * 6;
-        const scale = 0.8 + 0.2 * ((Math.sin(currentAngle) + 1) / 2);
-        const zIndex = Math.round(scale * 10);
-
-        return (
-          <motion.div
-            key={product.name}
-            className="absolute"
-            style={{
-              left: "50%",
-              top: "50%",
-              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y + floatOffset}px)) scale(${scale})`,
-              zIndex,
-            }}
-          >
-            {/* Gold trail glow */}
-            <div
-              className="absolute inset-0 rounded-full blur-md"
-              style={{
-                background: "radial-gradient(circle, rgba(212,175,55,0.4) 0%, transparent 70%)",
-                transform: "scale(1.8)",
-              }}
-            />
-            <img
-              src={product.src}
-              alt={product.name}
-              className="w-14 h-14 md:w-20 md:h-20 rounded-full object-cover border-2 border-primary/60 relative"
-              style={{
-                boxShadow: "0 0 20px rgba(212,175,55,0.4), 0 0 40px rgba(212,175,55,0.15)",
-              }}
-            />
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-};
+const HeroOrbit3D = lazy(() => import("./HeroOrbit3D"));
 
 const HeroSection = () => {
   return (
@@ -185,7 +93,9 @@ const HeroSection = () => {
             transition={{ duration: 1, delay: 0.4 }}
             className="relative"
           >
-            <OrbitComposition />
+            <Suspense fallback={<div className="w-[320px] h-[320px] md:w-[500px] md:h-[500px] mx-auto" />}>
+              <HeroOrbit3D />
+            </Suspense>
 
             {/* Floating badge */}
             <motion.div
