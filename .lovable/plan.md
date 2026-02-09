@@ -1,68 +1,60 @@
 
 
-# Restructuration du site en pages separees
+# Remplacer l'image hero par une composition avec les vraies varietes
 
-## Probleme actuel
+## Concept
 
-Le site utilise une seule page d'accueil (`/`) avec toutes les sections (Sommelier, Hero, Collection, La Societe, Contact) empilees. La navigation repose sur des ancres (`/#sommelier`, `/#contact`) qui causent des bugs de scroll persistants avec React Router.
+Au lieu d'une seule image generee par IA, creer une composition CSS/Framer Motion interactive avec les **vraies photos** des 7 varietes du catalogue qui flottent et tournent autour d'un livre ouvert illumine. Les paillettes d'or tombent en arriere-plan grace au composant GoldParticles existant.
 
-## Solution
+## Ce qui change
 
-Transformer chaque section en une vraie page avec sa propre route. Plus d'ancres, plus de problemes de scroll.
+### Modifier `src/components/HeroSection.tsx`
 
-### Nouvelles pages a creer
+- Supprimer l'import de `hero-flowers-resin.jpg`
+- Importer les 7 vraies images produits depuis `src/data/products.ts` ou directement :
+  - `amnesia-oniria-real.jpg`
+  - `platinum-og-real.jpg`
+  - `mint-kush-real.jpg`
+  - `blue-mango-real.jpg`
+  - `911-og-real.jpg`
+  - `ice-o-lator-real.jpg`
+  - `golden-cbn-real.jpg`
+- Remplacer le bloc `<img>` unique par une composition animee :
+  - Un element central representant un **livre ouvert** (image generee ou icone stylee avec glow dore)
+  - Les 7 images produits disposees en cercle autour du livre
+  - Chaque image tourne lentement en orbite avec Framer Motion (`rotate`, positions circulaires avec `sin`/`cos`)
+  - Chaque image a un leger flottement vertical independant (decalage different)
+  - Des trainées dorees derriere chaque image (effet CSS `box-shadow` gold + blur)
+  - Le livre au centre a un effet lumineux (glow dore, ombre portee)
 
-| Page | Route | Contenu |
-|------|-------|---------|
-| Accueil | `/` | HeroSection uniquement (landing) |
-| Le Sommelier | `/sommelier` | SommelierSection |
-| La Societe | `/societe` | AboutSection |
-| Contact | `/contact` | Footer/Contact (section contact extraite en page) |
+### Generer une image de livre ouvert
 
-Les pages existantes restent inchangees : `/catalogue`, `/produit/:id`, `/auth`, `/profil`, `/admin`.
+- Generer une image d'un livre ancien ouvert, fond transparent/noir, eclaire par une lumiere doree, style haute joaillerie
+- La sauvegarder dans `src/assets/hero-book.jpg`
 
-### Fichiers a modifier
+### Details techniques de l'animation
 
-**1. Creer `src/pages/SommelierPage.tsx`**
-- Page dediee qui affiche Header + SommelierSection + Footer
-- Route : `/sommelier`
+- Les 7 produits sont positionnes en cercle (rayon ~200px sur desktop, ~120px sur mobile)
+- Animation CSS `@keyframes orbit` ou Framer Motion `animate` avec rotation continue lente (30-40 secondes par tour)
+- Chaque produit a un delai different pour creer un mouvement organique
+- Les images produits sont affichees en cercle (border-radius 50%) avec bordure doree fine
+- Taille des vignettes : ~80px sur desktop, ~50px sur mobile
+- Effet de trainee : `box-shadow: 0 0 20px rgba(212, 175, 55, 0.4)`
 
-**2. Creer `src/pages/SocietePage.tsx`**
-- Page dediee qui affiche Header + AboutSection + Footer
-- Route : `/societe`
+### Responsive
 
-**3. Creer `src/pages/ContactPage.tsx`**
-- Page dediee qui affiche Header + section Contact (extraite du Footer) + Footer
-- Route : `/contact`
+- Desktop : composition large avec orbite visible
+- Mobile : orbite plus petite, vignettes reduites, le tout reste lisible
 
-**4. Modifier `src/pages/Index.tsx`**
-- Retirer SommelierSection et AboutSection
-- Garder uniquement HeroSection + ProductSection (la collection)
-- Garder le Header et Footer
+## Fichiers concernes
 
-**5. Modifier `src/components/Header.tsx`**
-- Remplacer les liens hash par des vrais liens :
-  - `/#sommelier` devient `/sommelier`
-  - `/#societe` devient `/societe`
-  - `/#contact` devient `/contact`
-- Supprimer toute la logique `handleNavClick` complexe (plus besoin)
-- Tous les liens deviennent de simples `<Link to="...">` 
+| Fichier | Action |
+|---------|--------|
+| `src/components/HeroSection.tsx` | Modifier - remplacer image par composition animee |
+| `src/assets/hero-book.jpg` | Creer - image du livre illumine |
 
-**6. Modifier `src/components/AnimatedRoutes.tsx`**
-- Ajouter les 3 nouvelles routes : `/sommelier`, `/societe`, `/contact`
+## Resultat attendu
 
-**7. Modifier `src/components/Footer.tsx`**
-- Mettre a jour les liens de navigation pour utiliser les nouvelles routes (`/sommelier`, `/societe`, `/contact`) au lieu des ancres
-- Le lien "Contact" pointe vers `/contact`
-
-**8. Modifier `src/components/HeroSection.tsx`**
-- Le bouton "Explorer la Collection" : lien vers `/catalogue` au lieu de `#collection`
-- Le bouton "Le Sommelier" : lien vers `/sommelier` au lieu de `#sommelier`
-
-## Resultat
-
-- Chaque clic de navigation change de page proprement via React Router
-- Plus aucun probleme de scroll ou d'ancres
-- Le bouton "retour" du navigateur fonctionne naturellement
-- La transition de page animee (Framer Motion) s'applique entre chaque page
-
+- Les vraies photos des varietes tournent autour d'un livre dore
+- Effet premium avec trainées d'or et flottement
+- Aucune image "fake" - uniquement les vrais produits du catalogue
