@@ -41,7 +41,7 @@ const ContactPage = () => {
               <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8 md:p-12 space-y-8">
                 <div className="flex items-center justify-center gap-3 text-muted-foreground font-body">
                   <Mail className="w-5 h-5 text-primary" />
-                  <span>contact@highsocietybotanicals.fr</span>
+                  <span>contact@highsocietybotanicals.com</span>
                 </div>
                 <div className="flex items-center justify-center gap-3 text-muted-foreground font-body">
                   <MapPin className="w-5 h-5 text-primary" />
