@@ -92,7 +92,13 @@ const Header = () => {
       >
         <Link
           to={link.href}
-          onClick={() => setIsMenuOpen(false)}
+          onClick={(e) => {
+            setIsMenuOpen(false);
+            if (location.pathname === link.href) {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
           className={
             isMobile
               ? `text-lg hover:text-primary transition-colors py-2 font-display ${isActive ? "text-primary" : "text-foreground"}`
