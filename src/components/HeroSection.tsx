@@ -1,10 +1,8 @@
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { lazy, Suspense } from "react";
 import GoldParticles from "./GoldParticles";
-
-const HeroOrbit3D = lazy(() => import("./HeroOrbit3D"));
+import HeroOrbitCSS from "./HeroOrbitCSS";
 
 const HeroSection = () => {
   return (
@@ -93,9 +91,7 @@ const HeroSection = () => {
             transition={{ duration: 1, delay: 0.4 }}
             className="relative"
           >
-            <Suspense fallback={<div className="w-[320px] h-[320px] md:w-[500px] md:h-[500px] mx-auto" />}>
-              <HeroOrbit3D />
-            </Suspense>
+            <HeroOrbitCSS />
 
             {/* Floating badge */}
             <motion.div
