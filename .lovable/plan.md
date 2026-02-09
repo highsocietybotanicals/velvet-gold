@@ -1,31 +1,68 @@
 
-# Correction de la navigation sur la page d'accueil
 
-## Probleme
+# Restructuration du site en pages separees
 
-Quand on est deja sur la page d'accueil (`/`) et qu'on clique sur :
-- **Accueil** : rien ne se passe car React Router voit qu'on est deja sur `/` et ignore le clic
-- **Contact**, **Le Sommelier**, **La Societe** : le scroll fonctionne deja grace au `handleNavClick`, mais uniquement si l'element existe dans le DOM au moment du clic
+## Probleme actuel
+
+Le site utilise une seule page d'accueil (`/`) avec toutes les sections (Sommelier, Hero, Collection, La Societe, Contact) empilees. La navigation repose sur des ancres (`/#sommelier`, `/#contact`) qui causent des bugs de scroll persistants avec React Router.
 
 ## Solution
 
-### Modifier `src/components/Header.tsx`
+Transformer chaque section en une vraie page avec sa propre route. Plus d'ancres, plus de problemes de scroll.
 
-1. **Lien "Accueil"** : Ajouter un `onClick` sur le `<Link to="/">` pour forcer un `window.scrollTo({ top: 0, behavior: "smooth" })` quand on est deja sur la page d'accueil
+### Nouvelles pages a creer
 
-2. **Generaliser** : Dans la fonction `renderLink`, pour les liens non-hash (comme "Accueil" vers `/`), ajouter une logique qui detecte si on est deja sur la meme page et force le scroll vers le haut
+| Page | Route | Contenu |
+|------|-------|---------|
+| Accueil | `/` | HeroSection uniquement (landing) |
+| Le Sommelier | `/sommelier` | SommelierSection |
+| La Societe | `/societe` | AboutSection |
+| Contact | `/contact` | Footer/Contact (section contact extraite en page) |
 
-Concretement, modifier le bloc du `<Link>` (lignes 93-104) pour ajouter un `onClick` qui :
-- Ferme le menu mobile
-- Si `location.pathname === link.href`, appelle `window.scrollTo({ top: 0, behavior: "smooth" })`
+Les pages existantes restent inchangees : `/catalogue`, `/produit/:id`, `/auth`, `/profil`, `/admin`.
 
-## Fichier concerne
+### Fichiers a modifier
 
-| Fichier | Action |
-|---------|--------|
-| `src/components/Header.tsx` | Modifier le comportement du clic sur les liens non-hash |
+**1. Creer `src/pages/SommelierPage.tsx`**
+- Page dediee qui affiche Header + SommelierSection + Footer
+- Route : `/sommelier`
+
+**2. Creer `src/pages/SocietePage.tsx`**
+- Page dediee qui affiche Header + AboutSection + Footer
+- Route : `/societe`
+
+**3. Creer `src/pages/ContactPage.tsx`**
+- Page dediee qui affiche Header + section Contact (extraite du Footer) + Footer
+- Route : `/contact`
+
+**4. Modifier `src/pages/Index.tsx`**
+- Retirer SommelierSection et AboutSection
+- Garder uniquement HeroSection + ProductSection (la collection)
+- Garder le Header et Footer
+
+**5. Modifier `src/components/Header.tsx`**
+- Remplacer les liens hash par des vrais liens :
+  - `/#sommelier` devient `/sommelier`
+  - `/#societe` devient `/societe`
+  - `/#contact` devient `/contact`
+- Supprimer toute la logique `handleNavClick` complexe (plus besoin)
+- Tous les liens deviennent de simples `<Link to="...">` 
+
+**6. Modifier `src/components/AnimatedRoutes.tsx`**
+- Ajouter les 3 nouvelles routes : `/sommelier`, `/societe`, `/contact`
+
+**7. Modifier `src/components/Footer.tsx`**
+- Mettre a jour les liens de navigation pour utiliser les nouvelles routes (`/sommelier`, `/societe`, `/contact`) au lieu des ancres
+- Le lien "Contact" pointe vers `/contact`
+
+**8. Modifier `src/components/HeroSection.tsx`**
+- Le bouton "Explorer la Collection" : lien vers `/catalogue` au lieu de `#collection`
+- Le bouton "Le Sommelier" : lien vers `/sommelier` au lieu de `#sommelier`
 
 ## Resultat
 
-- Cliquer sur "Accueil" depuis n'importe ou remonte toujours en haut de la page
-- Les liens hash continuent de fonctionner normalement
+- Chaque clic de navigation change de page proprement via React Router
+- Plus aucun probleme de scroll ou d'ancres
+- Le bouton "retour" du navigateur fonctionne naturellement
+- La transition de page animee (Framer Motion) s'applique entre chaque page
+
