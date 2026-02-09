@@ -1,38 +1,31 @@
 
-
-# Poids par defaut a 1g sur tout le site
+# Correction de la navigation sur la page d'accueil
 
 ## Probleme
 
-Actuellement, le poids par defaut est regle sur 2.5g partout, ce qui affiche un premier prix de 30 euros qui peut faire peur aux visiteurs. L'utilisateur veut que le poids par defaut soit 1g pour montrer un prix d'entree plus accessible.
+Quand on est deja sur la page d'accueil (`/`) et qu'on clique sur :
+- **Accueil** : rien ne se passe car React Router voit qu'on est deja sur `/` et ignore le clic
+- **Contact**, **Le Sommelier**, **La Societe** : le scroll fonctionne deja grace au `handleNavClick`, mais uniquement si l'element existe dans le DOM au moment du clic
 
-## Modifications
+## Solution
 
-### 1. Ajouter 1g dans les poids pre-definis
+### Modifier `src/components/Header.tsx`
 
-**Fichier : `src/lib/pricing.ts`** (ligne 67)
+1. **Lien "Accueil"** : Ajouter un `onClick` sur le `<Link to="/">` pour forcer un `window.scrollTo({ top: 0, behavior: "smooth" })` quand on est deja sur la page d'accueil
 
-Changer `PRESET_WEIGHTS` de `[2.5, 10, 25, 50, 100]` a `[1, 2.5, 10, 25, 50, 100]` pour que le bouton 1g soit disponible.
+2. **Generaliser** : Dans la fonction `renderLink`, pour les liens non-hash (comme "Accueil" vers `/`), ajouter une logique qui detecte si on est deja sur la meme page et force le scroll vers le haut
 
-### 2. Poids par defaut a 1g sur les cartes produit
+Concretement, modifier le bloc du `<Link>` (lignes 93-104) pour ajouter un `onClick` qui :
+- Ferme le menu mobile
+- Si `location.pathname === link.href`, appelle `window.scrollTo({ top: 0, behavior: "smooth" })`
 
-**Fichier : `src/components/ProductCard.tsx`** (lignes 125-126)
+## Fichier concerne
 
-Changer les valeurs initiales :
-- `selectedWeight` : de `2.5` a `1`
-- `customWeight` : de `"2.5"` a `"1"`
-
-### 3. Poids par defaut a 1g sur la page produit
-
-**Fichier : `src/pages/ProductPage.tsx`** (lignes 53-54)
-
-Meme changement :
-- `selectedWeight` : de `2.5` a `1`
-- `customWeight` : de `"2.5"` a `"1"`
+| Fichier | Action |
+|---------|--------|
+| `src/components/Header.tsx` | Modifier le comportement du clic sur les liens non-hash |
 
 ## Resultat
 
-- Le bouton "1g" apparait en premier dans la liste des poids
-- Tous les produits affichent le prix pour 1g par defaut (12 euros ou 14 euros selon le groupe)
-- Beaucoup plus accessible visuellement pour les nouveaux visiteurs
-
+- Cliquer sur "Accueil" depuis n'importe ou remonte toujours en haut de la page
+- Les liens hash continuent de fonctionner normalement
