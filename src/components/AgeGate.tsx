@@ -112,18 +112,30 @@ const AgeGate = ({ onVerified }: AgeGateProps) => {
               En entrant, vous confirmez avoir 18 ans ou plus.
             </motion.p>
 
-            {/* Enter button */}
-            <motion.button
+            {/* Age verification buttons */}
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.6 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleEnter}
-              className="btn-luxury shimmer"
+              className="flex flex-col sm:flex-row gap-4 w-full max-w-md"
             >
-              Rejoindre la Société
-            </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleEnter}
+                className="btn-luxury shimmer flex-1 text-center"
+              >
+                J'ai +18 ans — Entrer
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => window.location.href = "https://www.google.com"}
+                className="flex-1 px-8 py-4 border border-primary/30 rounded-lg text-muted-foreground font-display tracking-wider uppercase text-sm hover:border-primary/60 transition-colors text-center"
+              >
+                J'ai -18 ans — Quitter
+              </motion.button>
+            </motion.div>
 
             {/* Legal notice */}
             <motion.p
