@@ -8,6 +8,7 @@ import amnesiaOniria from "@/assets/flowers/amnesia-oniria-real.jpg";
 // Résines Premium
 import iceOLator from "@/assets/resins/ice-o-lator-real.jpg";
 import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
+import nuageDeMousseux from "@/assets/resins/nuage-de-mousseux-real.jpg";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
@@ -121,6 +122,22 @@ const groupA: Product[] = [
     intentionMatch: ["sommeil"],
     tasteMatch: ["floral"],
   },
+  {
+    id: "nuage-de-mousseux",
+    name: "Nuage de Mousseux",
+    subtitle: "Magic Sauce Premium",
+    badge: "Magic Sauce",
+    description: "Résine mousseux infusée Magic Sauce. Texture aérienne unique, détente profonde.",
+    price: 10,
+    priceGroup: "A",
+    cbdPercentage: "40%",
+    image: nuageDeMousseux,
+    terpenes: { boise: 80, fruite: 35, epice: 50, terreux: 85 },
+    mood: "Détente",
+    category: "resine",
+    intentionMatch: ["detente", "sommeil"],
+    tasteMatch: ["boise"],
+  },
 ];
 
 // ============================================
@@ -220,7 +237,7 @@ export const recommendationMatrix: Record<string, Record<string, Product>> = {
 // Matrice de recommandations pour les résines (utilise les résines disponibles)
 export const resinRecommendationMatrix: Record<string, Record<string, Product>> = {
   detente: {
-    boise: allProducts.find(p => p.id === "ice-o-lator")!,
+    boise: allProducts.find(p => p.id === "nuage-de-mousseux")!,
     fruite: allProducts.find(p => p.id === "ice-o-lator")!,
     floral: allProducts.find(p => p.id === "golden-cbn")!,
   },
@@ -230,7 +247,7 @@ export const resinRecommendationMatrix: Record<string, Record<string, Product>> 
     floral: allProducts.find(p => p.id === "golden-cbn")!,
   },
   sommeil: {
-    boise: allProducts.find(p => p.id === "golden-cbn")!,
+    boise: allProducts.find(p => p.id === "nuage-de-mousseux")!,
     fruite: allProducts.find(p => p.id === "ice-o-lator")!,
     floral: allProducts.find(p => p.id === "golden-cbn")!,
   },
