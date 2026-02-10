@@ -1,60 +1,35 @@
 
 
-# Remplacer l'image hero par une composition avec les vraies varietes
+# Ajout du produit "Nuage de Mousseux" (Resine CBD - Magic Sauce)
 
-## Concept
+## Resume
+Ajout d'une nouvelle resine nommee **"Nuage de Mousseux"** au catalogue, a **10EUR/g**, dans le **Groupe A**. La molecule presente dans ce produit est la "Magic Sauce".
 
-Au lieu d'une seule image generee par IA, creer une composition CSS/Framer Motion interactive avec les **vraies photos** des 7 varietes du catalogue qui flottent et tournent autour d'un livre ouvert illumine. Les paillettes d'or tombent en arriere-plan grace au composant GoldParticles existant.
+## Etapes
 
-## Ce qui change
+### 1. Generation de la photo produit
+- Generer via IA une photo de resine/hash style luxe High Society Botanicals
+- Inspiree de la capture d'ecran fournie : texture de hash mousseux / mousse
+- Fond noir, eclairage studio dore, esthetique haute joaillerie
+- Sauvegarde dans `src/assets/resins/nuage-de-mousseux-real.jpg`
 
-### Modifier `src/components/HeroSection.tsx`
+### 2. Ajout du produit dans `src/data/products.ts`
+- **Nom** : Nuage de Mousseux
+- **Sous-titre** : Magic Sauce Premium
+- **Badge** : Magic Sauce
+- **Categorie** : resine
+- **Prix de base** : 10EUR/g (au lieu de 12EUR standard du Groupe A)
+- **Groupe tarifaire** : A (remises : -15% a 10g, -25% a 25g, -35% a 50g, -50% a 100g)
+- **CBD** : a definir (suggestion ~40% en se basant sur le type de produit)
+- **Profil terpenes** : adapte a une resine de type mousseux (boise/terreux dominant)
+- **Intention / Gout** : detente, sommeil / boise
 
-- Supprimer l'import de `hero-flowers-resin.jpg`
-- Importer les 7 vraies images produits depuis `src/data/products.ts` ou directement :
-  - `amnesia-oniria-real.jpg`
-  - `platinum-og-real.jpg`
-  - `mint-kush-real.jpg`
-  - `blue-mango-real.jpg`
-  - `911-og-real.jpg`
-  - `ice-o-lator-real.jpg`
-  - `golden-cbn-real.jpg`
-- Remplacer le bloc `<img>` unique par une composition animee :
-  - Un element central representant un **livre ouvert** (image generee ou icone stylee avec glow dore)
-  - Les 7 images produits disposees en cercle autour du livre
-  - Chaque image tourne lentement en orbite avec Framer Motion (`rotate`, positions circulaires avec `sin`/`cos`)
-  - Chaque image a un leger flottement vertical independant (decalage different)
-  - Des trainées dorees derriere chaque image (effet CSS `box-shadow` gold + blur)
-  - Le livre au centre a un effet lumineux (glow dore, ombre portee)
+### 3. Mise a jour des matrices de recommandation du Sommelier
+- Inclure "Nuage de Mousseux" dans la `resinRecommendationMatrix` pour diversifier les suggestions de resines (actuellement seulement Ice O Lator et Golden CBN)
 
-### Generer une image de livre ouvert
+### 4. Fichiers modifies
+- `src/data/products.ts` : import de l'image + ajout du produit dans le groupe A + mise a jour des matrices
 
-- Generer une image d'un livre ancien ouvert, fond transparent/noir, eclaire par une lumiere doree, style haute joaillerie
-- La sauvegarder dans `src/assets/hero-book.jpg`
+### Note technique
+Le prix de base de 10EUR/g est different du standard du Groupe A (12EUR/g). Le systeme supporte deja cela car le champ `price` est independant du `priceGroup` — le groupe ne determine que les pourcentages de remise par palier.
 
-### Details techniques de l'animation
-
-- Les 7 produits sont positionnes en cercle (rayon ~200px sur desktop, ~120px sur mobile)
-- Animation CSS `@keyframes orbit` ou Framer Motion `animate` avec rotation continue lente (30-40 secondes par tour)
-- Chaque produit a un delai different pour creer un mouvement organique
-- Les images produits sont affichees en cercle (border-radius 50%) avec bordure doree fine
-- Taille des vignettes : ~80px sur desktop, ~50px sur mobile
-- Effet de trainee : `box-shadow: 0 0 20px rgba(212, 175, 55, 0.4)`
-
-### Responsive
-
-- Desktop : composition large avec orbite visible
-- Mobile : orbite plus petite, vignettes reduites, le tout reste lisible
-
-## Fichiers concernes
-
-| Fichier | Action |
-|---------|--------|
-| `src/components/HeroSection.tsx` | Modifier - remplacer image par composition animee |
-| `src/assets/hero-book.jpg` | Creer - image du livre illumine |
-
-## Resultat attendu
-
-- Les vraies photos des varietes tournent autour d'un livre dore
-- Effet premium avec trainées d'or et flottement
-- Aucune image "fake" - uniquement les vrais produits du catalogue
