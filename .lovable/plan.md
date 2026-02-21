@@ -1,35 +1,44 @@
 
 
-# Ajout du produit "Nuage de Mousseux" (Resine CBD - Magic Sauce)
+# Création des pages légales et informations
 
-## Resume
-Ajout d'une nouvelle resine nommee **"Nuage de Mousseux"** au catalogue, a **10EUR/g**, dans le **Groupe A**. La molecule presente dans ce produit est la "Magic Sauce".
+## Ce qui sera fait
 
-## Etapes
+Création de 4 nouvelles pages avec le contenu juridique/informatif adapté à High Society Botanicals, et mise à jour du footer pour que les liens fonctionnent.
 
-### 1. Generation de la photo produit
-- Generer via IA une photo de resine/hash style luxe High Society Botanicals
-- Inspiree de la capture d'ecran fournie : texture de hash mousseux / mousse
-- Fond noir, eclairage studio dore, esthetique haute joaillerie
-- Sauvegarde dans `src/assets/resins/nuage-de-mousseux-real.jpg`
+### 1. Mentions Légales (`/mentions-legales`)
+- Raison sociale : SASU High Society Botanicals, capital 1EUR, Paris
+- Hébergeur, directeur de publication, coordonnées
+- Propriété intellectuelle
 
-### 2. Ajout du produit dans `src/data/products.ts`
-- **Nom** : Nuage de Mousseux
-- **Sous-titre** : Magic Sauce Premium
-- **Badge** : Magic Sauce
-- **Categorie** : resine
-- **Prix de base** : 10EUR/g (au lieu de 12EUR standard du Groupe A)
-- **Groupe tarifaire** : A (remises : -15% a 10g, -25% a 25g, -35% a 50g, -50% a 100g)
-- **CBD** : a definir (suggestion ~40% en se basant sur le type de produit)
-- **Profil terpenes** : adapte a une resine de type mousseux (boise/terreux dominant)
-- **Intention / Gout** : detente, sommeil / boise
+### 2. Politique de Confidentialité (`/confidentialite`)
+- Collecte de données (compte, commandes)
+- Utilisation des données, cookies
+- Droits RGPD (accès, rectification, suppression)
 
-### 3. Mise a jour des matrices de recommandation du Sommelier
-- Inclure "Nuage de Mousseux" dans la `resinRecommendationMatrix` pour diversifier les suggestions de resines (actuellement seulement Ice O Lator et Golden CBN)
+### 3. Conditions Générales de Vente (`/cgv`)
+- Objet, prix, commande, paiement
+- Droit de rétractation (14 jours)
+- Responsabilité, litiges
 
-### 4. Fichiers modifies
-- `src/data/products.ts` : import de l'image + ajout du produit dans le groupe A + mise a jour des matrices
+### 4. Livraison et Retours (`/livraison-retours`)
+- Modes : envoi postal standard, remise en main propre (rayon 100km autour de Puceul 44170, réservé aux Pros ou commandes >= 100g)
+- Délais, frais, suivi
+- Politique de retour
 
-### Note technique
-Le prix de base de 10EUR/g est different du standard du Groupe A (12EUR/g). Le systeme supporte deja cela car le champ `price` est independant du `priceGroup` — le groupe ne determine que les pourcentages de remise par palier.
+## Modifications techniques
 
+### Fichiers créés (4 nouvelles pages)
+- `src/pages/MentionsLegalesPage.tsx`
+- `src/pages/ConfidentialitePage.tsx`
+- `src/pages/CGVPage.tsx`
+- `src/pages/LivraisonRetoursPage.tsx`
+
+Chaque page reprendra le design existant (Header, Footer, fond sombre, typographie luxe, animations framer-motion).
+
+### Fichiers modifiés
+- **`src/components/Footer.tsx`** : Remplacer les `<a href="#">` par des `<Link to="/mentions-legales">`, `/confidentialite`, `/cgv`, `/livraison-retours`
+- **`src/components/AnimatedRoutes.tsx`** : Ajouter les 4 nouvelles routes
+
+### Style
+Les pages auront un format texte structuré avec titres dorés, sections séparées, et le même aspect premium que le reste du site.
