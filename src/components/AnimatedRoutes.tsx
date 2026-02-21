@@ -12,6 +12,10 @@ import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
 import ProfilePage from "@/pages/ProfilePage";
 import AdminPage from "@/pages/AdminPage";
+import MentionsLegalesPage from "@/pages/MentionsLegalesPage";
+import ConfidentialitePage from "@/pages/ConfidentialitePage";
+import CGVPage from "@/pages/CGVPage";
+import LivraisonRetoursPage from "@/pages/LivraisonRetoursPage";
 import NotFound from "@/pages/NotFound";
 
 const AnimatedRoutes = () => {
@@ -31,6 +35,10 @@ const AnimatedRoutes = () => {
         <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
         <Route path="/profil" element={<PageTransition><ProfilePage /></PageTransition>} />
         <Route path="/admin" element={<PageTransition><AdminPage /></PageTransition>} />
+        <Route path="/mentions-legales" element={<PageTransition><MentionsLegalesPage /></PageTransition>} />
+        <Route path="/confidentialite" element={<PageTransition><ConfidentialitePage /></PageTransition>} />
+        <Route path="/cgv" element={<PageTransition><CGVPage /></PageTransition>} />
+        <Route path="/livraison-retours" element={<PageTransition><LivraisonRetoursPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
