@@ -202,7 +202,7 @@ export const resins: Product[] = [
 // Tous les produits combinés
 export const allProducts: Product[] = [...groupA, ...groupB];
 
-// Produits Force Noire (enrichis avec molécule)
+// Produits Élixir Noir (enrichis avec molécule)
 export const forceNoireProducts: Product[] = allProducts.filter(p => p.isForceNoire);
 
 // Produits vedettes pour la page d'accueil
