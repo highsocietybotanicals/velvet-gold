@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Filter, Grid, List, Search, ShoppingCart, Package } from "lucide-react";
+import { Filter, Grid, List, Search, ShoppingCart, Package, Zap } from "lucide-react";
 import { flowers, resins, forceNoireProducts, ProductCategory } from "@/data/products";
 import { accessories } from "@/data/accessories";
 import { useCart } from "@/contexts/CartContext";
@@ -257,8 +257,8 @@ const CataloguePage = () => {
                   transition={{ delay: index * 0.03 }}
                   className={
                     viewMode === "grid"
-                      ? "product-card group bg-card border border-border rounded-xl overflow-hidden"
-                      : "product-card group bg-card border border-border rounded-xl overflow-hidden flex"
+                      ? `product-card group bg-card border rounded-xl overflow-hidden ${product.isForceNoire ? "border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]" : "border-border"}`
+                      : `product-card group bg-card border rounded-xl overflow-hidden flex ${product.isForceNoire ? "border-red-900/50 hover:border-red-800/80" : "border-border"}`
                   }
                 >
                   <Link
@@ -278,6 +278,14 @@ const CataloguePage = () => {
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      
+                      {/* Force Noire badge */}
+                      {product.isForceNoire && (
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-gradient-to-r from-red-950/90 to-black/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-800/60">
+                          <Zap className="w-3 h-3 text-red-400" />
+                          <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
+                        </div>
+                      )}
                     </div>
                     <div className={viewMode === "grid" ? "p-4" : "flex-1 p-4 flex items-center justify-between"}>
                       <div>
