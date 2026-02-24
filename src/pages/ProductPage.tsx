@@ -226,7 +226,7 @@ const ProductPage = () => {
                   </span>
                 )}
                 <span className="ml-auto px-4 py-1 bg-secondary/50 rounded-full text-sm text-foreground">
-                  {product.cbdPercentage} CBD
+                  {product.isForceNoire ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
                 </span>
               </div>
 
@@ -452,7 +452,7 @@ const ProductPage = () => {
                           {getPrice(similarProduct.id)?.price ?? similarProduct.price}€/g
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {similarProduct.cbdPercentage} CBD
+                          {similarProduct.isForceNoire ? similarProduct.cbdPercentage : `${similarProduct.cbdPercentage} CBD`}
                         </span>
                       </div>
                     </div>
