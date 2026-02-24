@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Leaf, Sparkles, ShoppingCart, Gift, Package, ChevronDown } from "lucide-react";
+import { Leaf, Sparkles, ShoppingCart, Gift, Package, ChevronDown, Zap } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
@@ -189,7 +189,11 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.15 }}
-      className="group product-card bg-card rounded-lg border border-border/50 overflow-hidden relative"
+      className={`group product-card bg-card rounded-lg border overflow-hidden relative ${
+        product.isForceNoire 
+          ? "border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]" 
+          : "border-border/50"
+      }`}
     >
       <Link to={`/produit/${product.id}`}>
         {/* Image container with pochon overlay */}
@@ -204,8 +208,16 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             }}
           />
           
-          {/* Badge produit (Cali Genetics, etc.) */}
-          {(product as any).badge && (
+          {/* Force Noire badge */}
+          {product.isForceNoire && (
+            <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-red-950/90 to-black/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-800/60">
+              <Zap className="w-3 h-3 text-red-400" />
+              <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
+            </div>
+          )}
+
+          {/* Badge produit (Cali Genetics, etc.) - only if NOT Force Noire */}
+          {!product.isForceNoire && (product as any).badge && (
             <div className={`absolute top-4 left-4 flex items-center gap-2 backdrop-blur-sm px-3 py-1.5 rounded-full border ${
               (product as any).badge === "Cali Genetics" 
                 ? "bg-gradient-to-r from-yellow-500/20 to-primary/20 border-yellow-500/50 text-yellow-400"

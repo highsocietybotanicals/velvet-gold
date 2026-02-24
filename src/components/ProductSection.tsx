@@ -2,9 +2,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
-import { flowers, resins, type Product } from "@/data/products";
+import { flowers, resins, forceNoireProducts, type Product } from "@/data/products";
 
-type CategoryFilter = "all" | "fleur" | "resine";
+type CategoryFilter = "all" | "fleur" | "resine" | "force-noire";
 
 const ProductSection = () => {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
@@ -12,6 +12,7 @@ const ProductSection = () => {
   const getFilteredProducts = (): Product[] => {
     if (activeCategory === "fleur") return flowers.slice(0, 8);
     if (activeCategory === "resine") return resins.slice(0, 8);
+    if (activeCategory === "force-noire") return forceNoireProducts;
     return [...flowers.slice(0, 4), ...resins.slice(0, 4)];
   };
 
@@ -66,6 +67,7 @@ const ProductSection = () => {
               { id: "all" as CategoryFilter, label: "Tout", count: flowers.length + resins.length },
               { id: "fleur" as CategoryFilter, label: "Fleurs", count: flowers.length },
               { id: "resine" as CategoryFilter, label: "Résines", count: resins.length },
+              { id: "force-noire" as CategoryFilter, label: "⚡ Force Noire", count: forceNoireProducts.length },
             ].map((cat) => (
               <motion.button
                 key={cat.id}
@@ -74,7 +76,9 @@ const ProductSection = () => {
                 onClick={() => setActiveCategory(cat.id)}
                 className={`px-6 py-2 rounded-full border transition-all duration-300 ${
                   activeCategory === cat.id
-                    ? "border-primary bg-primary/20 text-primary"
+                    ? cat.id === "force-noire"
+                      ? "border-red-800 bg-red-950/40 text-red-300"
+                      : "border-primary bg-primary/20 text-primary"
                     : "border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary"
                 }`}
               >

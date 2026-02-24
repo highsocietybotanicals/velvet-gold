@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Filter, Grid, List, Search, ShoppingCart, Package } from "lucide-react";
-import { flowers, resins, ProductCategory } from "@/data/products";
+import { flowers, resins, forceNoireProducts, ProductCategory } from "@/data/products";
 import { accessories } from "@/data/accessories";
 import { useCart } from "@/contexts/CartContext";
 import Header from "@/components/Header";
@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 
 type ViewMode = "grid" | "list";
 type SortOption = "name" | "price-asc" | "price-desc" | "cbd";
-type CategoryFilter = "all" | ProductCategory | "accessoire";
+type CategoryFilter = "all" | ProductCategory | "accessoire" | "force-noire";
 
 const CataloguePage = () => {
   const { addToCart, addAccessory } = useCart();
@@ -23,8 +23,18 @@ const CataloguePage = () => {
   const allProducts = useMemo(() => [...flowers, ...resins], []);
 
   const filteredProducts = useMemo(() => {
-    // If accessoires category is selected, return empty (accessories handled separately)
     if (category === "accessoire") return [];
+    if (category === "force-noire") {
+      let products = [...forceNoireProducts];
+      if (searchQuery) {
+        products = products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      return products;
+    }
 
     let products = allProducts;
 
@@ -135,6 +145,7 @@ const CataloguePage = () => {
                 { key: "all", label: "Tous" },
                 { key: "fleur", label: "Fleurs" },
                 { key: "resine", label: "Résines" },
+                { key: "force-noire", label: "⚡ Force Noire" },
                 // { key: "accessoire", label: "Accessoires" }, // Masqué - rupture de stock
               ].map((cat) => (
                 <button

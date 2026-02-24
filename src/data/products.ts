@@ -35,6 +35,7 @@ export interface Product {
   category: ProductCategory;
   intentionMatch: string[];
   tasteMatch: string[];
+  isForceNoire?: boolean;
 }
 
 // ============================================
@@ -137,6 +138,7 @@ const groupA: Product[] = [
     category: "resine",
     intentionMatch: ["detente", "sommeil"],
     tasteMatch: ["boise"],
+    isForceNoire: true,
   },
 ];
 
@@ -160,6 +162,7 @@ const groupB: Product[] = [
     category: "fleur",
     intentionMatch: ["detente", "sommeil"],
     tasteMatch: ["boise"],
+    isForceNoire: true,
   },
   {
     id: "blue-mango-indoor",
@@ -176,6 +179,7 @@ const groupB: Product[] = [
     category: "fleur",
     intentionMatch: ["creativite", "energie"],
     tasteMatch: ["fruite"],
+    isForceNoire: true,
   },
 ];
 
@@ -197,6 +201,9 @@ export const resins: Product[] = [
 
 // Tous les produits combinés
 export const allProducts: Product[] = [...groupA, ...groupB];
+
+// Produits Force Noire (enrichis avec molécule)
+export const forceNoireProducts: Product[] = allProducts.filter(p => p.isForceNoire);
 
 // Produits vedettes pour la page d'accueil
 export const featuredProducts: Product[] = [
