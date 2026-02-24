@@ -126,12 +126,12 @@ const groupA: Product[] = [
   {
     id: "nuage-de-mousseux",
     name: "Nuage de Mousseux",
-    subtitle: "Magic Sauce Premium",
-    badge: "Magic Sauce",
-    description: "Résine mousseux infusée Magic Sauce 50%. Texture aérienne unique, détente profonde.",
+    subtitle: "Élixir Noir Premium",
+    badge: "Élixir Noir",
+    description: "Résine mousseux infusée Élixir Noir 50%. Texture aérienne unique, détente profonde.",
     price: 10,
     priceGroup: "A",
-    cbdPercentage: "50% Magic Sauce",
+    cbdPercentage: "50% Élixir Noir",
     image: nuageDeMousseux,
     terpenes: { boise: 80, fruite: 35, epice: 50, terreux: 85 },
     mood: "Détente",
@@ -151,11 +151,11 @@ const groupB: Product[] = [
     id: "911-og-indoor",
     name: '911 OG "Indoor Master"',
     subtitle: "Indoor Premium",
-    badge: "Magic Sauce 50%",
-    description: "Edition Limitée Indoor. La puissance à l'état pur avec 50% de Magic Sauce.",
+    badge: "Élixir Noir 50%",
+    description: "Edition Limitée Indoor. La puissance à l'état pur avec 50% d'Élixir Noir.",
     price: 14,
     priceGroup: "B",
-    cbdPercentage: "50% Magic Sauce",
+    cbdPercentage: "50% Élixir Noir",
     image: nineOneOne,
     terpenes: { boise: 85, fruite: 30, epice: 60, terreux: 90 },
     mood: "Puissance",
@@ -168,11 +168,11 @@ const groupB: Product[] = [
     id: "blue-mango-indoor",
     name: 'Blue Mango "Indoor Master"',
     subtitle: "Indoor Collection",
-    badge: "Rare 10-OH+",
-    description: "Collection Rare Indoor. Arômes de mangue et notes tropicales uniques, enrichie au 10-OH.",
+    badge: "Élixir Noir 30%",
+    description: "Collection Rare Indoor. Arômes de mangue et notes tropicales uniques, enrichie à l'Élixir Noir.",
     price: 14,
     priceGroup: "B",
-    cbdPercentage: "30% 10-OH",
+    cbdPercentage: "30% Élixir Noir",
     image: blueMango,
     terpenes: { boise: 35, fruite: 95, epice: 45, terreux: 40 },
     mood: "Tropical",
@@ -202,7 +202,7 @@ export const resins: Product[] = [
 // Tous les produits combinés
 export const allProducts: Product[] = [...groupA, ...groupB];
 
-// Produits Élixir Noir (enrichis avec molécule)
+// Produits Force Noire (enrichis avec Élixir Noir)
 export const forceNoireProducts: Product[] = allProducts.filter(p => p.isForceNoire);
 
 // Produits vedettes pour la page d'accueil
