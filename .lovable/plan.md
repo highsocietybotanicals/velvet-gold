@@ -1,44 +1,53 @@
 
 
-# Création des pages légales et informations
+# Integration de la gamme "Force Noire"
 
-## Ce qui sera fait
+## Concept
 
-Création de 4 nouvelles pages avec le contenu juridique/informatif adapté à High Society Botanicals, et mise à jour du footer pour que les liens fonctionnent.
+Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
 
-### 1. Mentions Légales (`/mentions-legales`)
-- Raison sociale : SASU High Society Botanicals, capital 1EUR, Paris
-- Hébergeur, directeur de publication, coordonnées
-- Propriété intellectuelle
+**Deux gammes :**
+- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
+- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
 
-### 2. Politique de Confidentialité (`/confidentialite`)
-- Collecte de données (compte, commandes)
-- Utilisation des données, cookies
-- Droits RGPD (accès, rectification, suppression)
+---
 
-### 3. Conditions Générales de Vente (`/cgv`)
-- Objet, prix, commande, paiement
-- Droit de rétractation (14 jours)
-- Responsabilité, litiges
+## Changements visuels
 
-### 4. Livraison et Retours (`/livraison-retours`)
-- Modes : envoi postal standard, remise en main propre (rayon 100km autour de Puceul 44170, réservé aux Pros ou commandes >= 100g)
-- Délais, frais, suivi
-- Politique de retour
+### Badge "Force Noire" sur les cartes produit
+- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
+- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
+- Effet visuel premium : bordure rouge sombre/noire, legere lueur
 
-## Modifications techniques
+### Filtre supplementaire
+- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
+- Permet de voir uniquement les produits enrichis
 
-### Fichiers créés (4 nouvelles pages)
-- `src/pages/MentionsLegalesPage.tsx`
-- `src/pages/ConfidentialitePage.tsx`
-- `src/pages/CGVPage.tsx`
-- `src/pages/LivraisonRetoursPage.tsx`
+### Indication sur la page produit detail
+- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
 
-Chaque page reprendra le design existant (Header, Footer, fond sombre, typographie luxe, animations framer-motion).
+---
 
-### Fichiers modifiés
-- **`src/components/Footer.tsx`** : Remplacer les `<a href="#">` par des `<Link to="/mentions-legales">`, `/confidentialite`, `/cgv`, `/livraison-retours`
-- **`src/components/AnimatedRoutes.tsx`** : Ajouter les 4 nouvelles routes
+## Details techniques
 
-### Style
-Les pages auront un format texte structuré avec titres dorés, sections séparées, et le même aspect premium que le reste du site.
+### 1. `src/data/products.ts`
+- Ajouter un champ `isForceNoire: boolean` au type `Product`
+- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
+- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+
+### 2. `src/components/ProductCard.tsx`
+- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
+- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
+
+### 3. `src/components/ProductSection.tsx` (page d'accueil)
+- Ajouter un filtre "Force Noire" dans les boutons de categorie
+- Quand selectionne, afficher uniquement les 3 produits Force Noire
+
+### 4. `src/pages/CataloguePage.tsx`
+- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
+- Filtrer les produits en consequence
+
+### 5. `src/pages/ProductPage.tsx`
+- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
+- Texte court expliquant la puissance superieure de ces produits
+
