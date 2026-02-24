@@ -145,7 +145,7 @@ const CataloguePage = () => {
                 { key: "all", label: "Tous" },
                 { key: "fleur", label: "Fleurs" },
                 { key: "resine", label: "Résines" },
-                { key: "force-noire", label: "⚡ Force Noire" },
+                { key: "force-noire", label: "⚡ Élixir Noir" },
                 // { key: "accessoire", label: "Accessoires" }, // Masqué - rupture de stock
               ].map((cat) => (
                 <button
@@ -279,11 +279,11 @@ const CataloguePage = () => {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       
-                      {/* Force Noire badge */}
+                      {/* Élixir Noir badge */}
                       {product.isForceNoire && (
                         <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-gradient-to-r from-red-950/90 to-black/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-800/60">
                           <Zap className="w-3 h-3 text-red-400" />
-                          <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
+                          <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Élixir Noir</span>
                         </div>
                       )}
                     </div>

@@ -204,7 +204,7 @@ const ProductPage = () => {
               {product.isForceNoire && (
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-red-950 to-black/90 border border-red-800/60 px-4 py-2 rounded-full mb-3 w-fit">
                   <Zap className="w-4 h-4 text-red-400" />
-                  <span className="text-sm font-bold text-red-300 tracking-widest uppercase">Collection Force Noire</span>
+                  <span className="text-sm font-bold text-red-300 tracking-widest uppercase">Collection Élixir Noir</span>
                 </div>
               )}
 
@@ -374,15 +374,15 @@ const ProductPage = () => {
                 <ChevronDown className="w-4 h-4" />
               </Link>
 
-              {/* Force Noire section */}
+              {/* Élixir Noir section */}
               {product.isForceNoire && (
                 <div className="bg-gradient-to-br from-red-950/30 to-card border border-red-900/40 rounded-2xl p-6 mt-6">
                   <div className="flex items-center gap-3 mb-3">
                     <Zap className="w-5 h-5 text-red-400" />
-                    <h3 className="font-display text-lg text-red-300">Force Noire</h3>
+                    <h3 className="font-display text-lg text-red-300">Élixir Noir</h3>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Ce produit appartient à notre collection exclusive <span className="text-red-300 font-medium">Force Noire</span> — 
+                    Ce produit appartient à notre collection exclusive <span className="text-red-300 font-medium">Élixir Noir</span> — 
                     des variétés enrichies avec une molécule supplémentaire pour une puissance et une intensité 
                     qui transcendent le CBD traditionnel. Réservé aux connaisseurs en quête d'absolu.
                   </p>
