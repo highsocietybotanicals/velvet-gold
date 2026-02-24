@@ -67,7 +67,7 @@ const ProductSection = () => {
               { id: "all" as CategoryFilter, label: "Tout", count: flowers.length + resins.length },
               { id: "fleur" as CategoryFilter, label: "Fleurs", count: flowers.length },
               { id: "resine" as CategoryFilter, label: "Résines", count: resins.length },
-              { id: "force-noire" as CategoryFilter, label: "⚡ Élixir Noir", count: forceNoireProducts.length },
+              { id: "force-noire" as CategoryFilter, label: "⚡ Force Noire", count: forceNoireProducts.length },
             ].map((cat) => (
               <motion.button
                 key={cat.id}
