@@ -135,6 +135,11 @@ const CartDrawer = () => {
   const [scheduledTime, setScheduledTime] = useState("");
   const [contactPhone, setContactPhone] = useState("");
 
+  // Guest checkout state
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+
   // No gifts for Pro users with validated VAT
   const totalGifts = isProWithValidatedVat ? null : getGifts(totalFlowerWeight);
   
