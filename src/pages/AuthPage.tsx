@@ -36,7 +36,16 @@ const handleGoogleSignIn = async () => {
   }
 };
 
-const AuthPage = () => {
+const handleAppleSignIn = async () => {
+  const { error } = await lovable.auth.signInWithOAuth("apple", {
+    redirect_uri: window.location.origin,
+  });
+  if (error) {
+    console.error("Apple sign-in error:", error);
+  }
+};
+
+
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
   const [email, setEmail] = useState("");
