@@ -43,9 +43,8 @@ const handleAppleSignIn = async () => {
   if (error) {
     console.error("Apple sign-in error:", error);
   }
-};
 
-
+const AuthPage = () => {
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
   const [email, setEmail] = useState("");
