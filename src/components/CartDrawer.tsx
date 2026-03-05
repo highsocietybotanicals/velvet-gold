@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package, Leaf, Sparkles } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package, Leaf, Sparkles, CreditCard, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProPrices } from "@/hooks/useProPrices";
 import { Input } from "@/components/ui/input";
 import { calculateItemPrice, getDiscountLabel, getGifts, calculateAccessoryPrice, calculateProItemPrice } from "@/lib/pricing";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import DeliverySection from "./DeliverySection";
 
 // Import corrected accessory images from accessories data
