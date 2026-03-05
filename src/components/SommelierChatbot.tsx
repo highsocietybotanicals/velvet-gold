@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Sparkles, Loader2, ShoppingCart } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useCart } from "@/contexts/CartContext";
-import { products } from "@/data/products";
+import { allProducts } from "@/data/products";
 import { toast } from "@/hooks/use-toast";
 
 type Message = { role: "user" | "assistant"; content: string };
