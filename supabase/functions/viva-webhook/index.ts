@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
 
     if (orderError || !order) {
       console.error("Order not found:", merchantTrns);
-      return new Response(JSON.stringify({ error: "Order not found" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
