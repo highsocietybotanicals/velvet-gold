@@ -124,7 +124,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addSample = (product: Product) => {
     const currentWeight = items.reduce((sum, item) => sum + item.weight, 0);
-    const allowedSamples = Math.floor(currentWeight / 12);
+    const allowedSamples = Math.floor(currentWeight / 10);
     
     // Check if we can add more samples
     if (sampleItems.length >= allowedSamples) return;
