@@ -1,9 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Send, Sparkles, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Sparkles, Loader2, ShoppingCart } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { useCart } from "@/contexts/CartContext";
+import { products } from "@/data/products";
+import { toast } from "@/hooks/use-toast";
 
 type Message = { role: "user" | "assistant"; content: string };
+
+interface CartCommand {
+  productId: string;
+  weight: number;
+}
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sommelier-chat`;
 
@@ -12,6 +20,22 @@ const WELCOME_MESSAGE: Message = {
   content:
     "Bienvenue chez **High Society Botanicals** ✨\n\nJe suis votre Sommelier personnel. Dis-moi ce que tu recherches — détente, énergie, sommeil ou créativité — et je te guiderai vers la variété parfaite !",
 };
+
+const ADD_TO_CART_REGEX = /\[ADD_TO_CART:\s*(\{[^}]+\})\s*\]/g;
+
+function parseCartCommands(content: string): { cleanContent: string; commands: CartCommand[] } {
+  const commands: CartCommand[] = [];
+  const cleanContent = content.replace(ADD_TO_CART_REGEX, (_, json) => {
+    try {
+      const parsed = JSON.parse(json);
+      if (parsed.productId && parsed.weight > 0) {
+        commands.push({ productId: parsed.productId, weight: parsed.weight });
+      }
+    } catch {}
+    return "";
+  }).trim();
+  return { cleanContent, commands };
+}
 
 async function streamChat({
   messages,
@@ -78,6 +102,31 @@ async function streamChat({
   onDone();
 }
 
+function CartButton({ command }: { command: CartCommand }) {
+  const { addToCart } = useCart();
+  const product = products.find((p) => p.id === command.productId);
+
+  if (!product) return null;
+
+  const handleClick = () => {
+    addToCart(product, command.weight);
+    toast({
+      title: "Ajouté au panier 🛒",
+      description: `${product.name} — ${command.weight}g`,
+    });
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-primary/20 hover:bg-primary/30 text-primary text-xs font-medium transition-colors border border-primary/30"
+    >
+      <ShoppingCart className="w-3.5 h-3.5" />
+      Ajouter {product.name} ({command.weight}g)
+    </button>
+  );
+}
+
 const SommelierChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
@@ -131,6 +180,27 @@ const SommelierChatbot = () => {
         setIsLoading(false);
       },
     });
+  };
+
+  const renderMessage = (msg: Message) => {
+    if (msg.role === "user") return msg.content;
+
+    const { cleanContent, commands } = parseCartCommands(msg.content);
+
+    return (
+      <>
+        <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p+p]:mt-2 [&>ul]:mt-1 [&>ul]:mb-0">
+          <ReactMarkdown>{cleanContent}</ReactMarkdown>
+        </div>
+        {commands.length > 0 && (
+          <div className="flex flex-col gap-1 mt-2">
+            {commands.map((cmd, i) => (
+              <CartButton key={`${cmd.productId}-${i}`} command={cmd} />
+            ))}
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
@@ -199,13 +269,7 @@ const SommelierChatbot = () => {
                         : "bg-muted text-foreground rounded-bl-md"
                     }`}
                   >
-                    {msg.role === "assistant" ? (
-                      <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p+p]:mt-2 [&>ul]:mt-1 [&>ul]:mb-0">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
-                    ) : (
-                      msg.content
-                    )}
+                    {renderMessage(msg)}
                   </div>
                 </motion.div>
               ))}
