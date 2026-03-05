@@ -111,6 +111,14 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Validate postal delivery requires an address
+    if (deliveryType === "postal" && (!deliveryAddress || deliveryAddress.trim().length === 0)) {
+      return new Response(JSON.stringify({ error: "Adresse de livraison requise pour l'envoi postal" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!items || !Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({ error: "No items provided" }), {
         status: 400,

@@ -617,10 +617,11 @@ const CartDrawer = () => {
                     />
                     <Input
                       type="text"
-                      placeholder="Nom (optionnel)"
+                      placeholder="Nom *"
                       value={guestName}
                       onChange={(e) => setGuestName(e.target.value)}
                       className="h-9 text-sm"
+                      required
                     />
                     <Input
                       type="tel"
