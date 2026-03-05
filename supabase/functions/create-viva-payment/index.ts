@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     console.log("Calling Viva API with amount:", vivaAmount);
 
     const vivaResponse = await fetch(
-      "https://demo.vivapayments.com/api/orders",
+      "https://www.vivapayments.com/api/orders",
       {
         method: "POST",
         headers: {
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         orderCode,
         orderId: order.id,
-        checkoutUrl: `https://demo.vivapayments.com/web/checkout?ref=${orderCode}`,
+        checkoutUrl: `https://www.vivapayments.com/web/checkout?ref=${orderCode}`,
       }),
       {
         status: 200,

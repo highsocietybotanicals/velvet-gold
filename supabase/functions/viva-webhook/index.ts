@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     const credentials = btoa(`${merchantId}:${apiKey}`);
 
     const verifyResponse = await fetch(
-      `https://demo.vivapayments.com/api/transactions/${transactionId}`,
+      `https://www.vivapayments.com/api/transactions/${transactionId}`,
       {
         headers: {
           Authorization: `Basic ${credentials}`,
