@@ -27,6 +27,7 @@ export interface VatRequest {
 export interface AdminOrder {
   id: string;
   order_number: number;
+  display_order_number: string | null;
   user_id: string;
   status: string;
   total_amount: number;

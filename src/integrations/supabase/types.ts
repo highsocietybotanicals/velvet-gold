@@ -69,6 +69,7 @@ export type Database = {
           delivery_date: string | null
           delivery_time: string | null
           delivery_type: string
+          display_order_number: string | null
           id: string
           order_number: number
           payment_status: string
@@ -86,6 +87,7 @@ export type Database = {
           delivery_date?: string | null
           delivery_time?: string | null
           delivery_type: string
+          display_order_number?: string | null
           id?: string
           order_number?: number
           payment_status?: string
@@ -103,6 +105,7 @@ export type Database = {
           delivery_date?: string | null
           delivery_time?: string | null
           delivery_type?: string
+          display_order_number?: string | null
           id?: string
           order_number?: number
           payment_status?: string

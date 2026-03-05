@@ -24,7 +24,7 @@ const OrderHistoryItem = ({ order }: { order: Order }) => {
             <Package className="w-5 h-5 text-muted-foreground" />
           </div>
           <div className="text-left">
-            <p className="font-medium text-foreground">Commande #{order.order_number}</p>
+            <p className="font-medium text-foreground">Commande {order.display_order_number || `#${order.order_number}`}</p>
             <p className="text-sm text-muted-foreground">
               {format(new Date(order.created_at), "d MMMM yyyy", { locale: fr })}
             </p>
