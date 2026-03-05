@@ -99,7 +99,23 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, totalFlowerWeight, freeGramsUsed, guestEmail, guestName, guestPhone } = await req.json();
+    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone } = await req.json();
+
+    // Validate deliveryType
+    const validDeliveryTypes = ['postal', 'personal'];
+    if (!deliveryType || !validDeliveryTypes.includes(deliveryType)) {
+      return new Response(JSON.stringify({ error: "Type de livraison invalide" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sanitize string inputs
+    const safeContactPhone = (contactPhone || '').slice(0, 20);
+    const safeDeliveryAddress = (deliveryAddress || '').slice(0, 500);
+    const safeGuestName = (guestName || '').slice(0, 200);
+    const safeGuestPhone = (guestPhone || '').slice(0, 20);
+    const safeGuestEmail = (guestEmail || '').slice(0, 255);
 
     // For guests, require email
     if (!userId) {
