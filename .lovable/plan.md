@@ -1,53 +1,21 @@
 
 
-# Integration de la gamme "Force Noire"
+## Plan : Promo 1g offert basée sur le poids TOTAL du panier
 
-## Concept
+### Problème actuel
+Le seuil dans le panier est calculé avec `/12` (ligne 87 de CartContext.tsx) au lieu de `/10`. De plus, le sommelier ne précise pas que la promo s'applique sur le poids total combiné de tous les produits.
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+### Corrections
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+**1. `src/contexts/CartContext.tsx`**
+- Changer `Math.floor(currentWeight / 12)` → `Math.floor(currentWeight / 10)` aux lignes 87 et 127
+- Cela permet : 3 fleurs × 4g = 12g total → 1g offert
 
----
+**2. `supabase/functions/sommelier-chat/index.ts`**
+- Préciser dans l'OFFRE SPÉCIALE que c'est le poids **total** de la commande (tous produits confondus) qui compte, pas par produit individuel
+- Ajouter un exemple concret : "3 fleurs différentes à 4g chacune = 12g total → 1g offert au choix"
 
-## Changements visuels
-
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
-
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
-
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
-
----
-
-## Details techniques
-
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
-
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+### Fichiers modifiés
+- `src/contexts/CartContext.tsx` — seuil 12 → 10
+- `supabase/functions/sommelier-chat/index.ts` — clarifier promo sur poids total
 
