@@ -2,3 +2,9 @@ project_id = "pvwwxpcosiqetsflykmp"
 
 [functions.sommelier-chat]
 verify_jwt = false
+
+[functions.create-viva-payment]
+verify_jwt = false
+
+[functions.viva-webhook]
+verify_jwt = false

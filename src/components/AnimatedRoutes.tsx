@@ -17,6 +17,8 @@ import ConfidentialitePage from "@/pages/ConfidentialitePage";
 import CGVPage from "@/pages/CGVPage";
 import LivraisonRetoursPage from "@/pages/LivraisonRetoursPage";
 import NotFound from "@/pages/NotFound";
+import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
+import PaymentFailurePage from "@/pages/PaymentFailurePage";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -39,6 +41,8 @@ const AnimatedRoutes = () => {
         <Route path="/confidentialite" element={<PageTransition><ConfidentialitePage /></PageTransition>} />
         <Route path="/cgv" element={<PageTransition><CGVPage /></PageTransition>} />
         <Route path="/livraison-retours" element={<PageTransition><LivraisonRetoursPage /></PageTransition>} />
+        <Route path="/payment-success" element={<PageTransition><PaymentSuccessPage /></PageTransition>} />
+        <Route path="/payment-failure" element={<PageTransition><PaymentFailurePage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

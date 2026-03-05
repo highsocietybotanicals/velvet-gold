@@ -27,6 +27,8 @@ export interface Order {
   delivery_date: string | null;
   delivery_time: string | null;
   contact_phone: string | null;
+  viva_order_code: string | null;
+  payment_status: string;
   created_at: string;
   updated_at: string;
   order_items?: OrderItem[];

@@ -1,16 +1,101 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package, Leaf, Sparkles } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package, Leaf, Sparkles, CreditCard, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProPrices } from "@/hooks/useProPrices";
 import { Input } from "@/components/ui/input";
 import { calculateItemPrice, getDiscountLabel, getGifts, calculateAccessoryPrice, calculateProItemPrice } from "@/lib/pricing";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import DeliverySection from "./DeliverySection";
 
 // Import corrected accessory images from accessories data
 import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
+
+const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone }: any) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handlePayment = async () => {
+    if (!user) {
+      toast.error("Veuillez vous connecter pour passer commande");
+      navigate("/auth");
+      return;
+    }
+    if (totalPrice <= 0) return;
+    setIsLoading(true);
+    try {
+      const orderItems = [
+        ...items.map((item: any) => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          productType: item.product.type || "flower",
+          weight: item.weight,
+          quantity: null,
+          unitPrice: item.product.price,
+          totalPrice: item.weight * item.product.price,
+        })),
+        ...accessoryItems.map((item: any) => ({
+          productId: item.accessory.id,
+          productName: item.accessory.name,
+          productType: "accessory",
+          weight: null,
+          quantity: item.quantity,
+          unitPrice: item.accessory.price,
+          totalPrice: item.accessory.price * item.quantity,
+        })),
+      ];
+
+      const { data, error } = await supabase.functions.invoke("create-viva-payment", {
+        body: {
+          amount: totalPrice,
+          items: orderItems,
+          deliveryType,
+          deliveryAddress: address || null,
+          deliveryDate: scheduledDate?.toISOString()?.split("T")[0] || null,
+          deliveryTime: scheduledTime || null,
+          contactPhone: contactPhone || null,
+          totalFlowerWeight,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      toast.error("Erreur lors de la création du paiement. Veuillez réessayer.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handlePayment}
+      disabled={isLoading || totalPrice <= 0}
+      className="w-full btn-luxury py-4 flex items-center justify-center gap-2 disabled:opacity-50"
+    >
+      {isLoading ? (
+        <>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Redirection...
+        </>
+      ) : (
+        <>
+          <CreditCard className="w-5 h-5" />
+          Payer {totalPrice.toFixed(2)}€ par carte
+        </>
+      )}
+    </button>
+  );
+};
 
 const CartDrawer = () => {
   const navigate = useNavigate();
@@ -509,16 +594,17 @@ const CartDrawer = () => {
                     <p className="text-xs text-primary mt-1">Prix professionnel appliqué</p>
                   )}
                 </div>
-                <button 
-                  className="w-full btn-luxury py-4 opacity-75 cursor-not-allowed"
-                  disabled
-                  title="Paiement en ligne bientôt disponible"
-                >
-                  Paiement bientôt disponible
-                </button>
-                <p className="text-xs text-center text-muted-foreground mt-2">
-                  Contactez-nous pour passer commande
-                </p>
+                <PaymentButton
+                  items={items}
+                  accessoryItems={accessoryItems}
+                  totalPrice={totalPrice}
+                  totalFlowerWeight={totalFlowerWeight}
+                  deliveryType={deliveryType}
+                  address={address}
+                  scheduledDate={scheduledDate}
+                  scheduledTime={scheduledTime}
+                  contactPhone={contactPhone}
+                />
                 <button
                   onClick={clearCart}
                   className="w-full text-sm text-muted-foreground hover:text-destructive transition-colors"
