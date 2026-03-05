@@ -1,53 +1,36 @@
 
 
-# Integration de la gamme "Force Noire"
+## Réponse : Viva Wallet ne gère pas les étiquettes d'expédition
 
-## Concept
+Viva Wallet est uniquement un système de **paiement**. Il peut pré-remplir le nom et l'email du client sur sa page de paiement (paramètres `fullName` et `email`), mais il ne collecte **pas** d'adresse postale et ne génère **aucune étiquette d'expédition**.
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
-
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+Ce que Viva sait faire : encaisser l'argent, point final.
 
 ---
 
-## Changements visuels
+## Ce que je propose : Génération automatique d'étiquette de colis
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+Au lieu de compter sur Viva, on peut générer une **étiquette imprimable** directement depuis votre page admin, avec les infos déjà collectées lors de la commande.
 
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
+### Fonctionnement
 
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+1. **Pré-remplir `fullName` et `email` sur Viva** — On passe ces infos lors de la création du payment order pour que le client n'ait pas à les retaper sur la page de paiement (améliore le taux de conversion).
 
----
+2. **Bouton "Imprimer étiquette"** dans la page admin — Pour chaque commande avec `delivery_type = "postal"`, un bouton ouvre une fenêtre d'impression avec :
+   - Votre adresse d'expéditeur (configurable)
+   - Nom du destinataire (`guest_name` ou nom du profil)
+   - Adresse complète (`delivery_address`)
+   - Téléphone (`contact_phone` ou `guest_phone`)
+   - Numéro de commande (`display_order_number`)
 
-## Details techniques
+3. **Format étiquette** — Un layout CSS optimisé pour impression sur étiquette autocollante standard (format A6 ou 10x15cm), avec `@media print` pour masquer le reste de la page.
 
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+### Modifications techniques
 
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
+- **Edge function `create-viva-payment`** : Ajouter `fullName` et `email` dans l'appel API Viva pour pré-remplir le formulaire de paiement
+- **`AdminPage.tsx`** : Ajouter un bouton "🏷️ Étiquette" sur chaque commande postale qui ouvre une fenêtre `window.print()` avec le layout d'étiquette formaté
+- **Nouveau composant `ShippingLabel.tsx`** : Composant d'étiquette imprimable avec styles `@media print`
 
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+### Résultat
+Pour chaque commande postale payée, vous cliquez sur "Étiquette", ça ouvre une page propre que vous imprimez et collez sur le colis. Zéro saisie manuelle.
 
