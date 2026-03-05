@@ -123,6 +123,9 @@ Deno.serve(async (req) => {
     const vivaText = await vivaResponse.text();
     console.log("Viva response status:", vivaResponse.status, "body:", vivaText);
 
+    // Extract OrderCode as string from raw text to avoid BigInt precision loss
+    const orderCodeMatch = vivaText.match(/"OrderCode"\s*:\s*(\d+)/);
+    
     let vivaData: any;
     try {
       vivaData = JSON.parse(vivaText);
@@ -145,7 +148,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const orderCode = vivaData.OrderCode;
+    // Use the regex-extracted string to preserve full precision
+    const orderCode = orderCodeMatch ? orderCodeMatch[1] : String(vivaData.OrderCode);
+    console.log("OrderCode (string, precise):", orderCode);
 
     // Update order with viva_order_code using service role
     const supabaseAdmin = createClient(
