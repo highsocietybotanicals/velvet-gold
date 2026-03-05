@@ -365,7 +365,7 @@ Deno.serve(async (req) => {
     if (!vivaResponse.ok || vivaData.ErrorCode !== 0) {
       console.error("Viva error:", vivaData);
       return new Response(
-        JSON.stringify({ error: "Payment creation failed", details: vivaData }),
+        JSON.stringify({ error: "Échec de la création du paiement. Veuillez réessayer." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

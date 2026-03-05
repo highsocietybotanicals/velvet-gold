@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
     const paidAmountEuros = txData.Amount / 100;
     if (Math.abs(paidAmountEuros - order.total_amount) > 0.01) {
       console.error("Amount mismatch: paid", paidAmountEuros, "expected", order.total_amount);
-      return new Response(JSON.stringify({ error: "Amount mismatch" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
