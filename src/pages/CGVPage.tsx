@@ -89,7 +89,20 @@ const CGVPage = () => {
             </section>
 
             <section>
-              <h2 className="font-display text-xl text-foreground mb-4">8. Litiges</h2>
+              <h2 className="font-display text-xl text-foreground mb-4">8. Protection des données personnelles</h2>
+              <p>
+                Les données personnelles collectées dans le cadre de votre commande sont traitées conformément
+                à notre{" "}
+                <a href="/confidentialite" className="text-primary hover:underline">
+                  Politique de Confidentialité
+                </a>
+                . Nous vous invitons à la consulter pour connaître vos droits et les modalités de traitement
+                de vos données.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-xl text-foreground mb-4">9. Litiges</h2>
               <p>
                 Les présentes CGV sont soumises au droit français. En cas de litige, une solution amiable
                 sera recherchée avant toute action judiciaire. À défaut, les tribunaux compétents de Paris

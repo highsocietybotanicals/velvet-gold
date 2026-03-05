@@ -37,6 +37,12 @@ const PaymentFailurePage = () => {
               Retour à l'accueil
             </button>
           </div>
+          <p className="mt-8 text-xs text-muted-foreground/50">
+            Paiement traité par{" "}
+            <a href="https://www.viva.com" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary transition-colors font-semibold">
+              viva.com
+            </a>
+          </p>
         </motion.div>
       </main>
       <Footer />
