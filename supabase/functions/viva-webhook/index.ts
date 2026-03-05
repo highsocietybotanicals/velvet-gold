@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     // SECURITY: Cross-check that the verified transaction's MerchantTrns matches the webhook payload
     if (txData.MerchantTrns !== merchantTrns) {
       console.error("MerchantTrns mismatch:", txData.MerchantTrns, "vs", merchantTrns);
-      return new Response(JSON.stringify({ error: "Order mismatch" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
