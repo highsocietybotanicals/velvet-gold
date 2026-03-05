@@ -24,10 +24,25 @@ RÉSINES :
 - Golden CBN (12€/g) : 25% CBD / 10% CBN / 10% CBG, combo sommeil royal. Profil : épicé.
 - Nuage de Mousseux (10€/g) : 50% Élixir Noir, texture aérienne. Collection Force Noire. Profil : boisé/terreux.
 
-GRILLES DE PRIX (par gramme) :
-Groupe A (12€ base) : 1g=12€, 2g=11€, 3.5g=10€, 5g=9€, 10g=8€, 20g=7€, 50g=5.50€, 100g=4€
-Groupe B (14€ base) : 1g=14€, 2g=13€, 3.5g=12€, 5g=11€, 10g=10€, 20g=9€, 50g=7.50€, 100g=6€
-Nuage de Mousseux : 1g=10€, 2g=9€, 3.5g=8€, 5g=7€, 10g=6€, 20g=5€, 50g=3.50€, 100g=2€
+GRILLES DE PRIX (par gramme, remises par paliers de poids) :
+Groupe A (Amnesia, Platinum OG, Mint Kush, Ice O Lator, Golden CBN — base 12€/g) :
+  Moins de 10g : 12€/g (pas de remise)
+  10-24g : 10.20€/g (-15%)
+  25-49g : 9€/g (-25%)
+  50-99g : 7.80€/g (-35%)
+  100g+ : 6€/g (-50%)
+Groupe B (911 OG, Blue Mango — base 14€/g) :
+  Moins de 10g : 14€/g (pas de remise)
+  10-24g : 12.60€/g (-10%)
+  25-49g : 11.20€/g (-20%)
+  50-99g : 10.50€/g (-25%)
+  100g+ : 9.10€/g (-35%)
+Nuage de Mousseux (base 10€/g, paliers Groupe A) :
+  Moins de 10g : 10€/g (pas de remise)
+  10-24g : 8.50€/g (-15%)
+  25-49g : 7.50€/g (-25%)
+  50-99g : 6.50€/g (-35%)
+  100g+ : 5€/g (-50%)
 
 COLLECTION FORCE NOIRE : Produits enrichis à l'Élixir Noir (molécule exclusive). 911 OG, Blue Mango, Nuage de Mousseux.
 
