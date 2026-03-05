@@ -321,6 +321,8 @@ Deno.serve(async (req) => {
           amount: vivaAmount,
           customerTrns: `Commande ${order.display_order_number || '#' + order.order_number}`,
           merchantTrns: order.id,
+          fullName: guestName || "",
+          email: guestEmail || "",
         }),
       }
     );

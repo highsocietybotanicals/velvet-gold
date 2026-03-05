@@ -6,6 +6,7 @@ import { useAdmin, ProRequest, AdminOrder, VatRequest } from "@/hooks/useAdmin";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PriceManagement from "@/components/admin/PriceManagement";
+import ShippingLabel from "@/components/admin/ShippingLabel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -228,9 +229,14 @@ const OrderRow = ({
         {order.total_amount.toFixed(2)}€
       </TableCell>
       <TableCell>
-        <Badge variant="outline" className="capitalize">
-          {order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="capitalize">
+            {order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal"}
+          </Badge>
+          {order.delivery_type === "postal" && (
+            <ShippingLabel order={order} />
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <Select
