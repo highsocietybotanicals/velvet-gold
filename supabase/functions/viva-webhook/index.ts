@@ -37,7 +37,17 @@ Deno.serve(async (req) => {
 
     if (!merchantTrns) {
       console.error("No MerchantTrns in webhook");
-      return new Response(JSON.stringify({ error: "Missing order reference" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate merchantTrns is a valid UUID format to prevent enumeration
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(merchantTrns)) {
+      console.error("Invalid MerchantTrns format:", merchantTrns);
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -59,7 +69,7 @@ Deno.serve(async (req) => {
 
     if (!verifyResponse.ok) {
       console.error("Transaction verification failed");
-      return new Response(JSON.stringify({ error: "Verification failed" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -71,7 +81,7 @@ Deno.serve(async (req) => {
     // SECURITY: Cross-check that the verified transaction's MerchantTrns matches the webhook payload
     if (txData.MerchantTrns !== merchantTrns) {
       console.error("MerchantTrns mismatch:", txData.MerchantTrns, "vs", merchantTrns);
-      return new Response(JSON.stringify({ error: "Order mismatch" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -92,7 +102,7 @@ Deno.serve(async (req) => {
 
     if (orderError || !order) {
       console.error("Order not found:", merchantTrns);
-      return new Response(JSON.stringify({ error: "Order not found" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -102,7 +112,7 @@ Deno.serve(async (req) => {
     const paidAmountEuros = txData.Amount / 100;
     if (Math.abs(paidAmountEuros - order.total_amount) > 0.01) {
       console.error("Amount mismatch: paid", paidAmountEuros, "expected", order.total_amount);
-      return new Response(JSON.stringify({ error: "Amount mismatch" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

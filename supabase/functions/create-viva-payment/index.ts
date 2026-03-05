@@ -99,11 +99,27 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, totalFlowerWeight, freeGramsUsed, guestEmail, guestName, guestPhone } = await req.json();
+    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone } = await req.json();
+
+    // Validate deliveryType
+    const validDeliveryTypes = ['postal', 'personal'];
+    if (!deliveryType || !validDeliveryTypes.includes(deliveryType)) {
+      return new Response(JSON.stringify({ error: "Type de livraison invalide" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sanitize string inputs
+    const safeContactPhone = (contactPhone || '').slice(0, 20);
+    const safeDeliveryAddress = (deliveryAddress || '').slice(0, 500);
+    const safeGuestName = (guestName || '').slice(0, 200);
+    const safeGuestPhone = (guestPhone || '').slice(0, 20);
+    const safeGuestEmail = (guestEmail || '').slice(0, 255);
 
     // For guests, require email
     if (!userId) {
-      if (!guestEmail || typeof guestEmail !== "string" || !guestEmail.includes("@")) {
+      if (!safeGuestEmail || !safeGuestEmail.includes("@")) {
         return new Response(JSON.stringify({ error: "Email requis pour commander sans compte" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -112,7 +128,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate postal delivery requires an address
-    if (deliveryType === "postal" && (!deliveryAddress || deliveryAddress.trim().length === 0)) {
+    if (deliveryType === "postal" && (!safeDeliveryAddress || safeDeliveryAddress.trim().length === 0)) {
       return new Response(JSON.stringify({ error: "Adresse de livraison requise pour l'envoi postal" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -249,15 +265,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Recalculate total flower weight server-side
+    const serverFlowerWeight = serverItems.reduce((sum, i) => sum + (i.weight || 0), 0);
+
     // Create the order in DB using service role (works for both guest and authenticated)
     const orderData: any = {
       total_amount: serverTotal,
-      total_flower_weight: totalFlowerWeight || 0,
-      delivery_type: deliveryType || "pickup",
-      delivery_address: deliveryAddress || null,
+      total_flower_weight: serverFlowerWeight,
+      delivery_type: deliveryType,
+      delivery_address: safeDeliveryAddress || null,
       delivery_date: deliveryDate || null,
       delivery_time: deliveryTime || null,
-      contact_phone: contactPhone || null,
+      contact_phone: safeContactPhone || null,
       status: "pending",
       payment_status: "unpaid",
     };
@@ -265,9 +284,9 @@ Deno.serve(async (req) => {
     if (userId) {
       orderData.user_id = userId;
     } else {
-      orderData.guest_email = guestEmail;
-      orderData.guest_name = guestName || null;
-      orderData.guest_phone = guestPhone || null;
+      orderData.guest_email = safeGuestEmail;
+      orderData.guest_name = safeGuestName || null;
+      orderData.guest_phone = safeGuestPhone || null;
     }
 
     const { data: order, error: orderError } = await supabaseAdmin
@@ -321,8 +340,8 @@ Deno.serve(async (req) => {
           amount: vivaAmount,
           customerTrns: `Commande ${order.display_order_number || '#' + order.order_number}`,
           merchantTrns: order.id,
-          fullName: guestName || "",
-          email: guestEmail || "",
+          fullName: safeGuestName || "",
+          email: safeGuestEmail || "",
         }),
       }
     );
@@ -338,7 +357,7 @@ Deno.serve(async (req) => {
     } catch {
       console.error("Failed to parse Viva response:", vivaText);
       return new Response(
-        JSON.stringify({ error: "Invalid response from payment provider", details: vivaText }),
+        JSON.stringify({ error: "Erreur du service de paiement. Veuillez réessayer." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -346,7 +365,7 @@ Deno.serve(async (req) => {
     if (!vivaResponse.ok || vivaData.ErrorCode !== 0) {
       console.error("Viva error:", vivaData);
       return new Response(
-        JSON.stringify({ error: "Payment creation failed", details: vivaData }),
+        JSON.stringify({ error: "Échec de la création du paiement. Veuillez réessayer." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
