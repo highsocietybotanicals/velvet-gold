@@ -43,6 +43,7 @@ const handleAppleSignIn = async () => {
   if (error) {
     console.error("Apple sign-in error:", error);
   }
+};
 
 const AuthPage = () => {
   const navigate = useNavigate();
