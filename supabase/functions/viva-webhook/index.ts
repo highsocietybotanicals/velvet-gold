@@ -37,7 +37,17 @@ Deno.serve(async (req) => {
 
     if (!merchantTrns) {
       console.error("No MerchantTrns in webhook");
-      return new Response(JSON.stringify({ error: "Missing order reference" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate merchantTrns is a valid UUID format to prevent enumeration
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(merchantTrns)) {
+      console.error("Invalid MerchantTrns format:", merchantTrns);
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
