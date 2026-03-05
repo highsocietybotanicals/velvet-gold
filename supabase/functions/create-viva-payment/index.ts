@@ -34,6 +34,9 @@ const WEIGHT_TIERS_B: WeightTier[] = [
 const ACCESSORY_BULK_THRESHOLD = 10;
 const ACCESSORY_BULK_DISCOUNT = 0.33;
 
+// Server-side source of truth for price group assignment
+const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor"]);
+
 // Known accessory prices (server-side source of truth)
 const ACCESSORY_PRICES: Record<string, number> = {
   "pochon-petit": 0.50,
@@ -185,8 +188,8 @@ Deno.serve(async (req) => {
         }
 
         const weight = Math.max(0.1, Number(item.weight) || 0);
-        // Determine price group from category
-        const priceGroup = item.priceGroup || "A";
+        // Derive price group server-side — never trust client input
+        const priceGroup = GROUP_B_PRODUCT_IDS.has(item.productId) ? "B" : "A";
         
         let itemTotal: number;
         let unitPrice: number;
