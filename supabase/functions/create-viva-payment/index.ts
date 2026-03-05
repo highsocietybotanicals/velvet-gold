@@ -188,8 +188,8 @@ Deno.serve(async (req) => {
         }
 
         const weight = Math.max(0.1, Number(item.weight) || 0);
-        // Determine price group from category
-        const priceGroup = item.priceGroup || "A";
+        // Derive price group server-side — never trust client input
+        const priceGroup = GROUP_B_PRODUCT_IDS.has(item.productId) ? "B" : "A";
         
         let itemTotal: number;
         let unitPrice: number;
