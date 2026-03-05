@@ -357,7 +357,7 @@ Deno.serve(async (req) => {
     } catch {
       console.error("Failed to parse Viva response:", vivaText);
       return new Response(
-        JSON.stringify({ error: "Invalid response from payment provider", details: vivaText }),
+        JSON.stringify({ error: "Erreur du service de paiement. Veuillez réessayer." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
