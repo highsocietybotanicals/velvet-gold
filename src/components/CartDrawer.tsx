@@ -106,7 +106,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
 
 const CartDrawer = () => {
   const navigate = useNavigate();
-  const { isPro, isProValidated, profile } = useAuth();
+  const { isPro, isProValidated, profile, user } = useAuth();
   const { getProPrice, isProActive } = useProPrices();
   
   // Check if user is Pro with validated VAT (no gifts for them)
