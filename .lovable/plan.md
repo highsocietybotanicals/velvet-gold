@@ -1,44 +1,53 @@
 
 
-## Plan : Sommelier avec actions panier + contrôle des cadeaux
+# Integration de la gamme "Force Noire"
 
-### Problème
-Le chatbot sommelier propose des cadeaux (3g gratuits) sans autorisation et ne peut pas ajouter de produits au panier du client.
+## Concept
 
-### Solution
+Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
 
-**1. Système de commandes structurées dans les réponses du sommelier**
+**Deux gammes :**
+- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
+- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
 
-L'IA retournera des blocs JSON spéciaux dans ses réponses que le frontend détectera et transformera en boutons cliquables :
+---
 
-```text
-Réponse IA texte normal...
-[ADD_TO_CART:{"productId":"amnesia-signature-oniria","weight":5}]
-```
+## Changements visuels
 
-Le composant `SommelierChatbot` parsera ces tags, les retirera du texte markdown, et affichera des boutons "Ajouter au panier" à la place.
+### Badge "Force Noire" sur les cartes produit
+- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
+- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
+- Effet visuel premium : bordure rouge sombre/noire, legere lueur
 
-**2. Mise à jour du prompt système (Edge Function)**
+### Filtre supplementaire
+- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
+- Permet de voir uniquement les produits enrichis
 
-- Instruire l'IA à utiliser le format `[ADD_TO_CART:{"productId":"...","weight":N}]` quand elle recommande un produit
-- Fournir la liste exacte des `productId` valides
-- **Supprimer** la mention "Échantillon Découverte gratuit" du prompt pour empêcher l'IA de promettre des cadeaux qu'elle n'est pas autorisée à offrir
-- Ajouter une règle explicite : "Ne propose JAMAIS de grammes gratuits, de cadeaux ou de réductions non listées dans la grille de prix"
+### Indication sur la page produit detail
+- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
 
-**3. Mise à jour du composant `SommelierChatbot.tsx`**
+---
 
-- Importer `useCart` depuis `CartContext` et `products` depuis `data/products`
-- Parser les réponses pour extraire les blocs `[ADD_TO_CART:...]`
-- Pour chaque bloc trouvé, afficher un bouton stylisé avec le nom du produit et le poids
-- Au clic, appeler `addToCart(product, weight)` avec le produit correspondant
-- Afficher un toast de confirmation
+## Details techniques
 
-**4. IDs produits pour le prompt**
+### 1. `src/data/products.ts`
+- Ajouter un champ `isForceNoire: boolean` au type `Product`
+- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
+- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
 
-Le prompt inclura la table de mapping :
-- `amnesia-signature-oniria`, `platinum-og`, `mint-kush`, `911-og-indoor-master`, `blue-mango-indoor-master`, `ice-o-lator`, `golden-cbn`, `nuage-de-mousseux`
+### 2. `src/components/ProductCard.tsx`
+- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
+- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
 
-### Fichiers modifiés
-- `supabase/functions/sommelier-chat/index.ts` — Mise à jour du prompt système
-- `src/components/SommelierChatbot.tsx` — Parsing des commandes + boutons panier
+### 3. `src/components/ProductSection.tsx` (page d'accueil)
+- Ajouter un filtre "Force Noire" dans les boutons de categorie
+- Quand selectionne, afficher uniquement les 3 produits Force Noire
+
+### 4. `src/pages/CataloguePage.tsx`
+- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
+- Filtrer les produits en consequence
+
+### 5. `src/pages/ProductPage.tsx`
+- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
+- Texte court expliquant la puissance superieure de ces produits
 
