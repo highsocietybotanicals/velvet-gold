@@ -1,42 +1,53 @@
 
 
-## Plan : Commande sans compte (Guest Checkout)
+# Integration de la gamme "Force Noire"
 
-### Objectif
-Permettre aux visiteurs non connectés de passer commande en fournissant simplement leur email, nom et téléphone, sans créer de compte.
+## Concept
 
-### Modifications
+Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
 
-#### 1. Base de données — Rendre `user_id` nullable + ajouter champs guest
-- Migration SQL :
-  - `ALTER TABLE orders ALTER COLUMN user_id DROP NOT NULL`
-  - Ajouter colonnes `guest_email TEXT`, `guest_name TEXT`, `guest_phone TEXT`
-  - Ajouter une politique RLS permettant l'INSERT sans auth (via service role dans l'edge function)
-  - Mettre à jour la politique RLS pour que les admins voient aussi les commandes guest
+**Deux gammes :**
+- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
+- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
 
-#### 2. Edge function `create-viva-payment`
-- Rendre l'authentification **optionnelle** : si un JWT valide est présent, l'utiliser ; sinon, accepter les champs `guestEmail`, `guestName`, `guestPhone`
-- Pour les guests : utiliser le service role client pour insérer la commande (pas de user_id)
-- Désactiver les fonctionnalités Pro/fidélité pour les guests
-- Stocker les infos guest dans les nouvelles colonnes
+---
 
-#### 3. Frontend — `CartDrawer.tsx` (PaymentButton)
-- Supprimer la redirection vers `/auth` quand non connecté
-- Afficher un formulaire compact (email, nom, téléphone) pour les guests dans le footer du panier
-- Passer les infos guest à l'edge function
-- Appeler l'edge function avec l'anon key au lieu du token utilisateur pour les guests
+## Changements visuels
 
-#### 4. Frontend — `DeliverySection.tsx`
-- Ajustement mineur : ne pas référencer `useAuth` pour les fonctionnalités Pro quand guest (déjà géré car `isPro` sera false)
+### Badge "Force Noire" sur les cartes produit
+- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
+- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
+- Effet visuel premium : bordure rouge sombre/noire, legere lueur
 
-### Sécurité
-- Les commandes guest passent par le même calcul de prix serveur
-- Pas de fidélité/Pro pour les guests
-- L'edge function valide que `guestEmail` est bien fourni si pas de JWT
-- Les commandes guest sont visibles uniquement par les admins (pas de page profil pour les guests)
+### Filtre supplementaire
+- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
+- Permet de voir uniquement les produits enrichis
 
-### Ce qui ne change pas
-- Les utilisateurs connectés gardent exactement le même flux
-- La page profil/historique reste réservée aux utilisateurs connectés
-- Le webhook Viva reste inchangé
+### Indication sur la page produit detail
+- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+
+---
+
+## Details techniques
+
+### 1. `src/data/products.ts`
+- Ajouter un champ `isForceNoire: boolean` au type `Product`
+- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
+- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+
+### 2. `src/components/ProductCard.tsx`
+- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
+- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
+
+### 3. `src/components/ProductSection.tsx` (page d'accueil)
+- Ajouter un filtre "Force Noire" dans les boutons de categorie
+- Quand selectionne, afficher uniquement les 3 produits Force Noire
+
+### 4. `src/pages/CataloguePage.tsx`
+- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
+- Filtrer les produits en consequence
+
+### 5. `src/pages/ProductPage.tsx`
+- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
+- Texte court expliquant la puissance superieure de ces produits
 

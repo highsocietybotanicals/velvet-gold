@@ -14,15 +14,13 @@ import DeliverySection from "./DeliverySection";
 // Import corrected accessory images from accessories data
 import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
 
-const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone }: any) => {
+const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const handlePayment = async () => {
-    if (!user) {
-      toast.error("Veuillez vous connecter pour passer commande");
-      navigate("/auth");
+    if (!user && (!guestEmail || !guestEmail.includes("@"))) {
+      toast.error("Veuillez renseigner un email valide pour commander");
       return;
     }
     if (totalPrice <= 0) return;
@@ -49,17 +47,26 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         })),
       ];
 
+      const body: any = {
+        amount: totalPrice,
+        items: orderItems,
+        deliveryType,
+        deliveryAddress: address || null,
+        deliveryDate: scheduledDate?.toISOString()?.split("T")[0] || null,
+        deliveryTime: scheduledTime || null,
+        contactPhone: contactPhone || null,
+        totalFlowerWeight,
+      };
+
+      // Add guest info if not authenticated
+      if (!user) {
+        body.guestEmail = guestEmail;
+        body.guestName = guestName || null;
+        body.guestPhone = guestPhone || null;
+      }
+
       const { data, error } = await supabase.functions.invoke("create-viva-payment", {
-        body: {
-          amount: totalPrice,
-          items: orderItems,
-          deliveryType,
-          deliveryAddress: address || null,
-          deliveryDate: scheduledDate?.toISOString()?.split("T")[0] || null,
-          deliveryTime: scheduledTime || null,
-          contactPhone: contactPhone || null,
-          totalFlowerWeight,
-        },
+        body,
       });
 
       if (error) throw error;
@@ -99,7 +106,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
 
 const CartDrawer = () => {
   const navigate = useNavigate();
-  const { isPro, isProValidated, profile } = useAuth();
+  const { isPro, isProValidated, profile, user } = useAuth();
   const { getProPrice, isProActive } = useProPrices();
   
   // Check if user is Pro with validated VAT (no gifts for them)
@@ -127,6 +134,11 @@ const CartDrawer = () => {
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+
+  // Guest checkout state
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
 
   // No gifts for Pro users with validated VAT
   const totalGifts = isProWithValidatedVat ? null : getGifts(totalFlowerWeight);
@@ -583,6 +595,35 @@ const CartDrawer = () => {
                   setContactPhone={setContactPhone}
                 />
 
+                {/* Guest checkout form */}
+                {!user && (
+                  <div className="pt-4 border-t border-border space-y-3">
+                    <h4 className="text-sm font-medium text-foreground">Vos coordonnées</h4>
+                    <Input
+                      type="email"
+                      placeholder="Email *"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      className="h-9 text-sm"
+                      required
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Nom (optionnel)"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                    <Input
+                      type="tel"
+                      placeholder="Téléphone (optionnel)"
+                      value={guestPhone}
+                      onChange={(e) => setGuestPhone(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                )}
+
                 <div className="pt-4 border-t border-border">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Total</span>
@@ -604,6 +645,9 @@ const CartDrawer = () => {
                   scheduledDate={scheduledDate}
                   scheduledTime={scheduledTime}
                   contactPhone={contactPhone}
+                  guestEmail={guestEmail}
+                  guestName={guestName}
+                  guestPhone={guestPhone}
                 />
                 <button
                   onClick={clearCart}

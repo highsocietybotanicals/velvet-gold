@@ -70,6 +70,9 @@ export type Database = {
           delivery_time: string | null
           delivery_type: string
           display_order_number: string | null
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
           id: string
           order_number: number
           payment_status: string
@@ -77,7 +80,7 @@ export type Database = {
           total_amount: number
           total_flower_weight: number
           updated_at: string | null
-          user_id: string
+          user_id: string | null
           viva_order_code: string | null
         }
         Insert: {
@@ -88,6 +91,9 @@ export type Database = {
           delivery_time?: string | null
           delivery_type: string
           display_order_number?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           order_number?: number
           payment_status?: string
@@ -95,7 +101,7 @@ export type Database = {
           total_amount: number
           total_flower_weight?: number
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
           viva_order_code?: string | null
         }
         Update: {
@@ -106,6 +112,9 @@ export type Database = {
           delivery_time?: string | null
           delivery_type?: string
           display_order_number?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           order_number?: number
           payment_status?: string
@@ -113,7 +122,7 @@ export type Database = {
           total_amount?: number
           total_flower_weight?: number
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
           viva_order_code?: string | null
         }
         Relationships: []
