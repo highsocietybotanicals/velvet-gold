@@ -104,7 +104,7 @@ async function streamChat({
 
 function CartButton({ command }: { command: CartCommand }) {
   const { addToCart } = useCart();
-  const product = products.find((p) => p.id === command.productId);
+  const product = allProducts.find((p) => p.id === command.productId);
 
   if (!product) return null;
 
