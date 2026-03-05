@@ -229,7 +229,7 @@ const OrderRow = ({
       </TableCell>
       <TableCell>
         <Badge variant="outline" className="capitalize">
-          {order.delivery_type === "personal" ? "Livraison perso" : "Point relais"}
+          {order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal"}
         </Badge>
       </TableCell>
       <TableCell>
