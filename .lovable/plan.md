@@ -1,23 +1,53 @@
 
 
-## Plan : Rendre l'adresse obligatoire pour les commandes postales (guest & connecté)
+# Integration de la gamme "Force Noire"
 
-### Problème
-Actuellement, un guest (ou même un utilisateur connecté) peut choisir "livraison postale" sans renseigner d'adresse. Vous n'avez alors aucun moyen de savoir où envoyer le colis.
+## Concept
 
-### Modifications
+Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
 
-#### 1. Frontend — `CartDrawer.tsx` (PaymentButton)
-- Ajouter une validation : si `deliveryType === "postal"` et que `address` est vide, afficher une erreur toast et bloquer le paiement
-- Pour les guests : vérifier aussi que `guestName` est rempli (pour le nom sur le colis)
+**Deux gammes :**
+- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
+- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
 
-#### 2. Edge function — `create-viva-payment`
-- Ajouter une validation serveur : si `deliveryType === "postal"` et `deliveryAddress` est vide/null, retourner une erreur 400
+---
 
-#### 3. Formulaire guest — `CartDrawer.tsx`
-- Rendre le champ `Nom` obligatoire (pas seulement l'email) avec un astérisque visuel
-- Optionnel : ajouter un champ adresse directement dans le formulaire guest si la `DeliverySection` ne le couvre pas déjà pour les guests
+## Changements visuels
 
-### Résultat
-Vous aurez toujours : nom + email + téléphone du guest, et l'adresse postale complète si livraison postale. Ces infos sont stockées dans la table `orders` (colonnes `delivery_address`, `guest_email`, `guest_name`, `guest_phone`).
+### Badge "Force Noire" sur les cartes produit
+- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
+- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
+- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+
+### Filtre supplementaire
+- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
+- Permet de voir uniquement les produits enrichis
+
+### Indication sur la page produit detail
+- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+
+---
+
+## Details techniques
+
+### 1. `src/data/products.ts`
+- Ajouter un champ `isForceNoire: boolean` au type `Product`
+- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
+- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+
+### 2. `src/components/ProductCard.tsx`
+- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
+- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
+
+### 3. `src/components/ProductSection.tsx` (page d'accueil)
+- Ajouter un filtre "Force Noire" dans les boutons de categorie
+- Quand selectionne, afficher uniquement les 3 produits Force Noire
+
+### 4. `src/pages/CataloguePage.tsx`
+- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
+- Filtrer les produits en consequence
+
+### 5. `src/pages/ProductPage.tsx`
+- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
+- Texte court expliquant la puissance superieure de ces produits
 
