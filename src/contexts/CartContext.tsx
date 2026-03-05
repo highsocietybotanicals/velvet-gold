@@ -84,7 +84,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // Auto-adjust samples when flower weight changes
   useEffect(() => {
     const currentWeight = items.reduce((sum, item) => sum + item.weight, 0);
-    const allowedSamples = Math.floor(currentWeight / 12);
+    const allowedSamples = Math.floor(currentWeight / 10);
     
     // If we have more samples than allowed, remove excess
     if (sampleItems.length > allowedSamples) {
