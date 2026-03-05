@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
     // For guests, require email
     if (!userId) {
-      if (!guestEmail || typeof guestEmail !== "string" || !guestEmail.includes("@")) {
+      if (!safeGuestEmail || !safeGuestEmail.includes("@")) {
         return new Response(JSON.stringify({ error: "Email requis pour commander sans compte" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
