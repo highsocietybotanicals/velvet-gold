@@ -19,6 +19,7 @@ export interface Order {
   id: string;
   user_id: string;
   order_number: number;
+  display_order_number: string | null;
   status: string;
   total_amount: number;
   total_flower_weight: number;

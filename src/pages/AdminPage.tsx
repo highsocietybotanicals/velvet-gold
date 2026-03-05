@@ -205,7 +205,7 @@ const OrderRow = ({
   return (
     <TableRow>
       <TableCell className="font-mono font-semibold">
-        #{order.order_number.toString().padStart(4, '0')}
+        {order.display_order_number || `#${order.order_number.toString().padStart(4, '0')}`}
       </TableCell>
       <TableCell>
         <div>

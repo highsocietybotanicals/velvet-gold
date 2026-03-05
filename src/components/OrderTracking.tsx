@@ -32,7 +32,7 @@ const OrderTracking = ({ order }: OrderTrackingProps) => {
           <Package className="w-5 h-5 text-primary" />
           <h2 className="font-display text-lg text-foreground">Commande en cours</h2>
         </div>
-        <span className="text-sm text-muted-foreground">#{order.order_number}</span>
+        <span className="text-sm text-muted-foreground">{order.display_order_number || `#${order.order_number}`}</span>
       </div>
 
       {/* Status badge */}
