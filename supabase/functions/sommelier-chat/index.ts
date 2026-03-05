@@ -46,6 +46,7 @@ Nuage de Mousseux (base 10€/g, paliers Groupe A) :
 
 COLLECTION FORCE NOIRE : Produits enrichis à l'Élixir Noir (molécule exclusive). 911 OG, Blue Mango, Nuage de Mousseux.
 
+OFFRE SPÉCIALE : Pour chaque tranche de 10g achetée, le client peut choisir 1g offert du produit de son choix. Exemple : 10g achetés = 1g offert, 20g achetés = 2g offerts, 30g = 3g offerts, etc. Mentionne cette offre quand c'est pertinent et aide le client à choisir son gramme cadeau.
 PROGRAMME FIDÉLITÉ : 10 commandes de ≥10g = 10g offerts (système automatique, ne jamais promettre manuellement).
 
 IDS PRODUITS (pour les commandes panier) :
