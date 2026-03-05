@@ -1,53 +1,37 @@
 
 
-# Integration de la gamme "Force Noire"
+## Probleme identifie
 
-## Concept
+Le chatbot sommelier donne des **prix totalement faux** car la grille de prix dans son prompt systeme ne correspond pas a la vraie logique de tarification du site.
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+**Exemple : Nuage de Mousseux (10€/g, Groupe A)**
+- Le prompt dit : 2g = 9€/g, 10g = 6€/g, 100g = 2€/g
+- La realite : 2g = 10€/g (pas de remise sous 10g), 10g = 8.50€/g (-15%), 100g = 5€/g (-50%)
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+## Correction
 
----
+Mettre a jour le `PRODUCTS_CONTEXT` dans `supabase/functions/sommelier-chat/index.ts` avec la vraie grille de prix basee sur les paliers de poids :
 
-## Changements visuels
+**Groupe A (base 12€/g)** — Amnesia, Platinum OG, Mint Kush, Ice O Lator, Golden CBN :
+- Moins de 10g : 12€/g
+- 10-24g : 10.20€/g (-15%)
+- 25-49g : 9€/g (-25%)
+- 50-99g : 7.80€/g (-35%)
+- 100g+ : 6€/g (-50%)
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+**Nuage de Mousseux (base 10€/g, paliers Groupe A)** :
+- Moins de 10g : 10€/g
+- 10-24g : 8.50€/g (-15%)
+- 25-49g : 7.50€/g (-25%)
+- 50-99g : 6.50€/g (-35%)
+- 100g+ : 5€/g (-50%)
 
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
+**Groupe B (base 14€/g)** — 911 OG, Blue Mango :
+- Moins de 10g : 14€/g
+- 10-24g : 12.60€/g (-10%)
+- 25-49g : 11.20€/g (-20%)
+- 50-99g : 10.50€/g (-25%)
+- 100g+ : 9.10€/g (-35%)
 
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
-
----
-
-## Details techniques
-
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
-
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+Un seul fichier a modifier : `supabase/functions/sommelier-chat/index.ts` (section `GRILLES DE PRIX`).
 
