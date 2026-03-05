@@ -595,6 +595,35 @@ const CartDrawer = () => {
                   setContactPhone={setContactPhone}
                 />
 
+                {/* Guest checkout form */}
+                {!user && (
+                  <div className="pt-4 border-t border-border space-y-3">
+                    <h4 className="text-sm font-medium text-foreground">Vos coordonnées</h4>
+                    <Input
+                      type="email"
+                      placeholder="Email *"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      className="h-9 text-sm"
+                      required
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Nom (optionnel)"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                    <Input
+                      type="tel"
+                      placeholder="Téléphone (optionnel)"
+                      value={guestPhone}
+                      onChange={(e) => setGuestPhone(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                )}
+
                 <div className="pt-4 border-t border-border">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Total</span>
@@ -616,6 +645,9 @@ const CartDrawer = () => {
                   scheduledDate={scheduledDate}
                   scheduledTime={scheduledTime}
                   contactPhone={contactPhone}
+                  guestEmail={guestEmail}
+                  guestName={guestName}
+                  guestPhone={guestPhone}
                 />
                 <button
                   onClick={clearCart}
