@@ -146,6 +146,18 @@ const Footer = () => {
               Produit réservé aux personnes majeures
             </p>
           </div>
+          <div className="flex items-center justify-center mt-6 gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-primary">
+              <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+              <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="text-xs text-muted-foreground/60 font-body">
+              Paiement sécurisé par{" "}
+              <a href="https://www.viva.com" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:text-primary transition-colors font-semibold">
+                viva.com
+              </a>
+            </span>
+          </div>
         </div>
       </div>
     </footer>
