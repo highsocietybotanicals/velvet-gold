@@ -265,15 +265,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Recalculate total flower weight server-side
+    const serverFlowerWeight = serverItems.reduce((sum, i) => sum + (i.weight || 0), 0);
+
     // Create the order in DB using service role (works for both guest and authenticated)
     const orderData: any = {
       total_amount: serverTotal,
-      total_flower_weight: totalFlowerWeight || 0,
-      delivery_type: deliveryType || "pickup",
-      delivery_address: deliveryAddress || null,
+      total_flower_weight: serverFlowerWeight,
+      delivery_type: deliveryType,
+      delivery_address: safeDeliveryAddress || null,
       delivery_date: deliveryDate || null,
       delivery_time: deliveryTime || null,
-      contact_phone: contactPhone || null,
+      contact_phone: safeContactPhone || null,
       status: "pending",
       payment_status: "unpaid",
     };
@@ -281,9 +284,9 @@ Deno.serve(async (req) => {
     if (userId) {
       orderData.user_id = userId;
     } else {
-      orderData.guest_email = guestEmail;
-      orderData.guest_name = guestName || null;
-      orderData.guest_phone = guestPhone || null;
+      orderData.guest_email = safeGuestEmail;
+      orderData.guest_name = safeGuestName || null;
+      orderData.guest_phone = safeGuestPhone || null;
     }
 
     const { data: order, error: orderError } = await supabaseAdmin
