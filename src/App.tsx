@@ -8,6 +8,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AnimatedRoutes from "./components/AnimatedRoutes";
 import CartDrawer from "./components/CartDrawer";
+import SommelierChatbot from "./components/SommelierChatbot";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <CartDrawer />
+            <SommelierChatbot />
             <AnimatedRoutes />
           </CartProvider>
         </AuthProvider>
