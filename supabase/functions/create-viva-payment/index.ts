@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           amount: vivaAmount,
-          customerTrns: `Commande #${order.order_number}`,
+          customerTrns: `Commande ${order.display_order_number || '#' + order.order_number}`,
           merchantTrns: order.id,
         }),
       }
