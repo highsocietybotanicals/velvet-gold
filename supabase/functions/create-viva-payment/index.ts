@@ -34,6 +34,9 @@ const WEIGHT_TIERS_B: WeightTier[] = [
 const ACCESSORY_BULK_THRESHOLD = 10;
 const ACCESSORY_BULK_DISCOUNT = 0.33;
 
+// Server-side source of truth for price group assignment
+const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor"]);
+
 // Known accessory prices (server-side source of truth)
 const ACCESSORY_PRICES: Record<string, number> = {
   "pochon-petit": 0.50,
