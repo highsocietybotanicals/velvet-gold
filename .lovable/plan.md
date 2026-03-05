@@ -1,25 +1,53 @@
 
 
-## Remplacer le logo Lovable dans les résultats Google
+# Integration de la gamme "Force Noire"
 
-### Problème
-Les balises `og:image` et `twitter:image` dans `index.html` pointent vers `https://lovable.dev/opengraph-image-p98pqg.png` — c'est l'image qui s'affiche dans Google et sur les réseaux sociaux.
+## Concept
 
-### Solution
-Remplacer ces URLs par le logo de la marque. On utilisera l'URL du logo déjà en place pour le favicon (ou une autre image fournie par l'utilisateur).
+Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
 
-### Modification
+**Deux gammes :**
+- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
+- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
 
-**Fichier** : `index.html`
+---
 
-- Ligne 16 : `og:image` → remplacer par l'URL du logo HSB
-- Ligne 18 : `twitter:image` → idem
+## Changements visuels
 
-Les deux lignes passeront de :
-```
-https://lovable.dev/opengraph-image-p98pqg.png
-```
-à l'URL du logo de la marque.
+### Badge "Force Noire" sur les cartes produit
+- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
+- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
+- Effet visuel premium : bordure rouge sombre/noire, legere lueur
 
-> Note : Google recommande une image OG de 1200x630px minimum. Le logo favicon (petit format JPEG) fonctionnera mais une image plus grande et adaptée serait idéale pour un meilleur rendu.
+### Filtre supplementaire
+- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
+- Permet de voir uniquement les produits enrichis
+
+### Indication sur la page produit detail
+- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+
+---
+
+## Details techniques
+
+### 1. `src/data/products.ts`
+- Ajouter un champ `isForceNoire: boolean` au type `Product`
+- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
+- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+
+### 2. `src/components/ProductCard.tsx`
+- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
+- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
+
+### 3. `src/components/ProductSection.tsx` (page d'accueil)
+- Ajouter un filtre "Force Noire" dans les boutons de categorie
+- Quand selectionne, afficher uniquement les 3 produits Force Noire
+
+### 4. `src/pages/CataloguePage.tsx`
+- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
+- Filtrer les produits en consequence
+
+### 5. `src/pages/ProductPage.tsx`
+- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
+- Texte court expliquant la puissance superieure de ces produits
 
