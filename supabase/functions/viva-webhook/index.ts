@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
 
     if (!verifyResponse.ok) {
       console.error("Transaction verification failed");
-      return new Response(JSON.stringify({ error: "Verification failed" }), {
+      return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
