@@ -34,10 +34,8 @@ const WEIGHT_TIERS_B: WeightTier[] = [
 const ACCESSORY_BULK_THRESHOLD = 10;
 const ACCESSORY_BULK_DISCOUNT = 0.33;
 
-// Server-side source of truth for price group assignment
 const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor"]);
 
-// Known accessory prices (server-side source of truth)
 const ACCESSORY_PRICES: Record<string, number> = {
   "pochon-petit": 0.50,
   "pochon-moyen": 2.50,
@@ -75,31 +73,43 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabase = createClient(
+    
+    // Service role client for all DB operations
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Try to authenticate user (optional for guest checkout)
+    let userId: string | null = null;
+    let supabaseUser: any = null;
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+      if (!claimsError && claimsData?.claims) {
+        userId = claimsData.claims.sub;
+        supabaseUser = supabase;
+      }
     }
 
-    const userId = claimsData.claims.sub;
+    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, totalFlowerWeight, freeGramsUsed, guestEmail, guestName, guestPhone } = await req.json();
 
-    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, totalFlowerWeight, freeGramsUsed } = await req.json();
+    // For guests, require email
+    if (!userId) {
+      if (!guestEmail || typeof guestEmail !== "string" || !guestEmail.includes("@")) {
+        return new Response(JSON.stringify({ error: "Email requis pour commander sans compte" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({ error: "No items provided" }), {
@@ -108,25 +118,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use service role to query product prices (products table has RLS)
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
     // Separate product items from accessory items
     const productItemIds = items
       .filter((i: any) => i.productType === "fleur" || i.productType === "resine")
       .map((i: any) => i.productId);
 
-    // Check if user is pro with validated VAT
-    const { data: userProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("is_pro_validated, is_vat_validated, vat_number, free_grams_available")
-      .eq("id", userId)
-      .single();
+    // Check if user is pro with validated VAT (only for authenticated users)
+    let userProfile: any = null;
+    let isProActive = false;
 
-    const isProActive = userProfile?.is_pro_validated && userProfile?.is_vat_validated && !!userProfile?.vat_number;
+    if (userId) {
+      const { data } = await supabaseAdmin
+        .from("profiles")
+        .select("is_pro_validated, is_vat_validated, vat_number, free_grams_available")
+        .eq("id", userId)
+        .single();
+      userProfile = data;
+      isProActive = userProfile?.is_pro_validated && userProfile?.is_vat_validated && !!userProfile?.vat_number;
+    }
 
     // Fetch DB prices for products
     let dbProducts: any[] = [];
@@ -178,7 +187,6 @@ Deno.serve(async (req) => {
           total_price: Math.round(itemTotal * 100) / 100,
         });
       } else {
-        // Find product in DB
         const dbProduct = dbProducts.find((p: any) => p.id === item.productId);
         if (!dbProduct) {
           return new Response(JSON.stringify({ error: `Product not found: ${item.productId}` }), {
@@ -188,13 +196,11 @@ Deno.serve(async (req) => {
         }
 
         const weight = Math.max(0.1, Number(item.weight) || 0);
-        // Derive price group server-side — never trust client input
         const priceGroup = GROUP_B_PRODUCT_IDS.has(item.productId) ? "B" : "A";
         
         let itemTotal: number;
         let unitPrice: number;
 
-        // Check pro pricing
         const proPrice = proPriceMap[item.productId] || dbProduct.pro_price;
         if (isProActive && proPrice) {
           itemTotal = calculateProItemPrice(proPrice, weight);
@@ -217,18 +223,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Validate and apply free grams deduction
+    // Validate and apply free grams deduction (only for authenticated users)
     let validFreeGramsUsed = 0;
-    if (freeGramsUsed && freeGramsUsed > 0 && userProfile) {
+    if (userId && freeGramsUsed && freeGramsUsed > 0 && userProfile) {
       const available = userProfile.free_grams_available || 0;
       validFreeGramsUsed = Math.min(freeGramsUsed, available);
-      // Deduct value: free grams at base price (12€/g Group A)
-      // Free grams reduce the total but not below 0
       const freeGramsValue = validFreeGramsUsed * 12;
       serverTotal = Math.max(0, serverTotal - freeGramsValue);
     }
 
-    // Round to 2 decimal places
     serverTotal = Math.round(serverTotal * 100) / 100;
 
     if (serverTotal <= 0) {
@@ -238,21 +241,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create the order in DB
-    const { data: order, error: orderError } = await supabase
+    // Create the order in DB using service role (works for both guest and authenticated)
+    const orderData: any = {
+      total_amount: serverTotal,
+      total_flower_weight: totalFlowerWeight || 0,
+      delivery_type: deliveryType || "pickup",
+      delivery_address: deliveryAddress || null,
+      delivery_date: deliveryDate || null,
+      delivery_time: deliveryTime || null,
+      contact_phone: contactPhone || null,
+      status: "pending",
+      payment_status: "unpaid",
+    };
+
+    if (userId) {
+      orderData.user_id = userId;
+    } else {
+      orderData.guest_email = guestEmail;
+      orderData.guest_name = guestName || null;
+      orderData.guest_phone = guestPhone || null;
+    }
+
+    const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
-      .insert({
-        user_id: userId,
-        total_amount: serverTotal,
-        total_flower_weight: totalFlowerWeight || 0,
-        delivery_type: deliveryType || "pickup",
-        delivery_address: deliveryAddress || null,
-        delivery_date: deliveryDate || null,
-        delivery_time: deliveryTime || null,
-        contact_phone: contactPhone || null,
-        status: "pending",
-        payment_status: "unpaid",
-      })
+      .insert(orderData)
       .select()
       .single();
 
@@ -264,14 +276,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Insert order items with server-calculated prices
+    // Insert order items
     if (serverItems.length > 0) {
       const orderItems = serverItems.map((si) => ({
         ...si,
         order_id: order.id,
       }));
 
-      const { error: itemsError } = await supabase
+      const { error: itemsError } = await supabaseAdmin
         .from("order_items")
         .insert(orderItems);
 
@@ -284,8 +296,7 @@ Deno.serve(async (req) => {
     const merchantId = Deno.env.get("VIVA_MERCHANT_ID");
     const apiKey = Deno.env.get("VIVA_API_KEY");
 
-    const vivaAmount = Math.round(serverTotal * 100); // Viva expects cents
-
+    const vivaAmount = Math.round(serverTotal * 100);
     const credentials = btoa(`${merchantId}:${apiKey}`);
 
     console.log("Calling Viva API with server-calculated amount:", vivaAmount);
@@ -309,7 +320,6 @@ Deno.serve(async (req) => {
     const vivaText = await vivaResponse.text();
     console.log("Viva response status:", vivaResponse.status, "body:", vivaText);
 
-    // Extract OrderCode as string from raw text to avoid BigInt precision loss
     const orderCodeMatch = vivaText.match(/"OrderCode"\s*:\s*(\d+)/);
     
     let vivaData: any;
@@ -334,18 +344,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use the regex-extracted string to preserve full precision
     const orderCode = orderCodeMatch ? orderCodeMatch[1] : String(vivaData.OrderCode);
     console.log("OrderCode (string, precise):", orderCode);
 
-    // Update order with viva_order_code using service role
+    // Update order with viva_order_code
     await supabaseAdmin
       .from("orders")
       .update({ viva_order_code: String(orderCode) })
       .eq("id", order.id);
 
-    // Deduct free grams if used
-    if (validFreeGramsUsed > 0) {
+    // Deduct free grams if used (only for authenticated users)
+    if (userId && validFreeGramsUsed > 0) {
       const newFreeGrams = Math.max(0, (userProfile!.free_grams_available || 0) - validFreeGramsUsed);
       await supabaseAdmin
         .from("profiles")

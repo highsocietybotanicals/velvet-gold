@@ -14,15 +14,13 @@ import DeliverySection from "./DeliverySection";
 // Import corrected accessory images from accessories data
 import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
 
-const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone }: any) => {
+const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const handlePayment = async () => {
-    if (!user) {
-      toast.error("Veuillez vous connecter pour passer commande");
-      navigate("/auth");
+    if (!user && (!guestEmail || !guestEmail.includes("@"))) {
+      toast.error("Veuillez renseigner un email valide pour commander");
       return;
     }
     if (totalPrice <= 0) return;
@@ -49,17 +47,26 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         })),
       ];
 
+      const body: any = {
+        amount: totalPrice,
+        items: orderItems,
+        deliveryType,
+        deliveryAddress: address || null,
+        deliveryDate: scheduledDate?.toISOString()?.split("T")[0] || null,
+        deliveryTime: scheduledTime || null,
+        contactPhone: contactPhone || null,
+        totalFlowerWeight,
+      };
+
+      // Add guest info if not authenticated
+      if (!user) {
+        body.guestEmail = guestEmail;
+        body.guestName = guestName || null;
+        body.guestPhone = guestPhone || null;
+      }
+
       const { data, error } = await supabase.functions.invoke("create-viva-payment", {
-        body: {
-          amount: totalPrice,
-          items: orderItems,
-          deliveryType,
-          deliveryAddress: address || null,
-          deliveryDate: scheduledDate?.toISOString()?.split("T")[0] || null,
-          deliveryTime: scheduledTime || null,
-          contactPhone: contactPhone || null,
-          totalFlowerWeight,
-        },
+        body,
       });
 
       if (error) throw error;
