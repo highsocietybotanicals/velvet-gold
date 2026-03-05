@@ -1,53 +1,50 @@
 
 
-# Integration de la gamme "Force Noire"
+## Plan : Intégration Viva Wallet Smart Checkout
 
-## Concept
+### Étape 1 — Stocker les secrets
+Enregistrer dans Lovable Cloud via l'outil `add_secret` :
+- `VIVA_MERCHANT_ID` = `00b96b79-8e40-4e1d-b3c3-27bab434ade1`
+- `VIVA_API_KEY` = `0J3mD76AqjRebk352a82Hq1U7n4vTD`
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+### Étape 2 — Edge function `create-viva-payment`
+Crée un ordre de paiement via l'API Viva Wallet (Basic Auth avec Merchant ID + API Key) :
+- Reçoit le montant et les infos de commande du frontend
+- Appelle `https://demo.vivapayments.com/api/orders` pour obtenir un `orderCode`
+- Retourne l'`orderCode` au frontend
+- Ajouter dans `supabase/config.toml` avec `verify_jwt = false`
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+### Étape 3 — Edge function `viva-webhook`
+Reçoit les notifications de paiement de Viva :
+- Vérifie la transaction via l'API Viva
+- Met à jour le statut de la commande en base (`pending` → `preparing`)
+- Ajouter dans `supabase/config.toml` avec `verify_jwt = false`
 
----
+### Étape 4 — Ajouter colonnes à la table `orders`
+Migration SQL pour ajouter :
+- `viva_order_code` (text, nullable) — pour lier la commande au paiement Viva
+- `payment_status` (text, default `'unpaid'`) — suivi du paiement
 
-## Changements visuels
+### Étape 5 — Pages frontend
+- `src/pages/PaymentSuccessPage.tsx` — confirmation de paiement réussi, crée la commande en base
+- `src/pages/PaymentFailurePage.tsx` — message d'échec avec bouton pour réessayer
+- Ajouter les routes dans `App.tsx`
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+### Étape 6 — Bouton payer dans le panier
+Modifier `CartDrawer.tsx` (lignes 512-518) :
+- Remplacer le bouton désactivé par un bouton actif "Payer par carte"
+- Au clic : appelle `create-viva-payment`, puis redirige vers `https://demo.vivapayments.com/web/checkout?ref={orderCode}`
 
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
+### Fichiers créés/modifiés
+- `supabase/functions/create-viva-payment/index.ts` (nouveau)
+- `supabase/functions/viva-webhook/index.ts` (nouveau)
+- `supabase/config.toml` (ajout des 2 fonctions)
+- `src/pages/PaymentSuccessPage.tsx` (nouveau)
+- `src/pages/PaymentFailurePage.tsx` (nouveau)
+- `src/components/CartDrawer.tsx` (bouton payer)
+- `src/App.tsx` (routes)
+- Migration SQL (colonnes `viva_order_code`, `payment_status`)
 
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
-
----
-
-## Details techniques
-
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
-
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+### Note importante
+On utilisera l'URL **demo** (`demo.vivapayments.com`) pour les tests. Le passage en production nécessitera simplement de changer l'URL vers `www.vivapayments.com`.
 
