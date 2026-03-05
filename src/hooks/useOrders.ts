@@ -66,13 +66,16 @@ export const useOrders = () => {
     enabled: !!user?.id,
   });
 
-  // Commande en cours (dernière non livrée/annulée)
-  const currentOrder = orders?.find(
+  // Only show paid orders
+  const paidOrders = orders?.filter((o) => o.payment_status !== "unpaid");
+
+  // Commande en cours (dernière non livrée/annulée, payée)
+  const currentOrder = paidOrders?.find(
     (o) => !["delivered", "cancelled"].includes(o.status)
   );
 
-  // Historique (commandes livrées ou annulées)
-  const orderHistory = orders?.filter((o) =>
+  // Historique (commandes livrées ou annulées, payées)
+  const orderHistory = paidOrders?.filter((o) =>
     ["delivered", "cancelled"].includes(o.status)
   );
 
