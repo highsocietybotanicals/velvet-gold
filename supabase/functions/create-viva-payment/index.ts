@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         orderCode,
         orderId: order.id,
-        checkoutUrl: `https://demo.vivapayments.com/web/checkout?ref=${orderCode}`,
+        checkoutUrl: `https://www.vivapayments.com/web/checkout?ref=${orderCode}`,
       }),
       {
         status: 200,
