@@ -68,11 +68,45 @@ Deno.serve(async (req) => {
     const txData = await verifyResponse.json();
     console.log("Transaction verified:", txData.StatusId);
 
-    // Update order status
+    // SECURITY: Cross-check that the verified transaction's MerchantTrns matches the webhook payload
+    if (txData.MerchantTrns !== merchantTrns) {
+      console.error("MerchantTrns mismatch:", txData.MerchantTrns, "vs", merchantTrns);
+      return new Response(JSON.stringify({ error: "Order mismatch" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // SECURITY: Verify the paid amount matches the order total
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Get order to verify amount
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("total_amount")
+      .eq("id", merchantTrns)
+      .single();
+
+    if (orderError || !order) {
+      console.error("Order not found:", merchantTrns);
+      return new Response(JSON.stringify({ error: "Order not found" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // txData.Amount is in cents, order.total_amount is in euros
+    const paidAmountEuros = txData.Amount / 100;
+    if (Math.abs(paidAmountEuros - order.total_amount) > 0.01) {
+      console.error("Amount mismatch: paid", paidAmountEuros, "expected", order.total_amount);
+      return new Response(JSON.stringify({ error: "Amount mismatch" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (txData.StatusId === "F") {
       // F = completed/finalized
