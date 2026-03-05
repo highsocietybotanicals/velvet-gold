@@ -71,11 +71,13 @@ export type Database = {
           delivery_type: string
           id: string
           order_number: number
+          payment_status: string
           status: string
           total_amount: number
           total_flower_weight: number
           updated_at: string | null
           user_id: string
+          viva_order_code: string | null
         }
         Insert: {
           contact_phone?: string | null
@@ -86,11 +88,13 @@ export type Database = {
           delivery_type: string
           id?: string
           order_number?: number
+          payment_status?: string
           status?: string
           total_amount: number
           total_flower_weight?: number
           updated_at?: string | null
           user_id: string
+          viva_order_code?: string | null
         }
         Update: {
           contact_phone?: string | null
@@ -101,11 +105,13 @@ export type Database = {
           delivery_type?: string
           id?: string
           order_number?: number
+          payment_status?: string
           status?: string
           total_amount?: number
           total_flower_weight?: number
           updated_at?: string | null
           user_id?: string
+          viva_order_code?: string | null
         }
         Relationships: []
       }
