@@ -22,6 +22,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <CartDrawer />
+            <SommelierChatbot />
             <AnimatedRoutes />
           </CartProvider>
         </AuthProvider>
