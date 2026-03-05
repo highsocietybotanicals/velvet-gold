@@ -229,9 +229,14 @@ const OrderRow = ({
         {order.total_amount.toFixed(2)}€
       </TableCell>
       <TableCell>
-        <Badge variant="outline" className="capitalize">
-          {order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="capitalize">
+            {order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal"}
+          </Badge>
+          {order.delivery_type === "postal" && (
+            <ShippingLabel order={order} />
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <Select
