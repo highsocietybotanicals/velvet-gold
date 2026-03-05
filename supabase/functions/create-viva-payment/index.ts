@@ -102,6 +102,8 @@ Deno.serve(async (req) => {
 
     const credentials = btoa(`${merchantId}:${apiKey}`);
 
+    console.log("Calling Viva API with amount:", vivaAmount);
+
     const vivaResponse = await fetch(
       "https://demo.vivapayments.com/api/orders",
       {
@@ -111,14 +113,26 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          Amount: vivaAmount,
-          CustomerTrns: `Commande #${order.order_number}`,
-          MerchantTrns: order.id,
+          amount: vivaAmount,
+          customerTrns: `Commande #${order.order_number}`,
+          merchantTrns: order.id,
         }),
       }
     );
 
-    const vivaData = await vivaResponse.json();
+    const vivaText = await vivaResponse.text();
+    console.log("Viva response status:", vivaResponse.status, "body:", vivaText);
+
+    let vivaData: any;
+    try {
+      vivaData = JSON.parse(vivaText);
+    } catch {
+      console.error("Failed to parse Viva response:", vivaText);
+      return new Response(
+        JSON.stringify({ error: "Invalid response from payment provider", details: vivaText }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!vivaResponse.ok || vivaData.ErrorCode !== 0) {
       console.error("Viva error:", vivaData);
