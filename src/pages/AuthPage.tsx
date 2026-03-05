@@ -421,6 +421,15 @@ const AuthPage = () => {
                     <GoogleIcon />
                     Continuer avec Google
                   </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={handleAppleSignIn}
+                    className="w-full"
+                  >
+                    <AppleIcon />
+                    Continuer avec Apple
+                  </Button>
                 </TabsContent>
               </Tabs>
             </div>
