@@ -1,53 +1,39 @@
 
 
-# Integration de la gamme "Force Noire"
+## Conformité Viva Wallet — Bilan et Actions
 
-## Concept
+### Ce qui est déjà en place ✓
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+1. **Politique de confidentialité** — Page `/confidentialite` existante
+2. **CGV avec livraison et retours** — Pages `/cgv` et `/livraison-retours` existantes
+3. **Coordonnées service client** — Page `/contact` + footer avec email et adresse
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+### Ce qui manque
 
----
+1. **Nom de domaine public** — Ton site est actuellement sur `highsocietybotanicals.lovable.app`. Tu dois connecter ton domaine personnalisé (ex: `highsocietybotanicals.com`) via **Settings → Domains** dans Lovable. Viva Wallet veut un vrai nom de domaine, pas un sous-domaine lovable.
 
-## Changements visuels
+2. **Logo viva.com sur les écrans de paiement** — Il faut ajouter le badge/logo Viva Wallet sur le site pour rassurer les clients et satisfaire l'exigence. On va l'ajouter dans le **Footer** (section bottom bar) et sur les pages **PaymentSuccess** / **PaymentFailure**.
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+3. **Mention de la confidentialité dans les CGV** — Les CGV doivent **référencer** la politique de confidentialité. On va ajouter un renvoi explicite.
 
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
+### Plan d'implémentation
 
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+**1. Ajouter le logo Viva Wallet dans le Footer**
+- Ajouter une image/badge "Paiement sécurisé par viva.com" dans la barre du bas du Footer
+- Utiliser le logo officiel Viva (SVG ou image hébergée)
 
----
+**2. Ajouter la mention Viva sur les pages de paiement**
+- `PaymentSuccessPage.tsx` et `PaymentFailurePage.tsx` : ajouter un petit badge "Paiement traité par viva.com"
 
-## Details techniques
+**3. Ajouter un renvoi à la politique de confidentialité dans les CGV**
+- Dans `CGVPage.tsx`, ajouter une section qui renvoie explicitement vers `/confidentialite`
 
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+**4. Domaine personnalisé**
+- Ceci se fait dans les paramètres Lovable (Settings → Domains), pas dans le code. Je te guiderai après.
 
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+### Fichiers modifiés
+- `src/components/Footer.tsx` — badge Viva dans la bottom bar
+- `src/pages/PaymentSuccessPage.tsx` — badge Viva
+- `src/pages/PaymentFailurePage.tsx` — badge Viva
+- `src/pages/CGVPage.tsx` — renvoi confidentialité
 
