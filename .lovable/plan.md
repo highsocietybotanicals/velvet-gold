@@ -1,53 +1,39 @@
 
 
-# Integration de la gamme "Force Noire"
+## Problème
 
-## Concept
+Viva Wallet envoie une requête `GET` à ton URL webhook et attend en réponse une **clé de vérification** en texte brut. Actuellement (ligne 15-18 de `viva-webhook/index.ts`), la fonction retourne `{"success": true}` en JSON — Viva rejette ça.
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+**Mais** : la clé de vérification est générée par Viva **après** que l'URL est vérifiée. C'est un mécanisme challenge-response. Viva n'a pas besoin d'une clé pré-existante — selon la doc Viva, le endpoint doit simplement répondre au GET avec un **HTTP 200** et le corps doit contenir la **Verification Key** que Viva affiche dans le dashboard.
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+Or, en regardant ta capture, la clé n'est pas encore visible car le webhook n'a pas encore été sauvegardé avec succès.
 
----
+## Solution
 
-## Changements visuels
+Le problème est probablement que Viva attend une réponse **texte brut** (pas JSON). On va :
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+### 1. Modifier `supabase/functions/viva-webhook/index.ts` (lignes 15-18)
 
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
+Changer le handler GET pour retourner une réponse texte brut simple au lieu de JSON :
 
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+```typescript
+if (req.method === "GET") {
+  // Viva verification: return verification key if set, otherwise empty 200
+  const verificationKey = Deno.env.get("VIVA_WEBHOOK_VERIFICATION_KEY");
+  return new Response(verificationKey || "", {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "text/plain" },
+  });
+}
+```
 
----
+### 2. Processus en 2 étapes
 
-## Details techniques
+**Étape A** — D'abord déployer la fonction modifiée SANS clé. Viva pourrait accepter la vérification avec une réponse vide 200.
 
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+**Étape B** — Si Viva affiche une Verification Key dans le dashboard après la première tentative, on l'ajoutera comme secret `VIVA_WEBHOOK_VERIFICATION_KEY` puis on re-vérifiera.
 
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+### Résumé des changements
+- **1 fichier modifié** : `supabase/functions/viva-webhook/index.ts` (lignes 15-18 uniquement)
+- **1 secret potentiel** : `VIVA_WEBHOOK_VERIFICATION_KEY` (si nécessaire après le premier essai)
 
