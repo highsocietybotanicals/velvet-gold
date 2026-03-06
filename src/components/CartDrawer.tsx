@@ -32,6 +32,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
       return;
     }
     if (totalPrice <= 0) return;
+    (window as any).__isNavigatingAway = true;
     setIsLoading(true);
     try {
       const orderItems = [
