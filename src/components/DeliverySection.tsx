@@ -1,7 +1,10 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Truck, User as UserIcon, MapPin, AlertCircle, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import DeliveryScheduler from "./DeliveryScheduler";
 
 interface DeliverySectionProps {
@@ -37,11 +40,31 @@ const DeliverySection = ({
   const { totalFlowerWeight } = useCart();
 
   const isProActive = isPro && isProValidated;
-
-  // Determine if personal delivery is accessible
-  // Pro: always (if within 100km)
-  // Regular: needs >= 100g AND within 100km
   const canAccessPersonalDelivery = isProActive || totalFlowerWeight >= 100;
+
+  // Structured address fields
+  const [street, setStreet] = useState("");
+  const [complement, setComplement] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+
+  const [postalCodeError, setPostalCodeError] = useState("");
+
+  // Assemble address whenever fields change
+  useEffect(() => {
+    const parts = [street, complement, postalCode, city, "France"].filter(Boolean);
+    setAddress(parts.join(", "));
+  }, [street, complement, postalCode, city, setAddress]);
+
+  const handlePostalCodeChange = (value: string) => {
+    const cleaned = value.replace(/\D/g, "").slice(0, 5);
+    setPostalCode(cleaned);
+    if (cleaned.length > 0 && cleaned.length !== 5) {
+      setPostalCodeError("Le code postal doit contenir 5 chiffres");
+    } else {
+      setPostalCodeError("");
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -51,7 +74,7 @@ const DeliverySection = ({
       </h3>
 
       <div className="grid grid-cols-1 gap-3">
-        {/* Postal Delivery - Always available */}
+        {/* Postal Delivery */}
         <motion.button
           onClick={() => setDeliveryType("postal")}
           className={`p-4 rounded-lg border-2 transition-all text-left ${
@@ -76,7 +99,7 @@ const DeliverySection = ({
           </div>
         </motion.button>
 
-        {/* Personal Delivery - Conditional */}
+        {/* Personal Delivery */}
         <motion.button
           onClick={() => canAccessPersonalDelivery && setDeliveryType("personal")}
           disabled={!canAccessPersonalDelivery}
@@ -118,7 +141,7 @@ const DeliverySection = ({
         </motion.button>
       </div>
 
-      {/* Postal delivery address */}
+      {/* Postal delivery - Structured address form */}
       {deliveryType === "postal" && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
@@ -130,13 +153,81 @@ const DeliverySection = ({
             <MapPin className="w-4 h-4" />
             <span>Adresse de livraison</span>
           </div>
-          <textarea
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Votre adresse complète..."
-            className="w-full p-3 rounded-lg bg-background border border-border text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary"
-            rows={3}
-          />
+
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="street" className="text-xs text-muted-foreground">
+                Numéro et rue *
+              </Label>
+              <Input
+                id="street"
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
+                placeholder="12 Rue de la Paix"
+                className="mt-1 bg-background border-border text-sm"
+                maxLength={200}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="complement" className="text-xs text-muted-foreground">
+                Complément (bâtiment, étage, code...)
+              </Label>
+              <Input
+                id="complement"
+                value={complement}
+                onChange={(e) => setComplement(e.target.value)}
+                placeholder="Bât. B, 3ème étage, code 1234"
+                className="mt-1 bg-background border-border text-sm"
+                maxLength={200}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="postalCode" className="text-xs text-muted-foreground">
+                  Code postal *
+                </Label>
+                <Input
+                  id="postalCode"
+                  value={postalCode}
+                  onChange={(e) => handlePostalCodeChange(e.target.value)}
+                  placeholder="75001"
+                  className={`mt-1 bg-background border-border text-sm ${postalCodeError ? "border-destructive" : ""}`}
+                  maxLength={5}
+                  inputMode="numeric"
+                  required
+                />
+                {postalCodeError && (
+                  <p className="text-xs text-destructive mt-1">{postalCodeError}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="city" className="text-xs text-muted-foreground">
+                  Ville *
+                </Label>
+                <Input
+                  id="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Paris"
+                  className="mt-1 bg-background border-border text-sm"
+                  maxLength={100}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs text-muted-foreground">Pays</Label>
+              <Input
+                value="France"
+                disabled
+                className="mt-1 bg-muted border-border text-sm text-muted-foreground"
+              />
+            </div>
+          </div>
         </motion.div>
       )}
 
@@ -148,7 +239,6 @@ const DeliverySection = ({
           exit={{ opacity: 0, height: 0 }}
           className="space-y-4 pt-2"
         >
-          {/* 100km confirmation */}
           <label className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border cursor-pointer hover:border-primary/50 transition-colors">
             <input
               type="checkbox"
@@ -166,7 +256,6 @@ const DeliverySection = ({
             </div>
           </label>
 
-          {/* Scheduler - only if 100km confirmed */}
           {isWithin100km && (
             <DeliveryScheduler
               scheduledDate={scheduledDate}

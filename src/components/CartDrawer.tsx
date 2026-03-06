@@ -27,8 +27,8 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
       toast.error("Veuillez renseigner votre nom pour commander");
       return;
     }
-    if (deliveryType === "postal" && (!address || address.trim().length === 0)) {
-      toast.error("Veuillez renseigner une adresse de livraison pour l'envoi postal");
+    if (deliveryType === "postal" && (!address || address.trim().length < 10)) {
+      toast.error("Veuillez renseigner une adresse de livraison complète (rue, code postal, ville)");
       return;
     }
     if (totalPrice <= 0) return;
@@ -38,7 +38,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         ...items.map((item: any) => ({
           productId: item.product.id,
           productName: item.product.name,
-          productType: item.product.type || "flower",
+          productType: item.product.category || "fleur",
           weight: item.weight,
           quantity: null,
           unitPrice: item.product.price,
@@ -47,7 +47,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         ...accessoryItems.map((item: any) => ({
           productId: item.accessory.id,
           productName: item.accessory.name,
-          productType: "accessory",
+          productType: "accessoire",
           weight: null,
           quantity: item.quantity,
           unitPrice: item.accessory.price,

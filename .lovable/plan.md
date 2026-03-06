@@ -1,48 +1,53 @@
 
 
-## Plan : Corriger le paiement et le formulaire d'adresse (sans Shopify)
+# Integration de la gamme "Force Noire"
 
-On garde **tout votre site tel quel** — pas de migration Shopify, pas de changement de système. On corrige juste les deux problèmes.
+## Concept
 
----
+Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
 
-### Problème 1 : Le formulaire d'adresse
-
-**Actuellement** : Un simple `<textarea>` avec "Votre adresse complète..." — aucune structure, aucune validation.
-
-**Correction** : Remplacer par un formulaire structuré avec des champs séparés :
-- **Numéro + Rue** (obligatoire)
-- **Complément d'adresse** (optionnel — bâtiment, étage, code)
-- **Code postal** (obligatoire, 5 chiffres validés)
-- **Ville** (obligatoire)
-- **Pays** (pré-rempli "France")
-
-L'adresse sera assemblée en une seule chaîne avant envoi au backend (aucun changement côté edge function).
-
-**Fichier modifié** : `src/components/DeliverySection.tsx`
+**Deux gammes :**
+- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
+- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
 
 ---
 
-### Problème 2 : Le paiement Viva Wallet
+## Changements visuels
 
-**Actuellement** : L'edge function `create-viva-payment` utilise `getClaims()` qui n'existe pas dans le SDK Supabase pour Deno — ça plante silencieusement pour les utilisateurs connectés.
+### Badge "Force Noire" sur les cartes produit
+- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
+- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
+- Effet visuel premium : bordure rouge sombre/noire, legere lueur
 
-**Corrections** :
-1. Remplacer `getClaims()` par `getUser()` pour l'authentification
-2. Le `PaymentButton` envoie `amount` et `totalFlowerWeight` mais l'edge function attend `items` avec les détails — il y a un décalage entre ce que le frontend envoie et ce que le backend attend. Le frontend envoie `items` avec `productType: "flower"` mais le backend filtre sur `"fleur"/"resine"` → les produits ne sont jamais trouvés en base.
-3. Corriger le mapping des `productType` pour que le frontend envoie les bons types (`fleur`/`resine`/`accessoire`) au lieu de `flower`/`resin`/`accessory`.
+### Filtre supplementaire
+- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
+- Permet de voir uniquement les produits enrichis
 
-**Fichiers modifiés** :
-- `supabase/functions/create-viva-payment/index.ts` — fix auth `getClaims` → `getUser`
-- `src/components/CartDrawer.tsx` — fix le mapping `productType` envoyé au backend
+### Indication sur la page produit detail
+- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
 
 ---
 
-### Ce qui ne change PAS
-- Le design du site
-- Le système de prix au gramme libre
-- Les remises progressives
-- Les échantillons, cadeaux, accessoires
-- Le sommelier, les pages admin, profil
-- Aucune dépendance ajoutée
+## Details techniques
+
+### 1. `src/data/products.ts`
+- Ajouter un champ `isForceNoire: boolean` au type `Product`
+- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
+- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+
+### 2. `src/components/ProductCard.tsx`
+- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
+- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
+
+### 3. `src/components/ProductSection.tsx` (page d'accueil)
+- Ajouter un filtre "Force Noire" dans les boutons de categorie
+- Quand selectionne, afficher uniquement les 3 produits Force Noire
+
+### 4. `src/pages/CataloguePage.tsx`
+- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
+- Filtrer les produits en consequence
+
+### 5. `src/pages/ProductPage.tsx`
+- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
+- Texte court expliquant la puissance superieure de ces produits
 
