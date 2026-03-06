@@ -1,53 +1,39 @@
 
 
-# Integration de la gamme "Force Noire"
+## Correction : flash de l'ErrorBoundary avant la redirection Viva
 
-## Concept
+### Probleme
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+Le code de paiement est correct (pas de state update apres redirect), mais React crash quand meme pendant le processus de navigation (`window.location.href`). Le navigateur commence a quitter la page, certains composants React tentent de se re-rendre ou de se demonter, et une erreur est attrapee par l'ErrorBoundary qui s'affiche brievement (~2s) avant que la redirection ne se termine.
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+### Solution : deux corrections complementaires
 
----
+**1. `src/components/ErrorBoundary.tsx`** - Ne pas afficher l'erreur si le navigateur est en train de naviguer ailleurs. Ajouter un listener `beforeunload` qui met un flag `isNavigatingAway`. Si ce flag est actif quand une erreur est attrapee, ne pas afficher la page d'erreur (laisser passer les children ou rien).
 
-## Changements visuels
+**2. `src/components/CartDrawer.tsx`** - Ajouter un `window.addEventListener('beforeunload')` juste avant le `window.location.href` pour signaler la navigation, et envelopper le redirect dans un petit `setTimeout` pour laisser React finir son cycle de rendu avant de declencher la navigation.
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+### Details techniques
 
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
+```typescript
+// ErrorBoundary.tsx - ignorer les erreurs pendant la navigation
+static getDerivedStateFromError(error: Error): State {
+  // Si le navigateur est en train de quitter la page, ignorer l'erreur
+  if ((window as any).__isNavigatingAway) {
+    return { hasError: false, error: null };
+  }
+  return { hasError: true, error };
+}
+```
 
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+```typescript
+// CartDrawer.tsx - signaler la navigation avant le redirect
+if (data?.checkoutUrl && ...) {
+  (window as any).__isNavigatingAway = true;
+  window.location.href = data.checkoutUrl;
+  return;
+}
+```
 
----
-
-## Details techniques
-
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
-
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+### Resultat attendu
+Le bouton payer redirige directement vers Viva sans aucun flash de la page d'erreur.
 
