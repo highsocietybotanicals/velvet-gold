@@ -106,7 +106,27 @@ serve(async (req) => {
       );
     }
 
-    const { messages } = await req.json();
+    const body = await req.json();
+    const rawMessages = body?.messages;
+
+    // --- Input validation to prevent API credit abuse ---
+    const MAX_MESSAGES = 30;
+    const MAX_MSG_LENGTH = 2000;
+
+    if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Messages invalides." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const safeMessages = rawMessages
+      .slice(-MAX_MESSAGES)
+      .map((m: { role?: string; content?: string }) => ({
+        role: ["user", "assistant"].includes(m.role ?? "") ? m.role! : "user",
+        content: String(m.content ?? "").slice(0, MAX_MSG_LENGTH),
+      }));
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -122,7 +142,7 @@ serve(async (req) => {
           model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: PRODUCTS_CONTEXT },
-            ...messages,
+            ...safeMessages,
           ],
           stream: true,
         }),
