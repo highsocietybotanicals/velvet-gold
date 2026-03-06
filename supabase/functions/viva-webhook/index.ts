@@ -12,9 +12,12 @@ Deno.serve(async (req) => {
   }
 
   // Viva sends a GET request for verification
+  // Viva sends a GET request for webhook verification (challenge-response)
   if (req.method === "GET") {
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const verificationKey = Deno.env.get("VIVA_WEBHOOK_VERIFICATION_KEY");
+    return new Response(verificationKey || "", {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "text/plain" },
     });
   }
 
