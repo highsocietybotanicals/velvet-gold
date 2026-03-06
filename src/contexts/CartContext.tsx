@@ -61,6 +61,7 @@ const safeParseJSON = <T,>(key: string, fallback: T): T => {
 };
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const { prices: dbProducts } = useProducts();
   const [items, setItems] = useState<CartItem[]>(() => safeParseJSON("cart", []));
   const [accessoryItems, setAccessoryItems] = useState<AccessoryCartItem[]>(() => 
     safeParseJSON("cart-accessories", [])
@@ -69,6 +70,33 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     safeParseJSON("cart-samples", [])
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Sync cart prices with database prices
+  useEffect(() => {
+    if (!dbProducts || dbProducts.length === 0) return;
+    
+    setItems(prev => {
+      const updated = prev.map(item => {
+        const dbProduct = dbProducts.find(p => p.id === item.product.id);
+        if (dbProduct && dbProduct.price !== item.product.price) {
+          return { ...item, product: { ...item.product, price: dbProduct.price } };
+        }
+        return item;
+      });
+      return updated.some((item, i) => item !== prev[i]) ? updated : prev;
+    });
+
+    setSampleItems(prev => {
+      const updated = prev.map(item => {
+        const dbProduct = dbProducts.find(p => p.id === item.product.id);
+        if (dbProduct && dbProduct.price !== item.product.price) {
+          return { ...item, product: { ...item.product, price: dbProduct.price } };
+        }
+        return item;
+      });
+      return updated.some((item, i) => item !== prev[i]) ? updated : prev;
+    });
+  }, [dbProducts]);
 
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(items));
