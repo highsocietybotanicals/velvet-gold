@@ -80,6 +80,13 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
 
       if (error) throw error;
       if (data?.checkoutUrl && typeof data.checkoutUrl === "string" && data.checkoutUrl.startsWith("https://")) {
+        // Store order info for payment verification on return
+        if (data.orderId && data.orderCode) {
+          localStorage.setItem("pending_payment", JSON.stringify({
+            orderId: data.orderId,
+            vivaOrderCode: data.orderCode,
+          }));
+        }
         window.location.replace(data.checkoutUrl);
       } else {
         throw new Error("Invalid or missing checkout URL");
