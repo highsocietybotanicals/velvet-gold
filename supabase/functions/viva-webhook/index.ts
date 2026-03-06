@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
 
     // Also verify the transaction status from the API response, not the webhook
     // Viva StatusId: "F" = completed/finalized
-    const vivaStatusId = txData.StatusId || eventData.StatusId;
+    const vivaStatusId = txData.StatusId;
     if (vivaStatusId === "F") {
       await supabase
         .from("orders")

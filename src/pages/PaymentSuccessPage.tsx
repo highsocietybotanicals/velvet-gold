@@ -42,9 +42,9 @@ const PaymentSuccessPage = () => {
       });
 
       if (error) {
-        console.error("Payment verification error:", error);
+        if (import.meta.env.DEV) console.error("Payment verification error:", error);
       } else {
-        console.log("Payment verification result:", data);
+        if (import.meta.env.DEV) console.log("Payment verification result:", data);
         if (data?.status === "paid" || data?.status === "already_paid") {
           setVerified(true);
         } else if (data?.status === "pending") {
