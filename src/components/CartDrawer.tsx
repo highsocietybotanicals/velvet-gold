@@ -38,7 +38,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         ...items.map((item: any) => ({
           productId: item.product.id,
           productName: item.product.name,
-          productType: item.product.type || "flower",
+          productType: item.product.category || "fleur",
           weight: item.weight,
           quantity: null,
           unitPrice: item.product.price,
