@@ -11,6 +11,8 @@ interface DeliverySectionProps {
   setIsWithin100km: (value: boolean) => void;
   address: string;
   setAddress: (value: string) => void;
+  addressFields?: { street: string; complement: string; postalCode: string; city: string };
+  setAddressFields?: (fields: { street: string; complement: string; postalCode: string; city: string }) => void;
   scheduledDate: Date | undefined;
   setScheduledDate: (date: Date | undefined) => void;
   scheduledTime: string;
