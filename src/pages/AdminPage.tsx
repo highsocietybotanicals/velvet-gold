@@ -241,7 +241,7 @@ const OrderRow = ({
       <TableCell>
         <Select
           value={order.status}
-          onValueChange={onStatusChange}
+          onValueChange={(value) => { try { onStatusChange(value); } catch (e) { console.error("Status change error:", e); } }}
           disabled={isUpdating}
         >
           <SelectTrigger className={`w-[160px] ${status.color}`}>

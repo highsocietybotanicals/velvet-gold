@@ -9,26 +9,29 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import AnimatedRoutes from "./components/AnimatedRoutes";
 import CartDrawer from "./components/CartDrawer";
 import SommelierChatbot from "./components/SommelierChatbot";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <AuthProvider>
-          <CartProvider>
-            <Toaster />
-            <Sonner />
-            <CartDrawer />
-            <SommelierChatbot />
-            <AnimatedRoutes />
-          </CartProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <AuthProvider>
+            <CartProvider>
+              <Toaster />
+              <Sonner />
+              <CartDrawer />
+              <SommelierChatbot />
+              <AnimatedRoutes />
+            </CartProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

@@ -37,6 +37,9 @@ export interface AdminOrder {
   delivery_date: string | null;
   delivery_time: string | null;
   contact_phone: string | null;
+  guest_name: string | null;
+  guest_email: string | null;
+  guest_phone: string | null;
   created_at: string;
   user_email?: string;
   order_items?: {
