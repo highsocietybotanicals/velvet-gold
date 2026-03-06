@@ -27,8 +27,8 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
       toast.error("Veuillez renseigner votre nom pour commander");
       return;
     }
-    if (deliveryType === "postal" && (!address || address.trim().length === 0)) {
-      toast.error("Veuillez renseigner une adresse de livraison pour l'envoi postal");
+    if (deliveryType === "postal" && (!address || address.trim().length < 10)) {
+      toast.error("Veuillez renseigner une adresse de livraison complète (rue, code postal, ville)");
       return;
     }
     if (totalPrice <= 0) return;
