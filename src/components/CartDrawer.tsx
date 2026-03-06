@@ -32,6 +32,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
       return;
     }
     if (totalPrice <= 0) return;
+    (window as any).__isNavigatingAway = true;
     setIsLoading(true);
     try {
       const orderItems = [
@@ -79,12 +80,12 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
 
       if (error) throw error;
       if (data?.checkoutUrl && typeof data.checkoutUrl === "string" && data.checkoutUrl.startsWith("https://")) {
-        (window as any).__isNavigatingAway = true;
-        window.location.href = data.checkoutUrl;
+        window.location.replace(data.checkoutUrl);
       } else {
         throw new Error("Invalid or missing checkout URL");
       }
     } catch (err: any) {
+      (window as any).__isNavigatingAway = false;
       console.error("Payment error:", err);
       toast.error("Erreur lors de la création du paiement. Veuillez réessayer.");
       setIsLoading(false);
@@ -183,7 +184,13 @@ const CartDrawer = () => {
   return (
     <AnimatePresence>
       {isCartOpen && (
-        <>
+        <motion.div
+          key="cart-drawer-container"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 1 }}
+          className="contents"
+        >
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -667,7 +674,7 @@ const CartDrawer = () => {
               </div>
             )}
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );
