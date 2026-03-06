@@ -1,53 +1,34 @@
 
 
-# Integration de la gamme "Force Noire"
+## Diagnostic : Écran noir sur le site publié
 
-## Concept
+### Problème identifié
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+L'application n'a **aucun Error Boundary React**. Quand une erreur JavaScript survient (lors d'un changement de statut de commande ou du paiement), React crash complètement et démonte toute l'interface. Résultat : le `<div id="root">` devient vide → fond noir du thème sombre.
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+Causes probables des crashes :
+1. **Changement de statut** : Après la mutation, `invalidateQueries` re-fetch les données. Si une erreur de rendu survient pendant la mise à jour React, tout plante sans filet.
+2. **Paiement** : Si `supabase.functions.invoke` échoue d'une manière inattendue ou si `window.location.href` reçoit une URL invalide, l'erreur non attrapée crash l'app.
 
----
+### Plan de correction
 
-## Changements visuels
+#### 1. Ajouter un ErrorBoundary global
+Créer un composant `ErrorBoundary` qui attrape toutes les erreurs React et affiche un message de fallback au lieu d'un écran noir, avec un bouton "Recharger".
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+#### 2. Renforcer la gestion d'erreurs dans AdminPage
+- Envelopper le `onValueChange` du Select dans un try/catch
+- Ajouter un `onError` plus robuste sur la mutation qui ne crash pas le rendu
 
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
+#### 3. Sécuriser le flux de paiement
+- Vérifier que `data?.checkoutUrl` est une URL valide avant de rediriger
+- Ajouter un fallback si la redirection échoue
 
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+#### 4. Corriger le type AdminOrder
+Ajouter les champs manquants (`guest_name`, `guest_email`, `guest_phone`) dans l'interface `AdminOrder` pour éviter des accès à des propriétés non typées dans `ShippingLabel`.
 
----
-
-## Details techniques
-
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
-
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+### Fichiers modifiés
+- **Nouveau** : `src/components/ErrorBoundary.tsx`
+- `src/App.tsx` — Envelopper l'app dans l'ErrorBoundary
+- `src/hooks/useAdmin.ts` — Ajouter `guest_name`, `guest_email`, `guest_phone` au type `AdminOrder`
+- `src/components/CartDrawer.tsx` — Valider l'URL de checkout avant redirect
 
