@@ -127,10 +127,29 @@ Deno.serve(async (req) => {
     const txData = await verifyResponse.json();
     console.log("Transaction verified, response keys:", Object.keys(txData));
 
-    // Transaction exists in Viva = it's real. We use webhook eventData for amount/status
-    // since the /api/transactions/ response structure differs from webhook payload.
+    // SECURITY: Use the amount from the VERIFIED Viva API response, NOT the webhook payload.
+    // The webhook payload can be forged, but the Viva API response is trustworthy.
+    // Viva /api/transactions/ returns amount in cents (e.g. 1500 = €15.00)
+    const vivaAmountCents = txData.Amount;
+    
+    if (typeof vivaAmountCents !== "number" || vivaAmountCents <= 0) {
+      console.error("Invalid amount from Viva API:", vivaAmountCents);
+      return new Response(JSON.stringify({ error: "Bad request" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    // SECURITY: Verify the paid amount matches the order total
+    // Also verify the MerchantTrns from the API response matches the webhook's
+    const vivaOrderRef = txData.MerchantTrns;
+    if (vivaOrderRef !== merchantTrns) {
+      console.error("MerchantTrns mismatch: API says", vivaOrderRef, "webhook says", merchantTrns);
+      return new Response(JSON.stringify({ error: "Bad request" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -151,23 +170,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // eventData.Amount is in euros (not cents), order.total_amount is in euros
-    const paidAmount = eventData.Amount;
+    // Compare: vivaAmountCents is in cents, order.total_amount is in euros
     const expectedAmountCents = Math.round(order.total_amount * 100);
-    const paidAmountCents = Math.round(paidAmount * 100);
     
-    console.log("Amount check: paid", paidAmountCents, "cents, expected", expectedAmountCents, "cents");
+    console.log("Amount check: Viva API says", vivaAmountCents, "cents, expected", expectedAmountCents, "cents");
     
-    if (Math.abs(paidAmountCents - expectedAmountCents) > 1) {
-      console.error("Amount mismatch: paid", paidAmount, "expected", order.total_amount);
+    if (Math.abs(vivaAmountCents - expectedAmountCents) > 1) {
+      console.error("Amount mismatch: Viva API", vivaAmountCents, "cents vs expected", expectedAmountCents, "cents");
       return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Use StatusId from webhook eventData (F = completed/finalized)
-    if (eventData.StatusId === "F") {
+    // Also verify the transaction status from the API response, not the webhook
+    // Viva StatusId: "F" = completed/finalized
+    const vivaStatusId = txData.StatusId || eventData.StatusId;
+    if (vivaStatusId === "F") {
       await supabase
         .from("orders")
         .update({
