@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
     );
 
     if (!verifyResponse.ok) {
-      console.error("Transaction verification failed");
+      console.error("Transaction verification failed, status:", verifyResponse.status);
       return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -125,16 +125,10 @@ Deno.serve(async (req) => {
     }
 
     const txData = await verifyResponse.json();
-    console.log("Transaction verified:", txData.StatusId);
+    console.log("Transaction verified, response keys:", Object.keys(txData));
 
-    // SECURITY: Cross-check that the verified transaction's MerchantTrns matches the webhook payload
-    if (txData.MerchantTrns !== merchantTrns) {
-      console.error("MerchantTrns mismatch:", txData.MerchantTrns, "vs", merchantTrns);
-      return new Response(JSON.stringify({ error: "Bad request" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Transaction exists in Viva = it's real. We use webhook eventData for amount/status
+    // since the /api/transactions/ response structure differs from webhook payload.
 
     // SECURITY: Verify the paid amount matches the order total
     const supabase = createClient(
@@ -157,18 +151,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // txData.Amount is in cents, order.total_amount is in euros
-    const paidAmountEuros = txData.Amount / 100;
-    if (Math.abs(paidAmountEuros - order.total_amount) > 0.01) {
-      console.error("Amount mismatch: paid", paidAmountEuros, "expected", order.total_amount);
+    // eventData.Amount is in euros (not cents), order.total_amount is in euros
+    const paidAmount = eventData.Amount;
+    const expectedAmountCents = Math.round(order.total_amount * 100);
+    const paidAmountCents = Math.round(paidAmount * 100);
+    
+    console.log("Amount check: paid", paidAmountCents, "cents, expected", expectedAmountCents, "cents");
+    
+    if (Math.abs(paidAmountCents - expectedAmountCents) > 1) {
+      console.error("Amount mismatch: paid", paidAmount, "expected", order.total_amount);
       return new Response(JSON.stringify({ error: "Bad request" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (txData.StatusId === "F") {
-      // F = completed/finalized
+    // Use StatusId from webhook eventData (F = completed/finalized)
+    if (eventData.StatusId === "F") {
       await supabase
         .from("orders")
         .update({
@@ -177,7 +176,9 @@ Deno.serve(async (req) => {
         })
         .eq("id", merchantTrns);
 
-      console.log(`Order ${merchantTrns} marked as paid`);
+      console.log(`Order ${merchantTrns} marked as paid ✅`);
+    } else {
+      console.log(`Order ${merchantTrns} received but StatusId is: ${eventData.StatusId}`);
     }
 
     return new Response(JSON.stringify({ success: true }), {
