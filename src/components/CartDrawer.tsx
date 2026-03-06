@@ -184,7 +184,13 @@ const CartDrawer = () => {
   return (
     <AnimatePresence>
       {isCartOpen && (
-        <>
+        <motion.div
+          key="cart-drawer-container"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 1 }}
+          className="contents"
+        >
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
