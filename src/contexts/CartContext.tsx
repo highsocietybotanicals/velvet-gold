@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Product } from "@/data/products";
 import { calculateItemPrice, calculateAccessoryPrice } from "@/lib/pricing";
+import { useProducts } from "@/hooks/useProducts";
 
 // Define Accessory interface locally to avoid circular dependency
 export interface Accessory {
