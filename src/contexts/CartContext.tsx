@@ -161,14 +161,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const currentWeight = items.reduce((sum, item) => sum + item.weight, 0);
     const allowedSamples = Math.floor(currentWeight / 10);
     
-    // Check if we can add more samples
     if (sampleItems.length >= allowedSamples) return;
     
-    // Check if this product is already a sample
     const alreadyExists = sampleItems.some(item => item.product.id === product.id);
     if (alreadyExists) return;
     
-    setSampleItems((prev) => [...prev, { product, weight: 1 }]);
+    const pricedProduct = withLatestDbPrice(product);
+    setSampleItems((prev) => [...prev, { product: pricedProduct, weight: 1 }]);
   };
 
   const removeFromCart = (productId: string) => {
