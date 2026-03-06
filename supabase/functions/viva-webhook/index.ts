@@ -6,9 +6,42 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple in-memory rate limiter per IP (resets on cold start)
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 20; // max 20 requests per IP per minute
+const ipRequests = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = ipRequests.get(ip);
+  if (!entry || now > entry.resetAt) {
+    ipRequests.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
+// Clean up stale entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of ipRequests) {
+    if (now > entry.resetAt) ipRequests.delete(ip);
+  }
+}, RATE_LIMIT_WINDOW_MS);
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limit by IP
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (isRateLimited(clientIp)) {
+    return new Response(JSON.stringify({ error: "Too many requests" }), {
+      status: 429,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   // Viva sends a GET request for webhook verification (challenge-response)
