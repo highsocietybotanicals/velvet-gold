@@ -86,6 +86,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         throw new Error("Invalid or missing checkout URL");
       }
     } catch (err: any) {
+      (window as any).__isNavigatingAway = false;
       console.error("Payment error:", err);
       toast.error("Erreur lors de la création du paiement. Veuillez réessayer.");
       setIsLoading(false);
