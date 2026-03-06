@@ -121,17 +121,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [items, sampleItems.length]);
 
+  const withLatestDbPrice = (product: Product): Product => {
+    const dbProduct = dbProducts.find(p => p.id === product.id);
+    return dbProduct ? { ...product, price: dbProduct.price } : product;
+  };
+
   const addToCart = (product: Product, weight: number) => {
+    const pricedProduct = withLatestDbPrice(product);
     setItems((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
+      const existing = prev.find((item) => item.product.id === pricedProduct.id);
       if (existing) {
         return prev.map((item) =>
-          item.product.id === product.id
-            ? { ...item, weight: item.weight + weight }
+          item.product.id === pricedProduct.id
+            ? { ...item, weight: item.weight + weight, product: pricedProduct }
             : item
         );
       }
-      return [...prev, { product, weight }];
+      return [...prev, { product: pricedProduct, weight }];
     });
     setIsCartOpen(true);
   };
