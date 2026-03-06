@@ -1,35 +1,53 @@
 
-Diagnostic rapide (confirmé)
-- Le webhook est joignable et répond en 200, mais le corps actuel du GET est vide (`text/plain`).
-- D’après la doc Viva, la vérification d’URL attend une réponse JSON contenant la clé de vérification (format type `{"Key":"..."}`), pas une réponse vide.
-- Le secret `VIVA_WEBHOOK_VERIFICATION_KEY` n’existe pas actuellement, donc la fonction ne peut renvoyer aucune clé.
 
-Plan de correction
-1) Corriger `supabase/functions/viva-webhook/index.ts` (handler GET)
-- Remplacer la logique GET actuelle.
-- Au lieu de renvoyer du texte vide, appeler l’endpoint Viva de génération de clé :
-  - Production: `https://www.vivapayments.com/api/messages/config/token`
-  - Fallback demo: `https://demo.vivapayments.com/api/messages/config/token`
-- Auth Basic avec `VIVA_MERCHANT_ID` + `VIVA_API_KEY`.
-- Renvoyer au client Viva la réponse JSON (ou au minimum `{ "Key": "..." }`) avec `Content-Type: application/json` et statut 200.
+# Integration de la gamme "Force Noire"
 
-2) Ajouter une stratégie de secours
-- Si l’appel Viva token échoue, utiliser un fallback local:
-  - soit secret `VIVA_WEBHOOK_VERIFICATION_KEY` (si configuré),
-  - sinon erreur JSON explicite pour faciliter le debug (et logs clairs).
-- Conserver les headers CORS et la gestion `OPTIONS`.
+## Concept
 
-3) Ne pas toucher la logique POST métier
-- Conserver intacte la partie webhook paiement (`EventTypeId 1796`, vérifications transaction/montant, update commande).
+Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
 
-4) Vérification fonctionnelle
-- Tester le GET du webhook (doit renvoyer JSON avec clé).
-- Dans Viva: cliquer “Vérifier” puis “Sauvegarder”.
-- Confirmer que le statut du webhook passe actif.
-- Faire un test de paiement réel de bout en bout pour valider la mise à jour automatique de la commande.
+**Deux gammes :**
+- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
+- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
 
-Détails techniques (section dédiée)
-- Fichier impacté: `supabase/functions/viva-webhook/index.ts` (bloc GET uniquement).
-- Aucun changement DB/RLS requis.
-- Cause racine: changement précédent vers `text/plain` vide, incompatible avec la vérification Viva qui attend un JSON de clé.
-- Robustesse recommandée: tentative prod puis demo pour éviter blocage si compte Viva non aligné avec l’environnement.
+---
+
+## Changements visuels
+
+### Badge "Force Noire" sur les cartes produit
+- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
+- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
+- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+
+### Filtre supplementaire
+- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
+- Permet de voir uniquement les produits enrichis
+
+### Indication sur la page produit detail
+- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+
+---
+
+## Details techniques
+
+### 1. `src/data/products.ts`
+- Ajouter un champ `isForceNoire: boolean` au type `Product`
+- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
+- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+
+### 2. `src/components/ProductCard.tsx`
+- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
+- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
+
+### 3. `src/components/ProductSection.tsx` (page d'accueil)
+- Ajouter un filtre "Force Noire" dans les boutons de categorie
+- Quand selectionne, afficher uniquement les 3 produits Force Noire
+
+### 4. `src/pages/CataloguePage.tsx`
+- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
+- Filtrer les produits en consequence
+
+### 5. `src/pages/ProductPage.tsx`
+- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
+- Texte court expliquant la puissance superieure de ces produits
+

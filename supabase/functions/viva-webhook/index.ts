@@ -11,14 +11,60 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Viva sends a GET request for verification
   // Viva sends a GET request for webhook verification (challenge-response)
+  // Must return the verification key from Viva's API
   if (req.method === "GET") {
-    const verificationKey = Deno.env.get("VIVA_WEBHOOK_VERIFICATION_KEY");
-    return new Response(verificationKey || "", {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "text/plain" },
-    });
+    try {
+      const merchantId = Deno.env.get("VIVA_MERCHANT_ID");
+      const apiKey = Deno.env.get("VIVA_API_KEY");
+      const credentials = btoa(`${merchantId}:${apiKey}`);
+
+      // Try production first
+      let tokenResponse = await fetch(
+        "https://www.vivapayments.com/api/messages/config/token",
+        { headers: { Authorization: `Basic ${credentials}` } }
+      );
+
+      // Fallback to demo if production fails
+      if (!tokenResponse.ok) {
+        console.log("Production token fetch failed, trying demo...");
+        tokenResponse = await fetch(
+          "https://demo.vivapayments.com/api/messages/config/token",
+          { headers: { Authorization: `Basic ${credentials}` } }
+        );
+      }
+
+      if (tokenResponse.ok) {
+        const tokenData = await tokenResponse.text();
+        console.log("Viva verification token retrieved successfully");
+        return new Response(tokenData, {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Fallback: use stored verification key if API call fails
+      const verificationKey = Deno.env.get("VIVA_WEBHOOK_VERIFICATION_KEY");
+      if (verificationKey) {
+        console.log("Using stored verification key as fallback");
+        return new Response(JSON.stringify({ Key: verificationKey }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.error("Failed to get verification token from Viva:", tokenResponse.status);
+      return new Response(JSON.stringify({ error: "Verification token unavailable" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("Verification error:", err);
+      return new Response(JSON.stringify({ error: "Verification failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   }
 
   try {
