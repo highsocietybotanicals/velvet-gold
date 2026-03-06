@@ -21,14 +21,18 @@ const SENDER = {
   country: "France",
 };
 
+const escHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+   .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 const ShippingLabel = ({ order }: ShippingLabelProps) => {
   const labelRef = useRef<HTMLDivElement>(null);
 
-  const recipientName = order.guest_name || "Client";
-  const recipientPhone = order.contact_phone || order.guest_phone || "";
-  const recipientEmail = order.guest_email || order.user_email || "";
-  const recipientAddress = order.delivery_address || "Adresse non renseignée";
-  const orderNumber = order.display_order_number || `#${order.order_number.toString().padStart(4, "0")}`;
+  const recipientName = escHtml(order.guest_name || "Client");
+  const recipientPhone = escHtml(order.contact_phone || order.guest_phone || "");
+  const recipientEmail = escHtml(order.guest_email || order.user_email || "");
+  const recipientAddress = escHtml(order.delivery_address || "Adresse non renseignée");
+  const orderNumber = escHtml(order.display_order_number || `#${order.order_number.toString().padStart(4, "0")}`);
 
   const handlePrint = () => {
     const printWindow = window.open("", "_blank", "width=600,height=400");
