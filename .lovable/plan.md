@@ -1,53 +1,42 @@
 
 
-# Integration de la gamme "Force Noire"
+## Probleme
 
-## Concept
+Le panier stocke le **produit entier** (avec son prix) dans `localStorage` au moment de l'ajout. Quand tu modifies le prix dans la base de données, le panier garde l'ancien objet produit avec l'ancien prix (10€). Il ne se met jamais a jour.
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+## Solution
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+Synchroniser les prix du panier avec les prix actuels de la base de donnees a chaque chargement.
 
----
+### Modification : `src/contexts/CartContext.tsx`
 
-## Changements visuels
+Ajouter un `useEffect` qui, au montage du composant (et quand les produits DB changent), met a jour le prix de chaque produit dans le panier avec le prix actuel de la base de donnees.
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+1. Importer le hook `useProducts` (qui recupere les produits depuis la DB)
+2. Ajouter un `useEffect` qui parcourt les items du panier et remplace `item.product.price` par le prix actuel de la DB si il a change
+3. Meme logique pour les echantillons (`sampleItems`)
 
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
+```typescript
+// Dans CartProvider, apres les useState existants :
+const { products: dbProducts } = useProducts();
 
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+useEffect(() => {
+  if (!dbProducts || dbProducts.length === 0) return;
+  
+  setItems(prev => prev.map(item => {
+    const dbProduct = dbProducts.find(p => p.id === item.product.id);
+    if (dbProduct && dbProduct.price !== item.product.price) {
+      return { ...item, product: { ...item.product, price: dbProduct.price } };
+    }
+    return item;
+  }));
+}, [dbProducts]);
+```
 
----
+### Fichiers impactes
+- **1 fichier** : `src/contexts/CartContext.tsx` (ajout d'un useEffect de synchronisation des prix)
 
-## Details techniques
-
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
-
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+### Resultat attendu
+- Quand un prix est modifie dans l'admin, le panier reflette automatiquement le nouveau prix au prochain chargement de page
+- Pas besoin de vider le panier manuellement
 
