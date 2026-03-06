@@ -674,7 +674,7 @@ const CartDrawer = () => {
               </div>
             )}
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

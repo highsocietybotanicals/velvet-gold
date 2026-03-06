@@ -16,14 +16,21 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Suppress errors during external navigation (e.g. Viva payment redirect)
     if (typeof window !== "undefined" && (window as any).__isNavigatingAway) {
+      console.warn("ErrorBoundary: suppressed error during navigation away:", error.message);
       return { hasError: false, error: null };
     }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
+    // Don't log if navigating away - these are expected teardown errors
+    if (typeof window !== "undefined" && (window as any).__isNavigatingAway) {
+      console.warn("ErrorBoundary: suppressed componentDidCatch during navigation away");
+      return;
+    }
+    console.error("ErrorBoundary caught:", error.message, error.stack, errorInfo);
   }
 
   handleReload = () => {
@@ -31,6 +38,11 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   render() {
+    // Double-check: if navigating away, never show error UI
+    if (typeof window !== "undefined" && (window as any).__isNavigatingAway) {
+      return this.props.children;
+    }
+
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center px-4">
