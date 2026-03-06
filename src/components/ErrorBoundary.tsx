@@ -25,7 +25,6 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Don't log if navigating away - these are expected teardown errors
     if (typeof window !== "undefined" && (window as any).__isNavigatingAway) {
       console.warn("ErrorBoundary: suppressed componentDidCatch during navigation away");
       return;
@@ -33,35 +32,67 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("ErrorBoundary caught:", error.message, error.stack, errorInfo);
   }
 
+  componentDidMount() {
+    // Listen for route changes to reset error state
+    this.resetOnNavigation();
+  }
+
+  componentDidUpdate() {
+    this.resetOnNavigation();
+  }
+
+  private resetOnNavigation() {
+    if (this.state.hasError) {
+      // Reset error state after a short delay to allow navigation to complete
+      const handlePopState = () => {
+        this.setState({ hasError: false, error: null });
+      };
+      window.addEventListener("popstate", handlePopState, { once: true });
+    }
+  }
+
   handleReload = () => {
+    this.setState({ hasError: false, error: null });
     window.location.reload();
   };
 
+  handleGoHome = () => {
+    this.setState({ hasError: false, error: null });
+    window.location.href = "/";
+  };
+
   render() {
-    // Double-check: if navigating away, never show error UI
     if (typeof window !== "undefined" && (window as any).__isNavigatingAway) {
       return this.props.children;
     }
 
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center px-4">
-          <div className="text-center max-w-md">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-destructive/10 flex items-center justify-center">
-              <span className="text-2xl">⚠️</span>
+        <div style={{ minHeight: "100vh", backgroundColor: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ textAlign: "center", maxWidth: "28rem" }}>
+            <div style={{ width: "4rem", height: "4rem", margin: "0 auto 1.5rem", borderRadius: "50%", backgroundColor: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: "1.5rem" }}>⚠️</span>
             </div>
-            <h1 className="text-xl font-semibold text-foreground mb-2">
+            <h1 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#111827", marginBottom: "0.5rem" }}>
               Une erreur est survenue
             </h1>
-            <p className="text-muted-foreground mb-6 text-sm">
-              L'application a rencontré un problème inattendu. Veuillez recharger la page.
+            <p style={{ color: "#6b7280", marginBottom: "1.5rem", fontSize: "0.875rem" }}>
+              L'application a rencontré un problème inattendu.
             </p>
-            <button
-              onClick={this.handleReload}
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
-            >
-              Recharger la page
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <button
+                onClick={this.handleReload}
+                style={{ padding: "0.75rem 1.5rem", backgroundColor: "#b8860b", color: "#ffffff", borderRadius: "0.5rem", border: "none", cursor: "pointer", fontWeight: 500, fontSize: "0.875rem" }}
+              >
+                Recharger la page
+              </button>
+              <button
+                onClick={this.handleGoHome}
+                style={{ padding: "0.5rem", backgroundColor: "transparent", color: "#6b7280", border: "none", cursor: "pointer", fontSize: "0.875rem" }}
+              >
+                Retour à l'accueil
+              </button>
+            </div>
           </div>
         </div>
       );

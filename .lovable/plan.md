@@ -1,28 +1,53 @@
 
 
-## Diagnostic
+# Integration de la gamme "Force Noire"
 
-L'ecran noir que tu vois est en fait la page d'erreur de l'ErrorBoundary avec le theme sombre -- le texte est la mais quasi invisible sur fond noir.
+## Concept
 
-L'erreur "useCart must be used within a CartProvider" est declenchee par un rechargement de code en developpement (hot-reload) apres les modifications recentes. Quand l'ErrorBoundary attrape une erreur, il remplace TOUT l'arbre de composants (y compris CartProvider), ce qui cree une cascade d'erreurs.
+Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
 
-## Plan de correction
+**Deux gammes :**
+- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
+- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
 
-### 1. Rendre la page d'erreur visible en mode sombre
-**Fichier:** `src/components/ErrorBoundary.tsx`
-- Forcer des couleurs explicites (fond blanc, texte noir) au lieu de `bg-background` qui est invisible en mode sombre
+---
 
-### 2. Ajouter un reset automatique de l'ErrorBoundary lors des navigations
-**Fichier:** `src/components/ErrorBoundary.tsx`
-- Wrapper l'ErrorBoundary pour qu'il reset son etat `hasError` quand la route change (via `location.pathname`)
-- Cela evitera qu'une erreur transitoire bloque definitivement l'application
+## Changements visuels
 
-### 3. Securiser le PaymentSuccessPage
-**Fichier:** `src/pages/PaymentSuccessPage.tsx`  
-- Le bouton "Suivre ma commande" pointe vers `/profil` mais apres une redirection Viva, la session auth peut etre perdue
-- Ajouter une verification: si pas connecte, rediriger vers `/auth` plutot que `/profil` pour eviter un crash
+### Badge "Force Noire" sur les cartes produit
+- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
+- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
+- Effet visuel premium : bordure rouge sombre/noire, legere lueur
 
-### Fichiers impactes
-- `src/components/ErrorBoundary.tsx` (couleurs + reset sur navigation)
-- `src/pages/PaymentSuccessPage.tsx` (securiser la redirection)
+### Filtre supplementaire
+- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
+- Permet de voir uniquement les produits enrichis
+
+### Indication sur la page produit detail
+- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+
+---
+
+## Details techniques
+
+### 1. `src/data/products.ts`
+- Ajouter un champ `isForceNoire: boolean` au type `Product`
+- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
+- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+
+### 2. `src/components/ProductCard.tsx`
+- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
+- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
+
+### 3. `src/components/ProductSection.tsx` (page d'accueil)
+- Ajouter un filtre "Force Noire" dans les boutons de categorie
+- Quand selectionne, afficher uniquement les 3 produits Force Noire
+
+### 4. `src/pages/CataloguePage.tsx`
+- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
+- Filtrer les produits en consequence
+
+### 5. `src/pages/ProductPage.tsx`
+- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
+- Texte court expliquant la puissance superieure de ces produits
 
