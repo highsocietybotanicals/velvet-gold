@@ -5,11 +5,13 @@ import { CheckCircle, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const PaymentSuccessPage = () => {
   const navigate = useNavigate();
   const { clearCart } = useCart();
+  const { user } = useAuth();
   const [verifying, setVerifying] = useState(true);
   const [verified, setVerified] = useState(false);
 
@@ -24,7 +26,7 @@ const PaymentSuccessPage = () => {
       if (!pendingPayment) {
         console.log("No pending payment info found");
         setVerifying(false);
-        setVerified(true); // Assume success if no info (old flow)
+        setVerified(true);
         return;
       }
 
@@ -35,7 +37,6 @@ const PaymentSuccessPage = () => {
         return;
       }
 
-      // Call verify-payment edge function
       const { data, error } = await supabase.functions.invoke("verify-payment", {
         body: { orderId, vivaOrderCode },
       });
@@ -47,7 +48,6 @@ const PaymentSuccessPage = () => {
         if (data?.status === "paid" || data?.status === "already_paid") {
           setVerified(true);
         } else if (data?.status === "pending") {
-          // Payment might still be processing, retry after a delay
           await new Promise((resolve) => setTimeout(resolve, 3000));
           const { data: retryData } = await supabase.functions.invoke("verify-payment", {
             body: { orderId, vivaOrderCode },
@@ -55,18 +55,25 @@ const PaymentSuccessPage = () => {
           if (retryData?.status === "paid" || retryData?.status === "already_paid") {
             setVerified(true);
           } else {
-            setVerified(true); // Show success anyway, webhook might catch it later
+            setVerified(true);
           }
         }
       }
 
-      // Clean up
       localStorage.removeItem("pending_payment");
     } catch (err) {
       console.error("Verify payment error:", err);
     } finally {
       setVerifying(false);
       setVerified(true);
+    }
+  };
+
+  const handleTrackOrder = () => {
+    if (user) {
+      navigate("/profil");
+    } else {
+      navigate("/auth");
     }
   };
 
@@ -100,7 +107,7 @@ const PaymentSuccessPage = () => {
               </p>
               <div className="space-y-3">
                 <button
-                  onClick={() => navigate("/profil")}
+                  onClick={handleTrackOrder}
                   className="w-full btn-luxury py-3"
                 >
                   Suivre ma commande
