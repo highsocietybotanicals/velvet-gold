@@ -86,7 +86,6 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
     } catch (err: any) {
       console.error("Payment error:", err);
       toast.error("Erreur lors de la création du paiement. Veuillez réessayer.");
-    } finally {
       setIsLoading(false);
     }
   };
