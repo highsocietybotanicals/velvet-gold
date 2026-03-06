@@ -16,6 +16,9 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    if (typeof window !== "undefined" && (window as any).__isNavigatingAway) {
+      return { hasError: false, error: null };
+    }
     return { hasError: true, error };
   }
 

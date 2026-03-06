@@ -79,6 +79,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
 
       if (error) throw error;
       if (data?.checkoutUrl && typeof data.checkoutUrl === "string" && data.checkoutUrl.startsWith("https://")) {
+        (window as any).__isNavigatingAway = true;
         window.location.href = data.checkoutUrl;
       } else {
         throw new Error("Invalid or missing checkout URL");
