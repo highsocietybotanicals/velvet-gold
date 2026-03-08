@@ -13,7 +13,7 @@ Tu es élégant, chaleureux et expert. Tu tutoies le client de manière respectu
 CATALOGUE COMPLET (prix de base par gramme, remises sur quantité disponibles) :
 
 FLEURS :
-- Amnesia "Signature Oniria" (12€/g) : Sativa, 18% CBD, arômes agrumes/terre. Énergie & Créativité. Profil : fruité dominant.
+- Amnesia "Signature Oniria" (12€/g) : Sativa, 27% CBD, arômes agrumes/terre. Énergie & Créativité. Profil : fruité dominant.
 - Platinum OG (12€/g) : Indica, 22% CBD, notes pin/citron/bois. Relaxation profonde. Profil : boisé dominant.
 - Mint Kush (12€/g) : Indica, 20% CBD, menthe fraîche & épices douces. Fraîcheur. Profil : floral/épicé.
 - 911 OG "Indoor Master" (14€/g) : Indoor Premium, 50% Élixir Noir, puissance pure. Collection Force Noire. Profil : boisé/terreux.
