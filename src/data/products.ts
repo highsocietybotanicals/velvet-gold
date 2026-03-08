@@ -51,7 +51,7 @@ const groupA: Product[] = [
     description: "Fleur d'artiste par Oniria. Arômes d'agrumes et de terre, stimulante et énergisante.",
     price: 12,
     priceGroup: "A",
-    cbdPercentage: "18%",
+    cbdPercentage: "27%",
     image: amnesiaOniria,
     terpenes: { boise: 40, fruite: 85, epice: 50, terreux: 60 },
     mood: "Énergie",
