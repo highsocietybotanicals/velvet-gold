@@ -80,7 +80,16 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Viva sends a GET request for webhook verification (challenge-response)
+  // IP allowlist check for POST requests (webhook notifications)
+  // GET requests (challenge-response verification) are allowed from any IP
+  if (req.method === "POST" && !isVivaIp(clientIp)) {
+    console.warn("Webhook POST from non-Viva IP rejected:", clientIp);
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // Must return the verification key from Viva's API
   if (req.method === "GET") {
     try {
