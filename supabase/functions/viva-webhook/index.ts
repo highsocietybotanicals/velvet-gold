@@ -6,6 +6,43 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Viva Wallet production webhook IP allowlist
+// Source: https://developer.viva.com/webhooks-for-payments/
+const VIVA_ALLOWED_IPS = new Set([
+  "51.138.37.238",
+  "13.80.70.181",
+  "13.80.71.223",
+  "13.79.28.70",
+  "94.70.255.73",
+  "94.70.248.18",
+  "83.235.24.226",
+  "20.13.195.185",
+  "94.70.174.36",
+]);
+
+// Viva IP ranges (CIDR /28 = 16 IPs each)
+// 40.127.253.112/28 → .112-.127
+// 51.105.129.192/28 → .192-.207
+function isInCidr28(ip: string, base: string): boolean {
+  const parts = ip.split(".").map(Number);
+  const baseParts = base.split(".").map(Number);
+  if (parts.length !== 4 || baseParts.length !== 4) return false;
+  return (
+    parts[0] === baseParts[0] &&
+    parts[1] === baseParts[1] &&
+    parts[2] === baseParts[2] &&
+    parts[3] >= baseParts[3] &&
+    parts[3] <= baseParts[3] + 15
+  );
+}
+
+function isVivaIp(ip: string): boolean {
+  if (VIVA_ALLOWED_IPS.has(ip)) return true;
+  if (isInCidr28(ip, "40.127.253.112")) return true;
+  if (isInCidr28(ip, "51.105.129.192")) return true;
+  return false;
+}
+
 // Simple in-memory rate limiter per IP (resets on cold start)
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 const RATE_LIMIT_MAX = 20; // max 20 requests per IP per minute
@@ -22,7 +59,6 @@ function isRateLimited(ip: string): boolean {
   return entry.count > RATE_LIMIT_MAX;
 }
 
-// Clean up stale entries periodically
 setInterval(() => {
   const now = Date.now();
   for (const [ip, entry] of ipRequests) {
@@ -44,7 +80,16 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Viva sends a GET request for webhook verification (challenge-response)
+  // IP allowlist check for POST requests (webhook notifications)
+  // GET requests (challenge-response verification) are allowed from any IP
+  if (req.method === "POST" && !isVivaIp(clientIp)) {
+    console.warn("Webhook POST from non-Viva IP rejected:", clientIp);
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // Must return the verification key from Viva's API
   if (req.method === "GET") {
     try {
