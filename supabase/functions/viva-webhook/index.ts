@@ -53,7 +53,7 @@ function isRateLimited(ip: string): boolean {
   const entry = ipRequests.get(ip);
   if (!entry || now > entry.resetAt) {
     ipRequests.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;how
+    return false;
   }
   entry.count++;
   return entry.count > RATE_LIMIT_MAX;
