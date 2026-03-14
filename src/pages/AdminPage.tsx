@@ -233,9 +233,7 @@ const OrderRow = ({
           <Badge variant="outline" className="capitalize">
             {order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal"}
           </Badge>
-          {order.delivery_type === "postal" && (
-            <ShippingLabel order={order} />
-          )}
+          <OrderSummaryPrint order={order} />
         </div>
       </TableCell>
       <TableCell>
