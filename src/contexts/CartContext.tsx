@@ -256,6 +256,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         totalPrice,
         isCartOpen,
         setIsCartOpen,
+        promoCode,
+        setPromoCode,
+        promoDiscount,
+        setPromoDiscount,
       }}
     >
       {children}
