@@ -1,53 +1,38 @@
 
 
-# Integration de la gamme "Force Noire"
+## Plan : Email de remerciement via Gmail SMTP
 
-## Concept
+Tu as généré le mot de passe d'application Google avec succès. Voici le plan pour envoyer les emails de confirmation depuis `contacts@highsocietybotanicals.com` via Gmail SMTP.
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+### Étapes
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+1. **Stocker 2 secrets** : `GMAIL_USER` (contacts@highsocietybotanicals.com) et `GMAIL_APP_PASSWORD` (le mot de passe que tu viens de fournir)
 
----
+2. **Créer `send-order-confirmation` edge function** qui :
+   - Reçoit un `orderId`
+   - Récupère la commande + items + profil client via service role
+   - Génère un email HTML de remerciement avec facture détaillée (numéro HSB-XXXXXX, tableau des articles avec produit/poids/prix, total, infos livraison)
+   - Envoie via Gmail SMTP avec `denomailer` (bibliothèque Deno pour SMTP)
+   - Expéditeur : `contacts@highsocietybotanicals.com`
 
-## Changements visuels
+3. **Modifier `verify-payment/index.ts`** : après le passage en `paid` (ligne 104-110), appel vers `send-order-confirmation`
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
+4. **Modifier `viva-webhook/index.ts`** : après le passage en `paid` (ligne 268-274), appel vers `send-order-confirmation`
 
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
+5. **Mettre à jour `supabase/config.toml`** : ajouter `[functions.send-order-confirmation]` avec `verify_jwt = false`
 
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
+6. **Déployer** les 3 edge functions modifiées
 
----
+### Contenu de l'email
+- Objet : "Merci pour votre commande HSB-XXXXXX — High Society Botanicals"
+- Message personnalisé (prénom si disponible, sinon nom)
+- Tableau : produit, type, quantité/poids, prix unitaire, total ligne
+- Total général
+- Infos livraison (type, adresse, date/créneau)
+- Pied de page avec coordonnées
 
-## Details techniques
-
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
-
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
+### Détail technique
+- L'email est envoyé directement depuis ton compte Google, pas via l'infrastructure Lovable
+- Idempotency : vérification dans `email_send_log` avant envoi pour éviter les doublons
+- L'envoi est asynchrone (fire-and-forget) pour ne pas bloquer la réponse de paiement
 
