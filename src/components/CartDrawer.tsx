@@ -14,7 +14,7 @@ import DeliverySection from "./DeliverySection";
 // Import corrected accessory images from accessories data
 import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
 
-const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone }: any) => {
+const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone, promoCode }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
