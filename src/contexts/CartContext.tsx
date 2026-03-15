@@ -46,6 +46,10 @@ interface CartContextType {
   totalPrice: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
+  promoCode: string;
+  setPromoCode: (code: string) => void;
+  promoDiscount: number; // percentage e.g. 15
+  setPromoDiscount: (discount: number) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
