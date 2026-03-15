@@ -56,6 +56,12 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         })),
       ];
 
+      // Build sample items for the order
+      const sampleOrderItems = sampleItems.map((item: any) => ({
+        productId: item.product.id,
+        productName: item.product.name,
+      }));
+
       const body: any = {
         amount: totalPrice,
         items: orderItems,
