@@ -65,6 +65,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
       const body: any = {
         amount: totalPrice,
         items: orderItems,
+        sampleItems: sampleOrderItems,
         deliveryType,
         deliveryAddress: address || null,
         deliveryDate: scheduledDate?.toISOString()?.split("T")[0] || null,
