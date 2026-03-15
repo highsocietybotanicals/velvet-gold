@@ -74,6 +74,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     safeParseJSON("cart-samples", [])
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
 
   // Sync cart prices with database prices
   useEffect(() => {
