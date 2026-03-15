@@ -331,6 +331,44 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_code_usage: {
+        Row: {
+          code: string
+          created_at: string
+          discount_amount: number
+          discount_percent: number
+          id: string
+          order_id: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_amount?: number
+          discount_percent: number
+          id?: string
+          order_id?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_amount?: number
+          discount_percent?: number
+          id?: string
+          order_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_usage_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
