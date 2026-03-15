@@ -1,53 +1,51 @@
 
+Objectif: corriger l’email de confirmation pour qu’il affiche correctement les échantillons/cadeaux/ristournes, faire apparaître le code promo quand le client est éligible, et supprimer les `=20` visibles dans le mail.
 
-# Integration de la gamme "Force Noire"
+Plan d’implémentation
 
-## Concept
+1) Aligner les règles promo + échantillons + cadeaux
+- Uniformiser la règle d’échantillons à **1g offert par tranche de 10g** partout (actuellement il y a un mix 10g/12g selon les fichiers).
+- Réactiver la logique cadeaux (actuellement désactivée dans `src/lib/pricing.ts`), pour qu’elle soit réellement calculée et affichable.
+- Vérifier la règle promo côté email: aujourd’hui le bloc promo dépend uniquement de `order.user_id` + count de commandes payées; je vais la rendre plus robuste (et explicite) pour éviter les cas “code absent” inattendus.
 
-Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
+2) Sauvegarder les échantillons/cadeaux dans la commande (pour pouvoir les afficher dans l’email)
+- `src/components/CartDrawer.tsx`:
+  - faire passer les `sampleItems` au paiement.
+- `supabase/functions/create-viva-payment/index.ts`:
+  - valider côté serveur les échantillons (max autorisé, 1g chacun, seulement des fleurs valides),
+  - ajouter les échantillons et cadeaux comme lignes `order_items` à 0€ (types dédiés `sample` / `gift`),
+  - conserver un total facturé inchangé (les offerts n’augmentent pas le montant).
+- Avantage: pas de migration DB nécessaire, on réutilise `order_items` pour le détail complet de la commande.
 
-**Deux gammes :**
-- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
-- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
+3) Enrichir l’email de confirmation
+- `supabase/functions/send-order-confirmation/index.ts`:
+  - séparer les lignes de commande en sections:
+    - Articles facturés
+    - Échantillons gratuits
+    - Cadeaux offerts
+  - ajouter un bloc “Ristournes appliquées” (remise palier poids + promo si présent),
+  - afficher BIENVENUE15 selon l’éligibilité réelle (et ajouter un message clair si non éligible pour éviter l’impression de bug).
 
----
+4) Corriger définitivement le problème `=20`
+- Dans l’envoi SMTP (`send-order-confirmation`):
+  - activer `encodeLB: true` sur le client denomailer (corrige les soucis d’encodage/retours ligne),
+  - envoyer aussi une version texte (`content`) propre en plus du HTML,
+  - nettoyer le HTML généré (supprimer espaces de fin de ligne / normaliser les retours),
+  - garder l’objet du mail simple (ASCII) pour éviter les artefacts d’encodage.
 
-## Changements visuels
+5) Vérification end-to-end
+- Tester 3 cas:
+  1. 1ère commande payée d’un compte: code visible dans l’email, pas de `=20`.
+  2. 2ème commande: promo appliquée (auto/manual), ristournes + offerts visibles.
+  3. Compte ayant déjà utilisé BIENVENUE15: plus de code actif.
+- Contrôler à la fois le rendu inbox et le contenu brut du message (pour confirmer la disparition des `=20`).
 
-### Badge "Force Noire" sur les cartes produit
-- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
-- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
-- Effet visuel premium : bordure rouge sombre/noire, legere lueur
-
-### Filtre supplementaire
-- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
-- Permet de voir uniquement les produits enrichis
-
-### Indication sur la page produit detail
-- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
-
----
-
-## Details techniques
-
-### 1. `src/data/products.ts`
-- Ajouter un champ `isForceNoire: boolean` au type `Product`
-- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
-- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
-
-### 2. `src/components/ProductCard.tsx`
-- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
-- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
-
-### 3. `src/components/ProductSection.tsx` (page d'accueil)
-- Ajouter un filtre "Force Noire" dans les boutons de categorie
-- Quand selectionne, afficher uniquement les 3 produits Force Noire
-
-### 4. `src/pages/CataloguePage.tsx`
-- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
-- Filtrer les produits en consequence
-
-### 5. `src/pages/ProductPage.tsx`
-- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
-- Texte court expliquant la puissance superieure de ces produits
-
+Détails techniques (résumé)
+- Fichiers ciblés:
+  - `src/lib/pricing.ts`
+  - `src/components/CartDrawer.tsx`
+  - `src/pages/SampleSelectionPage.tsx`
+  - `src/contexts/CartContext.tsx`
+  - `supabase/functions/create-viva-payment/index.ts`
+  - `supabase/functions/send-order-confirmation/index.ts`
+- Pas de changement RLS ni migration SQL obligatoire pour cette version (on capitalise sur `order_items` existant).
