@@ -63,25 +63,44 @@ export const useOrders = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
+      // Fetch orders with items
       const { data, error } = await supabase
         .from("orders")
         .select(`
           *,
-          order_items (*),
-          order_status_history (*)
+          order_items (*)
         `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       
-      // Map status_history from the nested relation
-      return (data || []).map((order: any) => ({
-        ...order,
-        status_history: (order.order_status_history || []).sort(
-          (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        ),
-      })) as Order[];
+      const ordersList = data as Order[];
+      
+      // Fetch status history for all orders separately (table not in generated types)
+      if (ordersList.length > 0) {
+        const orderIds = ordersList.map(o => o.id);
+        const { data: historyData } = await supabase
+          .from("order_status_history" as any)
+          .select("id, order_id, old_status, new_status, created_at")
+          .in("order_id", orderIds)
+          .order("created_at", { ascending: true });
+        
+        const historyMap = new Map<string, StatusHistoryEntry[]>();
+        if (historyData) {
+          for (const h of historyData as any[]) {
+            const list = historyMap.get(h.order_id) || [];
+            list.push(h as StatusHistoryEntry);
+            historyMap.set(h.order_id, list);
+          }
+        }
+        
+        for (const order of ordersList) {
+          order.status_history = historyMap.get(order.id) || [];
+        }
+      }
+      
+      return ordersList;
     },
     enabled: !!user?.id,
   });
