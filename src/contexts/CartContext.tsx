@@ -216,6 +216,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems([]);
     setAccessoryItems([]);
     setSampleItems([]);
+    setPromoCode("");
+    setPromoDiscount(0);
   };
 
   const totalItems = items.length + accessoryItems.length + sampleItems.length;
