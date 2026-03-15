@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone } = await req.json();
+    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone, promoCode } = await req.json();
 
     // Validate deliveryType
     const validDeliveryTypes = ['postal', 'personal'];
