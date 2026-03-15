@@ -199,6 +199,97 @@ const CartDrawer = () => {
     navigate("/echantillon");
   };
 
+  // Auto-check BIENVENUE15 eligibility for logged-in users
+  useEffect(() => {
+    if (!user || promoAutoChecked || promoCode) return;
+    setPromoAutoChecked(true);
+    
+    (async () => {
+      try {
+        // Check if user already used BIENVENUE15
+        const { data: usage } = await supabase
+          .from("promo_code_usage")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("code", "BIENVENUE15")
+          .maybeSingle();
+        
+        if (usage) return; // Already used
+
+        // Check if user has any paid orders (first order = no prior paid orders)
+        const { count } = await supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("payment_status", "paid");
+        
+        if ((count || 0) === 0) {
+          // Eligible! Auto-apply
+          setPromoCode("BIENVENUE15");
+          setPromoDiscount(15);
+          setPromoInput("BIENVENUE15");
+        }
+      } catch (err) {
+        console.error("Promo auto-check error:", err);
+      }
+    })();
+  }, [user, promoAutoChecked, promoCode]);
+
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+    
+    if (code !== "BIENVENUE15") {
+      setPromoError("Code promo invalide");
+      return;
+    }
+
+    if (!user) {
+      setPromoError("Connecte-toi pour utiliser un code promo");
+      return;
+    }
+
+    setPromoLoading(true);
+    setPromoError("");
+
+    try {
+      // Check if already used
+      const { data: usage } = await supabase
+        .from("promo_code_usage")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("code", "BIENVENUE15")
+        .maybeSingle();
+
+      if (usage) {
+        setPromoError("Tu as déjà utilisé ce code 😅");
+        setPromoLoading(false);
+        return;
+      }
+
+      setPromoCode("BIENVENUE15");
+      setPromoDiscount(15);
+      toast.success("Code promo BIENVENUE15 appliqué ! -15% 🎉");
+    } catch (err) {
+      setPromoError("Erreur lors de la vérification");
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoCode("");
+    setPromoDiscount(0);
+    setPromoInput("");
+    setPromoError("");
+  };
+
+  // Calculate discounted total
+  const discountedTotal = promoDiscount > 0
+    ? Math.round(totalPrice * (1 - promoDiscount / 100) * 100) / 100
+    : totalPrice;
+  const discountAmount = totalPrice - discountedTotal;
+
   return (
     <AnimatePresence>
       {isCartOpen && (
