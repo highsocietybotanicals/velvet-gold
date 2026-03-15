@@ -216,15 +216,15 @@ const CartDrawer = () => {
         
         if (usage) return; // Already used
 
-        // Check if user has any paid orders (first order = no prior paid orders)
+        // Check if user has exactly 1 paid order (2nd order = eligible)
         const { count } = await supabase
           .from("orders")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id)
           .eq("payment_status", "paid");
         
-        if ((count || 0) === 0) {
-          // Eligible! Auto-apply
+        if ((count || 0) === 1) {
+          // Has 1 paid order → this will be their 2nd → auto-apply
           setPromoCode("BIENVENUE15");
           setPromoDiscount(15);
           setPromoInput("BIENVENUE15");
