@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,6 +13,14 @@ export interface OrderItem {
   quantity: number | null;
   unit_price: number;
   total_price: number;
+  created_at: string;
+}
+
+export interface StatusHistoryEntry {
+  id: string;
+  order_id: string;
+  old_status: string | null;
+  new_status: string;
   created_at: string;
 }
 
@@ -33,6 +42,7 @@ export interface Order {
   created_at: string;
   updated_at: string;
   order_items?: OrderItem[];
+  status_history?: StatusHistoryEntry[];
 }
 
 export const ORDER_STATUS = {
@@ -46,6 +56,7 @@ export const ORDER_STATUS = {
 
 export const useOrders = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ["orders", user?.id],
@@ -56,16 +67,49 @@ export const useOrders = () => {
         .from("orders")
         .select(`
           *,
-          order_items (*)
+          order_items (*),
+          order_status_history (*)
         `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Order[];
+      
+      // Map status_history from the nested relation
+      return (data || []).map((order: any) => ({
+        ...order,
+        status_history: (order.order_status_history || []).sort(
+          (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        ),
+      })) as Order[];
     },
     enabled: !!user?.id,
   });
+
+  // Realtime subscription for order status changes
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel("order-status-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["orders", user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
 
   // Only show paid orders
   const paidOrders = orders?.filter((o) => o.payment_status !== "unpaid");

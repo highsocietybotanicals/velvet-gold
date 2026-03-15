@@ -58,7 +58,6 @@ export const useAdmin = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Récupérer les demandes Pro en attente
   const { data: proRequests, isLoading: loadingProRequests } = useQuery({
     queryKey: ["admin", "pro-requests"],
     queryFn: async () => {
@@ -75,7 +74,6 @@ export const useAdmin = () => {
     enabled: !!user && isAdmin,
   });
 
-  // Récupérer les demandes TVA en attente
   const { data: vatRequests, isLoading: loadingVatRequests } = useQuery({
     queryKey: ["admin", "vat-requests"],
     queryFn: async () => {
@@ -93,7 +91,6 @@ export const useAdmin = () => {
     enabled: !!user && isAdmin,
   });
 
-  // Récupérer toutes les commandes
   const { data: allOrders, isLoading: loadingOrders } = useQuery({
     queryKey: ["admin", "orders"],
     queryFn: async () => {
@@ -107,7 +104,6 @@ export const useAdmin = () => {
 
       if (ordersError) throw ordersError;
 
-      // Récupérer les emails des utilisateurs
       const userIds = [...new Set(ordersData.map(o => o.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
@@ -124,10 +120,8 @@ export const useAdmin = () => {
     enabled: !!user && isAdmin,
   });
 
-  // Valider un compte Pro
   const validateProMutation = useMutation({
     mutationFn: async (userId: string) => {
-      // Mettre à jour is_pro_validated
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ is_pro_validated: true })
@@ -135,7 +129,6 @@ export const useAdmin = () => {
 
       if (profileError) throw profileError;
 
-      // Ajouter le rôle 'pro' dans user_roles
       const { error: roleError } = await supabase
         .from("user_roles")
         .insert({ user_id: userId, role: "pro" });
@@ -161,7 +154,6 @@ export const useAdmin = () => {
     },
   });
 
-  // Refuser un compte Pro
   const rejectProMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await supabase
@@ -192,7 +184,7 @@ export const useAdmin = () => {
     },
   });
 
-  // Mettre à jour le statut d'une commande
+  // Update order status + send notification email
   const updateOrderStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
       const { error } = await supabase
@@ -201,12 +193,20 @@ export const useAdmin = () => {
         .eq("id", orderId);
 
       if (error) throw error;
+
+      // Send status update email (fire-and-forget)
+      // Skip email for "pending" status (initial state)
+      if (status !== "pending") {
+        supabase.functions.invoke("send-status-update-email", {
+          body: { orderId, newStatus: status },
+        }).catch((e) => console.error("Status email error:", e));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
       toast({
-        title: "Statut mis à jour",
-        description: "La commande a été mise à jour.",
+        title: "Statut mis à jour ✅",
+        description: "Le client a été notifié par email.",
       });
     },
     onError: (error) => {
@@ -219,7 +219,6 @@ export const useAdmin = () => {
     },
   });
 
-  // Valider un numéro TVA
   const validateVatMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await supabase
@@ -246,7 +245,6 @@ export const useAdmin = () => {
     },
   });
 
-  // Rejeter un numéro TVA
   const rejectVatMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await supabase
