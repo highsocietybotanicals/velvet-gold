@@ -94,6 +94,17 @@ Deno.serve(async (req) => {
 
     const orderNumber = order.display_order_number || `HSB-${String(order.order_number).padStart(6, "0")}`;
 
+    // Check if this is the customer's first order (for promo code)
+    let isFirstOrder = false;
+    if (order.user_id) {
+      const { count } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", order.user_id)
+        .eq("payment_status", "paid");
+      isFirstOrder = (count || 0) <= 1;
+    }
+
     // Build items table rows
     const itemRows = (items || [])
       .map((item) => {
