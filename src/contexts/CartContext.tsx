@@ -46,6 +46,10 @@ interface CartContextType {
   totalPrice: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
+  promoCode: string;
+  setPromoCode: (code: string) => void;
+  promoDiscount: number; // percentage e.g. 15
+  setPromoDiscount: (discount: number) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -70,6 +74,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     safeParseJSON("cart-samples", [])
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
 
   // Sync cart prices with database prices
   useEffect(() => {
@@ -210,6 +216,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems([]);
     setAccessoryItems([]);
     setSampleItems([]);
+    setPromoCode("");
+    setPromoDiscount(0);
   };
 
   const totalItems = items.length + accessoryItems.length + sampleItems.length;
@@ -248,6 +256,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         totalPrice,
         isCartOpen,
         setIsCartOpen,
+        promoCode,
+        setPromoCode,
+        promoDiscount,
+        setPromoDiscount,
       }}
     >
       {children}

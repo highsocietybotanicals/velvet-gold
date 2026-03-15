@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package, Leaf, Sparkles, CreditCard, Loader2 } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package, Leaf, Sparkles, CreditCard, Loader2, Tag, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,7 +14,7 @@ import DeliverySection from "./DeliverySection";
 // Import corrected accessory images from accessories data
 import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
 
-const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone }: any) => {
+const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone, promoCode }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
@@ -65,6 +65,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         deliveryTime: scheduledTime || null,
         contactPhone: contactPhone || null,
         totalFlowerWeight,
+        promoCode: promoCode || null,
       };
 
       // Add guest info if not authenticated
@@ -141,7 +142,17 @@ const CartDrawer = () => {
     totalFlowerWeight,
     isCartOpen,
     setIsCartOpen,
+    promoCode,
+    setPromoCode,
+    promoDiscount,
+    setPromoDiscount,
   } = useCart();
+
+  // Promo code state
+  const [promoInput, setPromoInput] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [promoAutoChecked, setPromoAutoChecked] = useState(false);
 
   // Delivery state
   const [deliveryType, setDeliveryType] = useState<"postal" | "personal">("postal");
@@ -187,6 +198,97 @@ const CartDrawer = () => {
     setIsCartOpen(false);
     navigate("/echantillon");
   };
+
+  // Auto-check BIENVENUE15 eligibility for logged-in users
+  useEffect(() => {
+    if (!user || promoAutoChecked || promoCode) return;
+    setPromoAutoChecked(true);
+    
+    (async () => {
+      try {
+        // Check if user already used BIENVENUE15
+        const { data: usage } = await supabase
+          .from("promo_code_usage")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("code", "BIENVENUE15")
+          .maybeSingle();
+        
+        if (usage) return; // Already used
+
+        // Check if user has any paid orders (first order = no prior paid orders)
+        const { count } = await supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("payment_status", "paid");
+        
+        if ((count || 0) === 0) {
+          // Eligible! Auto-apply
+          setPromoCode("BIENVENUE15");
+          setPromoDiscount(15);
+          setPromoInput("BIENVENUE15");
+        }
+      } catch (err) {
+        console.error("Promo auto-check error:", err);
+      }
+    })();
+  }, [user, promoAutoChecked, promoCode]);
+
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+    
+    if (code !== "BIENVENUE15") {
+      setPromoError("Code promo invalide");
+      return;
+    }
+
+    if (!user) {
+      setPromoError("Connecte-toi pour utiliser un code promo");
+      return;
+    }
+
+    setPromoLoading(true);
+    setPromoError("");
+
+    try {
+      // Check if already used
+      const { data: usage } = await supabase
+        .from("promo_code_usage")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("code", "BIENVENUE15")
+        .maybeSingle();
+
+      if (usage) {
+        setPromoError("Tu as déjà utilisé ce code 😅");
+        setPromoLoading(false);
+        return;
+      }
+
+      setPromoCode("BIENVENUE15");
+      setPromoDiscount(15);
+      toast.success("Code promo BIENVENUE15 appliqué ! -15% 🎉");
+    } catch (err) {
+      setPromoError("Erreur lors de la vérification");
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoCode("");
+    setPromoDiscount(0);
+    setPromoInput("");
+    setPromoError("");
+  };
+
+  // Calculate discounted total
+  const discountedTotal = promoDiscount > 0
+    ? Math.round(totalPrice * (1 - promoDiscount / 100) * 100) / 100
+    : totalPrice;
+  const discountAmount = totalPrice - discountedTotal;
 
   return (
     <AnimatePresence>
@@ -647,11 +749,64 @@ const CartDrawer = () => {
                   </div>
                 )}
 
+                {/* Promo Code Section */}
                 <div className="pt-4 border-t border-border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Tag className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">Code promo</span>
+                  </div>
+                  {promoCode ? (
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/30">
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-mono font-bold text-primary">{promoCode}</span>
+                        <span className="text-xs text-muted-foreground">(-{promoDiscount}%)</span>
+                      </div>
+                      <button onClick={handleRemovePromo} className="p-1 text-muted-foreground hover:text-destructive">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="BIENVENUE15"
+                        value={promoInput}
+                        onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(""); }}
+                        className="h-9 text-sm font-mono uppercase"
+                        maxLength={20}
+                      />
+                      <button
+                        onClick={handleApplyPromo}
+                        disabled={promoLoading || !promoInput.trim()}
+                        className="px-4 h-9 text-sm btn-luxury disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Appliquer"}
+                      </button>
+                    </div>
+                  )}
+                  {promoError && (
+                    <p className="text-xs text-destructive mt-1">{promoError}</p>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-border">
+                  {promoDiscount > 0 && (
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm text-muted-foreground">Sous-total</span>
+                      <span className="text-sm text-muted-foreground line-through">{totalPrice.toFixed(2)}€</span>
+                    </div>
+                  )}
+                  {promoDiscount > 0 && (
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-primary">Réduction -{promoDiscount}%</span>
+                      <span className="text-sm text-primary">-{discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Total</span>
                     <span className="font-display text-2xl text-primary">
-                      {totalPrice.toFixed(2)}€
+                      {discountedTotal.toFixed(2)}€
                     </span>
                   </div>
                   {isProActive && (
@@ -661,7 +816,7 @@ const CartDrawer = () => {
                 <PaymentButton
                   items={items}
                   accessoryItems={accessoryItems}
-                  totalPrice={totalPrice}
+                  totalPrice={discountedTotal}
                   totalFlowerWeight={totalFlowerWeight}
                   deliveryType={deliveryType}
                   address={address}
@@ -671,6 +826,7 @@ const CartDrawer = () => {
                   guestEmail={guestEmail}
                   guestName={guestName}
                   guestPhone={guestPhone}
+                  promoCode={promoCode}
                 />
                 <button
                   onClick={clearCart}

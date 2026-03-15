@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone } = await req.json();
+    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone, promoCode } = await req.json();
 
     // Validate deliveryType
     const validDeliveryTypes = ['postal', 'personal'];
@@ -255,6 +255,28 @@ Deno.serve(async (req) => {
       serverTotal = Math.max(0, serverTotal - freeGramsValue);
     }
 
+    // Validate and apply promo code
+    let validPromoCode: string | null = null;
+    let promoDiscountPercent = 0;
+    let promoDiscountAmount = 0;
+
+    if (promoCode && promoCode === "BIENVENUE15" && userId) {
+      // Check if already used
+      const { data: existingUsage } = await supabaseAdmin
+        .from("promo_code_usage")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("code", "BIENVENUE15")
+        .maybeSingle();
+
+      if (!existingUsage) {
+        promoDiscountPercent = 15;
+        promoDiscountAmount = Math.round(serverTotal * 0.15 * 100) / 100;
+        serverTotal = Math.round((serverTotal - promoDiscountAmount) * 100) / 100;
+        validPromoCode = "BIENVENUE15";
+      }
+    }
+
     serverTotal = Math.round(serverTotal * 100) / 100;
 
     if (serverTotal <= 0) {
@@ -388,6 +410,19 @@ Deno.serve(async (req) => {
         .from("profiles")
         .update({ free_grams_available: newFreeGrams })
         .eq("id", userId);
+    }
+
+    // Record promo code usage
+    if (validPromoCode && userId) {
+      await supabaseAdmin
+        .from("promo_code_usage")
+        .insert({
+          user_id: userId,
+          code: validPromoCode,
+          order_id: order.id,
+          discount_percent: promoDiscountPercent,
+          discount_amount: promoDiscountAmount,
+        });
     }
 
     return new Response(
