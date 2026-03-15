@@ -65,6 +65,7 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         deliveryTime: scheduledTime || null,
         contactPhone: contactPhone || null,
         totalFlowerWeight,
+        promoCode: promoCode || null,
       };
 
       // Add guest info if not authenticated
