@@ -171,7 +171,7 @@ const CartDrawer = () => {
   const totalGifts = isProWithValidatedVat ? null : getGifts(totalFlowerWeight);
   
   // Calculate sample allowance - no samples for Pro users with validated VAT
-  const sampleAllowance = isProWithValidatedVat ? 0 : Math.floor(totalFlowerWeight / 12);
+  const sampleAllowance = isProWithValidatedVat ? 0 : Math.floor(totalFlowerWeight / 10);
   const samplesChosen = sampleItems.length;
   const samplesRemaining = sampleAllowance - samplesChosen;
 
