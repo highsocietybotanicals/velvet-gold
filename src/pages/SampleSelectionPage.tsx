@@ -17,7 +17,7 @@ const SampleSelectionPage = () => {
     setIsCartOpen 
   } = useCart();
 
-  const sampleAllowance = Math.floor(totalFlowerWeight / 12);
+  const sampleAllowance = Math.floor(totalFlowerWeight / 10);
   const samplesChosen = sampleItems.length;
   const samplesRemaining = sampleAllowance - samplesChosen;
 
@@ -53,7 +53,7 @@ const SampleSelectionPage = () => {
               Pas d'échantillon disponible
             </h1>
             <p className="text-muted-foreground mb-8">
-              Ajoutez 12g de fleurs dans votre panier pour débloquer un échantillon gratuit !
+              Ajoutez 10g de fleurs dans votre panier pour débloquer un échantillon gratuit !
             </p>
             <button
               onClick={() => navigate("/catalogue")}

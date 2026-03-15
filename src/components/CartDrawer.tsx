@@ -14,7 +14,7 @@ import DeliverySection from "./DeliverySection";
 // Import corrected accessory images from accessories data
 import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
 
-const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone, promoCode }: any) => {
+const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone, promoCode }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
@@ -56,9 +56,16 @@ const PaymentButton = ({ items, accessoryItems, totalPrice, totalFlowerWeight, d
         })),
       ];
 
+      // Build sample items for the order
+      const sampleOrderItems = sampleItems.map((item: any) => ({
+        productId: item.product.id,
+        productName: item.product.name,
+      }));
+
       const body: any = {
         amount: totalPrice,
         items: orderItems,
+        sampleItems: sampleOrderItems,
         deliveryType,
         deliveryAddress: address || null,
         deliveryDate: scheduledDate?.toISOString()?.split("T")[0] || null,
@@ -171,7 +178,7 @@ const CartDrawer = () => {
   const totalGifts = isProWithValidatedVat ? null : getGifts(totalFlowerWeight);
   
   // Calculate sample allowance - no samples for Pro users with validated VAT
-  const sampleAllowance = isProWithValidatedVat ? 0 : Math.floor(totalFlowerWeight / 12);
+  const sampleAllowance = isProWithValidatedVat ? 0 : Math.floor(totalFlowerWeight / 10);
   const samplesChosen = sampleItems.length;
   const samplesRemaining = sampleAllowance - samplesChosen;
 
@@ -816,6 +823,7 @@ const CartDrawer = () => {
                 <PaymentButton
                   items={items}
                   accessoryItems={accessoryItems}
+                  sampleItems={sampleItems}
                   totalPrice={discountedTotal}
                   totalFlowerWeight={totalFlowerWeight}
                   deliveryType={deliveryType}

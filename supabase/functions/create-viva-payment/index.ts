@@ -74,13 +74,11 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     
-    // Service role client for all DB operations
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Try to authenticate user (optional for guest checkout)
     let userId: string | null = null;
     let supabaseUser: any = null;
 
@@ -98,9 +96,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { items, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone, promoCode } = await req.json();
+    const { items, sampleItems, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone, promoCode } = await req.json();
 
-    // Validate deliveryType
     const validDeliveryTypes = ['postal', 'personal'];
     if (!deliveryType || !validDeliveryTypes.includes(deliveryType)) {
       return new Response(JSON.stringify({ error: "Type de livraison invalide" }), {
@@ -109,14 +106,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Sanitize string inputs
     const safeContactPhone = (contactPhone || '').slice(0, 20);
     const safeDeliveryAddress = (deliveryAddress || '').slice(0, 500);
     const safeGuestName = (guestName || '').slice(0, 200);
     const safeGuestPhone = (guestPhone || '').slice(0, 20);
     const safeGuestEmail = (guestEmail || '').slice(0, 255);
 
-    // For guests, require email
     if (!userId) {
       if (!safeGuestEmail || !safeGuestEmail.includes("@")) {
         return new Response(JSON.stringify({ error: "Email requis pour commander sans compte" }), {
@@ -126,7 +121,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Validate postal delivery requires an address
     if (deliveryType === "postal" && (!safeDeliveryAddress || safeDeliveryAddress.trim().length === 0)) {
       return new Response(JSON.stringify({ error: "Adresse de livraison requise pour l'envoi postal" }), {
         status: 400,
@@ -141,12 +135,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Separate product items from accessory items
     const productItemIds = items
       .filter((i: any) => i.productType === "fleur" || i.productType === "resine")
       .map((i: any) => i.productId);
 
-    // Check if user is pro with validated VAT (only for authenticated users)
     let userProfile: any = null;
     let isProActive = false;
 
@@ -160,7 +152,6 @@ Deno.serve(async (req) => {
       isProActive = userProfile?.is_pro_validated && userProfile?.is_vat_validated && !!userProfile?.vat_number;
     }
 
-    // Fetch DB prices for products
     let dbProducts: any[] = [];
     if (productItemIds.length > 0) {
       const { data } = await supabaseAdmin
@@ -170,7 +161,6 @@ Deno.serve(async (req) => {
       dbProducts = data || [];
     }
 
-    // Also fetch pro_prices if user is pro
     let proPriceMap: Record<string, number> = {};
     if (isProActive && productItemIds.length > 0) {
       const { data: proPrices } = await supabaseAdmin
@@ -182,7 +172,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Server-side total recalculation
     let serverTotal = 0;
     const serverItems: any[] = [];
 
@@ -246,7 +235,26 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Validate and apply free grams deduction (only for authenticated users)
+    // Validate and add sample items (free, 1g each)
+    const serverFlowerWeight = serverItems.reduce((sum: number, i: any) => sum + (i.weight || 0), 0);
+    const maxSamples = Math.floor(serverFlowerWeight / 10);
+    
+    if (sampleItems && Array.isArray(sampleItems) && sampleItems.length > 0) {
+      const validSamples = sampleItems.slice(0, maxSamples);
+      for (const sample of validSamples) {
+        serverItems.push({
+          product_id: sample.productId,
+          product_name: sample.productName,
+          product_type: "sample",
+          weight: 1,
+          quantity: null,
+          unit_price: 0,
+          total_price: 0,
+        });
+      }
+    }
+
+    // Validate and apply free grams deduction
     let validFreeGramsUsed = 0;
     if (userId && freeGramsUsed && freeGramsUsed > 0 && userProfile) {
       const available = userProfile.free_grams_available || 0;
@@ -261,7 +269,6 @@ Deno.serve(async (req) => {
     let promoDiscountAmount = 0;
 
     if (promoCode && promoCode === "BIENVENUE15" && userId) {
-      // Check if already used
       const { data: existingUsage } = await supabaseAdmin
         .from("promo_code_usage")
         .select("id")
@@ -286,10 +293,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Recalculate total flower weight server-side
-    const serverFlowerWeight = serverItems.reduce((sum, i) => sum + (i.weight || 0), 0);
-
-    // Create the order in DB using service role (works for both guest and authenticated)
+    // Create the order in DB
     const orderData: any = {
       total_amount: serverTotal,
       total_flower_weight: serverFlowerWeight,
@@ -324,7 +328,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Insert order items
+    // Insert order items (including samples at 0€)
     if (serverItems.length > 0) {
       const orderItems = serverItems.map((si) => ({
         ...si,
@@ -378,7 +382,7 @@ Deno.serve(async (req) => {
     } catch {
       console.error("Failed to parse Viva response:", vivaText);
       return new Response(
-        JSON.stringify({ error: "Erreur du service de paiement. Veuillez réessayer." }),
+        JSON.stringify({ error: "Erreur du service de paiement. Veuillez reessayer." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -386,7 +390,7 @@ Deno.serve(async (req) => {
     if (!vivaResponse.ok || vivaData.ErrorCode !== 0) {
       console.error("Viva error:", vivaData);
       return new Response(
-        JSON.stringify({ error: "Échec de la création du paiement. Veuillez réessayer." }),
+        JSON.stringify({ error: "Echec de la creation du paiement. Veuillez reessayer." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -397,13 +401,12 @@ Deno.serve(async (req) => {
     const orderCode = orderCodeMatch ? orderCodeMatch[1] : String(vivaData.OrderCode);
     console.log("OrderCode (string, precise):", orderCode);
 
-    // Update order with viva_order_code
     await supabaseAdmin
       .from("orders")
       .update({ viva_order_code: String(orderCode) })
       .eq("id", order.id);
 
-    // Deduct free grams if used (only for authenticated users)
+    // Deduct free grams if used
     if (userId && validFreeGramsUsed > 0) {
       const newFreeGrams = Math.max(0, (userProfile!.free_grams_available || 0) - validFreeGramsUsed);
       await supabaseAdmin

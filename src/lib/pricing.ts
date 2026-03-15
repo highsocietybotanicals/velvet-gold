@@ -176,9 +176,9 @@ export const getDiscountLabel = (weight: number, priceGroup: PriceGroup = "A"): 
   return tier.label;
 };
 
-// Calculate sample allowance based on total flower weight (1 sample per 12g)
+// Calculate sample allowance based on total flower weight (1 sample per 10g)
 export const calculateSampleAllowance = (totalFlowerWeight: number): number => {
-  return Math.floor(totalFlowerWeight / 12);
+  return Math.floor(totalFlowerWeight / 10);
 };
 
 // Pro pricing - simple fixed price calculation (NO weight-based discounts)
