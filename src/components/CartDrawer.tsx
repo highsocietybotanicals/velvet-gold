@@ -142,7 +142,17 @@ const CartDrawer = () => {
     totalFlowerWeight,
     isCartOpen,
     setIsCartOpen,
+    promoCode,
+    setPromoCode,
+    promoDiscount,
+    setPromoDiscount,
   } = useCart();
+
+  // Promo code state
+  const [promoInput, setPromoInput] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [promoAutoChecked, setPromoAutoChecked] = useState(false);
 
   // Delivery state
   const [deliveryType, setDeliveryType] = useState<"postal" | "personal">("postal");
