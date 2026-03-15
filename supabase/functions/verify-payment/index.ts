@@ -121,8 +121,22 @@ Deno.serve(async (req) => {
 
       // Trigger loyalty counter update if user is authenticated
       if (order.user_id) {
-        // The trigger should handle this, but let's log it
         console.log("Order paid for user:", order.user_id);
+      }
+
+      // Send confirmation email (fire-and-forget)
+      try {
+        const emailUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-order-confirmation`;
+        fetch(emailUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({ orderId }),
+        }).catch((e) => console.error("Fire-and-forget email error:", e));
+      } catch (e) {
+        console.error("Email trigger error:", e);
       }
 
       return new Response(JSON.stringify({ success: true, status: "paid" }), {

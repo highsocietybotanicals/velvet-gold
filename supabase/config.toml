@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.process-email-queue]
 verify_jwt = true
+
+[functions.send-order-confirmation]
+verify_jwt = false

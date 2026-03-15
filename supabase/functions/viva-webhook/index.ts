@@ -274,6 +274,21 @@ Deno.serve(async (req) => {
         .eq("id", merchantTrns);
 
       console.log(`Order ${merchantTrns} marked as paid ✅`);
+
+      // Send confirmation email (fire-and-forget)
+      try {
+        const emailUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-order-confirmation`;
+        fetch(emailUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({ orderId: merchantTrns }),
+        }).catch((e) => console.error("Fire-and-forget email error:", e));
+      } catch (e) {
+        console.error("Email trigger error:", e);
+      }
     } else {
       console.log(`Order ${merchantTrns} received but StatusId is: ${eventData.StatusId}`);
     }
