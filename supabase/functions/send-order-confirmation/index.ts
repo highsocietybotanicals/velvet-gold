@@ -133,10 +133,22 @@ Deno.serve(async (req) => {
     }
     if (order.delivery_time) deliveryDetails.push(`Créneau : ${order.delivery_time}`);
 
-    const greeting = firstName ? `Bonjour ${firstName},` : "Bonjour,";
+    const greeting = firstName ? `${firstName}` : "";
+    const greetingLine = greeting ? `Salut ${greeting} 👋` : "Hey 👋";
 
-    const htmlEmail = `
-<!DOCTYPE html>
+    // Promo code block for first order
+    const promoBlock = isFirstOrder ? `
+      <!-- First order promo -->
+      <div style="background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 100%); border: 2px dashed #d4af37; border-radius: 12px; padding: 24px; margin: 32px 0; text-align: center;">
+        <p style="margin: 0 0 4px; color: #d4af37; font-size: 11px; text-transform: uppercase; letter-spacing: 3px;">🎁 Cadeau de bienvenue</p>
+        <p style="margin: 0 0 12px; color: #e0e0e0; font-size: 15px;">Merci pour ta confiance ! Voici <strong style="color: #d4af37;">-15%</strong> sur ta prochaine commande :</p>
+        <div style="background-color: #0a0a0a; border-radius: 8px; padding: 14px 24px; display: inline-block;">
+          <span style="color: #d4af37; font-size: 26px; font-weight: 800; letter-spacing: 4px; font-family: monospace;">BIENVENUE15</span>
+        </div>
+        <p style="margin: 12px 0 0; color: #888; font-size: 12px;">Valable sur ta prochaine commande • Usage unique</p>
+      </div>` : "";
+
+    const htmlEmail = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
@@ -150,9 +162,12 @@ Deno.serve(async (req) => {
 
     <!-- Content -->
     <div style="padding: 40px 32px;">
-      <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 8px;">${greeting}</p>
-      <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
-        Merci pour votre commande ! Nous l'avons bien reçue et elle est en cours de préparation.
+      <p style="color: #e0e0e0; font-size: 18px; line-height: 1.6; margin: 0 0 16px;">${greetingLine}</p>
+      <p style="color: #e0e0e0; font-size: 16px; line-height: 1.7; margin: 0 0 8px;">
+        Un grand merci pour ta commande ! 🙏
+      </p>
+      <p style="color: #bbb; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+        On s'en occupe avec soin et on te tient au courant dès que c'est en route. En attendant, voici le récap' :
       </p>
 
       <!-- Order number badge -->
@@ -162,7 +177,7 @@ Deno.serve(async (req) => {
       </div>
 
       <!-- Items table -->
-      <h2 style="color: #d4af37; font-size: 18px; font-weight: 500; margin: 0 0 16px; letter-spacing: 1px;">Détail de votre commande</h2>
+      <h2 style="color: #d4af37; font-size: 18px; font-weight: 500; margin: 0 0 16px; letter-spacing: 1px;">Tes articles</h2>
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
         <thead>
           <tr style="border-bottom: 2px solid #d4af37;">
@@ -185,14 +200,19 @@ Deno.serve(async (req) => {
       </table>
 
       <!-- Delivery info -->
-      <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px 24px; margin-bottom: 32px;">
+      <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px 24px; margin-bottom: 24px;">
         <h3 style="color: #d4af37; font-size: 14px; font-weight: 500; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Livraison</h3>
         <p style="color: #e0e0e0; margin: 0 0 4px; font-size: 14px;">${deliveryTypeLabel}</p>
-        ${deliveryDetails.map((d) => `<p style="color: #999; margin: 0 0 4px; font-size: 14px;">${d}</p>`).join("")}
+        ${deliveryDetails.map((d: string) => `<p style="color: #999; margin: 0 0 4px; font-size: 14px;">${d}</p>`).join("")}
       </div>
 
-      <p style="color: #999; font-size: 14px; line-height: 1.6; margin: 0;">
-        Vous recevrez un message lorsque votre commande sera expédiée. Pour toute question, n'hésitez pas à nous contacter.
+      ${promoBlock}
+
+      <p style="color: #bbb; font-size: 15px; line-height: 1.7; margin: 0 0 8px;">
+        Si t'as la moindre question, on est là ! Réponds simplement à cet email ou écris-nous. 💬
+      </p>
+      <p style="color: #e0e0e0; font-size: 15px; line-height: 1.7; margin: 16px 0 0;">
+        À très vite,<br><span style="color: #d4af37;">L'équipe HSB</span> ✨
       </p>
     </div>
 
@@ -223,9 +243,9 @@ Deno.serve(async (req) => {
     });
 
     await client.send({
-      from: `High Society Botanicals <${gmailUser}>`,
+      from: `HSB <${gmailUser}>`,
       to: recipientEmail,
-      subject: `Merci pour votre commande ${orderNumber} — High Society Botanicals`,
+      subject: `Merci ${orderNumber} - HSB`,
       html: htmlEmail,
     });
 
