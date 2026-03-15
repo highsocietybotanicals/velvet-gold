@@ -823,6 +823,7 @@ const CartDrawer = () => {
                 <PaymentButton
                   items={items}
                   accessoryItems={accessoryItems}
+                  sampleItems={sampleItems}
                   totalPrice={discountedTotal}
                   totalFlowerWeight={totalFlowerWeight}
                   deliveryType={deliveryType}
