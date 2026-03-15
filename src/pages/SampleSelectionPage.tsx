@@ -17,7 +17,7 @@ const SampleSelectionPage = () => {
     setIsCartOpen 
   } = useCart();
 
-  const sampleAllowance = Math.floor(totalFlowerWeight / 12);
+  const sampleAllowance = Math.floor(totalFlowerWeight / 10);
   const samplesChosen = sampleItems.length;
   const samplesRemaining = sampleAllowance - samplesChosen;
 
