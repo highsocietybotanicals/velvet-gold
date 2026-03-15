@@ -255,6 +255,28 @@ Deno.serve(async (req) => {
       serverTotal = Math.max(0, serverTotal - freeGramsValue);
     }
 
+    // Validate and apply promo code
+    let validPromoCode: string | null = null;
+    let promoDiscountPercent = 0;
+    let promoDiscountAmount = 0;
+
+    if (promoCode && promoCode === "BIENVENUE15" && userId) {
+      // Check if already used
+      const { data: existingUsage } = await supabaseAdmin
+        .from("promo_code_usage")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("code", "BIENVENUE15")
+        .maybeSingle();
+
+      if (!existingUsage) {
+        promoDiscountPercent = 15;
+        promoDiscountAmount = Math.round(serverTotal * 0.15 * 100) / 100;
+        serverTotal = Math.round((serverTotal - promoDiscountAmount) * 100) / 100;
+        validPromoCode = "BIENVENUE15";
+      }
+    }
+
     serverTotal = Math.round(serverTotal * 100) / 100;
 
     if (serverTotal <= 0) {
