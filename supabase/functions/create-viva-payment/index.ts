@@ -412,6 +412,19 @@ Deno.serve(async (req) => {
         .eq("id", userId);
     }
 
+    // Record promo code usage
+    if (validPromoCode && userId) {
+      await supabaseAdmin
+        .from("promo_code_usage")
+        .insert({
+          user_id: userId,
+          code: validPromoCode,
+          order_id: order.id,
+          discount_percent: promoDiscountPercent,
+          discount_amount: promoDiscountAmount,
+        });
+    }
+
     return new Response(
       JSON.stringify({
         orderCode,
