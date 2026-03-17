@@ -164,6 +164,9 @@ Deno.serve(async (req) => {
       `${statusInfo.emoji} ${statusInfo.label}`,
       statusInfo.message,
       "",
+      ...((statusInfo as any).withTracking && order.tracking_number
+        ? [`N° de suivi Colissimo : ${order.tracking_number}`, `Suivre mon colis : ${order.tracking_url || 'https://www.laposte.fr/outils/suivre-vos-envois?code=' + order.tracking_number}`, ""]
+        : []),
       ...(history || []).map((h: any) => {
         const info = STATUS_LABELS[h.new_status];
         if (!info) return "";

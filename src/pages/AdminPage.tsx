@@ -235,6 +235,7 @@ const OrderRow = ({
             {order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal"}
           </Badge>
           <OrderSummaryPrint order={order} />
+          <ShippingLabel order={order} />
         </div>
       </TableCell>
       <TableCell>

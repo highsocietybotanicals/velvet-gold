@@ -40,6 +40,8 @@ export interface AdminOrder {
   guest_name: string | null;
   guest_email: string | null;
   guest_phone: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
   created_at: string;
   user_email?: string;
   order_items?: {

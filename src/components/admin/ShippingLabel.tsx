@@ -1,137 +1,123 @@
-import { useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
+import { Package, Loader2, ExternalLink, RotateCcw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ShippingLabelProps {
   order: {
+    id: string;
     display_order_number?: string | null;
     order_number: number;
-    guest_name?: string | null;
-    guest_email?: string | null;
-    guest_phone?: string | null;
-    delivery_address?: string | null;
-    contact_phone?: string | null;
-    user_email?: string;
+    tracking_number?: string | null;
+    tracking_url?: string | null;
+    delivery_type: string;
   };
 }
 
-const SENDER = {
-  name: "High Society Botanicals",
-  address: "44390 Puceul",
-  country: "France",
-};
-
-const escHtml = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
-   .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
 const ShippingLabel = ({ order }: ShippingLabelProps) => {
-  const labelRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const recipientName = escHtml(order.guest_name || "Client");
-  const recipientPhone = escHtml(order.contact_phone || order.guest_phone || "");
-  const recipientEmail = escHtml(order.guest_email || order.user_email || "");
-  const recipientAddress = escHtml(order.delivery_address || "Adresse non renseignée");
-  const orderNumber = escHtml(order.display_order_number || `#${order.order_number.toString().padStart(4, "0")}`);
+  if (order.delivery_type !== "postal") return null;
 
-  const handlePrint = () => {
-    const printWindow = window.open("", "_blank", "width=600,height=400");
-    if (!printWindow) return;
+  const handleGenerateLabel = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "generate-colissimo-label",
+        { body: { orderId: order.id } }
+      );
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Étiquette ${orderNumber}</title>
-        <style>
-          @page { size: 100mm 150mm; margin: 0; }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { 
-            font-family: Arial, Helvetica, sans-serif; 
-            width: 100mm; 
-            height: 150mm; 
-            padding: 5mm;
-            display: flex;
-            flex-direction: column;
-          }
-          .sender {
-            font-size: 9pt;
-            color: #666;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 3mm;
-            margin-bottom: 4mm;
-          }
-          .sender .name { font-weight: bold; color: #333; }
-          .recipient {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 2mm 0;
-          }
-          .recipient .name {
-            font-size: 16pt;
-            font-weight: bold;
-            margin-bottom: 3mm;
-          }
-          .recipient .address {
-            font-size: 12pt;
-            line-height: 1.5;
-            white-space: pre-line;
-          }
-          .recipient .phone {
-            font-size: 10pt;
-            color: #444;
-            margin-top: 3mm;
-          }
-          .footer {
-            border-top: 2px solid #000;
-            padding-top: 3mm;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 9pt;
-          }
-          .footer .order {
-            font-weight: bold;
-            font-size: 11pt;
-            font-family: monospace;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="sender">
-          <div class="name">${SENDER.name}</div>
-          <div>${SENDER.address}</div>
-        </div>
-        <div class="recipient">
-          <div class="name">${recipientName}</div>
-          <div class="address">${recipientAddress}</div>
-          ${recipientPhone ? `<div class="phone">📞 ${recipientPhone}</div>` : ""}
-          ${recipientEmail ? `<div class="phone">✉ ${recipientEmail}</div>` : ""}
-        </div>
-        <div class="footer">
-          <span class="order">${orderNumber}</span>
-          <span>HSB</span>
-        </div>
-      </body>
-      </html>
-    `);
+      if (error) throw error;
 
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => printWindow.print(), 250);
+      if (data?.error) {
+        toast({
+          title: "Erreur Colissimo",
+          description: data.details || data.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Open PDF in new tab
+      if (data?.pdfBase64) {
+        const blob = new Blob(
+          [Uint8Array.from(atob(data.pdfBase64), (c) => c.charCodeAt(0))],
+          { type: "application/pdf" }
+        );
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+      }
+
+      toast({
+        title: data?.alreadyGenerated
+          ? "Étiquette existante"
+          : "Étiquette Colissimo générée ✅",
+        description: `N° de suivi : ${data?.trackingNumber}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+    } catch (err: any) {
+      console.error("Colissimo error:", err);
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer l'étiquette Colissimo.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (order.tracking_number) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-mono text-muted-foreground">
+          {order.tracking_number}
+        </span>
+        <a
+          href={order.tracking_url || `https://www.laposte.fr/outils/suivre-vos-envois?code=${order.tracking_number}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-primary">
+            <ExternalLink className="h-3.5 w-3.5" />
+          </Button>
+        </a>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 text-muted-foreground"
+          onClick={handleGenerateLabel}
+          disabled={loading}
+          title="Réimprimer l'étiquette"
+        >
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <Button
       variant="outline"
       size="sm"
-      onClick={handlePrint}
+      onClick={handleGenerateLabel}
+      disabled={loading}
       className="border-primary/30 text-primary hover:bg-primary/10"
-      title="Imprimer étiquette"
+      title="Générer étiquette Colissimo"
     >
-      <Printer className="h-4 w-4" />
+      {loading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <>
+          <Package className="h-4 w-4 mr-1" />
+          Colissimo
+        </>
+      )}
     </Button>
   );
 };
