@@ -107,9 +107,31 @@ const OrderTracking = ({ order }: OrderTrackingProps) => {
         </div>
       </div>
 
+      {/* Tracking info */}
+      {(order as any).tracking_number && (
+        <div className="mt-6 pt-4 border-t border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <Truck className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Suivi Colissimo</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-mono text-muted-foreground">{(order as any).tracking_number}</span>
+            <a
+              href={(order as any).tracking_url || `https://www.laposte.fr/outils/suivre-vos-envois?code=${(order as any).tracking_number}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline flex items-center gap-1"
+            >
+              Suivre mon colis
+              <MapPin className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Delivery info */}
       {order.delivery_type && (
-        <div className="mt-6 pt-4 border-t border-border flex items-start gap-2">
+        <div className="mt-4 pt-4 border-t border-border flex items-start gap-2">
           <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
           <div className="text-sm">
             <span className="text-muted-foreground">

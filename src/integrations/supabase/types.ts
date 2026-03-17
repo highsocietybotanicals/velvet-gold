@@ -201,6 +201,8 @@ export type Database = {
           status: string
           total_amount: number
           total_flower_weight: number
+          tracking_number: string | null
+          tracking_url: string | null
           updated_at: string | null
           user_id: string | null
           viva_order_code: string | null
@@ -222,6 +224,8 @@ export type Database = {
           status?: string
           total_amount: number
           total_flower_weight?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string | null
           user_id?: string | null
           viva_order_code?: string | null
@@ -243,6 +247,8 @@ export type Database = {
           status?: string
           total_amount?: number
           total_flower_weight?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string | null
           user_id?: string | null
           viva_order_code?: string | null

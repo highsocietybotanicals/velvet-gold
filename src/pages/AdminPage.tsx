@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PriceManagement from "@/components/admin/PriceManagement";
 import OrderSummaryPrint from "@/components/admin/OrderSummaryPrint";
+import ShippingLabel from "@/components/admin/ShippingLabel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -234,6 +235,7 @@ const OrderRow = ({
             {order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal"}
           </Badge>
           <OrderSummaryPrint order={order} />
+          <ShippingLabel order={order} />
         </div>
       </TableCell>
       <TableCell>
