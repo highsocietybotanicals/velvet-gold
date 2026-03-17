@@ -141,6 +141,10 @@ Deno.serve(async (req) => {
       `<div style="background-color:#1a1a1a;border-left:4px solid ${statusInfo.color};border-radius:0 8px 8px 0;padding:20px 24px;margin-bottom:24px;">`,
       `<p style="margin:0 0 8px;color:${statusInfo.color};font-size:20px;font-weight:700;">${statusInfo.emoji} ${statusInfo.label}</p>`,
       `<p style="margin:0;color:#e0e0e0;font-size:15px;line-height:1.6;">${statusInfo.message}</p></div>`,
+      // Tracking link for shipped orders
+      (statusInfo as any).withTracking && order.tracking_number
+        ? `<div style="background:linear-gradient(135deg,#0a1628 0%,#1a2a4a 100%);border:1px solid #3b82f6;border-radius:8px;padding:20px 24px;margin-bottom:24px;text-align:center;"><p style="margin:0 0 8px;color:#93c5fd;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Numero de suivi Colissimo</p><p style="margin:0 0 16px;color:#fff;font-size:20px;font-weight:700;font-family:monospace;letter-spacing:2px;">${order.tracking_number}</p><a href="${order.tracking_url || 'https://www.laposte.fr/outils/suivre-vos-envois?code=' + order.tracking_number}" target="_blank" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600;">Suivre mon colis sur La Poste</a></div>`
+        : '',
       timelineRows ? `<div style="background-color:#1a1a1a;border-radius:8px;padding:20px 24px;margin-bottom:24px;"><h3 style="color:#d4af37;font-size:14px;font-weight:500;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;">Suivi de ta commande</h3><table style="width:100%;border-collapse:collapse;">${timelineRows}</table></div>` : '',
       '<p style="color:#bbb;font-size:15px;line-height:1.7;margin:0 0 8px;">Une question ? Reponds simplement a cet email.</p>',
       '<p style="color:#e0e0e0;font-size:15px;line-height:1.7;margin:16px 0 0;">A tres vite,<br><span style="color:#d4af37;">L\'equipe HSB</span></p>',
