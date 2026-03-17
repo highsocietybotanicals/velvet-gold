@@ -19,6 +19,7 @@ const STATUS_LABELS: Record<string, { label: string; emoji: string; message: str
     emoji: "🚀",
     message: "Ta commande vient d'etre expediee ! Elle est en route vers toi.",
     color: "#3b82f6",
+    withTracking: true,
   },
   in_delivery: {
     label: "En livraison",
