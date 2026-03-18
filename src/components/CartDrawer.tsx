@@ -11,8 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DeliverySection from "./DeliverySection";
 
-// Import corrected accessory images from accessories data
-import { pochonMoyen, feuillesSlim, briquetHSB } from "@/data/accessories";
 
 const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone, promoCode }: any) => {
   const [isLoading, setIsLoading] = useState(false);
