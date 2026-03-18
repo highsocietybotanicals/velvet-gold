@@ -666,36 +666,20 @@ const CartDrawer = () => {
                         </div>
                         
                         {/* Gift contents detail */}
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-primary/20">
-                          <div className="flex items-center gap-2">
-                            <img src={pochonMoyen} alt="Pochon" className="w-8 h-8 rounded object-cover" />
-                            <div>
-                              <p className="text-xs text-foreground">{totalGifts.contents.pochonMoyen}x Pochon Moyen</p>
-                              <p className="text-xs text-green-400 font-medium">OFFERT</p>
-                            </div>
+                        <div className="space-y-2 pt-2 border-t border-primary/20">
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-4 h-4 text-primary shrink-0" />
+                            <p className="text-sm text-foreground">
+                              {totalGifts.contents.feuillesSlim}x Feuilles Slim + Carton RAW
+                            </p>
+                            <span className="ml-auto text-xs text-green-400 font-semibold tracking-wide">OFFERT</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <img src={feuillesSlim} alt="Feuilles" className="w-8 h-8 rounded object-cover" />
-                            <div>
-                              <p className="text-xs text-foreground">{totalGifts.contents.feuillesSlim}x Feuilles Slim</p>
-                              <p className="text-xs text-green-400 font-medium">OFFERT</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <img src={briquetHSB} alt="Briquet" className="w-8 h-8 rounded object-cover" />
-                            <div>
-                              <p className="text-xs text-foreground">{totalGifts.contents.briquetHSB}x Briquet HSB</p>
-                              <p className="text-xs text-green-400 font-medium">OFFERT</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center">
-                              <span className="text-primary text-xs">🎀</span>
-                            </div>
-                            <div>
-                              <p className="text-xs text-foreground">{totalGifts.contents.elastique}x Élastique</p>
-                              <p className="text-xs text-green-400 font-medium">OFFERT</p>
-                            </div>
+                          <div className="flex items-center gap-3">
+                            <Flame className="w-4 h-4 text-primary shrink-0" />
+                            <p className="text-sm text-foreground">
+                              {totalGifts.contents.briquetBIC}x Briquet BIC Noir
+                            </p>
+                            <span className="ml-auto text-xs text-green-400 font-semibold tracking-wide">OFFERT</span>
                           </div>
                         </div>
                       </motion.div>

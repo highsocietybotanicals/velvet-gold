@@ -133,40 +133,23 @@ export const calculateAccessoryPrice = (unitPrice: number, quantity: number): Ac
   };
 };
 
-// Get gifts based on total flower weight - 1 Pack Initié every 10g
-// DÉSACTIVÉ TEMPORAIREMENT - Accessoires en rupture
+// Get gifts based on total flower weight - 1 kit every 10g
 export const getGifts = (weight: number): GiftInfo | null => {
-  // Retourne null pour masquer les cadeaux (accessoires indisponibles)
-  return null;
-  
-  /* Code conservé pour réactivation future:
   if (!weight || weight <= 0 || weight < 10) return null;
   
   const packCount = Math.floor(weight / 10);
   
   const contents: GiftContents = {
-    pochonMoyen: packCount,
     feuillesSlim: packCount,
-    briquetHSB: packCount,
-    elastique: packCount,
+    briquetBIC: packCount,
   };
 
-  if (weight >= 100) {
-    return {
-      type: "kit",
-      count: packCount,
-      label: `Kit Revendeur HSB (${packCount} Packs)`,
-      contents,
-    };
-  }
-  
   return {
-    type: "pack",
+    type: packCount >= 10 ? "kit" : "pack",
     count: packCount,
-    label: `${packCount} Pack${packCount > 1 ? "s" : ""} Initié`,
+    label: `${packCount} Kit${packCount > 1 ? "s" : ""} Cadeau`,
     contents,
   };
-  */
 };
 
 export const getDiscountLabel = (weight: number, priceGroup: PriceGroup = "A"): string => {

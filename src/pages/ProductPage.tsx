@@ -341,7 +341,7 @@ const ProductPage = () => {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2 ml-8">
-                      Contenu : {gifts.contents.pochonMoyen}x Pochon Moyen, {gifts.contents.feuillesSlim}x Feuilles Slim, {gifts.contents.briquetHSB}x Briquet HSB, {gifts.contents.elastique}x Élastique
+                      Contenu : {gifts.contents.feuillesSlim}x Feuilles Slim + Carton RAW, {gifts.contents.briquetBIC}x Briquet BIC Noir
                     </p>
                   </motion.div>
                 )}
