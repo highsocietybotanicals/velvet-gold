@@ -17,10 +17,8 @@ export interface PriceInfo {
 }
 
 export interface GiftContents {
-  pochonMoyen: number;
   feuillesSlim: number;
-  briquetHSB: number;
-  elastique: number;
+  briquetBIC: number;
 }
 
 export interface GiftInfo {
