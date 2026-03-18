@@ -254,6 +254,29 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Add gift items (feuilles slim + briquet BIC per 10g)
+    const giftPackCount = Math.floor(serverFlowerWeight / 10);
+    if (giftPackCount > 0 && !isProActive) {
+      serverItems.push({
+        product_id: "gift-feuilles-slim",
+        product_name: `${giftPackCount}x Feuilles Slim + Carton RAW`,
+        product_type: "gift",
+        weight: null,
+        quantity: giftPackCount,
+        unit_price: 0,
+        total_price: 0,
+      });
+      serverItems.push({
+        product_id: "gift-briquet-bic",
+        product_name: `${giftPackCount}x Briquet BIC Noir`,
+        product_type: "gift",
+        weight: null,
+        quantity: giftPackCount,
+        unit_price: 0,
+        total_price: 0,
+      });
+    }
+
     // Validate and apply free grams deduction
     let validFreeGramsUsed = 0;
     if (userId && freeGramsUsed && freeGramsUsed > 0 && userProfile) {

@@ -1,38 +1,53 @@
 
 
-# Réactiver les cadeaux : Feuilles Slim RAW + Briquet BIC noir par tranche de 10g
+# Integration de la gamme "Force Noire"
 
-## Ce qui change
+## Concept
 
-Actuellement les cadeaux sont **désactivés** (`getGifts` retourne `null`). On va les réactiver avec un contenu simplifié :
-- **1x Paquet de feuilles slim avec carton RAW**
-- **1x Petit briquet BIC full noir**
+Differencier visuellement et structurellement les produits CBD classiques des produits enrichis avec une molecule supplementaire (Magic Sauce, 10-OH+).
 
-Par tranche de 10g commandés. Affichage texte propre, sans photos.
+**Deux gammes :**
+- **Collection Classique** : Amnesia Signature Oniria, Platinum OG, Mint Kush, Ice O Lator, Golden CBN
+- **Collection Force Noire** : 911 OG Indoor Master, Blue Mango Indoor Master, Nuage de Mousseux (tous ont une molecule en plus)
 
-## Modifications
+---
 
-### 1. `src/lib/pricing.ts` — Réactiver `getGifts`
-- Supprimer le `return null` et le commentaire "DÉSACTIVÉ"
-- Simplifier `GiftContents` : retirer `pochonMoyen` et `elastique`, garder `feuillesSlim` et `briquetHSB`
-- Renommer les labels : "Feuilles Slim + Carton RAW" et "Briquet BIC Noir"
-- Le label du pack devient ex: `1 Kit Cadeau` / `2 Kits Cadeaux`
+## Changements visuels
 
-### 2. `src/components/CartDrawer.tsx` — Affichage texte sans images
-- Remplacer la grille avec images par une liste texte élégante avec icônes Lucide (Gift, Flame)
-- Retirer les `<img>` pour pochon/feuilles/briquet/élastique
-- Afficher proprement : `1x Feuilles Slim + Carton RAW — OFFERT` et `1x Briquet BIC Noir — OFFERT`
+### Badge "Force Noire" sur les cartes produit
+- Un badge distinctif noir/rouge sombre avec une icone de puissance (Zap ou Shield)
+- Remplace ou complete le badge actuel (Magic Sauce, Rare 10-OH+)
+- Effet visuel premium : bordure rouge sombre/noire, legere lueur
 
-### 3. `src/pages/ProductPage.tsx` — Texte cadeau simplifié
-- Mettre à jour la ligne de description des contenus pour ne mentionner que feuilles + briquet
-- Garder le style actuel (texte sous le label du pack)
+### Filtre supplementaire
+- Sur la page d'accueil (ProductSection) et le catalogue : ajout d'un filtre "Force Noire" en plus de "Tout / Fleurs / Resines"
+- Permet de voir uniquement les produits enrichis
 
-### 4. `supabase/functions/create-viva-payment/index.ts` — Ajouter les gifts aux order_items
-- Vérifier si les cadeaux sont déjà envoyés comme `order_items` type `gift` lors de la création de commande, et les ajouter si ce n'est pas le cas
+### Indication sur la page produit detail
+- Section expliquant ce qu'est la gamme "Force Noire" avec un texte court et luxueux
 
-## Fichiers impactés
-- `src/lib/pricing.ts`
-- `src/components/CartDrawer.tsx`
-- `src/pages/ProductPage.tsx`
-- Potentiellement `supabase/functions/create-viva-payment/index.ts`
+---
+
+## Details techniques
+
+### 1. `src/data/products.ts`
+- Ajouter un champ `isForceNoire: boolean` au type `Product`
+- Marquer les 3 produits concernes : 911 OG, Blue Mango, Nuage de Mousseux
+- Ajouter un export `forceNoireProducts` filtrant les produits Force Noire
+
+### 2. `src/components/ProductCard.tsx`
+- Detecter `product.isForceNoire` pour afficher un badge "Force Noire" avec un style sombre/rouge premium
+- Ajouter une legere bordure ou effet visuel different pour ces cartes (ex: bordure rouge sombre au survol)
+
+### 3. `src/components/ProductSection.tsx` (page d'accueil)
+- Ajouter un filtre "Force Noire" dans les boutons de categorie
+- Quand selectionne, afficher uniquement les 3 produits Force Noire
+
+### 4. `src/pages/CataloguePage.tsx`
+- Ajouter "Force Noire" comme option de filtre dans les onglets de categorie
+- Filtrer les produits en consequence
+
+### 5. `src/pages/ProductPage.tsx`
+- Afficher un encart "Collection Force Noire" sur les fiches des produits concernes
+- Texte court expliquant la puissance superieure de ces produits
 
