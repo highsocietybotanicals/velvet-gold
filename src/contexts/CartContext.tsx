@@ -78,6 +78,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState(0);
+  const [freeShipping, setFreeShipping] = useState(false);
 
   // Sync cart prices with database prices
   useEffect(() => {
