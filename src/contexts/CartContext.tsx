@@ -50,6 +50,8 @@ interface CartContextType {
   setPromoCode: (code: string) => void;
   promoDiscount: number; // percentage e.g. 15
   setPromoDiscount: (discount: number) => void;
+  freeShipping: boolean;
+  setFreeShipping: (free: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
