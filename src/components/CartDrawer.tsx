@@ -151,6 +151,8 @@ const CartDrawer = () => {
     setPromoCode,
     promoDiscount,
     setPromoDiscount,
+    freeShipping,
+    setFreeShipping,
   } = useCart();
 
   // Promo code state
@@ -244,7 +246,7 @@ const CartDrawer = () => {
     const code = promoInput.trim().toUpperCase();
     if (!code) return;
     
-    if (code !== "BIENVENUE15") {
+    if (code !== "BIENVENUE15" && code !== "NUAGE300") {
       setPromoError("Code promo invalide");
       return;
     }
@@ -258,23 +260,75 @@ const CartDrawer = () => {
     setPromoError("");
 
     try {
-      // Check if already used
-      const { data: usage } = await supabase
-        .from("promo_code_usage")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("code", "BIENVENUE15")
-        .maybeSingle();
+      if (code === "NUAGE300") {
+        // Check cart contains nuage-de-mousseux at 100g
+        const mousseuxItem = items.find(item => item.product.id === "nuage-de-mousseux");
+        if (!mousseuxItem || mousseuxItem.weight !== 100) {
+          setPromoError("Ce code est valable uniquement pour 100g de Nuage de Mousseux");
+          setPromoLoading(false);
+          return;
+        }
 
-      if (usage) {
-        setPromoError("Tu as déjà utilisé ce code 😅");
-        setPromoLoading(false);
-        return;
+        // Check global usage (not per-user, single use globally)
+        const { data: globalUsage } = await supabase
+          .from("promo_code_usage")
+          .select("id")
+          .eq("code", "NUAGE300")
+          .maybeSingle();
+
+        if (globalUsage) {
+          setPromoError("Ce code a déjà été utilisé");
+          setPromoLoading(false);
+          return;
+        }
+
+        // Calculate discount % to reach 300€ from current nuage price
+        const mousseuxPrice = (() => {
+          const proPrice = getProPrice("nuage-de-mousseux");
+          if (isProActive && proPrice !== null) {
+            return calculateProItemPrice(proPrice, 100).finalPrice;
+          }
+          return calculateItemPrice(mousseuxItem.product.price, 100).finalPrice;
+        })();
+
+        // Total of other items in cart (accessories etc)
+        const otherItemsTotal = totalPrice - mousseuxPrice;
+        const currentTotal = totalPrice;
+        const targetTotal = 300;
+
+        if (currentTotal <= targetTotal) {
+          setPromoError("Le total est déjà inférieur à 300€");
+          setPromoLoading(false);
+          return;
+        }
+
+        const discountPercent = Math.round(((currentTotal - targetTotal) / currentTotal) * 10000) / 100;
+
+        setPromoCode("NUAGE300");
+        setPromoDiscount(discountPercent);
+        setFreeShipping(true);
+        toast.success("Code NUAGE300 appliqué ! 100g à 300€ + livraison offerte 🎉");
+      } else {
+        // BIENVENUE15 logic
+        const { data: usage } = await supabase
+          .from("promo_code_usage")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("code", "BIENVENUE15")
+          .maybeSingle();
+
+        if (usage) {
+          setPromoError("Tu as déjà utilisé ce code 😅");
+          setPromoLoading(false);
+          return;
+        }
+
+        setPromoCode("BIENVENUE15");
+        setPromoDiscount(15);
       }
-
-      setPromoCode("BIENVENUE15");
-      setPromoDiscount(15);
-      toast.success("Code promo BIENVENUE15 appliqué ! -15% 🎉");
+      if (code === "BIENVENUE15") {
+        toast.success("Code promo BIENVENUE15 appliqué ! -15% 🎉");
+      }
     } catch (err) {
       setPromoError("Erreur lors de la vérification");
     } finally {
@@ -287,12 +341,15 @@ const CartDrawer = () => {
     setPromoDiscount(0);
     setPromoInput("");
     setPromoError("");
+    setFreeShipping(false);
   };
 
   // Calculate discounted total
-  const discountedTotal = promoDiscount > 0
-    ? Math.round(totalPrice * (1 - promoDiscount / 100) * 100) / 100
-    : totalPrice;
+  const discountedTotal = promoCode === "NUAGE300"
+    ? 300
+    : promoDiscount > 0
+      ? Math.round(totalPrice * (1 - promoDiscount / 100) * 100) / 100
+      : totalPrice;
   const discountAmount = totalPrice - discountedTotal;
 
   return (
@@ -749,7 +806,11 @@ const CartDrawer = () => {
                       <div className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-primary" />
                         <span className="text-sm font-mono font-bold text-primary">{promoCode}</span>
-                        <span className="text-xs text-muted-foreground">(-{promoDiscount}%)</span>
+                        {promoCode === "NUAGE300" ? (
+                          <span className="text-xs text-muted-foreground">300€ tout compris</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">(-{promoDiscount}%)</span>
+                        )}
                       </div>
                       <button onClick={handleRemovePromo} className="p-1 text-muted-foreground hover:text-destructive">
                         <X className="w-4 h-4" />
@@ -786,10 +847,22 @@ const CartDrawer = () => {
                       <span className="text-sm text-muted-foreground line-through">{totalPrice.toFixed(2)}€</span>
                     </div>
                   )}
-                  {promoDiscount > 0 && (
+                  {promoDiscount > 0 && promoCode !== "NUAGE300" && (
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-primary">Réduction -{promoDiscount}%</span>
                       <span className="text-sm text-primary">-{discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
+                  {promoCode === "NUAGE300" && (
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-primary">Offre NUAGE300</span>
+                      <span className="text-sm text-primary">-{discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
+                  {freeShipping && (
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-primary">🚚 Livraison</span>
+                      <span className="text-sm text-primary font-medium">OFFERTE</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center">
