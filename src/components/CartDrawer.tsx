@@ -806,7 +806,11 @@ const CartDrawer = () => {
                       <div className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-primary" />
                         <span className="text-sm font-mono font-bold text-primary">{promoCode}</span>
-                        <span className="text-xs text-muted-foreground">(-{promoDiscount}%)</span>
+                        {promoCode === "NUAGE300" ? (
+                          <span className="text-xs text-muted-foreground">300€ tout compris</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">(-{promoDiscount}%)</span>
+                        )}
                       </div>
                       <button onClick={handleRemovePromo} className="p-1 text-muted-foreground hover:text-destructive">
                         <X className="w-4 h-4" />
