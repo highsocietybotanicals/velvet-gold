@@ -151,6 +151,8 @@ const CartDrawer = () => {
     setPromoCode,
     promoDiscount,
     setPromoDiscount,
+    freeShipping,
+    setFreeShipping,
   } = useCart();
 
   // Promo code state
