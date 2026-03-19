@@ -264,6 +264,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setPromoCode,
         promoDiscount,
         setPromoDiscount,
+        freeShipping,
+        setFreeShipping,
       }}
     >
       {children}
