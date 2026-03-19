@@ -1,38 +1,86 @@
 
 
-# Code Promo NUAGE300 — Usage unique global, 100g Nuage de Mousseux à 300€ + livraison gratuite
+# Social Media Automation — Génération IA + Publication Instagram & Telegram
 
-## Résumé
+## Vue d'ensemble
 
-Code promo `NUAGE300` utilisable **une seule fois au total** (pas par compte, une seule utilisation globale). Après qu'un client l'utilise, plus personne ne peut s'en servir.
+Créer un système semi-automatique dans ton admin pour :
+1. **Générer** des visuels "Dark Luxury" fidèles à ta marque via IA (Gemini image generation)
+2. **Générer** des légendes/captions engageantes via IA texte
+3. **Prévisualiser** le tout dans l'admin avant validation
+4. **Publier automatiquement** sur Telegram via le connecteur disponible
+5. **Préparer** Instagram (téléchargement direct car l'API Instagram nécessite un compte Meta Business)
 
-- Le panier doit contenir **100g de Nuage de Mousseux**
-- Prix fixé à **300€** tout compris
-- **Livraison gratuite**
+## Architecture
 
-## Modifications
+```text
+┌─────────────────────────────────┐
+│        Admin Page (nouvelle tab)│
+│  "Social Media"                 │
+│                                 │
+│  [Générer un post]              │
+│    → Choix produit ou thème     │
+│    → IA génère image + caption  │
+│    → Prévisualisation           │
+│  [Publier Telegram] [Download]  │
+└──────────┬──────────────────────┘
+           │
+    ┌──────▼──────┐
+    │ Edge Function│
+    │ social-content│
+    │              │
+    │ 1. Génère image (Gemini)    │
+    │ 2. Génère caption (Gemini)  │
+    │ 3. Stocke dans storage      │
+    │ 4. Publie Telegram si demandé│
+    └─────────────┘
+```
 
-### 1. `src/components/CartDrawer.tsx` — Validation client NUAGE300
+## Étapes d'implémentation
 
-- Reconnaître `NUAGE300` dans `handleApplyPromo`
-- Vérifier que le panier contient `nuage-de-mousseux` avec weight = 100
-- Vérifier l'usage global : query `promo_code_usage` WHERE `code = 'NUAGE300'` (sans filtre user_id) — si un résultat existe → erreur "Ce code a déjà été utilisé"
-- L'utilisateur doit être connecté
-- Calculer le % de réduction pour atteindre 300€, activer livraison gratuite
-- Non cumulable avec BIENVENUE15
+### 1. Connecter Telegram
+Lier le connecteur Telegram au projet pour obtenir les clés API nécessaires à la publication automatique.
 
-### 2. `supabase/functions/create-viva-payment/index.ts` — Validation serveur
+### 2. Créer un bucket de stockage `social-media`
+Pour stocker les images générées par l'IA avant publication.
 
-- Vérifier côté serveur que `NUAGE300` n'a **jamais** été utilisé (check global dans `promo_code_usage`)
-- Si valide : forcer `serverTotal = 300`, pas de frais de livraison
-- Enregistrer dans `promo_code_usage` après paiement
+### 3. Créer une table `social_posts`
+Colonnes : `id`, `product_id`, `image_url`, `caption`, `status` (draft/published), `published_to` (telegram/instagram), `created_at`, `published_at`. Accès admin uniquement via RLS.
 
-### 3. `src/contexts/CartContext.tsx` — Flag `freeShipping`
+### 4. Edge Function `social-content`
+- **Mode "generate"** : Appelle Gemini image (`google/gemini-3.1-flash-image-preview`) avec un prompt détaillé intégrant l'identité visuelle HSB (fond noir profond, poussière d'or, éclairage studio doré, pas de texte sur l'image). Appelle Gemini texte pour générer une caption Instagram/Telegram avec hashtags. Stocke l'image dans le bucket et sauvegarde le post en draft.
+- **Mode "publish-telegram"** : Envoie l'image + caption sur le canal Telegram via le connecteur gateway (`sendPhoto`).
 
-- Ajouter `freeShipping: boolean` et `setFreeShipping` au contexte
+### 5. Nouvelle section admin "Social Media"
+- Bouton "Générer un post" → choix du produit ou thème libre
+- Aperçu de l'image générée + caption éditable
+- Bouton "Publier sur Telegram" → publication instantanée
+- Bouton "Télécharger pour Instagram" → télécharge l'image au format carré (1080x1080)
+- Historique des posts avec statut
 
-## Fichiers impactés
-- `src/components/CartDrawer.tsx`
-- `supabase/functions/create-viva-payment/index.ts`
-- `src/contexts/CartContext.tsx`
+### 6. Instagram — Approche réaliste
+L'API Instagram Content Publishing nécessite un compte Meta Business + app Facebook approuvée. Pour l'instant, l'approche sera :
+- Télécharger l'image optimisée pour Instagram (1080x1080)
+- Caption copiée dans le presse-papier en un clic
+- Possibilité future d'ajouter Zapier pour automatiser complètement
+
+## Prompt IA pour les visuels (intégré dans l'edge function)
+
+Le prompt sera calibré sur ton identité visuelle :
+- Fond noir profond (#000000)
+- Ambiance "haute joaillerie" avec poussière d'or flottante
+- Éclairage studio avec contour doré (rim light)
+- Texture velours/mat
+- Pas de texte, pas de logo
+- Produit CBD mis en valeur comme un bijou
+
+## Fichiers créés/modifiés
+- `supabase/functions/social-content/index.ts` — nouvelle edge function
+- `src/components/admin/SocialMediaManager.tsx` — nouveau composant admin
+- `src/pages/AdminPage.tsx` — ajout de l'onglet Social Media
+- Migration : table `social_posts` + bucket storage
+
+## Prérequis
+- Connexion du connecteur Telegram (bot + chat_id du canal)
+- LOVABLE_API_KEY déjà disponible pour Gemini
 
