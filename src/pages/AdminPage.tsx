@@ -456,6 +456,15 @@ const AdminPage = () => {
               </CardContent>
             </Card>
           </motion.section>
+
+          {/* Section Social Media */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <SocialMediaManager />
+          </motion.section>
         </div>
       </main>
 

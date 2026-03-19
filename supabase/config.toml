@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.generate-colissimo-label]
 verify_jwt = false
+
+[functions.social-content]
+verify_jwt = false
