@@ -345,9 +345,11 @@ const CartDrawer = () => {
   };
 
   // Calculate discounted total
-  const discountedTotal = promoDiscount > 0
-    ? Math.round(totalPrice * (1 - promoDiscount / 100) * 100) / 100
-    : totalPrice;
+  const discountedTotal = promoCode === "NUAGE300"
+    ? 300
+    : promoDiscount > 0
+      ? Math.round(totalPrice * (1 - promoDiscount / 100) * 100) / 100
+      : totalPrice;
   const discountAmount = totalPrice - discountedTotal;
 
   return (
