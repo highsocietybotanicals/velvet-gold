@@ -847,10 +847,22 @@ const CartDrawer = () => {
                       <span className="text-sm text-muted-foreground line-through">{totalPrice.toFixed(2)}€</span>
                     </div>
                   )}
-                  {promoDiscount > 0 && (
+                  {promoDiscount > 0 && promoCode !== "NUAGE300" && (
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-primary">Réduction -{promoDiscount}%</span>
                       <span className="text-sm text-primary">-{discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
+                  {promoCode === "NUAGE300" && (
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-primary">Offre NUAGE300</span>
+                      <span className="text-sm text-primary">-{discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
+                  {freeShipping && (
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-primary">🚚 Livraison</span>
+                      <span className="text-sm text-primary font-medium">OFFERTE</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center">
