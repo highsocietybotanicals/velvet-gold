@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import PriceManagement from "@/components/admin/PriceManagement";
 import OrderSummaryPrint from "@/components/admin/OrderSummaryPrint";
 import ShippingLabel from "@/components/admin/ShippingLabel";
+import SocialMediaManager from "@/components/admin/SocialMediaManager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -454,6 +455,15 @@ const AdminPage = () => {
                 )}
               </CardContent>
             </Card>
+          </motion.section>
+
+          {/* Section Social Media */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <SocialMediaManager />
           </motion.section>
         </div>
       </main>

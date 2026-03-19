@@ -410,6 +410,42 @@ export type Database = {
           },
         ]
       }
+      social_posts: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          product_id: string | null
+          published_at: string | null
+          published_to: string[] | null
+          status: string
+          theme: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          product_id?: string | null
+          published_at?: string | null
+          published_to?: string[] | null
+          status?: string
+          theme?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          product_id?: string | null
+          published_at?: string | null
+          published_to?: string[] | null
+          status?: string
+          theme?: string | null
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
