@@ -221,6 +221,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setSampleItems([]);
     setPromoCode("");
     setPromoDiscount(0);
+    setFreeShipping(false);
   };
 
   const totalItems = items.length + accessoryItems.length + sampleItems.length;
