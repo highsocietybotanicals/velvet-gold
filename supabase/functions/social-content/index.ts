@@ -246,6 +246,115 @@ serve(async (req) => {
       });
     }
 
+    // ── GENERATE IMAGE ──
+    if (action === "generate-image") {
+      if (!postId) throw new Error("postId required");
+
+      const { data: post, error: postError } = await supabase
+        .from("social_posts")
+        .select("*")
+        .eq("id", postId)
+        .single();
+
+      if (postError || !post) throw new Error("Post not found");
+
+      // Get product info if available
+      const productInfo = (() => {
+        if (products && Array.isArray(products) && post.product_id) {
+          const p = products.find((pr: any) => pr.id === post.product_id);
+          if (p) return { name: p.name, category: p.category, description: p.description || "" };
+        }
+        return { name: "produit CBD premium", category: "fleur", description: "" };
+      })();
+
+      const categoryDesc = productInfo.category === "resine" || productInfo.category === "hash"
+        ? "résine CBD dorée/ambrée, texture compacte et brillante"
+        : "fleur CBD dense avec trichomes givrés, nuances vertes et violettes";
+
+      const imagePrompt = `Photographie de studio ultra haute qualité d'un produit CBD premium nommé "${productInfo.name}".
+
+CHARTE VISUELLE HSB — OBLIGATOIRE :
+- Fond noir profond #000000, éclairage studio avec rim light doré
+- Poussière d'or flottante subtile, texture velours/mat
+- Style "Haute Joaillerie" inspiré des campagnes Rolex/Cartier
+- Palette EXCLUSIVE : noir, or (#C8A94E), vert botanique
+- Le logo HSB (couronne dorée ornée + initiales HSB + ornements baroques dorés) peut apparaître en filigrane doré discret dans un coin
+- Le produit est une ${categoryDesc}
+${productInfo.description ? `- Description : ${productInfo.description}` : ""}
+
+INTERDICTIONS ABSOLUES :
+- AUCUN logo autre que celui de High Society Botanicals (HSB)
+- AUCUNE marque concurrente
+- AUCUN texte inventé, AUCUNE étiquette
+- AUCUNE couleur hors palette (pas de rouge, bleu vif, rose, orange)
+- Ne jamais inventer une forme de produit irréaliste
+- Le produit doit ressembler à un vrai produit CBD, pas à une illustration`;
+
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3.1-flash-image-preview",
+          messages: [{ role: "user", content: imagePrompt }],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        const errText = await aiResponse.text();
+        console.error("AI image error:", aiResponse.status, errText);
+        if (aiResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "Limite de requêtes atteinte, réessayez dans quelques instants." }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (aiResponse.status === 402) {
+          return new Response(JSON.stringify({ error: "Crédits IA insuffisants." }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error(`AI image generation failed: ${aiResponse.status}`);
+      }
+
+      const aiData = await aiResponse.json();
+      const imageData = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (!imageData) throw new Error("No image returned from AI");
+
+      // Extract base64 and upload to storage
+      const base64Match = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
+      if (!base64Match) throw new Error("Invalid image data format");
+
+      const imageBytes = Uint8Array.from(atob(base64Match[2]), (c: string) => c.charCodeAt(0));
+      const filePath = `generated/${postId}.png`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("social-media")
+        .upload(filePath, imageBytes, {
+          contentType: "image/png",
+          upsert: true,
+        });
+
+      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
+      const { data: publicUrlData } = supabase.storage
+        .from("social-media")
+        .getPublicUrl(filePath);
+
+      const publicUrl = publicUrlData.publicUrl;
+
+      await supabase
+        .from("social_posts")
+        .update({ image_url: publicUrl })
+        .eq("id", postId);
+
+      return new Response(JSON.stringify({ success: true, imageUrl: publicUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

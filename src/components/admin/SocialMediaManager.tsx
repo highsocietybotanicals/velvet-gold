@@ -19,6 +19,8 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
+  Paintbrush,
+  Undo2,
 } from "lucide-react";
 
 interface SocialPost {
@@ -62,7 +64,8 @@ const SocialMediaManager = () => {
   const [editingCaption, setEditingCaption] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
-
+  const [generatingImage, setGeneratingImage] = useState<string | null>(null);
+  const [originalImageUrls, setOriginalImageUrls] = useState<Record<string, string | null>>({});
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -228,6 +231,63 @@ const SocialMediaManager = () => {
     setExpandedSeries(prev => ({ ...prev, [seriesId]: !prev[seriesId] }));
   };
 
+  const handleGenerateImage = async (post: SocialPost) => {
+    setGeneratingImage(post.id);
+    try {
+      // Save original image URL before replacing
+      const currentImage = post.image_url || (post.product_id ? getProductImageUrl(post.product_id) : null);
+      if (!originalImageUrls[post.id]) {
+        setOriginalImageUrls(prev => ({ ...prev, [post.id]: currentImage }));
+      }
+
+      const productsData = allProducts.map(p => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        description: p.description,
+      }));
+
+      const { data, error } = await supabase.functions.invoke("social-content", {
+        body: {
+          action: "generate-image",
+          postId: post.id,
+          products: productsData,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success("Visuel IA généré avec succès !");
+      fetchPosts();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors de la génération du visuel");
+    } finally {
+      setGeneratingImage(null);
+    }
+  };
+
+  const handleRestoreOriginal = async (post: SocialPost) => {
+    const originalUrl = originalImageUrls[post.id] || (post.product_id ? `${window.location.origin}${getProductImageUrl(post.product_id)}` : null);
+    if (!originalUrl) {
+      toast.error("Aucune image originale disponible");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("social_posts")
+      .update({ image_url: originalUrl })
+      .eq("id", post.id);
+
+    if (error) {
+      toast.error("Erreur lors de la restauration");
+      return;
+    }
+
+    toast.success("Photo originale restaurée !");
+    fetchPosts();
+  };
+
   const renderPostCard = (post: SocialPost, compact = false) => {
     const imageUrl = post.image_url || (post.product_id ? getProductImageUrl(post.product_id) : null);
     const productName = post.product_id ? allProducts.find(p => p.id === post.product_id)?.name : null;
@@ -282,6 +342,24 @@ const SocialMediaManager = () => {
               {imageUrl && (
                 <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleDownloadImage(post)}>
                   <Download className="h-3 w-3 mr-1" />Instagram
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => handleGenerateImage(post)}
+                disabled={generatingImage === post.id}
+              >
+                {generatingImage === post.id ? (
+                  <><Loader2 className="h-3 w-3 animate-spin mr-1" />Création...</>
+                ) : (
+                  <><Paintbrush className="h-3 w-3 mr-1" />Visuel IA</>
+                )}
+              </Button>
+              {(originalImageUrls[post.id] || post.product_id) && post.image_url?.includes("generated/") && (
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleRestoreOriginal(post)}>
+                  <Undo2 className="h-3 w-3 mr-1" />Photo originale
                 </Button>
               )}
               {post.status !== "published" && (
