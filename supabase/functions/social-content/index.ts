@@ -194,7 +194,7 @@ serve(async (req) => {
       let telegramResponse: Response;
       let telegramData: any;
 
-      const SITE_URL = "https://highsocietybotanicals.lovable.app";
+      const SITE_URL = "https://highsocietybotanicals.com";
       const captionWithLink = `${post.caption}\n\n🛒 Commander maintenant :\n${SITE_URL}`;
 
       if (post.image_url) {
