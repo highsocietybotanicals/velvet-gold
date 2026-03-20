@@ -115,7 +115,7 @@ const groupA: Product[] = [
     description: "25% CBD / 10% CBN / 10% CBG. Le combo ultime pour un sommeil royal.",
     price: 12,
     priceGroup: "A",
-    cbdPercentage: "25%",
+    cbdPercentage: "25% CBD / 10% CBN / 10% CBG",
     image: goldenCBN,
     terpenes: { boise: 60, fruite: 45, epice: 90, terreux: 70 },
     mood: "Sommeil",

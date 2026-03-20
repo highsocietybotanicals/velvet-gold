@@ -301,7 +301,7 @@ const CataloguePage = () => {
                       </div>
                       <div className={viewMode === "list" ? "text-right" : "flex justify-between items-center mt-4"}>
                         <span className="text-sm text-muted-foreground">
-                          {product.isForceNoire ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
+                          {product.isForceNoire || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
                         </span>
                         <span className="text-lg font-display text-primary">
                           {product.price}€<span className="text-xs text-muted-foreground">/g</span>
