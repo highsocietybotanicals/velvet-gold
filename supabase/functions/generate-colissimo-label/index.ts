@@ -69,11 +69,22 @@ function parseMultipartResponse(
   body: Uint8Array,
   contentType: string
 ): { jsonPart: any; pdfBase64: string } {
+  const text = new TextDecoder().decode(body);
+  
+  // If empty body, return error info
+  if (!text || text.trim() === "") {
+    return { jsonPart: { messages: [{ type: "ERROR", messageContent: "Empty response from Colissimo API" }] }, pdfBase64: "" };
+  }
+
   const boundaryMatch = contentType.match(/boundary="?([^";\s]+)"?/);
   if (!boundaryMatch) {
     // Not multipart — try plain JSON
-    const text = new TextDecoder().decode(body);
-    return { jsonPart: JSON.parse(text), pdfBase64: "" };
+    try {
+      return { jsonPart: JSON.parse(text), pdfBase64: "" };
+    } catch {
+      console.error("Non-JSON response from Colissimo:", text.substring(0, 500));
+      return { jsonPart: { messages: [{ type: "ERROR", messageContent: `Colissimo returned non-JSON: ${text.substring(0, 200)}` }] }, pdfBase64: "" };
+    }
   }
 
   const boundary = boundaryMatch[1];
