@@ -416,9 +416,12 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          post_type: string | null
           product_id: string | null
           published_at: string | null
           published_to: string[] | null
+          series_id: string | null
+          series_position: number | null
           status: string
           theme: string | null
         }
@@ -427,9 +430,12 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          post_type?: string | null
           product_id?: string | null
           published_at?: string | null
           published_to?: string[] | null
+          series_id?: string | null
+          series_position?: number | null
           status?: string
           theme?: string | null
         }
@@ -438,9 +444,12 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          post_type?: string | null
           product_id?: string | null
           published_at?: string | null
           published_to?: string[] | null
+          series_id?: string | null
+          series_position?: number | null
           status?: string
           theme?: string | null
         }
