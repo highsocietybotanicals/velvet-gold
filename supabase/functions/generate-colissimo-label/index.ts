@@ -69,11 +69,22 @@ function parseMultipartResponse(
   body: Uint8Array,
   contentType: string
 ): { jsonPart: any; pdfBase64: string } {
+  const text = new TextDecoder().decode(body);
+  
+  // If empty body, return error info
+  if (!text || text.trim() === "") {
+    return { jsonPart: { messages: [{ type: "ERROR", messageContent: "Empty response from Colissimo API" }] }, pdfBase64: "" };
+  }
+
   const boundaryMatch = contentType.match(/boundary="?([^";\s]+)"?/);
   if (!boundaryMatch) {
     // Not multipart — try plain JSON
-    const text = new TextDecoder().decode(body);
-    return { jsonPart: JSON.parse(text), pdfBase64: "" };
+    try {
+      return { jsonPart: JSON.parse(text), pdfBase64: "" };
+    } catch {
+      console.error("Non-JSON response from Colissimo:", text.substring(0, 500));
+      return { jsonPart: { messages: [{ type: "ERROR", messageContent: `Colissimo returned non-JSON: ${text.substring(0, 200)}` }] }, pdfBase64: "" };
+    }
   }
 
   const boundary = boundaryMatch[1];
@@ -256,25 +267,32 @@ Deno.serve(async (req) => {
       },
     };
 
-    // Call Colissimo API with manually constructed multipart/form-data
+    // Call Colissimo API with multipart/form-data using TextEncoder for proper binary
     const boundary = "----ColissimoBoundary" + Date.now();
     const jsonPayload = JSON.stringify(labelRequest);
     
-    const multipartBody = 
-      `--${boundary}\r\n` +
-      `Content-Disposition: form-data; name="generateLabelRequest"\r\n` +
-      `Content-Type: application/json\r\n\r\n` +
-      jsonPayload + `\r\n` +
-      `--${boundary}--\r\n`;
+    const bodyParts = [
+      `--${boundary}\r\n`,
+      `Content-Disposition: form-data; name="generateLabelRequest"\r\n`,
+      `Content-Type: application/json\r\n`,
+      `\r\n`,
+      jsonPayload,
+      `\r\n`,
+      `--${boundary}--\r\n`,
+    ];
+    const bodyString = bodyParts.join("");
+    const bodyBytes = new TextEncoder().encode(bodyString);
 
     console.log("Calling Colissimo API for order:", orderId);
+    console.log("Request body preview:", jsonPayload.substring(0, 200));
 
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        "Accept": "application/json, multipart/mixed",
       },
-      body: multipartBody,
+      body: bodyBytes,
     });
 
     const responseBody = new Uint8Array(await colissimoResponse.arrayBuffer());
