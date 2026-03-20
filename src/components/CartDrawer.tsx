@@ -791,8 +791,8 @@ const CartDrawer = () => {
                       <div className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-primary" />
                         <span className="text-sm font-mono font-bold text-primary">{promoCode}</span>
-                        {promoCode === "NUAGE300" ? (
-                          <span className="text-xs text-muted-foreground">300€ tout compris</span>
+                        {promoCode === "DEMI160" ? (
+                          <span className="text-xs text-muted-foreground">50g à 160€ tout compris</span>
                         ) : (
                           <span className="text-xs text-muted-foreground">(-{promoDiscount}%)</span>
                         )}
