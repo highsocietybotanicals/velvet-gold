@@ -1,86 +1,84 @@
 
 
-# Social Media Automation — Génération IA + Publication Instagram & Telegram
+# Social Media IA Stratégique — Publication Millimétrée
 
-## Vue d'ensemble
+## Problème actuel
 
-Créer un système semi-automatique dans ton admin pour :
-1. **Générer** des visuels "Dark Luxury" fidèles à ta marque via IA (Gemini image generation)
-2. **Générer** des légendes/captions engageantes via IA texte
-3. **Prévisualiser** le tout dans l'admin avant validation
-4. **Publier automatiquement** sur Telegram via le connecteur disponible
-5. **Préparer** Instagram (téléchargement direct car l'API Instagram nécessite un compte Meta Business)
+L'IA génère des images artificielles via Gemini au lieu d'utiliser les **vraies photos produits** du site. Les posts sont générés un par un, sans stratégie ni cohérence éditoriale.
 
-## Architecture
+## Vision
+
+Transformer l'IA en véritable **Directrice de Communication** de HSB qui :
+- Utilise exclusivement les **vraies photos produits** du site (jamais de génération d'images)
+- Planifie des **séries de publications stratégiques** (pas des posts isolés)
+- Parle avec une voix de marque constante, comme si c'était **sa propre entreprise**
+- Alterne intelligemment entre types de contenu (produit, éducation, lifestyle, teasing)
+
+## Architecture de la stratégie
 
 ```text
-┌─────────────────────────────────┐
-│        Admin Page (nouvelle tab)│
-│  "Social Media"                 │
-│                                 │
-│  [Générer un post]              │
-│    → Choix produit ou thème     │
-│    → IA génère image + caption  │
-│    → Prévisualisation           │
-│  [Publier Telegram] [Download]  │
-└──────────┬──────────────────────┘
-           │
-    ┌──────▼──────┐
-    │ Edge Function│
-    │ social-content│
-    │              │
-    │ 1. Génère image (Gemini)    │
-    │ 2. Génère caption (Gemini)  │
-    │ 3. Stocke dans storage      │
-    │ 4. Publie Telegram si demandé│
-    └─────────────┘
+┌─────────────────────────────────────────────┐
+│  STRATÉGIE DE PUBLICATION                   │
+│                                             │
+│  Série = 5-7 posts cohérents               │
+│  ├── Post 1: Teasing mystérieux            │
+│  ├── Post 2: Mise en lumière produit       │
+│  ├── Post 3: Éducation (terpènes, CBD)     │
+│  ├── Post 4: Lifestyle / ambiance          │
+│  ├── Post 5: Produit complémentaire        │
+│  ├── Post 6: Témoignage / conseil          │
+│  └── Post 7: Call-to-action                │
+│                                             │
+│  Chaque post a son image RÉELLE du site    │
+│  + légende stratégique IA                  │
+└─────────────────────────────────────────────┘
 ```
 
-## Étapes d'implémentation
+## Changements techniques
 
-### 1. Connecter Telegram
-Lier le connecteur Telegram au projet pour obtenir les clés API nécessaires à la publication automatique.
+### 1. Edge Function `social-content` — Refonte complète
 
-### 2. Créer un bucket de stockage `social-media`
-Pour stocker les images générées par l'IA avant publication.
+**Suppression de la génération d'images IA.** L'IA ne génère plus que les légendes/captions.
 
-### 3. Créer une table `social_posts`
-Colonnes : `id`, `product_id`, `image_url`, `caption`, `status` (draft/published), `published_to` (telegram/instagram), `created_at`, `published_at`. Accès admin uniquement via RLS.
+Nouveau mode `generate-series` :
+- L'IA reçoit le catalogue complet (noms, descriptions, catégories, terpènes, mood)
+- Elle planifie une série de 5-7 posts avec un arc narratif
+- Chaque post est associé à un produit réel et son image existante
+- Les images sont les URLs publiques des assets du site (via le frontend qui les transmet)
 
-### 4. Edge Function `social-content`
-- **Mode "generate"** : Appelle Gemini image (`google/gemini-3.1-flash-image-preview`) avec un prompt détaillé intégrant l'identité visuelle HSB (fond noir profond, poussière d'or, éclairage studio doré, pas de texte sur l'image). Appelle Gemini texte pour générer une caption Instagram/Telegram avec hashtags. Stocke l'image dans le bucket et sauvegarde le post en draft.
-- **Mode "publish-telegram"** : Envoie l'image + caption sur le canal Telegram via le connecteur gateway (`sendPhoto`).
+Nouveau prompt système "Directrice de Communication HSB" :
+- Personnalité : passionnée, stratège, luxe discret
+- Ton : « L'empire HSB doit exploser. Chaque post est une brique de notre légende. »
+- Logique de séquence : teasing → reveal → éducation → lifestyle → CTA
+- Ne jamais mentionner de prix, toujours créer du désir et du mystère
+- Hashtags calibrés et cohérents sur toute la série
 
-### 5. Nouvelle section admin "Social Media"
-- Bouton "Générer un post" → choix du produit ou thème libre
-- Aperçu de l'image générée + caption éditable
-- Bouton "Publier sur Telegram" → publication instantanée
-- Bouton "Télécharger pour Instagram" → télécharge l'image au format carré (1080x1080)
-- Historique des posts avec statut
+### 2. Table `social_posts` — Ajout de colonnes
 
-### 6. Instagram — Approche réaliste
-L'API Instagram Content Publishing nécessite un compte Meta Business + app Facebook approuvée. Pour l'instant, l'approche sera :
-- Télécharger l'image optimisée pour Instagram (1080x1080)
-- Caption copiée dans le presse-papier en un clic
-- Possibilité future d'ajouter Zapier pour automatiser complètement
+- `series_id` (uuid) — regroupe les posts d'une même série
+- `series_position` (integer) — ordre dans la série
+- `post_type` (text) — teasing / product / education / lifestyle / cta
 
-## Prompt IA pour les visuels (intégré dans l'edge function)
+### 3. Admin UI — Refonte `SocialMediaManager.tsx`
 
-Le prompt sera calibré sur ton identité visuelle :
-- Fond noir profond (#000000)
-- Ambiance "haute joaillerie" avec poussière d'or flottante
-- Éclairage studio avec contour doré (rim light)
-- Texture velours/mat
-- Pas de texte, pas de logo
-- Produit CBD mis en valeur comme un bijou
+- **Nouveau bouton "Planifier une série"** : choisir un thème ou laisser l'IA décider
+- L'IA propose la série entière avec les images réelles associées
+- Prévisualisation de toute la série sous forme de timeline
+- Publication individuelle ou par lot sur Telegram
+- Chaque légende reste éditable
+- Les images produits sont servies depuis les assets du site (pas de génération)
 
-## Fichiers créés/modifiés
-- `supabase/functions/social-content/index.ts` — nouvelle edge function
-- `src/components/admin/SocialMediaManager.tsx` — nouveau composant admin
-- `src/pages/AdminPage.tsx` — ajout de l'onglet Social Media
-- Migration : table `social_posts` + bucket storage
+### 4. Mapping produit → image publique
 
-## Prérequis
-- Connexion du connecteur Telegram (bot + chat_id du canal)
-- LOVABLE_API_KEY déjà disponible pour Gemini
+Le frontend envoie à l'edge function les données produit incluant l'URL publique de chaque image. L'edge function utilise ces URLs directement lors de la publication Telegram (au lieu de générer des images).
+
+## Fichiers modifiés
+
+- `supabase/functions/social-content/index.ts` — refonte du prompt et de la logique (génération de séries, plus de génération d'image)
+- `src/components/admin/SocialMediaManager.tsx` — UI séries, timeline, images réelles
+- Migration SQL : ajout `series_id`, `series_position`, `post_type` à `social_posts`
+
+## Résultat attendu
+
+L'admin clique "Planifier une série" → l'IA analyse le catalogue → propose 5-7 posts ordonnés avec les vraies photos et des légendes stratégiques → l'admin valide/modifie → publie sur Telegram un par un ou en lot.
 
