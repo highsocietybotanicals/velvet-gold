@@ -1,63 +1,61 @@
 
 
-# Génération d'Images IA — Fidèle à HSB avec Logo Officiel
+# Publication Automatique Instagram
 
-## Résumé
+## Contexte
 
-Ajouter un mode `generate-image` à l'edge function `social-content` qui génère des visuels IA avec le logo HSB intégré et des contraintes strictes de marque. Les deux logos uploadés (photo 3D et vectoriel) seront copiés dans le projet et rendus disponibles pour l'IA.
+Instagram utilise l'**Instagram Graph API** avec un modèle de publication en 3 étapes (création de container → attente → publication). Cela nécessite :
+- Un **compte Instagram Business** relié à une **Page Facebook**
+- Un **access token** avec les scopes `instagram_content_publish` et `instagram_basic`
+- L'**Instagram User ID** du compte
 
-## Changements
+Il n'y a pas de connecteur Instagram disponible dans Lovable, donc il faudra configurer manuellement les credentials.
 
-### 1. Copier les logos dans le projet
+## Prérequis utilisateur
 
-- `user-uploads://1766974737754_upscayl_10x_remacri-4x.png` → `public/images/logo-3d.png` (version photo relief doré)
-- `user-uploads://unnamed_upscayl_15x_remacri-4x.png` → `public/images/logo-vector.png` (version vectorielle dorée)
+1. Avoir un compte **Instagram Business** (pas personnel)
+2. Le relier à une **Page Facebook**
+3. Créer une **Meta App** sur [developers.facebook.com](https://developers.facebook.com)
+4. Obtenir un **access token long-durée** avec les permissions `instagram_content_publish`, `instagram_basic`
+5. Récupérer son **Instagram User ID** (via l'API `/me/accounts`)
 
-Ces fichiers seront accessibles via URL publique pour l'IA et pour Telegram.
+## Changements techniques
 
-### 2. Edge Function `social-content/index.ts` — Nouveau mode `generate-image`
+### 1. Secrets à ajouter
 
-Ajouter une action `generate-image` qui :
-- Reçoit les données produit (nom, catégorie, description, terpènes) + l'URL publique du logo vectoriel
-- Appelle `google/gemini-3.1-flash-image-preview` avec un prompt ultra-contraint :
+- `INSTAGRAM_ACCESS_TOKEN` — token d'accès longue durée
+- `INSTAGRAM_USER_ID` — ID du compte Instagram Business
+
+### 2. Edge Function `social-content/index.ts` — Nouveau mode `publish-instagram`
+
+Processus en 3 étapes via l'API Graph Instagram :
 
 ```text
-CHARTE VISUELLE HSB — OBLIGATOIRE :
-- Fond noir profond #000000, éclairage studio rim light doré
-- Poussière d'or flottante subtile, texture velours/mat
-- Style "Haute Joaillerie" (Rolex/Cartier)
-- Palette EXCLUSIVE : noir, or (#C8A94E), vert botanique
-- Le logo HSB (couronne + maison + ornements dorés) peut apparaître en filigrane doré discret
-- Le produit doit ressembler fidèlement à une [fleur CBD / résine CBD]
-- Nom exact du produit : [nom] — JAMAIS modifié ni inventé
-
-INTERDICTIONS ABSOLUES :
-- AUCUN logo autre que celui de High Society Botanicals
-- AUCUNE marque concurrente, AUCUN texte inventé
-- AUCUNE couleur hors palette (pas de rouge, bleu vif, rose, etc.)
-- Ne jamais inventer une forme de produit irréaliste
+Étape 1: POST /{user_id}/media → crée un container avec image_url + caption
+Étape 2: GET /{container_id}?fields=status_code → attente "FINISHED"
+Étape 3: POST /{user_id}/media_publish → publie le container
 ```
 
-- Upload l'image générée dans le bucket `social-media` (path `generated/{postId}.png`)
-- Met à jour le `image_url` du post en base
+- L'image doit être accessible via URL publique (les images du site ou du bucket `social-media` le sont déjà)
+- Met à jour le post en base avec `published_to: [..., "instagram"]`
 
-### 3. Admin UI `SocialMediaManager.tsx` — Bouton par post
+### 3. Admin UI `SocialMediaManager.tsx` — Bouton "Instagram" par post
 
-Sur chaque post de la série, ajouter :
-- Bouton **"🎨 Générer visuel IA"** → appelle le mode `generate-image` avec les données produit
-- Spinner pendant la génération
-- Après génération : la nouvelle image remplace la preview
-- Bouton **"↩️ Photo originale"** pour revenir à la vraie photo produit
-- Le logo vectoriel (`/images/logo-vector.png`) est envoyé automatiquement comme URL à l'edge function
+- Ajouter un bouton **"📸 Instagram"** à côté du bouton Telegram existant
+- Même logique : spinner pendant la publication, mise à jour du statut après
+- Le bouton remplace l'actuel bouton "Download Instagram" (qui télécharge juste l'image)
 
-### 4. Bucket storage
+### 4. Publication par lot
 
-Vérifier que le bucket `social-media` existe et est public (migration si nécessaire).
+- Ajouter un bouton **"Publier toute la série sur Instagram"** (comme pour Telegram)
+- Publie les posts un par un avec un délai de 30s entre chaque (limite API Instagram)
 
 ## Fichiers modifiés
 
-- `public/images/logo-3d.png` — copie du logo 3D
-- `public/images/logo-vector.png` — copie du logo vectoriel
-- `supabase/functions/social-content/index.ts` — ajout mode `generate-image` avec charte HSB + logo autorisé
-- `src/components/admin/SocialMediaManager.tsx` — boutons génération/restauration d'image par post
+- `supabase/functions/social-content/index.ts` — ajout mode `publish-instagram` (3 étapes Graph API)
+- `src/components/admin/SocialMediaManager.tsx` — bouton Instagram par post + publication par lot
+
+## Limitation importante
+
+Les **tokens Instagram expirent** (60 jours max pour les long-lived tokens). Il faudra les renouveler périodiquement. Je peux ajouter un mécanisme de refresh automatique si nécessaire.
 
