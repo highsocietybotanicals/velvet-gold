@@ -220,7 +220,6 @@ serve(async (req) => {
           body: JSON.stringify({
             chat_id: chatId,
             text: post.caption,
-            parse_mode: "HTML",
           }),
         });
       }

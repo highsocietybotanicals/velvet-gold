@@ -423,7 +423,7 @@ const SocialMediaManager = () => {
           <Input
             placeholder="ID du canal Telegram (ex: @monchannel ou -100123456)"
             value={telegramChatId}
-            onChange={(e) => setTelegramChatId(e.target.value)}
+            onChange={(e) => { setTelegramChatId(e.target.value); localStorage.setItem("hsb_telegram_chat_id", e.target.value); }}
             className="max-w-sm"
           />
         </div>
