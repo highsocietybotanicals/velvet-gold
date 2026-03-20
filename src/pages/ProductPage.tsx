@@ -226,7 +226,7 @@ const ProductPage = () => {
                   </span>
                 )}
                 <span className="ml-auto px-4 py-1 bg-secondary/50 rounded-full text-sm text-foreground">
-                  {product.isForceNoire ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
+                  {product.isForceNoire || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
                 </span>
               </div>
 
