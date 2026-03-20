@@ -271,15 +271,13 @@ Deno.serve(async (req) => {
     console.log("Calling Colissimo API for order:", orderId);
     console.log("Request body preview:", jsonPayload.substring(0, 300));
 
-    // Use application/x-www-form-urlencoded with generateLabelRequest param
-    const formBody = "generateLabelRequest=" + encodeURIComponent(jsonPayload);
+    // Append JSON as a plain string form field (not file/blob)
+    const formData = new FormData();
+    formData.append("generateLabelRequest", jsonPayload);
 
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formBody,
+      body: formData,
     });
 
     const responseBody = new Uint8Array(await colissimoResponse.arrayBuffer());
