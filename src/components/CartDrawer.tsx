@@ -246,7 +246,7 @@ const CartDrawer = () => {
     const code = promoInput.trim().toUpperCase();
     if (!code) return;
     
-    if (code !== "BIENVENUE15" && code !== "NUAGE300") {
+    if (code !== "BIENVENUE15" && code !== "DEMI160") {
       setPromoError("Code promo invalide");
       return;
     }
