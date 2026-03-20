@@ -267,30 +267,31 @@ Deno.serve(async (req) => {
       },
     };
 
-    // Call Colissimo API with multipart/form-data using TextEncoder for proper binary
-    const boundary = "----ColissimoBoundary" + Date.now();
     const jsonPayload = JSON.stringify(labelRequest);
-    
-    const bodyParts = [
-      `--${boundary}\r\n`,
-      `Content-Disposition: form-data; name="generateLabelRequest"\r\n`,
-      `Content-Type: application/json\r\n`,
-      `\r\n`,
-      jsonPayload,
-      `\r\n`,
-      `--${boundary}--\r\n`,
-    ];
-    const bodyString = bodyParts.join("");
-    const bodyBytes = new TextEncoder().encode(bodyString);
-
     console.log("Calling Colissimo API for order:", orderId);
-    console.log("Request body preview:", jsonPayload.substring(0, 200));
+
+    // Deno's FormData strips Content-Type from Blob parts, but Colissimo's 
+    // Spring backend requires Content-Type: application/json on the part.
+    // Build multipart manually with explicit part Content-Type as Uint8Array.
+    const boundary = "ColissimoBoundary" + Date.now();
+    const CRLF = "\r\n";
+    const bodyStr = [
+      `--${boundary}`,
+      `Content-Disposition: form-data; name="generateLabelRequest"; filename="generateLabelRequest.json"`,
+      `Content-Type: application/json`,
+      ``,
+      jsonPayload,
+      `--${boundary}--`,
+      ``
+    ].join(CRLF);
+
+    const bodyBytes = new TextEncoder().encode(bodyStr);
+    console.log("Manual multipart body (first 300):", bodyStr.substring(0, 300));
 
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": `multipart/form-data; boundary=${boundary}`,
-        "Accept": "application/json, multipart/mixed",
       },
       body: bodyBytes,
     });
