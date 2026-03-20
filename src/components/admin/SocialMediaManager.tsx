@@ -231,6 +231,63 @@ const SocialMediaManager = () => {
     setExpandedSeries(prev => ({ ...prev, [seriesId]: !prev[seriesId] }));
   };
 
+  const handleGenerateImage = async (post: SocialPost) => {
+    setGeneratingImage(post.id);
+    try {
+      // Save original image URL before replacing
+      const currentImage = post.image_url || (post.product_id ? getProductImageUrl(post.product_id) : null);
+      if (!originalImageUrls[post.id]) {
+        setOriginalImageUrls(prev => ({ ...prev, [post.id]: currentImage }));
+      }
+
+      const productsData = allProducts.map(p => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        description: p.description,
+      }));
+
+      const { data, error } = await supabase.functions.invoke("social-content", {
+        body: {
+          action: "generate-image",
+          postId: post.id,
+          products: productsData,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success("Visuel IA généré avec succès !");
+      fetchPosts();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors de la génération du visuel");
+    } finally {
+      setGeneratingImage(null);
+    }
+  };
+
+  const handleRestoreOriginal = async (post: SocialPost) => {
+    const originalUrl = originalImageUrls[post.id] || (post.product_id ? `${window.location.origin}${getProductImageUrl(post.product_id)}` : null);
+    if (!originalUrl) {
+      toast.error("Aucune image originale disponible");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("social_posts")
+      .update({ image_url: originalUrl })
+      .eq("id", post.id);
+
+    if (error) {
+      toast.error("Erreur lors de la restauration");
+      return;
+    }
+
+    toast.success("Photo originale restaurée !");
+    fetchPosts();
+  };
+
   const renderPostCard = (post: SocialPost, compact = false) => {
     const imageUrl = post.image_url || (post.product_id ? getProductImageUrl(post.product_id) : null);
     const productName = post.product_id ? allProducts.find(p => p.id === post.product_id)?.name : null;
