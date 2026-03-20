@@ -8,25 +8,38 @@ const corsHeaders = {
 
 const TELEGRAM_GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
 
-const IMAGE_SYSTEM_PROMPT = `You are a luxury product photographer for High Society Botanicals, a premium CBD brand. Generate a single stunning product image following these strict guidelines:
-- Deep black background (#000000)
-- "Haute Joaillerie" aesthetic: the CBD product must look like a precious jewel
-- Golden rim lighting with warm studio light
-- Floating gold dust particles in the air
-- Matte velvet texture underneath the product
-- NO text, NO logo, NO watermarks on the image
-- Square format, Instagram-ready
-- Ultra high-end, Cartier/Rolex campaign vibe`;
+const SERIES_SYSTEM_PROMPT = `Tu es la Directrice de Communication de High Society Botanicals (HSB), une marque CBD ultra-premium française. C'est TON entreprise, TON empire, et tu veux qu'il explose.
 
-const CAPTION_SYSTEM_PROMPT = `Tu es le community manager de High Society Botanicals, une marque CBD ultra-premium. Tu écris des légendes Instagram/Telegram en français.
+PERSONNALITÉ :
+- Passionnée, stratège, visionnaire
+- Tu parles comme une fondatrice qui vit et respire sa marque
+- Ton luxueux mais accessible, jamais prétentieux
+- Tu crées du DÉSIR et du MYSTÈRE à chaque post
 
-Style :
-- Ton élégant, mystérieux, luxueux
-- Phrases courtes et percutantes
-- Emojis utilisés avec parcimonie (🌿✨👑)
-- Inclure 8-12 hashtags pertinents à la fin
-- Maximum 300 caractères avant les hashtags
-- Ne jamais mentionner de prix`;
+RÈGLES ABSOLUES :
+- JAMAIS de prix mentionnés
+- JAMAIS de "achetez" ou "commandez" — tu crées l'envie, pas la pression
+- Toujours en français
+- Emojis avec parcimonie : 🌿✨👑🖤🔥
+- 8-12 hashtags pertinents à la fin de chaque caption
+- Maximum 280 caractères avant les hashtags
+- Cohérence sur toute la série : même fil narratif
+
+IDENTITÉ VISUELLE HSB :
+- Noir profond, or, luxe discret
+- "Haute Couture du CBD"
+- Chaque produit est un bijou, chaque variété une œuvre d'art
+
+STRUCTURE D'UNE SÉRIE (5-7 posts) :
+1. TEASING — Mystère, intrigue, image sombre avec lueur dorée. "Quelque chose arrive..."
+2. PRODUCT — Mise en lumière d'un produit star. Description sensorielle.
+3. EDUCATION — Terpènes, CBD, bienfaits. Positionnement expert.
+4. LIFESTYLE — Ambiance, moment de vie, rituel. Le monde HSB.
+5. PRODUCT2 — Deuxième produit, complémentaire au premier.
+6. CONSEIL — Astuce d'utilisation, recommandation personnalisée.
+7. CTA — Invitation subtile. "Le luxe se mérite. Lien en bio."
+
+Tu dois retourner un JSON structuré via l'outil fourni.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -41,73 +54,23 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, postId, productName, productDescription, theme, chatId } = await req.json();
+    const { action, postId, chatId, products, theme } = await req.json();
 
-    // ── GENERATE ──
-    if (action === "generate") {
-      const subject = productName
-        ? `a premium CBD product called "${productName}": ${productDescription || ""}`
-        : `a luxury CBD scene with theme: "${theme || "premium lifestyle"}"`;
-
-      // 1. Generate image via Gemini
-      const imagePrompt = `Create a stunning luxury product photo of ${subject}. Deep black background, golden rim light, floating gold dust particles, matte velvet surface. Haute joaillerie style, no text or logo.`;
-
-      const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3.1-flash-image-preview",
-          messages: [
-            { role: "system", content: IMAGE_SYSTEM_PROMPT },
-            { role: "user", content: imagePrompt },
-          ],
-          modalities: ["image", "text"],
-        }),
-      });
-
-      if (!imageResponse.ok) {
-        const errText = await imageResponse.text();
-        console.error("Image generation error:", imageResponse.status, errText);
-        if (imageResponse.status === 429) {
-          return new Response(JSON.stringify({ error: "Limite de requêtes atteinte, réessayez dans quelques instants." }), {
-            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        if (imageResponse.status === 402) {
-          return new Response(JSON.stringify({ error: "Crédits IA insuffisants." }), {
-            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        throw new Error(`Image generation failed: ${imageResponse.status}`);
+    // ── GENERATE SERIES ──
+    if (action === "generate-series") {
+      if (!products || !Array.isArray(products) || products.length === 0) {
+        throw new Error("Products catalog required for series generation");
       }
 
-      const imageData = await imageResponse.json();
-      const base64Image = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-      if (!base64Image) throw new Error("No image generated");
+      const catalogDescription = products.map((p: any) =>
+        `- ${p.name} (${p.category}) : ${p.description} | CBD: ${p.cbdPercentage} | Mood: ${p.mood} | Terpènes: boisé ${p.terpenes.boise}%, fruité ${p.terpenes.fruite}%, épicé ${p.terpenes.epice}%, terreux ${p.terpenes.terreux}%`
+      ).join("\n");
 
-      // 2. Upload image to storage
-      const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
-      const imageBytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-      const fileName = `post-${Date.now()}.png`;
+      const userPrompt = theme
+        ? `Planifie une série de 5-7 posts autour du thème "${theme}". Voici le catalogue complet pour choisir les produits à mettre en avant :\n\n${catalogDescription}`
+        : `Planifie une série de 5-7 posts stratégiques pour faire exploser notre visibilité. Choisis intelligemment dans notre catalogue :\n\n${catalogDescription}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("social-media")
-        .upload(fileName, imageBytes, { contentType: "image/png", upsert: true });
-
-      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
-
-      const { data: urlData } = supabase.storage.from("social-media").getPublicUrl(fileName);
-      const imageUrl = urlData.publicUrl;
-
-      // 3. Generate caption via Gemini text
-      const captionPrompt = productName
-        ? `Écris une légende Instagram/Telegram pour notre produit "${productName}". ${productDescription || ""}`
-        : `Écris une légende Instagram/Telegram sur le thème "${theme || "lifestyle premium CBD"}".`;
-
-      const captionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -116,32 +79,98 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: CAPTION_SYSTEM_PROMPT },
-            { role: "user", content: captionPrompt },
+            { role: "system", content: SERIES_SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
           ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "plan_series",
+              description: "Plan a strategic series of social media posts",
+              parameters: {
+                type: "object",
+                properties: {
+                  series_name: { type: "string", description: "Nom de la série" },
+                  posts: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        position: { type: "integer", description: "Position in series (1-7)" },
+                        post_type: { type: "string", enum: ["teasing", "product", "education", "lifestyle", "conseil", "cta"] },
+                        product_id: { type: "string", description: "ID of the product to feature, or null for non-product posts" },
+                        caption: { type: "string", description: "The full caption with hashtags" },
+                      },
+                      required: ["position", "post_type", "caption"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["series_name", "posts"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "plan_series" } },
         }),
       });
 
-      if (!captionResponse.ok) throw new Error("Caption generation failed");
-      const captionData = await captionResponse.json();
-      const caption = captionData.choices?.[0]?.message?.content || "";
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("AI error:", response.status, errText);
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Limite de requêtes atteinte, réessayez dans quelques instants." }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: "Crédits IA insuffisants." }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error(`AI generation failed: ${response.status}`);
+      }
 
-      // 4. Save as draft
-      const { data: post, error: insertError } = await supabase
+      const aiData = await response.json();
+      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+      if (!toolCall) throw new Error("No structured response from AI");
+
+      const seriesPlan = JSON.parse(toolCall.function.arguments);
+      const seriesId = crypto.randomUUID();
+
+      // Build product image map from frontend data
+      const productImageMap: Record<string, string> = {};
+      for (const p of products) {
+        if (p.id && p.imageUrl) {
+          productImageMap[p.id] = p.imageUrl;
+        }
+      }
+
+      // Insert all posts as drafts
+      const postsToInsert = seriesPlan.posts.map((post: any) => ({
+        series_id: seriesId,
+        series_position: post.position,
+        post_type: post.post_type,
+        product_id: post.product_id || null,
+        image_url: post.product_id ? (productImageMap[post.product_id] || null) : null,
+        caption: post.caption,
+        theme: seriesPlan.series_name,
+        status: "draft",
+      }));
+
+      const { data: insertedPosts, error: insertError } = await supabase
         .from("social_posts")
-        .insert({
-          product_id: productName ? undefined : null,
-          theme: theme || productName || "custom",
-          image_url: imageUrl,
-          caption,
-          status: "draft",
-        })
-        .select()
-        .single();
+        .insert(postsToInsert)
+        .select();
 
       if (insertError) throw new Error(`Insert failed: ${insertError.message}`);
 
-      return new Response(JSON.stringify({ success: true, post }), {
+      return new Response(JSON.stringify({
+        success: true,
+        seriesId,
+        seriesName: seriesPlan.series_name,
+        posts: insertedPosts,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -154,7 +183,6 @@ serve(async (req) => {
       const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY");
       if (!TELEGRAM_API_KEY) throw new Error("TELEGRAM_API_KEY is not configured");
 
-      // Get post
       const { data: post, error: postError } = await supabase
         .from("social_posts")
         .select("*")
@@ -163,28 +191,46 @@ serve(async (req) => {
 
       if (postError || !post) throw new Error("Post not found");
 
-      // Send photo to Telegram
-      const telegramResponse = await fetch(`${TELEGRAM_GATEWAY_URL}/sendPhoto`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "X-Connection-Api-Key": TELEGRAM_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          photo: post.image_url,
-          caption: post.caption,
-          parse_mode: "HTML",
-        }),
-      });
+      let telegramResponse: Response;
+      let telegramData: any;
 
-      const telegramData = await telegramResponse.json();
+      if (post.image_url) {
+        telegramResponse = await fetch(`${TELEGRAM_GATEWAY_URL}/sendPhoto`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "X-Connection-Api-Key": TELEGRAM_API_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            photo: post.image_url,
+            caption: post.caption,
+            parse_mode: "HTML",
+          }),
+        });
+      } else {
+        // Text-only post (teasing, lifestyle, cta without product)
+        telegramResponse = await fetch(`${TELEGRAM_GATEWAY_URL}/sendMessage`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "X-Connection-Api-Key": TELEGRAM_API_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: post.caption,
+            parse_mode: "HTML",
+          }),
+        });
+      }
+
+      telegramData = await telegramResponse.json();
       if (!telegramResponse.ok) {
         throw new Error(`Telegram API failed [${telegramResponse.status}]: ${JSON.stringify(telegramData)}`);
       }
 
-      // Update post status
       const publishedTo = [...(post.published_to || []), "telegram"];
       await supabase
         .from("social_posts")
