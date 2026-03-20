@@ -269,23 +269,20 @@ Deno.serve(async (req) => {
 
     const jsonPayload = JSON.stringify(labelRequest);
     console.log("Calling Colissimo API for order:", orderId);
-    console.log("Request body preview:", jsonPayload.substring(0, 300));
 
-    // Debug: create a Request to inspect what Deno produces
+    // Use Blob with application/json content-type so the multipart part includes Content-Type header
     const formData = new FormData();
-    formData.append("generateLabelRequest", jsonPayload);
-    
-    const testReq = new Request("https://example.com", { method: "POST", body: formData });
-    const contentTypeHeader = testReq.headers.get("content-type");
-    console.log("Deno FormData Content-Type:", contentTypeHeader);
-    
-    // Read and log the raw body Deno produces
-    const rawBody = await testReq.text();
-    console.log("Deno FormData body (first 500 chars):", rawBody.substring(0, 500));
+    const jsonBlob = new Blob([jsonPayload], { type: "application/json" });
+    formData.append("generateLabelRequest", jsonBlob, "generateLabelRequest");
 
-    // Now make the actual request
+    // Debug: log what Deno produces
+    const testReq = new Request("https://example.com", { method: "POST", body: formData });
+    const rawBody = await testReq.text();
+    console.log("Outgoing multipart body (first 600 chars):", rawBody.substring(0, 600));
+
+    // Actual request - recreate FormData since testReq consumed the first one
     const formData2 = new FormData();
-    formData2.append("generateLabelRequest", jsonPayload);
+    formData2.append("generateLabelRequest", new Blob([jsonPayload], { type: "application/json" }), "generateLabelRequest");
 
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
