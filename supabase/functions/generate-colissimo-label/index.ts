@@ -267,18 +267,27 @@ Deno.serve(async (req) => {
       },
     };
 
-    const jsonPayload = JSON.stringify({ generateLabelRequest: labelRequest });
+    const jsonPayload = JSON.stringify(labelRequest);
     console.log("Calling Colissimo API for order:", orderId);
     console.log("Request body preview:", jsonPayload.substring(0, 300));
 
-    // Try direct JSON POST (some Colissimo API versions accept this)
+    // Manual multipart construction - Colissimo requires multipart/form-data
+    // with a part named "generateLabelRequest" having Content-Type: application/json
+    const boundary = `ColissimoBoundary${Date.now()}`;
+    const body = 
+      `--${boundary}\r\n` +
+      `Content-Disposition: form-data; name="generateLabelRequest"; filename="request.json"\r\n` +
+      `Content-Type: application/json\r\n` +
+      `\r\n` +
+      jsonPayload + `\r\n` +
+      `--${boundary}--`;
+
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
       },
-      body: jsonPayload,
+      body: body,
     });
 
     const responseBody = new Uint8Array(await colissimoResponse.arrayBuffer());
