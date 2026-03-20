@@ -452,7 +452,7 @@ const ProductPage = () => {
                           {getPrice(similarProduct.id)?.price ?? similarProduct.price}€/g
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {similarProduct.isForceNoire ? similarProduct.cbdPercentage : `${similarProduct.cbdPercentage} CBD`}
+                          {similarProduct.isForceNoire || similarProduct.cbdPercentage.includes('CBD') ? similarProduct.cbdPercentage : `${similarProduct.cbdPercentage} CBD`}
                         </span>
                       </div>
                     </div>
