@@ -256,18 +256,25 @@ Deno.serve(async (req) => {
       },
     };
 
-    // Call Colissimo API with multipart/form-data
-    const formData = new FormData();
-    formData.append(
-      "generateLabelRequest",
-      new Blob([JSON.stringify(labelRequest)], { type: "application/json" })
-    );
+    // Call Colissimo API with manually constructed multipart/form-data
+    const boundary = "----ColissimoBoundary" + Date.now();
+    const jsonPayload = JSON.stringify(labelRequest);
+    
+    const multipartBody = 
+      `--${boundary}\r\n` +
+      `Content-Disposition: form-data; name="generateLabelRequest"\r\n` +
+      `Content-Type: application/json\r\n\r\n` +
+      jsonPayload + `\r\n` +
+      `--${boundary}--\r\n`;
 
     console.log("Calling Colissimo API for order:", orderId);
 
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      },
+      body: multipartBody,
     });
 
     const responseBody = new Uint8Array(await colissimoResponse.arrayBuffer());
