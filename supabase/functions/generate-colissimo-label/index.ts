@@ -267,20 +267,18 @@ Deno.serve(async (req) => {
       },
     };
 
-    // Build multipart form - use File with explicit content-type for Deno compatibility
-    const jsonPayload = JSON.stringify(labelRequest);
+    const jsonPayload = JSON.stringify({ generateLabelRequest: labelRequest });
     console.log("Calling Colissimo API for order:", orderId);
-    console.log("Request body preview:", jsonPayload.substring(0, 200));
+    console.log("Request body preview:", jsonPayload.substring(0, 300));
 
-    const formData = new FormData();
-    formData.append(
-      "generateLabelRequest",
-      new File([jsonPayload], "generateLabelRequest.json", { type: "application/json" })
-    );
-
+    // Try direct JSON POST (some Colissimo API versions accept this)
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: jsonPayload,
     });
 
     const responseBody = new Uint8Array(await colissimoResponse.arrayBuffer());
