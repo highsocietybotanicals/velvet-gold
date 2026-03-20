@@ -260,11 +260,10 @@ const CartDrawer = () => {
     setPromoError("");
 
     try {
-      if (code === "NUAGE300") {
-        // Check cart contains nuage-de-mousseux at 100g
-        const mousseuxItem = items.find(item => item.product.id === "nuage-de-mousseux");
-        if (!mousseuxItem || mousseuxItem.weight !== 100) {
-          setPromoError("Ce code est valable uniquement pour 100g de Nuage de Mousseux");
+      if (code === "DEMI160") {
+        // Check cart contains exactly 50g total flower/resin weight
+        if (totalFlowerWeight !== 50) {
+          setPromoError("Ce code est valable uniquement pour exactement 50g au total");
           setPromoLoading(false);
           return;
         }
@@ -273,7 +272,7 @@ const CartDrawer = () => {
         const { data: globalUsage } = await supabase
           .from("promo_code_usage")
           .select("id")
-          .eq("code", "NUAGE300")
+          .eq("code", "DEMI160")
           .maybeSingle();
 
         if (globalUsage) {
@@ -282,32 +281,18 @@ const CartDrawer = () => {
           return;
         }
 
-        // Calculate discount % to reach 300€ from current nuage price
-        const mousseuxPrice = (() => {
-          const proPrice = getProPrice("nuage-de-mousseux");
-          if (isProActive && proPrice !== null) {
-            return calculateProItemPrice(proPrice, 100).finalPrice;
-          }
-          return calculateItemPrice(mousseuxItem.product.price, 100).finalPrice;
-        })();
-
-        // Total of other items in cart (accessories etc)
-        const otherItemsTotal = totalPrice - mousseuxPrice;
-        const currentTotal = totalPrice;
-        const targetTotal = 300;
-
-        if (currentTotal <= targetTotal) {
-          setPromoError("Le total est déjà inférieur à 300€");
+        if (totalPrice <= 160) {
+          setPromoError("Le total est déjà inférieur à 160€");
           setPromoLoading(false);
           return;
         }
 
-        const discountPercent = Math.round(((currentTotal - targetTotal) / currentTotal) * 10000) / 100;
+        const discountPercent = Math.round(((totalPrice - 160) / totalPrice) * 10000) / 100;
 
-        setPromoCode("NUAGE300");
+        setPromoCode("DEMI160");
         setPromoDiscount(discountPercent);
         setFreeShipping(true);
-        toast.success("Code NUAGE300 appliqué ! 100g à 300€ + livraison offerte 🎉");
+        toast.success("Code DEMI160 appliqué ! 50g à 160€ + livraison offerte 🎉");
       } else {
         // BIENVENUE15 logic
         const { data: usage } = await supabase
