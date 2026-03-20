@@ -64,7 +64,8 @@ const SocialMediaManager = () => {
   const [editingCaption, setEditingCaption] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
-
+  const [generatingImage, setGeneratingImage] = useState<string | null>(null);
+  const [originalImageUrls, setOriginalImageUrls] = useState<Record<string, string | null>>({});
   useEffect(() => {
     fetchPosts();
   }, []);
