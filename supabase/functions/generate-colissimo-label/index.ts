@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
       },
     };
 
-    // Build multipart form using native FormData with Blob for proper content-type
+    // Build multipart form - use File with explicit content-type for Deno compatibility
     const jsonPayload = JSON.stringify(labelRequest);
     console.log("Calling Colissimo API for order:", orderId);
     console.log("Request body preview:", jsonPayload.substring(0, 200));
@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
     const formData = new FormData();
     formData.append(
       "generateLabelRequest",
-      new Blob([jsonPayload], { type: "application/json" })
+      new File([jsonPayload], "generateLabelRequest.json", { type: "application/json" })
     );
 
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
