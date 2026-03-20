@@ -271,13 +271,25 @@ Deno.serve(async (req) => {
     console.log("Calling Colissimo API for order:", orderId);
     console.log("Request body preview:", jsonPayload.substring(0, 300));
 
-    // Append JSON as a plain string form field (not file/blob)
+    // Debug: create a Request to inspect what Deno produces
     const formData = new FormData();
     formData.append("generateLabelRequest", jsonPayload);
+    
+    const testReq = new Request("https://example.com", { method: "POST", body: formData });
+    const contentTypeHeader = testReq.headers.get("content-type");
+    console.log("Deno FormData Content-Type:", contentTypeHeader);
+    
+    // Read and log the raw body Deno produces
+    const rawBody = await testReq.text();
+    console.log("Deno FormData body (first 500 chars):", rawBody.substring(0, 500));
+
+    // Now make the actual request
+    const formData2 = new FormData();
+    formData2.append("generateLabelRequest", jsonPayload);
 
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
-      body: formData,
+      body: formData2,
     });
 
     const responseBody = new Uint8Array(await colissimoResponse.arrayBuffer());
