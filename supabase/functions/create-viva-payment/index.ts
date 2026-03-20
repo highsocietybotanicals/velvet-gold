@@ -291,23 +291,22 @@ Deno.serve(async (req) => {
     let promoDiscountPercent = 0;
     let promoDiscountAmount = 0;
 
-    if (promoCode === "NUAGE300" && userId) {
+    if (promoCode === "DEMI160" && userId) {
       // Global single-use check (not per-user)
       const { data: globalUsage } = await supabaseAdmin
         .from("promo_code_usage")
         .select("id")
-        .eq("code", "NUAGE300")
+        .eq("code", "DEMI160")
         .maybeSingle();
 
       if (!globalUsage) {
-        // Verify cart contains nuage-de-mousseux at 100g
-        const mousseuxItem = serverItems.find((i: any) => i.product_id === "nuage-de-mousseux" && i.weight === 100);
-        if (mousseuxItem) {
-          promoDiscountAmount = Math.round((serverTotal - 300) * 100) / 100;
+        // Verify total flower weight = 50g
+        if (serverFlowerWeight === 50) {
+          promoDiscountAmount = Math.round((serverTotal - 160) * 100) / 100;
           if (promoDiscountAmount > 0) {
-            serverTotal = 300;
+            serverTotal = 160;
             promoDiscountPercent = Math.round((promoDiscountAmount / (serverTotal + promoDiscountAmount)) * 10000) / 100;
-            validPromoCode = "NUAGE300";
+            validPromoCode = "DEMI160";
           }
         }
       }
