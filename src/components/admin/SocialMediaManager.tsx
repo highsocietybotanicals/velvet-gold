@@ -60,7 +60,7 @@ const SocialMediaManager = () => {
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState<string | null>(null);
   const [customTheme, setCustomTheme] = useState("");
-  const [telegramChatId, setTelegramChatId] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState(() => localStorage.getItem("hsb_telegram_chat_id") || "");
   const [editingCaption, setEditingCaption] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
