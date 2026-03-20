@@ -19,6 +19,8 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
+  Paintbrush,
+  Undo2,
 } from "lucide-react";
 
 interface SocialPost {
