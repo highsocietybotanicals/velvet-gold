@@ -344,6 +344,24 @@ const SocialMediaManager = () => {
                   <Download className="h-3 w-3 mr-1" />Instagram
                 </Button>
               )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => handleGenerateImage(post)}
+                disabled={generatingImage === post.id}
+              >
+                {generatingImage === post.id ? (
+                  <><Loader2 className="h-3 w-3 animate-spin mr-1" />Création...</>
+                ) : (
+                  <><Paintbrush className="h-3 w-3 mr-1" />Visuel IA</>
+                )}
+              </Button>
+              {(originalImageUrls[post.id] || post.product_id) && post.image_url?.includes("generated/") && (
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleRestoreOriginal(post)}>
+                  <Undo2 className="h-3 w-3 mr-1" />Photo originale
+                </Button>
+              )}
               {post.status !== "published" && (
                 <Button
                   size="sm"
