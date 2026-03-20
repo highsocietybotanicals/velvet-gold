@@ -194,6 +194,9 @@ serve(async (req) => {
       let telegramResponse: Response;
       let telegramData: any;
 
+      const SITE_URL = "https://highsocietybotanicals.lovable.app";
+      const captionWithLink = `${post.caption}\n\n🛒 Commander maintenant :\n${SITE_URL}`;
+
       if (post.image_url) {
         telegramResponse = await fetch(`${TELEGRAM_GATEWAY_URL}/sendPhoto`, {
           method: "POST",
@@ -205,11 +208,10 @@ serve(async (req) => {
           body: JSON.stringify({
             chat_id: chatId,
             photo: post.image_url,
-            caption: post.caption,
+            caption: captionWithLink,
           }),
         });
       } else {
-        // Text-only post (teasing, lifestyle, cta without product)
         telegramResponse = await fetch(`${TELEGRAM_GATEWAY_URL}/sendMessage`, {
           method: "POST",
           headers: {
@@ -219,7 +221,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             chat_id: chatId,
-            text: post.caption,
+            text: captionWithLink,
           }),
         });
       }
