@@ -206,7 +206,6 @@ serve(async (req) => {
             chat_id: chatId,
             photo: post.image_url,
             caption: post.caption,
-            parse_mode: "HTML",
           }),
         });
       } else {
@@ -221,7 +220,6 @@ serve(async (req) => {
           body: JSON.stringify({
             chat_id: chatId,
             text: post.caption,
-            parse_mode: "HTML",
           }),
         });
       }

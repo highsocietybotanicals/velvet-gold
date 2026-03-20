@@ -60,7 +60,7 @@ const SocialMediaManager = () => {
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState<string | null>(null);
   const [customTheme, setCustomTheme] = useState("");
-  const [telegramChatId, setTelegramChatId] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState(() => localStorage.getItem("hsb_telegram_chat_id") || "");
   const [editingCaption, setEditingCaption] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
@@ -423,7 +423,7 @@ const SocialMediaManager = () => {
           <Input
             placeholder="ID du canal Telegram (ex: @monchannel ou -100123456)"
             value={telegramChatId}
-            onChange={(e) => setTelegramChatId(e.target.value)}
+            onChange={(e) => { setTelegramChatId(e.target.value); localStorage.setItem("hsb_telegram_chat_id", e.target.value); }}
             className="max-w-sm"
           />
         </div>
