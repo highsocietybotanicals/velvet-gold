@@ -287,8 +287,10 @@ Deno.serve(async (req) => {
 
     const responseBody = new Uint8Array(await colissimoResponse.arrayBuffer());
     const responseContentType = colissimoResponse.headers.get("content-type") || "";
+    const responseText = new TextDecoder().decode(responseBody);
 
     console.log("Colissimo response status:", colissimoResponse.status, "content-type:", responseContentType);
+    console.log("Colissimo raw response (first 500):", responseText.substring(0, 500));
 
     const { jsonPart, pdfBase64 } = parseMultipartResponse(
       responseBody,
