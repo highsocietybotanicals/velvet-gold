@@ -1,31 +1,35 @@
 
 
-# Remplacer NUAGE300 par DEMI160
+# Fix Colissimo — Pas besoin de clé API séparée
 
-## Résumé
+## Diagnostic
 
-Supprimer le code promo `NUAGE300` (100g Nuage de Mousseux à 300€) et le remplacer par `DEMI160` : **50g de n'importe quel produit fleur/résine à 160€**, livraison gratuite, usage unique global.
+Les options Prestashop/Shopify/WooCommerce sont des **plugins e-commerce**, pas des clés API. L'API REST Colissimo `generateLabel` fonctionne avec **uniquement** le numéro de contrat + mot de passe (que tu as déjà configurés).
 
-## Changements
+Le vrai problème est que Deno corrompt le format `multipart/form-data`. La solution : envoyer le JSON directement en `application/json` au endpoint alternatif Colissimo qui l'accepte nativement.
 
-### 1. `src/components/CartDrawer.tsx` — Remplacer NUAGE300 par DEMI160
+## Solution
 
-- Remplacer toutes les références `NUAGE300` par `DEMI160`
-- Condition : le panier doit contenir exactement **50g** au total (tout produit confondu)
-- Prix fixé à **160€** tout compris + livraison gratuite
-- Même logique d'usage unique global (check `promo_code_usage` WHERE `code = 'DEMI160'` sans filtre user)
-- Non cumulable avec BIENVENUE15
-- Messages et labels adaptés
+### Modifier `supabase/functions/generate-colissimo-label/index.ts`
 
-### 2. `supabase/functions/create-viva-payment/index.ts` — Validation serveur DEMI160
+1. **Changer l'URL** vers le endpoint JSON natif :
+   `https://ws.colissimo.fr/sls-ws/SlsServiceWSRest/2.0/generateLabel`
+   → Tester d'abord avec `Content-Type: application/json` directement (sans multipart)
 
-- Remplacer la validation serveur `NUAGE300` par `DEMI160`
-- Vérifier que le poids total des items = 50g
-- Vérifier usage unique global dans `promo_code_usage`
-- Forcer `serverTotal = 160`, pas de frais de livraison
-- Enregistrer dans `promo_code_usage` après validation
+2. **Si JSON direct échoue** (415), utiliser un **vrai FormData natif Deno avec Blob** :
+   ```typescript
+   const form = new FormData();
+   form.append("generateLabelRequest", new Blob([jsonPayload], { type: "application/json" }), "request.json");
+   // Pas de Content-Type header manuel — laisser fetch le générer
+   const response = await fetch(COLISSIMO_API_URL, { method: "POST", body: form });
+   ```
+   La clé : laisser `fetch()` générer automatiquement le header `Content-Type` avec le boundary correct, au lieu de le construire manuellement.
 
-### Fichiers modifiés
-- `src/components/CartDrawer.tsx`
-- `supabase/functions/create-viva-payment/index.ts`
+3. **Supprimer** tout le code de construction manuelle du multipart (boundary, TextEncoder, etc.)
+
+4. **Améliorer la gestion d'erreur** : logger le corps complet de la réponse en cas d'échec pour diagnostiquer rapidement
+
+### Aucun secret supplémentaire nécessaire
+
+`COLISSIMO_CONTRACT_NUMBER` et `COLISSIMO_PASSWORD` suffisent.
 
