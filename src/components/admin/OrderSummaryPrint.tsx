@@ -24,6 +24,9 @@ interface OrderSummaryPrintProps {
     total_amount: number;
     created_at: string;
     order_items?: OrderItem[];
+    promo_code?: string;
+    promo_discount_percent?: number;
+    promo_discount_amount?: number;
   };
 }
 
