@@ -265,7 +265,6 @@ Deno.serve(async (req) => {
 
     const jsonPayload = JSON.stringify(labelRequest);
     console.log("Calling Colissimo API for order:", orderId);
-    console.log("Label request payload:", jsonPayload);
 
     // Send JSON directly — no multipart needed
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {

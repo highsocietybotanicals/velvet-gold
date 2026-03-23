@@ -81,7 +81,7 @@ const OrderSummaryPrint = ({ order }: OrderSummaryPrintProps) => {
     </head><body>
       <div class="header">
         <div class="brand">HIGH SOCIETY BOTANICALS</div>
-        <div class="sub">44390 Puceul — France</div>
+        <div class="sub">highsocietybotanicals.com — France</div>
       </div>
 
       <div class="order-info">

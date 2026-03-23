@@ -248,10 +248,10 @@ const DeliverySection = ({
             />
             <div>
               <p className="text-sm font-medium text-foreground">
-                Je confirme être situé à moins de 100km de Puceul (44170)
+                Je confirme être situé à moins de 100km de notre entrepôt (Loire-Atlantique, 44)
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Distance calculée depuis Puceul (44170). Nous vous contacterons pour confirmer le rendez-vous.
+                Nous vous contacterons pour confirmer le rendez-vous.
               </p>
             </div>
           </label>
