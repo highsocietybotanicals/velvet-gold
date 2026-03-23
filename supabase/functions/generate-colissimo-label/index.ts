@@ -44,7 +44,7 @@ function parseAddress(raw: string): {
 
   // Fallback: try comma-separated format "123 rue X, 44390 Puceul"
   if (!zipCode) {
-    const commaMatch = raw.match(/(\d{5})\s+([^,\n]+)/);
+    const commaMatch = raw.match(/(\d{5})[,\s]+([^,\n]+)/);
     if (commaMatch) {
       zipCode = commaMatch[1];
       city = commaMatch[2].trim();
@@ -226,6 +226,7 @@ Deno.serve(async (req) => {
 
     const contractNumber = Deno.env.get("COLISSIMO_CONTRACT_NUMBER")!;
     const password = Deno.env.get("COLISSIMO_PASSWORD")!;
+    const apiKey = Deno.env.get("COLISSIMO_API_KEY")!
 
     const labelRequest = {
       contractNumber,
@@ -282,6 +283,7 @@ Deno.serve(async (req) => {
     // Do NOT set Content-Type manually — fetch auto-generates it with correct boundary
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
+      headers: { "apiKey": apiKey },
       body: form,
     });
 
