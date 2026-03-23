@@ -1,34 +1,36 @@
 
 
-# Fix Colissimo — Envoyer du JSON directement (pas multipart)
+# Fix PDF bloqué par Chrome
 
-## Diagnostic
+## Problème
 
-Les logs montrent : `status: 415` (Unsupported Media Type) + réponse vide. L'API Colissimo rejette le format `multipart/form-data` envoyé par Deno.
-
-En analysant des implémentations fonctionnelles (gem Ruby `colissimo_label`), l'API REST Colissimo accepte un simple **POST JSON** avec `Content-Type: application/json` — pas besoin de multipart du tout.
+`window.open(blobUrl, "_blank")` est bloqué par le popup blocker de Chrome car l'appel est asynchrone (après un `await fetch`). Chrome ne considère plus ça comme une action utilisateur directe.
 
 ## Solution
 
-### Modifier `supabase/functions/generate-colissimo-label/index.ts`
+Remplacer `window.open()` par un téléchargement automatique via un lien `<a>` cliqué programmatiquement :
 
-1. **Remplacer le FormData/Blob par un simple `fetch` avec JSON** :
-   ```typescript
-   const colissimoResponse = await fetch(COLISSIMO_API_URL, {
-     method: "POST",
-     headers: {
-       "Content-Type": "application/json",
-     },
-     body: jsonPayload,
-   });
-   ```
+### Modifier `src/components/admin/ShippingLabel.tsx` (lignes 45-53)
 
-2. **Supprimer** le code FormData/Blob (lignes 276-288)
+```typescript
+if (data?.pdfBase64) {
+  const blob = new Blob(
+    [Uint8Array.from(atob(data.pdfBase64), (c) => c.charCodeAt(0))],
+    { type: "application/pdf" }
+  );
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `colissimo-${order.display_order_number || order.order_number}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+```
 
-3. **Retirer le header `apiKey`** — l'authentification se fait via `contractNumber` + `password` dans le body JSON (déjà présent)
-
-4. **Garder** tout le reste : parsing multipart de la réponse (Colissimo renvoie bien du multipart), gestion tracking, etc.
+Le PDF sera directement téléchargé au lieu d'ouvrir un popup — Chrome ne bloque jamais les téléchargements déclenchés par un clic.
 
 ## Fichier modifié
-- `supabase/functions/generate-colissimo-label/index.ts`
+- `src/components/admin/ShippingLabel.tsx`
 
