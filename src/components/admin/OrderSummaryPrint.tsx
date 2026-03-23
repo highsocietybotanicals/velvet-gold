@@ -24,6 +24,9 @@ interface OrderSummaryPrintProps {
     total_amount: number;
     created_at: string;
     order_items?: OrderItem[];
+    promo_code?: string;
+    promo_discount_percent?: number;
+    promo_discount_amount?: number;
   };
 }
 
@@ -103,6 +106,19 @@ const OrderSummaryPrint = ({ order }: OrderSummaryPrintProps) => {
         </tr></thead>
         <tbody>${itemsHtml}</tbody>
       </table>
+
+      ${order.promo_code ? `
+      <div style="font-size:8pt;margin-bottom:2mm;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:1mm;">
+          <span>Sous-total</span>
+          <span>${(order.total_amount + (order.promo_discount_amount || 0)).toFixed(2)}€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:#b8860b;font-weight:600;">
+          <span>Code ${esc(order.promo_code)} (${order.promo_discount_percent ? `-${order.promo_discount_percent}%` : 'promo'})</span>
+          <span>-${(order.promo_discount_amount || 0).toFixed(2)}€</span>
+        </div>
+      </div>
+      ` : ''}
 
       <div class="total-row">
         <span>TOTAL</span>

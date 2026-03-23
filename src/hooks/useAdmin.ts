@@ -44,6 +44,9 @@ export interface AdminOrder {
   tracking_url: string | null;
   created_at: string;
   user_email?: string;
+  promo_code?: string;
+  promo_discount_percent?: number;
+  promo_discount_amount?: number;
   order_items?: {
     id: string;
     product_name: string;
@@ -114,9 +117,21 @@ export const useAdmin = () => {
 
       const emailMap = new Map(profiles?.map(p => [p.id, p.email]) || []);
 
+      // Fetch promo code usage for all orders
+      const orderIds = ordersData.map(o => o.id);
+      const { data: promoData } = await supabase
+        .from("promo_code_usage")
+        .select("order_id, code, discount_percent, discount_amount")
+        .in("order_id", orderIds);
+
+      const promoMap = new Map(promoData?.map(p => [p.order_id, p]) || []);
+
       return ordersData.map(order => ({
         ...order,
         user_email: emailMap.get(order.user_id) || "Email inconnu",
+        promo_code: promoMap.get(order.id)?.code || undefined,
+        promo_discount_percent: promoMap.get(order.id)?.discount_percent || undefined,
+        promo_discount_amount: promoMap.get(order.id)?.discount_amount || undefined,
       })) as AdminOrder[];
     },
     enabled: !!user && isAdmin,
