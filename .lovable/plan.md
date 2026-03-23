@@ -1,33 +1,34 @@
 
 
-# Fix Colissimo — Ajouter la clé API
+# Fix Colissimo — Envoyer du JSON directement (pas multipart)
 
-## Résumé
+## Diagnostic
 
-Tu as maintenant ta clé API Colissimo. Il faut la stocker en secret et l'ajouter dans le header `apiKey` de la requête vers l'API Colissimo, comme l'exige l'API REST v2.0.
+Les logs montrent : `status: 415` (Unsupported Media Type) + réponse vide. L'API Colissimo rejette le format `multipart/form-data` envoyé par Deno.
 
-## Changements
+En analysant des implémentations fonctionnelles (gem Ruby `colissimo_label`), l'API REST Colissimo accepte un simple **POST JSON** avec `Content-Type: application/json` — pas besoin de multipart du tout.
 
-### 1. Stocker le secret `COLISSIMO_API_KEY`
+## Solution
 
-Utiliser l'outil `add_secret` pour te demander de saisir ta clé API Colissimo.
+### Modifier `supabase/functions/generate-colissimo-label/index.ts`
 
-### 2. Modifier `supabase/functions/generate-colissimo-label/index.ts`
+1. **Remplacer le FormData/Blob par un simple `fetch` avec JSON** :
+   ```typescript
+   const colissimoResponse = await fetch(COLISSIMO_API_URL, {
+     method: "POST",
+     headers: {
+       "Content-Type": "application/json",
+     },
+     body: jsonPayload,
+   });
+   ```
 
-- Récupérer `COLISSIMO_API_KEY` depuis `Deno.env.get()`
-- Ajouter le header `apiKey` à la requête `fetch` vers Colissimo :
-  ```typescript
-  const colissimoResponse = await fetch(COLISSIMO_API_URL, {
-    method: "POST",
-    headers: { "apiKey": apiKey },
-    body: form,
-  });
-  ```
+2. **Supprimer** le code FormData/Blob (lignes 276-288)
 
-### 3. Fix du parsing d'adresse (bonus)
+3. **Retirer le header `apiKey`** — l'authentification se fait via `contractNumber` + `password` dans le body JSON (déjà présent)
 
-La regex actuelle ne gère pas le format avec virgules (`44240, La Chapelle Sur Erdre`). Corriger pour supporter ce format : `(\d{5})[,\s]+([^,\n]+)`.
+4. **Garder** tout le reste : parsing multipart de la réponse (Colissimo renvoie bien du multipart), gestion tracking, etc.
 
-## Fichiers modifiés
+## Fichier modifié
 - `supabase/functions/generate-colissimo-label/index.ts`
 
