@@ -9,6 +9,7 @@ import { useProducts } from "@/hooks/useProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerpeneRadar from "@/components/TerpeneRadar";
+import ProductReviews from "@/components/ProductReviews";
 import { Input } from "@/components/ui/input";
 import { PRESET_WEIGHTS, calculatePrice, getGifts } from "@/lib/pricing";
 import { getPochonImage, getPochonLabel } from "@/data/accessories";
