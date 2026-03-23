@@ -402,6 +402,9 @@ const ProductPage = () => {
             </motion.div>
           </div>
 
+          {/* Avis Clients */}
+          <ProductReviews productId={product.id} />
+
           {/* Similar Products Section */}
           <motion.section
             initial={{ opacity: 0, y: 40 }}
