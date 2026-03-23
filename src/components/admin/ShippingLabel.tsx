@@ -49,7 +49,13 @@ const ShippingLabel = ({ order }: ShippingLabelProps) => {
           { type: "application/pdf" }
         );
         const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `colissimo-${order.display_order_number || order.order_number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
 
       toast({
