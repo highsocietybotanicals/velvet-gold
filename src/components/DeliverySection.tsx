@@ -128,7 +128,7 @@ const DeliverySection = ({
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Je me déplace chez vous (rayon de 100km autour de Puceul - 44170)
+                Je me déplace chez vous (rayon de 100km autour de notre entrepôt, Loire-Atlantique)
               </p>
               {!canAccessPersonalDelivery && (
                 <div className="flex items-center gap-1 mt-2 text-xs text-amber-500">
