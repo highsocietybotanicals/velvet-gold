@@ -1,64 +1,61 @@
 
 
-# Avis Clients — Soumission par les clients + modération admin
+# Livraison en point relais Colissimo (bureau de tabac, bureau de poste, etc.)
 
 ## Résumé
 
-Permettre aux clients connectés de laisser un avis sur un produit qu'ils ont commandé (statut "delivered"). Les avis soumis sont en attente de validation par l'admin avant d'être visibles publiquement.
+Ajouter une troisième option de livraison "Point Relais" au checkout. Le client entre son code postal, voit la liste des points relais Colissimo à proximité, en choisit un, et l'étiquette est générée avec le bon code produit (`A2P` pour relais Pickup / `BPR` pour bureau de poste).
 
 ## Changements
 
-### 1. Migration — Ajouter colonnes à `product_reviews`
+### 1. Edge function `colissimo-find-relay-points/index.ts` (nouveau)
+
+- Appelle l'API Colissimo de recherche de points de retrait : `https://ws.colissimo.fr/pointretrait-ws-cxf/PointRetraitServiceWS/2.0/findRDVPointRetraitAchworking`
+- Ou plus simple : utiliser l'API REST `https://ws.colissimo.fr/widget-point-retrait/rest/authenticate.rest` pour obtenir un token, puis chercher les points via le widget côté client
+- Approche retenue : **API REST directe** `findRDVPointRetraitAchworking` avec le contractNumber/password
+- Paramètres : code postal, type de point (tous), rayon
+- Retourne la liste des points (nom, adresse, ID, horaires, type)
+
+### 2. Migration — Colonnes sur `orders`
 
 ```sql
-ALTER TABLE public.product_reviews
-  ADD COLUMN user_id uuid REFERENCES auth.users(id),
-  ADD COLUMN status text NOT NULL DEFAULT 'approved',  -- les avis existants restent visibles
-  ADD COLUMN order_id uuid;
-
--- Les nouveaux avis soumis par les clients auront status = 'pending'
--- Policy INSERT pour les utilisateurs authentifiés
-CREATE POLICY "Authenticated users can submit reviews"
-  ON public.product_reviews FOR INSERT
-  TO authenticated
-  WITH CHECK (auth.uid() = user_id);
-
--- Modifier la policy SELECT : seuls les avis 'approved' sont visibles publiquement
-DROP POLICY "Anyone can read reviews" ON public.product_reviews;
-CREATE POLICY "Anyone can read approved reviews"
-  ON public.product_reviews FOR SELECT USING (status = 'approved');
-CREATE POLICY "Admins can read all reviews"
-  ON public.product_reviews FOR SELECT TO authenticated USING (is_admin(auth.uid()));
-
--- Admin peut update (approuver/rejeter) et delete
-CREATE POLICY "Admins can update reviews"
-  ON public.product_reviews FOR UPDATE TO authenticated USING (is_admin(auth.uid()));
-CREATE POLICY "Admins can delete reviews"
-  ON public.product_reviews FOR DELETE TO authenticated USING (is_admin(auth.uid()));
+ALTER TABLE public.orders
+  ADD COLUMN relay_point_id text,
+  ADD COLUMN relay_point_name text,
+  ADD COLUMN relay_point_address text;
 ```
 
-### 2. `ProductReviews.tsx` — Formulaire de soumission
+### 3. `DeliverySection.tsx` — Troisième option "Point Relais"
 
-- Afficher le formulaire uniquement si l'utilisateur est connecté ET a une commande livrée contenant ce produit
-- Champs : note (1-5 étoiles cliquables), commentaire (textarea)
-- Le pseudo = `full_name` du profil ou email
-- Après soumission : message "Votre avis est en attente de validation"
-- Filtrer l'affichage pour ne montrer que les avis `approved`
+- Nouveau type `"postal" | "personal" | "relay"`
+- Bouton "Point Relais Colissimo" avec icône
+- Quand sélectionné : champ code postal → bouton "Rechercher" → liste des points à proximité (nom, adresse, horaires)
+- Le client clique sur un point pour le sélectionner
+- Design noir/or cohérent
 
-### 3. `AdminPage.tsx` — Section modération des avis
+### 4. `CartDrawer.tsx` — Adapter le type de livraison
 
-- Nouvelle section/onglet "Avis en attente"
-- Lister les avis avec `status = 'pending'` : pseudo, produit, note, commentaire
-- Boutons : Approuver (→ `approved`) / Rejeter (→ supprimer ou `rejected`)
+- Étendre le type delivery à 3 options
+- Passer les infos du point relais (ID, nom, adresse) au PaymentButton
+- Validation : vérifier qu'un point relais est sélectionné si mode relay
+- Stocker relay_point_id/name/address dans la commande
 
-### 4. Vérification côté client
+### 5. `generate-colissimo-label/index.ts` — Code produit adapté
 
-- Requête sur `orders` + `order_items` pour vérifier que le user a bien une commande livrée avec ce `product_id`
-- Empêcher les avis multiples sur le même produit par le même user
+- Si `relay_point_id` présent sur la commande → utiliser `productCode: "A2P"` + `pickupLocationId: relay_point_id`
+- Sinon → garder `productCode: "DOM"` (domicile)
+- L'adresse du destinataire reste celle du client (Colissimo gère le routage vers le point relais)
 
-## Fichiers modifiés/créés
-- Migration SQL (colonnes + policies)
-- `src/components/ProductReviews.tsx` — formulaire + logique
-- `src/pages/AdminPage.tsx` — section modération
-- `src/hooks/useAdmin.ts` — fetch des avis en attente
+### 6. `OrderSummaryPrint.tsx` — Afficher le point relais sur la facture
+
+- Si commande avec point relais : afficher "Point Relais : [nom] — [adresse]"
+
+## Fichiers créés/modifiés
+
+- `supabase/functions/colissimo-find-relay-points/index.ts` — nouveau
+- Migration SQL — colonnes relay_point sur orders
+- `src/components/DeliverySection.tsx` — option relay + recherche + sélection
+- `src/components/CartDrawer.tsx` — gestion du nouveau type
+- `supabase/functions/generate-colissimo-label/index.ts` — productCode A2P
+- `src/components/admin/OrderSummaryPrint.tsx` — affichage point relais
 
