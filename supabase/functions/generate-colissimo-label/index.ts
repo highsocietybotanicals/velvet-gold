@@ -126,9 +126,14 @@ function parseMultipartResponse(
         let pdfEnd = findSequence(body, endBoundary, pdfStart);
         if (pdfEnd === -1) pdfEnd = body.length;
         const pdfBytes = body.slice(pdfStart, pdfEnd);
-        pdfBase64 = btoa(
-          String.fromCharCode(...pdfBytes)
-        );
+        // Convert in chunks to avoid stack overflow with large PDFs
+        let binary = "";
+        const chunkSize = 8192;
+        for (let offset = 0; offset < pdfBytes.length; offset += chunkSize) {
+          const chunk = pdfBytes.slice(offset, offset + chunkSize);
+          binary += String.fromCharCode(...chunk);
+        }
+        pdfBase64 = btoa(binary);
       }
     }
   }
@@ -188,18 +193,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // If already has tracking, return existing
-    if (order.tracking_number) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          trackingNumber: order.tracking_number,
-          trackingUrl: order.tracking_url,
-          alreadyGenerated: true,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // If already has tracking, skip early return — still call Colissimo to get PDF for reprint
+    const alreadyGenerated = !!order.tracking_number;
 
     // Get recipient info
     let recipientName = order.guest_name || "Client";
@@ -326,26 +321,28 @@ Deno.serve(async (req) => {
 
     const trackingUrl = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
 
-    // Update order with tracking info and set status to shipped
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({
-        tracking_number: trackingNumber,
-        tracking_url: trackingUrl,
-        status: "shipped",
-      })
-      .eq("id", orderId);
+    // Only update order if not already generated
+    if (!alreadyGenerated) {
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({
+          tracking_number: trackingNumber,
+          tracking_url: trackingUrl,
+          status: "shipped",
+        })
+        .eq("id", orderId);
 
-    if (updateError) {
-      console.error("Error updating order:", updateError);
+      if (updateError) {
+        console.error("Error updating order:", updateError);
+      }
+
+      // Send status update email (fire-and-forget)
+      supabase.functions
+        .invoke("send-status-update-email", {
+          body: { orderId, newStatus: "shipped" },
+        })
+        .catch((e: any) => console.error("Status email error:", e));
     }
-
-    // Send status update email (fire-and-forget)
-    supabase.functions
-      .invoke("send-status-update-email", {
-        body: { orderId, newStatus: "shipped" },
-      })
-      .catch((e: any) => console.error("Status email error:", e));
 
     console.log(`Colissimo label generated for order ${orderId}: ${trackingNumber}`);
 
@@ -355,6 +352,7 @@ Deno.serve(async (req) => {
         trackingNumber,
         trackingUrl,
         pdfBase64,
+        alreadyGenerated,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
