@@ -1,36 +1,28 @@
 
 
-# Fix PDF bloqué par Chrome
+# Masquer les infos sensibles (adresse perso + identifiants Colissimo)
 
 ## Problème
 
-`window.open(blobUrl, "_blank")` est bloqué par le popup blocker de Chrome car l'appel est asynchrone (après un `await fetch`). Chrome ne considère plus ça comme une action utilisateur directe.
+1. **Logs edge function** : `console.log("Label request payload:", jsonPayload)` affiche le numéro de contrat `322687` et le mot de passe en clair dans les logs
+2. **Facture imprimée** (OrderSummaryPrint.tsx) : affiche "44390 Puceul — France" visible par le client
+3. **DeliverySection.tsx** : mentionne "Puceul (44170)" pour la zone de livraison perso — c'est normal pour l'info de zone, mais on peut généraliser
 
-## Solution
+## Changements
 
-Remplacer `window.open()` par un téléchargement automatique via un lien `<a>` cliqué programmatiquement :
+### 1. `supabase/functions/generate-colissimo-label/index.ts`
+- **Supprimer le log du payload complet** (ligne 268) qui expose contractNumber + password
+- Garder uniquement un log de l'orderId (sans données sensibles)
 
-### Modifier `src/components/admin/ShippingLabel.tsx` (lignes 45-53)
+### 2. `src/components/admin/OrderSummaryPrint.tsx`
+- Remplacer `44390 Puceul — France` par simplement `France` ou `highsocietybotanicals.com` dans le header de la facture
 
-```typescript
-if (data?.pdfBase64) {
-  const blob = new Blob(
-    [Uint8Array.from(atob(data.pdfBase64), (c) => c.charCodeAt(0))],
-    { type: "application/pdf" }
-  );
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `colissimo-${order.display_order_number || order.order_number}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-```
+### 3. `src/components/DeliverySection.tsx`
+- Remplacer "Puceul (44170)" par "notre entrepôt (Loire-Atlantique, 44)" — même info géographique sans l'adresse exacte
 
-Le PDF sera directement téléchargé au lieu d'ouvrir un popup — Chrome ne bloque jamais les téléchargements déclenchés par un clic.
-
-## Fichier modifié
-- `src/components/admin/ShippingLabel.tsx`
+## Fichiers modifiés
+- `supabase/functions/generate-colissimo-label/index.ts`
+- `src/components/admin/OrderSummaryPrint.tsx`
+- `src/components/DeliverySection.tsx`
+- `src/pages/LivraisonRetoursPage.tsx` (même remplacement "Puceul" → zone générique)
 
