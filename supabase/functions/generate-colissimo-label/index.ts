@@ -283,6 +283,7 @@ Deno.serve(async (req) => {
     // Do NOT set Content-Type manually — fetch auto-generates it with correct boundary
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
+      headers: { "apiKey": apiKey },
       body: form,
     });
 
