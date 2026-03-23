@@ -1,35 +1,62 @@
 
 
-# Fix Colissimo — Pas besoin de clé API séparée
+# Avis Clients — Section sur chaque page produit
 
-## Diagnostic
+## Résumé
 
-Les options Prestashop/Shopify/WooCommerce sont des **plugins e-commerce**, pas des clés API. L'API REST Colissimo `generateLabel` fonctionne avec **uniquement** le numéro de contrat + mot de passe (que tu as déjà configurés).
+Créer une table `product_reviews` en base, pré-remplir 5-10 avis par produit avec un ton jeune/street authentique, et afficher une section "Avis Clients" sur chaque page produit avec note étoiles + commentaire.
 
-Le vrai problème est que Deno corrompt le format `multipart/form-data`. La solution : envoyer le JSON directement en `application/json` au endpoint alternatif Colissimo qui l'accepte nativement.
+## Changements
 
-## Solution
+### 1. Migration — Table `product_reviews`
 
-### Modifier `supabase/functions/generate-colissimo-label/index.ts`
+```sql
+CREATE TABLE public.product_reviews (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id text NOT NULL,
+  author_name text NOT NULL,
+  rating integer NOT NULL DEFAULT 5,
+  comment text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
 
-1. **Changer l'URL** vers le endpoint JSON natif :
-   `https://ws.colissimo.fr/sls-ws/SlsServiceWSRest/2.0/generateLabel`
-   → Tester d'abord avec `Content-Type: application/json` directement (sans multipart)
+ALTER TABLE public.product_reviews ENABLE ROW LEVEL SECURITY;
 
-2. **Si JSON direct échoue** (415), utiliser un **vrai FormData natif Deno avec Blob** :
-   ```typescript
-   const form = new FormData();
-   form.append("generateLabelRequest", new Blob([jsonPayload], { type: "application/json" }), "request.json");
-   // Pas de Content-Type header manuel — laisser fetch le générer
-   const response = await fetch(COLISSIMO_API_URL, { method: "POST", body: form });
-   ```
-   La clé : laisser `fetch()` générer automatiquement le header `Content-Type` avec le boundary correct, au lieu de le construire manuellement.
+-- Tout le monde peut lire les avis
+CREATE POLICY "Anyone can read reviews"
+  ON public.product_reviews FOR SELECT
+  USING (true);
+```
 
-3. **Supprimer** tout le code de construction manuelle du multipart (boundary, TextEncoder, etc.)
+Puis insérer ~8 avis par produit (8 produits = ~64 avis au total) avec des pseudos et commentaires style jeune/street :
+- Pseudos : "Kev75", "LaTouffe", "ZenMaster420", "JulCBD", "DjibZ", etc.
+- Ton : fautes naturelles, abréviations, argot, mais toujours positif et descriptif
+- Notes : entre 4 et 5 étoiles
+- Exemples :
+  - *"franchemen jlai gouter hier soir et wallah jdormais comme un bebe, la golden cbn c du lourd frr"* — ZenMaster420, 5★
+  - *"le gout menthe c ouf, trop frais, jen reprend direct"* — KushKing44, 5★
+  - *"premiere commande ici et vrmt pas decu, la 911 elle claque bien le soir"* — TiboFume, 4★
 
-4. **Améliorer la gestion d'erreur** : logger le corps complet de la réponse en cas d'échec pour diagnostiquer rapidement
+### 2. Composant `ProductReviews.tsx`
 
-### Aucun secret supplémentaire nécessaire
+- Affiche les avis depuis la base pour le `product_id` courant
+- Note moyenne + nombre d'avis en haut
+- Étoiles dorées (style luxe du site)
+- Liste des avis avec pseudo, date relative, étoiles, commentaire
+- Design noir/or cohérent avec le thème
 
-`COLISSIMO_CONTRACT_NUMBER` et `COLISSIMO_PASSWORD` suffisent.
+### 3. `ProductPage.tsx` — Intégrer la section
+
+- Ajouter `<ProductReviews productId={product.id} />` après la section produit, avant les produits similaires
+
+### 4. Page d'accueil (optionnel)
+
+- Afficher la note moyenne sur les cartes produit dans `ProductCard.tsx` (petit badge étoiles)
+
+## Fichiers créés/modifiés
+
+- **Migration SQL** — table + seed ~64 avis
+- `src/components/ProductReviews.tsx` — nouveau composant
+- `src/pages/ProductPage.tsx` — intégration de la section avis
+- `src/components/ProductCard.tsx` — badge note moyenne (optionnel)
 
