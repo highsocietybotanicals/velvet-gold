@@ -44,7 +44,7 @@ function parseAddress(raw: string): {
 
   // Fallback: try comma-separated format "123 rue X, 44390 Puceul"
   if (!zipCode) {
-    const commaMatch = raw.match(/(\d{5})\s+([^,\n]+)/);
+    const commaMatch = raw.match(/(\d{5})[,\s]+([^,\n]+)/);
     if (commaMatch) {
       zipCode = commaMatch[1];
       city = commaMatch[2].trim();
