@@ -226,7 +226,7 @@ Deno.serve(async (req) => {
 
     const contractNumber = Deno.env.get("COLISSIMO_CONTRACT_NUMBER")!;
     const password = Deno.env.get("COLISSIMO_PASSWORD")!;
-    const apiKey = Deno.env.get("COLISSIMO_API_KEY")!
+    // apiKey not needed — auth via contractNumber + password in body
 
     const labelRequest = {
       contractNumber,
@@ -272,19 +272,11 @@ Deno.serve(async (req) => {
     console.log("Calling Colissimo API for order:", orderId);
     console.log("Label request payload:", jsonPayload);
 
-    // Use native FormData with Blob to let Deno generate correct multipart boundary
-    const form = new FormData();
-    form.append(
-      "generateLabelRequest",
-      new Blob([jsonPayload], { type: "application/json" }),
-      "generateLabelRequest.json"
-    );
-
-    // Do NOT set Content-Type manually — fetch auto-generates it with correct boundary
+    // Send JSON directly — no multipart needed
     const colissimoResponse = await fetch(COLISSIMO_API_URL, {
       method: "POST",
-      headers: { "apiKey": apiKey },
-      body: form,
+      headers: { "Content-Type": "application/json" },
+      body: jsonPayload,
     });
 
     const responseBody = new Uint8Array(await colissimoResponse.arrayBuffer());
