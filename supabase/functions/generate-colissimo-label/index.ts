@@ -126,9 +126,14 @@ function parseMultipartResponse(
         let pdfEnd = findSequence(body, endBoundary, pdfStart);
         if (pdfEnd === -1) pdfEnd = body.length;
         const pdfBytes = body.slice(pdfStart, pdfEnd);
-        pdfBase64 = btoa(
-          String.fromCharCode(...pdfBytes)
-        );
+        // Convert in chunks to avoid stack overflow with large PDFs
+        let binary = "";
+        const chunkSize = 8192;
+        for (let offset = 0; offset < pdfBytes.length; offset += chunkSize) {
+          const chunk = pdfBytes.slice(offset, offset + chunkSize);
+          binary += String.fromCharCode(...chunk);
+        }
+        pdfBase64 = btoa(binary);
       }
     }
   }
