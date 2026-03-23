@@ -226,7 +226,7 @@ Deno.serve(async (req) => {
 
     const contractNumber = Deno.env.get("COLISSIMO_CONTRACT_NUMBER")!;
     const password = Deno.env.get("COLISSIMO_PASSWORD")!;
-    const apiKey = Deno.env.get("COLISSIMO_API_KEY")!
+    // apiKey not needed — auth via contractNumber + password in body
 
     const labelRequest = {
       contractNumber,
