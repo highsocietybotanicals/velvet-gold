@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAdmin, ProRequest, AdminOrder, VatRequest } from "@/hooks/useAdmin";
+import { useAdmin, ProRequest, AdminOrder, VatRequest, PendingReview } from "@/hooks/useAdmin";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PriceManagement from "@/components/admin/PriceManagement";
@@ -37,7 +37,9 @@ import {
   Building,
   Clock,
   FileText,
-  Receipt
+  Receipt,
+  Star,
+  MessageSquare
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -268,19 +270,25 @@ const AdminPage = () => {
     proRequests, 
     vatRequests,
     allOrders, 
+    pendingReviews,
     loadingProRequests,
     loadingVatRequests, 
     loadingOrders,
+    loadingPendingReviews,
     validatePro,
     rejectPro,
     validateVat,
     rejectVat,
     updateOrderStatus,
+    approveReview,
+    deleteReview,
     isValidating,
     isRejecting,
     isValidatingVat,
     isRejectingVat,
-    isUpdatingOrder
+    isUpdatingOrder,
+    isApprovingReview,
+    isDeletingReview
   } = useAdmin();
 
   useEffect(() => {
@@ -289,7 +297,7 @@ const AdminPage = () => {
     }
   }, [user, isAdmin, loading, navigate]);
 
-  if (loading || loadingProRequests || loadingVatRequests || loadingOrders) {
+  if (loading || loadingProRequests || loadingVatRequests || loadingOrders || loadingPendingReviews) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gold" />
@@ -407,6 +415,76 @@ const AdminPage = () => {
               </CardContent>
             </Card>
           </motion.section>
+          {/* Section Avis en attente */}
+          {pendingReviews.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.18 }}
+              className="mb-12"
+            >
+              <Card className="border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Avis en attente de modération
+                    <Badge variant="secondary" className="ml-2 bg-primary/20 text-primary">
+                      {pendingReviews.length}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {pendingReviews.map((review) => (
+                      <Card key={review.id} className="border-border/50 bg-card/50">
+                        <CardContent className="p-4">
+                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm font-semibold text-foreground">{review.author_name}</span>
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`w-4 h-4 ${s <= review.rating ? "text-primary fill-primary" : "text-muted-foreground/30"}`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-xs text-muted-foreground">Produit: {review.product_id}</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{review.comment}</p>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteReview(review.id)}
+                                disabled={isDeletingReview}
+                                className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Rejeter
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => approveReview(review.id)}
+                                disabled={isApprovingReview}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approuver
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.section>
+          )}
+
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

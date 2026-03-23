@@ -58,6 +58,15 @@ export interface AdminOrder {
   }[];
 }
 
+export interface PendingReview {
+  id: string;
+  product_id: string;
+  author_name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+}
+
 export const useAdmin = () => {
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
@@ -117,7 +126,6 @@ export const useAdmin = () => {
 
       const emailMap = new Map(profiles?.map(p => [p.id, p.email]) || []);
 
-      // Fetch promo code usage for all orders
       const orderIds = ordersData.map(o => o.id);
       const { data: promoData } = await supabase
         .from("promo_code_usage")
@@ -133,6 +141,22 @@ export const useAdmin = () => {
         promo_discount_percent: promoMap.get(order.id)?.discount_percent || undefined,
         promo_discount_amount: promoMap.get(order.id)?.discount_amount || undefined,
       })) as AdminOrder[];
+    },
+    enabled: !!user && isAdmin,
+  });
+
+  // Pending reviews for moderation
+  const { data: pendingReviews, isLoading: loadingPendingReviews } = useQuery({
+    queryKey: ["admin", "pending-reviews"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("product_reviews")
+        .select("id, product_id, author_name, rating, comment, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as PendingReview[];
     },
     enabled: !!user && isAdmin,
   });
@@ -156,18 +180,10 @@ export const useAdmin = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "pro-requests"] });
-      toast({
-        title: "Compte Pro validé ✅",
-        description: "Le client a maintenant accès aux tarifs Pro.",
-      });
+      toast({ title: "Compte Pro validé ✅", description: "Le client a maintenant accès aux tarifs Pro." });
     },
-    onError: (error) => {
-      if (import.meta.env.DEV) console.error("Error validating pro:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de valider le compte Pro.",
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de valider le compte Pro.", variant: "destructive" });
     },
   });
 
@@ -175,44 +191,23 @@ export const useAdmin = () => {
     mutationFn: async (userId: string) => {
       const { error } = await supabase
         .from("profiles")
-        .update({ 
-          company_name: null, 
-          siret: null,
-          is_pro_validated: false 
-        })
+        .update({ company_name: null, siret: null, is_pro_validated: false })
         .eq("id", userId);
-
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "pro-requests"] });
-      toast({
-        title: "Demande refusée",
-        description: "La demande Pro a été supprimée.",
-      });
+      toast({ title: "Demande refusée", description: "La demande Pro a été supprimée." });
     },
-    onError: (error) => {
-      if (import.meta.env.DEV) console.error("Error rejecting pro:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de refuser la demande.",
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de refuser la demande.", variant: "destructive" });
     },
   });
 
-  // Update order status + send notification email
   const updateOrderStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status })
-        .eq("id", orderId);
-
+      const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
       if (error) throw error;
-
-      // Send status update email (fire-and-forget)
-      // Skip email for "pending" status (initial state)
       if (status !== "pending") {
         supabase.functions.invoke("send-status-update-email", {
           body: { orderId, newStatus: status },
@@ -221,73 +216,74 @@ export const useAdmin = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
-      toast({
-        title: "Statut mis à jour ✅",
-        description: "Le client a été notifié par email.",
-      });
+      toast({ title: "Statut mis à jour ✅", description: "Le client a été notifié par email." });
     },
-    onError: (error) => {
-      if (import.meta.env.DEV) console.error("Error updating order status:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le statut.",
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le statut.", variant: "destructive" });
     },
   });
 
   const validateVatMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_vat_validated: true })
-        .eq("id", userId);
-
+      const { error } = await supabase.from("profiles").update({ is_vat_validated: true }).eq("id", userId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "vat-requests"] });
-      toast({
-        title: "TVA validée ✅",
-        description: "Le client bénéficie maintenant des prix HT.",
-      });
+      toast({ title: "TVA validée ✅", description: "Le client bénéficie maintenant des prix HT." });
     },
-    onError: (error) => {
-      if (import.meta.env.DEV) console.error("Error validating VAT:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de valider la TVA.",
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de valider la TVA.", variant: "destructive" });
     },
   });
 
   const rejectVatMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ 
-          vat_number: null, 
-          is_vat_validated: false 
-        })
-        .eq("id", userId);
-
+      const { error } = await supabase.from("profiles").update({ vat_number: null, is_vat_validated: false }).eq("id", userId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "vat-requests"] });
-      toast({
-        title: "TVA refusée",
-        description: "Le numéro TVA a été supprimé.",
-      });
+      toast({ title: "TVA refusée", description: "Le numéro TVA a été supprimé." });
     },
-    onError: (error) => {
-      if (import.meta.env.DEV) console.error("Error rejecting VAT:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de refuser la TVA.",
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de refuser la TVA.", variant: "destructive" });
+    },
+  });
+
+  // Approve a review
+  const approveReviewMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      const { error } = await (supabase as any)
+        .from("product_reviews")
+        .update({ status: "approved" })
+        .eq("id", reviewId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "pending-reviews"] });
+      toast({ title: "Avis approuvé ✅" });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible d'approuver l'avis.", variant: "destructive" });
+    },
+  });
+
+  // Delete/reject a review
+  const deleteReviewMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      const { error } = await (supabase as any)
+        .from("product_reviews")
+        .delete()
+        .eq("id", reviewId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "pending-reviews"] });
+      toast({ title: "Avis supprimé" });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de supprimer l'avis.", variant: "destructive" });
     },
   });
 
@@ -295,19 +291,25 @@ export const useAdmin = () => {
     proRequests: proRequests || [],
     vatRequests: vatRequests || [],
     allOrders: allOrders || [],
+    pendingReviews: pendingReviews || [],
     loadingProRequests,
     loadingVatRequests,
     loadingOrders,
+    loadingPendingReviews,
     validatePro: (userId: string) => validateProMutation.mutate(userId),
     rejectPro: (userId: string) => rejectProMutation.mutate(userId),
     validateVat: (userId: string) => validateVatMutation.mutate(userId),
     rejectVat: (userId: string) => rejectVatMutation.mutate(userId),
-    updateOrderStatus: (orderId: string, status: string) => 
+    updateOrderStatus: (orderId: string, status: string) =>
       updateOrderStatusMutation.mutate({ orderId, status }),
+    approveReview: (reviewId: string) => approveReviewMutation.mutate(reviewId),
+    deleteReview: (reviewId: string) => deleteReviewMutation.mutate(reviewId),
     isValidating: validateProMutation.isPending,
     isRejecting: rejectProMutation.isPending,
     isValidatingVat: validateVatMutation.isPending,
     isRejectingVat: rejectVatMutation.isPending,
     isUpdatingOrder: updateOrderStatusMutation.isPending,
+    isApprovingReview: approveReviewMutation.isPending,
+    isDeletingReview: deleteReviewMutation.isPending,
   };
 };
