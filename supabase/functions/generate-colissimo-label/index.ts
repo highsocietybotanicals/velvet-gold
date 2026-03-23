@@ -193,18 +193,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // If already has tracking, return existing
-    if (order.tracking_number) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          trackingNumber: order.tracking_number,
-          trackingUrl: order.tracking_url,
-          alreadyGenerated: true,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // If already has tracking, skip early return — still call Colissimo to get PDF for reprint
+    const alreadyGenerated = !!order.tracking_number;
 
     // Get recipient info
     let recipientName = order.guest_name || "Client";
