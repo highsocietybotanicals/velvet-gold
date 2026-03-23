@@ -270,19 +270,25 @@ const AdminPage = () => {
     proRequests, 
     vatRequests,
     allOrders, 
+    pendingReviews,
     loadingProRequests,
     loadingVatRequests, 
     loadingOrders,
+    loadingPendingReviews,
     validatePro,
     rejectPro,
     validateVat,
     rejectVat,
     updateOrderStatus,
+    approveReview,
+    deleteReview,
     isValidating,
     isRejecting,
     isValidatingVat,
     isRejectingVat,
-    isUpdatingOrder
+    isUpdatingOrder,
+    isApprovingReview,
+    isDeletingReview
   } = useAdmin();
 
   useEffect(() => {
