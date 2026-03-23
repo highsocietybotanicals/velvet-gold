@@ -44,6 +44,9 @@ export interface AdminOrder {
   tracking_url: string | null;
   created_at: string;
   user_email?: string;
+  promo_code?: string;
+  promo_discount_percent?: number;
+  promo_discount_amount?: number;
   order_items?: {
     id: string;
     product_name: string;
