@@ -415,11 +415,76 @@ const AdminPage = () => {
               </CardContent>
             </Card>
           </motion.section>
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          {/* Section Avis en attente */}
+          {pendingReviews.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.18 }}
+              className="mb-12"
+            >
+              <Card className="border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Avis en attente de modération
+                    <Badge variant="secondary" className="ml-2 bg-primary/20 text-primary">
+                      {pendingReviews.length}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {pendingReviews.map((review) => (
+                      <Card key={review.id} className="border-border/50 bg-card/50">
+                        <CardContent className="p-4">
+                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm font-semibold text-foreground">{review.author_name}</span>
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`w-4 h-4 ${s <= review.rating ? "text-primary fill-primary" : "text-muted-foreground/30"}`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-xs text-muted-foreground">Produit: {review.product_id}</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{review.comment}</p>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteReview(review.id)}
+                                disabled={isDeletingReview}
+                                className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Rejeter
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => approveReview(review.id)}
+                                disabled={isApprovingReview}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approuver
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.section>
+          )}
+
             <Card className="border-gold/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
