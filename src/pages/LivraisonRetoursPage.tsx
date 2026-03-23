@@ -54,7 +54,7 @@ const LivraisonRetoursPage = () => {
 
               <h3 className="font-display text-lg text-primary/80 mb-3 mt-6">Remise en main propre</h3>
               <p>
-                Disponible dans un <strong className="text-foreground">rayon de 100 km autour de Puceul (44170)</strong>.
+                Disponible dans un <strong className="text-foreground">rayon de 100 km autour de notre entrepôt (Loire-Atlantique, 44)</strong>.
                 Ce mode de livraison est réservé aux :
               </p>
               <ul className="list-disc list-inside mt-3 space-y-2">
