@@ -321,26 +321,28 @@ Deno.serve(async (req) => {
 
     const trackingUrl = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
 
-    // Update order with tracking info and set status to shipped
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({
-        tracking_number: trackingNumber,
-        tracking_url: trackingUrl,
-        status: "shipped",
-      })
-      .eq("id", orderId);
+    // Only update order if not already generated
+    if (!alreadyGenerated) {
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({
+          tracking_number: trackingNumber,
+          tracking_url: trackingUrl,
+          status: "shipped",
+        })
+        .eq("id", orderId);
 
-    if (updateError) {
-      console.error("Error updating order:", updateError);
+      if (updateError) {
+        console.error("Error updating order:", updateError);
+      }
+
+      // Send status update email (fire-and-forget)
+      supabase.functions
+        .invoke("send-status-update-email", {
+          body: { orderId, newStatus: "shipped" },
+        })
+        .catch((e: any) => console.error("Status email error:", e));
     }
-
-    // Send status update email (fire-and-forget)
-    supabase.functions
-      .invoke("send-status-update-email", {
-        body: { orderId, newStatus: "shipped" },
-      })
-      .catch((e: any) => console.error("Status email error:", e));
 
     console.log(`Colissimo label generated for order ${orderId}: ${trackingNumber}`);
 
@@ -350,6 +352,7 @@ Deno.serve(async (req) => {
         trackingNumber,
         trackingUrl,
         pdfBase64,
+        alreadyGenerated,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
