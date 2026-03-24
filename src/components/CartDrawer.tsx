@@ -891,6 +891,9 @@ const CartDrawer = () => {
                   guestName={guestName}
                   guestPhone={guestPhone}
                   promoCode={promoCode}
+                  relayPointId={relayPointId}
+                  relayPointName={relayPointName}
+                  relayPointAddress={relayPointAddress}
                 />
                 <button
                   onClick={clearCart}
