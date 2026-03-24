@@ -29,6 +29,10 @@ const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFl
       toast.error("Veuillez renseigner une adresse de livraison complète (rue, code postal, ville)");
       return;
     }
+    if (deliveryType === "relay" && !relayPointId) {
+      toast.error("Veuillez sélectionner un point relais");
+      return;
+    }
     if (totalPrice <= 0) return;
     (window as any).__isNavigatingAway = true;
     setIsLoading(true);
