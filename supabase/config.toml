@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.social-content]
 verify_jwt = false
+
+[functions.colissimo-find-relay-points]
+verify_jwt = false

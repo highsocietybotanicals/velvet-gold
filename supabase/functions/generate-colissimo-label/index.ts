@@ -221,7 +221,19 @@ Deno.serve(async (req) => {
 
     const contractNumber = Deno.env.get("COLISSIMO_CONTRACT_NUMBER")!;
     const password = Deno.env.get("COLISSIMO_PASSWORD")!;
-    // apiKey not needed — auth via contractNumber + password in body
+
+    const isRelay = !!order.relay_point_id;
+    const productCode = isRelay ? "A2P" : "DOM";
+
+    const serviceConfig: any = {
+      productCode,
+      depositDate: new Date().toISOString().split("T")[0],
+      totalAmount: Math.round(order.total_amount * 100),
+    };
+
+    if (isRelay) {
+      serviceConfig.pickupLocationId = order.relay_point_id;
+    }
 
     const labelRequest = {
       contractNumber,
@@ -232,11 +244,7 @@ Deno.serve(async (req) => {
         outputPrintingType: "PDF_10x15_300dpi",
       },
       letter: {
-        service: {
-          productCode: "DOM",
-          depositDate: new Date().toISOString().split("T")[0],
-          totalAmount: Math.round(order.total_amount * 100), // in cents
-        },
+        service: serviceConfig,
         parcel: {
           weight: weightKg,
         },

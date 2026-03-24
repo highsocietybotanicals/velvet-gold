@@ -96,9 +96,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { items, sampleItems, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone, promoCode } = await req.json();
+    const { items, sampleItems, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone, promoCode, relayPointId, relayPointName, relayPointAddress } = await req.json();
 
-    const validDeliveryTypes = ['postal', 'personal'];
+    const validDeliveryTypes = ['postal', 'personal', 'relay'];
     if (!deliveryType || !validDeliveryTypes.includes(deliveryType)) {
       return new Response(JSON.stringify({ error: "Type de livraison invalide" }), {
         status: 400,
@@ -346,6 +346,9 @@ Deno.serve(async (req) => {
       contact_phone: safeContactPhone || null,
       status: "pending",
       payment_status: "unpaid",
+      relay_point_id: (relayPointId || '').slice(0, 50) || null,
+      relay_point_name: (relayPointName || '').slice(0, 200) || null,
+      relay_point_address: (relayPointAddress || '').slice(0, 500) || null,
     };
 
     if (userId) {

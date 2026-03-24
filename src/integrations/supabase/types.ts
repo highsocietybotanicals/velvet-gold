@@ -198,6 +198,9 @@ export type Database = {
           id: string
           order_number: number
           payment_status: string
+          relay_point_address: string | null
+          relay_point_id: string | null
+          relay_point_name: string | null
           status: string
           total_amount: number
           total_flower_weight: number
@@ -221,6 +224,9 @@ export type Database = {
           id?: string
           order_number?: number
           payment_status?: string
+          relay_point_address?: string | null
+          relay_point_id?: string | null
+          relay_point_name?: string | null
           status?: string
           total_amount: number
           total_flower_weight?: number
@@ -244,6 +250,9 @@ export type Database = {
           id?: string
           order_number?: number
           payment_status?: string
+          relay_point_address?: string | null
+          relay_point_id?: string | null
+          relay_point_name?: string | null
           status?: string
           total_amount?: number
           total_flower_weight?: number

@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import DeliverySection from "./DeliverySection";
 
 
-const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone, promoCode }: any) => {
+const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone, promoCode, relayPointId, relayPointName, relayPointAddress }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
@@ -27,6 +27,10 @@ const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFl
     }
     if (deliveryType === "postal" && (!address || address.trim().length < 10)) {
       toast.error("Veuillez renseigner une adresse de livraison complète (rue, code postal, ville)");
+      return;
+    }
+    if (deliveryType === "relay" && !relayPointId) {
+      toast.error("Veuillez sélectionner un point relais");
       return;
     }
     if (totalPrice <= 0) return;
@@ -71,6 +75,9 @@ const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFl
         contactPhone: contactPhone || null,
         totalFlowerWeight,
         promoCode: promoCode || null,
+        relayPointId: relayPointId || null,
+        relayPointName: relayPointName || null,
+        relayPointAddress: relayPointAddress || null,
       };
 
       // Add guest info if not authenticated
@@ -162,12 +169,15 @@ const CartDrawer = () => {
   const [promoAutoChecked, setPromoAutoChecked] = useState(false);
 
   // Delivery state
-  const [deliveryType, setDeliveryType] = useState<"postal" | "personal">("postal");
+  const [deliveryType, setDeliveryType] = useState<"postal" | "personal" | "relay">("postal");
   const [isWithin100km, setIsWithin100km] = useState(false);
   const [address, setAddress] = useState("");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [relayPointId, setRelayPointId] = useState("");
+  const [relayPointName, setRelayPointName] = useState("");
+  const [relayPointAddress, setRelayPointAddress] = useState("");
 
   // Guest checkout state
   const [guestEmail, setGuestEmail] = useState("");
@@ -748,6 +758,12 @@ const CartDrawer = () => {
                   setScheduledTime={setScheduledTime}
                   contactPhone={contactPhone}
                   setContactPhone={setContactPhone}
+                  relayPointId={relayPointId}
+                  setRelayPointId={setRelayPointId}
+                  relayPointName={relayPointName}
+                  setRelayPointName={setRelayPointName}
+                  relayPointAddress={relayPointAddress}
+                  setRelayPointAddress={setRelayPointAddress}
                 />
 
                 {/* Guest checkout form */}
@@ -875,6 +891,9 @@ const CartDrawer = () => {
                   guestName={guestName}
                   guestPhone={guestPhone}
                   promoCode={promoCode}
+                  relayPointId={relayPointId}
+                  relayPointName={relayPointName}
+                  relayPointAddress={relayPointAddress}
                 />
                 <button
                   onClick={clearCart}
