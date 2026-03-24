@@ -75,6 +75,9 @@ const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFl
         contactPhone: contactPhone || null,
         totalFlowerWeight,
         promoCode: promoCode || null,
+        relayPointId: relayPointId || null,
+        relayPointName: relayPointName || null,
+        relayPointAddress: relayPointAddress || null,
       };
 
       // Add guest info if not authenticated
