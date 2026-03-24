@@ -43,7 +43,7 @@ const OrderSummaryPrint = ({ order }: OrderSummaryPrintProps) => {
   const address = esc(order.delivery_address || "—");
   const orderNum = esc(order.display_order_number || `#${order.order_number.toString().padStart(4, "0")}`);
   const date = new Date(order.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  const delivery = order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal";
+  const delivery = order.delivery_type === "personal" ? "Remise en main propre" : order.delivery_type === "relay" ? "Point Relais Colissimo" : "Envoi postal";
 
   const itemsHtml = (order.order_items || []).map(item => {
     const qty = item.weight ? `${item.weight}g` : `x${item.quantity}`;
