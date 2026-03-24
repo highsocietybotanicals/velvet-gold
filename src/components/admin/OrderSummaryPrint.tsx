@@ -100,6 +100,7 @@ const OrderSummaryPrint = ({ order }: OrderSummaryPrintProps) => {
         ${phone ? `<div><span class="label">Tél :</span> ${phone}</div>` : ""}
         ${email ? `<div><span class="label">Email :</span> ${email}</div>` : ""}
         <div><span class="label">Livraison :</span> ${delivery}</div>
+        ${order.relay_point_name ? `<div><span class="label">Point Relais :</span> ${esc(order.relay_point_name)}${order.relay_point_address ? ` — ${esc(order.relay_point_address)}` : ""}</div>` : ""}
       </div>
 
       <table>

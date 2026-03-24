@@ -346,6 +346,9 @@ Deno.serve(async (req) => {
       contact_phone: safeContactPhone || null,
       status: "pending",
       payment_status: "unpaid",
+      relay_point_id: (relayPointId || '').slice(0, 50) || null,
+      relay_point_name: (relayPointName || '').slice(0, 200) || null,
+      relay_point_address: (relayPointAddress || '').slice(0, 500) || null,
     };
 
     if (userId) {
