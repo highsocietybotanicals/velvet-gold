@@ -758,6 +758,12 @@ const CartDrawer = () => {
                   setScheduledTime={setScheduledTime}
                   contactPhone={contactPhone}
                   setContactPhone={setContactPhone}
+                  relayPointId={relayPointId}
+                  setRelayPointId={setRelayPointId}
+                  relayPointName={relayPointName}
+                  setRelayPointName={setRelayPointName}
+                  relayPointAddress={relayPointAddress}
+                  setRelayPointAddress={setRelayPointAddress}
                 />
 
                 {/* Guest checkout form */}
