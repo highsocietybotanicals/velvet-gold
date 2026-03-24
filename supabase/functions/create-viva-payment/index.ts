@@ -96,9 +96,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { items, sampleItems, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone, promoCode } = await req.json();
+    const { items, sampleItems, deliveryType, deliveryAddress, deliveryDate, deliveryTime, contactPhone, freeGramsUsed, guestEmail, guestName, guestPhone, promoCode, relayPointId, relayPointName, relayPointAddress } = await req.json();
 
-    const validDeliveryTypes = ['postal', 'personal'];
+    const validDeliveryTypes = ['postal', 'personal', 'relay'];
     if (!deliveryType || !validDeliveryTypes.includes(deliveryType)) {
       return new Response(JSON.stringify({ error: "Type de livraison invalide" }), {
         status: 400,
