@@ -27,6 +27,8 @@ interface OrderSummaryPrintProps {
     promo_code?: string;
     promo_discount_percent?: number;
     promo_discount_amount?: number;
+    relay_point_name?: string | null;
+    relay_point_address?: string | null;
   };
 }
 
