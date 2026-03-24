@@ -169,12 +169,15 @@ const CartDrawer = () => {
   const [promoAutoChecked, setPromoAutoChecked] = useState(false);
 
   // Delivery state
-  const [deliveryType, setDeliveryType] = useState<"postal" | "personal">("postal");
+  const [deliveryType, setDeliveryType] = useState<"postal" | "personal" | "relay">("postal");
   const [isWithin100km, setIsWithin100km] = useState(false);
   const [address, setAddress] = useState("");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [relayPointId, setRelayPointId] = useState("");
+  const [relayPointName, setRelayPointName] = useState("");
+  const [relayPointAddress, setRelayPointAddress] = useState("");
 
   // Guest checkout state
   const [guestEmail, setGuestEmail] = useState("");
