@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import DeliverySection from "./DeliverySection";
 
 
-const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone, promoCode }: any) => {
+const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFlowerWeight, deliveryType, address, scheduledDate, scheduledTime, contactPhone, guestEmail, guestName, guestPhone, promoCode, relayPointId, relayPointName, relayPointAddress }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
