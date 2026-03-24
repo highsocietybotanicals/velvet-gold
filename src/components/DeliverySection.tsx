@@ -1,15 +1,26 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Truck, User as UserIcon, MapPin, AlertCircle, Check } from "lucide-react";
+import { Truck, User as UserIcon, MapPin, AlertCircle, Check, Search, Loader2, Store } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 import DeliveryScheduler from "./DeliveryScheduler";
 
+interface RelayPoint {
+  id: string;
+  name: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  type: string;
+  distance: number;
+}
+
 interface DeliverySectionProps {
-  deliveryType: "postal" | "personal";
-  setDeliveryType: (type: "postal" | "personal") => void;
+  deliveryType: "postal" | "personal" | "relay";
+  setDeliveryType: (type: "postal" | "personal" | "relay") => void;
   isWithin100km: boolean;
   setIsWithin100km: (value: boolean) => void;
   address: string;
@@ -20,6 +31,12 @@ interface DeliverySectionProps {
   setScheduledTime: (time: string) => void;
   contactPhone: string;
   setContactPhone: (phone: string) => void;
+  relayPointId?: string;
+  setRelayPointId?: (id: string) => void;
+  relayPointName?: string;
+  setRelayPointName?: (name: string) => void;
+  relayPointAddress?: string;
+  setRelayPointAddress?: (address: string) => void;
 }
 
 const DeliverySection = ({
@@ -35,6 +52,12 @@ const DeliverySection = ({
   setScheduledTime,
   contactPhone,
   setContactPhone,
+  relayPointId,
+  setRelayPointId,
+  relayPointName,
+  setRelayPointName,
+  relayPointAddress,
+  setRelayPointAddress,
 }: DeliverySectionProps) => {
   const { isPro, isProValidated } = useAuth();
   const { totalFlowerWeight } = useCart();
@@ -47,14 +70,20 @@ const DeliverySection = ({
   const [complement, setComplement] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
-
   const [postalCodeError, setPostalCodeError] = useState("");
+
+  // Relay point state
+  const [relayPostalCode, setRelayPostalCode] = useState("");
+  const [relayPoints, setRelayPoints] = useState<RelayPoint[]>([]);
+  const [relayLoading, setRelayLoading] = useState(false);
+  const [relayError, setRelayError] = useState("");
 
   // Assemble address whenever fields change
   useEffect(() => {
+    if (deliveryType === "relay") return;
     const parts = [street, complement, postalCode, city, "France"].filter(Boolean);
     setAddress(parts.join(", "));
-  }, [street, complement, postalCode, city, setAddress]);
+  }, [street, complement, postalCode, city, setAddress, deliveryType]);
 
   const handlePostalCodeChange = (value: string) => {
     const cleaned = value.replace(/\D/g, "").slice(0, 5);
@@ -64,6 +93,43 @@ const DeliverySection = ({
     } else {
       setPostalCodeError("");
     }
+  };
+
+  const handleSearchRelayPoints = async () => {
+    if (!/^\d{5}$/.test(relayPostalCode)) {
+      setRelayError("Code postal invalide (5 chiffres)");
+      return;
+    }
+    setRelayLoading(true);
+    setRelayError("");
+    setRelayPoints([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("colissimo-find-relay-points", {
+        body: { postalCode: relayPostalCode },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        setRelayError(data.error);
+        return;
+      }
+      setRelayPoints(data?.points || []);
+      if ((data?.points || []).length === 0) {
+        setRelayError("Aucun point relais trouvé pour ce code postal");
+      }
+    } catch (err: any) {
+      console.error("Relay search error:", err);
+      setRelayError("Erreur lors de la recherche");
+    } finally {
+      setRelayLoading(false);
+    }
+  };
+
+  const handleSelectRelay = (point: RelayPoint) => {
+    setRelayPointId?.(point.id);
+    setRelayPointName?.(point.name);
+    const fullAddress = `${point.address}, ${point.postalCode} ${point.city}`;
+    setRelayPointAddress?.(fullAddress);
+    setAddress(fullAddress);
   };
 
   return (
@@ -91,9 +157,34 @@ const DeliverySection = ({
               {deliveryType === "postal" && <Check className="w-3 h-3 text-primary-foreground" />}
             </div>
             <div>
-              <p className="font-medium text-foreground">Envoi postal</p>
+              <p className="font-medium text-foreground">Envoi postal à domicile</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Expédition sous 48h par La Poste
+              </p>
+            </div>
+          </div>
+        </motion.button>
+
+        {/* Relay Point Delivery */}
+        <motion.button
+          onClick={() => setDeliveryType("relay")}
+          className={`p-4 rounded-lg border-2 transition-all text-left ${
+            deliveryType === "relay"
+              ? "border-primary bg-primary/10"
+              : "border-border hover:border-primary/50"
+          }`}
+          whileTap={{ scale: 0.98 }}
+        >
+          <div className="flex items-start gap-3">
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
+              deliveryType === "relay" ? "border-primary bg-primary" : "border-muted-foreground"
+            }`}>
+              {deliveryType === "relay" && <Check className="w-3 h-3 text-primary-foreground" />}
+            </div>
+            <div>
+              <p className="font-medium text-foreground">Point Relais Colissimo</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Retrait dans un bureau de tabac, commerce ou bureau de poste
               </p>
             </div>
           </div>
@@ -228,6 +319,91 @@ const DeliverySection = ({
               />
             </div>
           </div>
+        </motion.div>
+      )}
+
+      {/* Relay point search */}
+      {deliveryType === "relay" && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="space-y-3 pt-2"
+        >
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Store className="w-4 h-4" />
+            <span>Rechercher un point relais</span>
+          </div>
+
+          <div className="flex gap-2">
+            <Input
+              value={relayPostalCode}
+              onChange={(e) => setRelayPostalCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
+              placeholder="Code postal (ex: 44000)"
+              className="bg-background border-border text-sm"
+              maxLength={5}
+              inputMode="numeric"
+            />
+            <button
+              onClick={handleSearchRelayPoints}
+              disabled={relayLoading || relayPostalCode.length !== 5}
+              className="px-4 h-9 text-sm btn-luxury disabled:opacity-50 whitespace-nowrap flex items-center gap-2"
+            >
+              {relayLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              Rechercher
+            </button>
+          </div>
+
+          {relayError && (
+            <p className="text-xs text-destructive">{relayError}</p>
+          )}
+
+          {/* Relay points list */}
+          {relayPoints.length > 0 && (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {relayPoints.map((point) => (
+                <button
+                  key={point.id}
+                  onClick={() => handleSelectRelay(point)}
+                  className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
+                    relayPointId === point.id
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <Store className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{point.name}</p>
+                      <p className="text-xs text-muted-foreground">{point.address}</p>
+                      <p className="text-xs text-muted-foreground">{point.postalCode} {point.city}</p>
+                      {point.distance > 0 && (
+                        <p className="text-xs text-primary mt-1">
+                          {point.distance < 1000
+                            ? `${point.distance}m`
+                            : `${(point.distance / 1000).toFixed(1)}km`}
+                        </p>
+                      )}
+                    </div>
+                    {relayPointId === point.id && (
+                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5 ml-auto" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Selected relay confirmation */}
+          {relayPointId && relayPointName && (
+            <div className="p-3 rounded-lg bg-primary/10 border border-primary/30">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-primary">{relayPointName}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{relayPointAddress}</p>
+            </div>
+          )}
         </motion.div>
       )}
 
