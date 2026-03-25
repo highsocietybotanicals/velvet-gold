@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.colissimo-find-relay-points]
 verify_jwt = false
+
+[functions.send-welcome-promo]
+verify_jwt = false
