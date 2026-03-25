@@ -43,7 +43,6 @@ const WelcomePopup = ({ onClose }: WelcomePopupProps) => {
   };
 
   const handleDismiss = () => {
-    localStorage.setItem("hsb-welcome-popup-shown", "true");
     onClose();
   };
 
