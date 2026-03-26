@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Loader2, CreditCard, UserPlus } from "lucide-react";
+import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
@@ -10,7 +10,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -33,6 +32,7 @@ const ManualOrderCreator = () => {
   const [customerPhone, setCustomerPhone] = useState("");
   const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1 }]);
   const [isCreating, setIsCreating] = useState(false);
+  const [lastCreatedOrder, setLastCreatedOrder] = useState<any>(null);
 
   const addLine = () => setLines([...lines, { productId: "", weight: 1 }]);
   const removeLine = (idx: number) => setLines(lines.filter((_, i) => i !== idx));
@@ -66,6 +66,88 @@ const ManualOrderCreator = () => {
     return sum + l.weight;
   }, 0);
 
+  const buildInvoiceHtml = (orderData: any, items: any[]) => {
+    const orderNum = orderData.display_order_number || `#${orderData.order_number?.toString().padStart(4, "0") || "0000"}`;
+    const date = new Date(orderData.created_at).toLocaleDateString("fr-FR", {
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const itemsHtml = items.map(item => {
+      const qty = item.weight ? `${item.weight}g` : `x${item.quantity}`;
+      return `<tr>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt">${esc(item.product_name)}</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt;text-align:center">${qty}</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt;text-align:right">${item.unit_price.toFixed(2)}€</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt;text-align:right;font-weight:600">${item.total_price.toFixed(2)}€</td>
+      </tr>`;
+    }).join("");
+
+    return `<!DOCTYPE html><html><head>
+      <title>Facture ${orderNum}</title>
+      <style>
+        @page { size: A5; margin: 10mm; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #e0d5c0; background: #0a0a0a; padding: 8mm; }
+        .header { text-align: center; border-bottom: 2px solid #b8860b; padding-bottom: 4mm; margin-bottom: 4mm; }
+        .header .brand { font-size: 14pt; font-weight: bold; color: #b8860b; letter-spacing: 1px; }
+        .header .sub { font-size: 8pt; color: #888; margin-top: 1mm; }
+        .info { display: flex; justify-content: space-between; font-size: 8pt; color: #999; margin-bottom: 4mm; padding-bottom: 3mm; border-bottom: 0.5px solid #333; }
+        .info .num { font-weight: bold; font-size: 10pt; color: #b8860b; font-family: monospace; }
+        .client { font-size: 9pt; margin-bottom: 4mm; padding-bottom: 3mm; border-bottom: 0.5px solid #333; }
+        .client .cname { font-weight: bold; font-size: 10pt; color: #e0d5c0; }
+        .client .label { color: #888; font-size: 7pt; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 4mm; }
+        thead th { font-size: 7pt; text-transform: uppercase; color: #b8860b; border-bottom: 1px solid #b8860b; padding: 2mm; text-align: left; }
+        thead th:nth-child(2) { text-align: center; }
+        thead th:nth-child(3), thead th:nth-child(4) { text-align: right; }
+        .total { border-top: 2px solid #b8860b; padding-top: 3mm; display: flex; justify-content: space-between; font-size: 12pt; font-weight: bold; }
+        .total .amount { color: #b8860b; font-size: 14pt; }
+        .badge { display: inline-block; background: #b8860b22; color: #b8860b; padding: 1mm 3mm; border-radius: 3px; font-size: 8pt; font-weight: 600; margin-top: 3mm; }
+        .footer { margin-top: auto; text-align: center; font-size: 7pt; color: #666; border-top: 0.5px solid #333; padding-top: 3mm; margin-top: 6mm; }
+        .footer .thanks { font-size: 9pt; color: #b8860b; font-weight: 600; margin-bottom: 1mm; }
+      </style>
+    </head><body>
+      <div class="header">
+        <div class="brand">HIGH SOCIETY BOTANICALS</div>
+        <div class="sub">FACTURE — highsocietybotanicals.com</div>
+      </div>
+      <div class="info">
+        <div><span class="num">${esc(orderNum)}</span></div>
+        <div>${date}</div>
+      </div>
+      <div class="client">
+        <div class="cname">${esc(orderData.guest_name || "Client")}</div>
+        ${orderData.guest_phone ? `<div><span class="label">Tél :</span> ${esc(orderData.guest_phone)}</div>` : ""}
+        ${orderData.guest_email ? `<div><span class="label">Email :</span> ${esc(orderData.guest_email)}</div>` : ""}
+        <div><span class="label">Mode :</span> Remise en main propre</div>
+      </div>
+      <table>
+        <thead><tr><th>Produit</th><th>Qté</th><th>P.U.</th><th>Total</th></tr></thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+      <div class="total">
+        <span>TOTAL TTC</span>
+        <span class="amount">${orderData.total_amount.toFixed(2)}€</span>
+      </div>
+      <div class="badge">✅ PAYÉ — Remise en main propre</div>
+      <div class="footer">
+        <div class="thanks">Merci pour votre confiance ! 🌿</div>
+        <div>High Society Botanicals — France</div>
+      </div>
+    </body></html>`;
+  };
+
+  const downloadInvoice = (orderData: any, items: any[]) => {
+    const html = buildInvoiceHtml(orderData, items);
+    const w = window.open("", "_blank", "width=500,height=700");
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 300);
+  };
+
   const handleCreate = async () => {
     const validLines = lines.filter(l => l.productId && l.weight > 0);
     if (validLines.length === 0) {
@@ -79,25 +161,23 @@ const ManualOrderCreator = () => {
 
     setIsCreating(true);
     try {
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
           delivery_type: "personal",
           total_amount: totalAmount,
           total_flower_weight: totalFlowerWeight,
-          payment_status: "paid",
-          status: "delivered",
+          payment_status: "unpaid",
+          status: "preparing",
           guest_name: customerName.trim(),
           guest_email: customerEmail.trim() || null,
           guest_phone: customerPhone.trim() || null,
         })
-        .select("id")
+        .select("id, display_order_number, order_number, created_at, total_amount, guest_name, guest_email, guest_phone")
         .single();
 
       if (orderError) throw orderError;
 
-      // Create order items
       const items = validLines.map(l => {
         const product = allProducts.find(p => p.id === l.productId)!;
         const lineTotal = calculateLineTotal(l);
@@ -115,10 +195,10 @@ const ManualOrderCreator = () => {
       const { error: itemsError } = await supabase.from("order_items").insert(items);
       if (itemsError) throw itemsError;
 
-      toast({ title: "Commande créée ✅", description: `Commande de ${totalAmount.toFixed(2)}€ pour ${customerName}` });
+      setLastCreatedOrder({ ...order, items });
+      toast({ title: "Commande créée ✅", description: `${order.display_order_number} — En préparation, en attente de paiement` });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
 
-      // Reset form
       setCustomerName("");
       setCustomerEmail("");
       setCustomerPhone("");
@@ -218,8 +298,29 @@ const ManualOrderCreator = () => {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            💡 Cette commande sera marquée comme "payée" et "livrée" immédiatement (paiement par terminal Viva en physique).
+            💡 La commande sera créée en statut "En préparation" et "Non payée". Passez-la en "Payée" dans le tableau des commandes pour générer la facture et l'envoyer au client.
           </p>
+
+          {/* Last created order - download invoice */}
+          {lastCreatedOrder && (
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
+              <div>
+                <span className="text-sm font-semibold text-primary">
+                  Dernière commande : {lastCreatedOrder.display_order_number}
+                </span>
+                <p className="text-xs text-muted-foreground">En attente de paiement</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => downloadInvoice(lastCreatedOrder, lastCreatedOrder.items)}
+                className="gap-2 border-primary/30 text-primary"
+              >
+                <FileText className="h-4 w-4" />
+                Aperçu facture
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.section>

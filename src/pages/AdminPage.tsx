@@ -10,6 +10,7 @@ import OrderSummaryPrint from "@/components/admin/OrderSummaryPrint";
 import ShippingLabel from "@/components/admin/ShippingLabel";
 import SocialMediaManager from "@/components/admin/SocialMediaManager";
 import ManualOrderCreator from "@/components/admin/ManualOrderCreator";
+import PromoCodeManager from "@/components/admin/PromoCodeManager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +41,9 @@ import {
   FileText,
   Receipt,
   Star,
-  MessageSquare
+  MessageSquare,
+  DollarSign,
+  Download
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -200,13 +203,82 @@ const VatRequestCard = ({
 const OrderRow = ({ 
   order, 
   onStatusChange,
+  onPaymentStatusChange,
   isUpdating
 }: { 
   order: AdminOrder; 
   onStatusChange: (status: string) => void;
+  onPaymentStatusChange: (status: string) => void;
   isUpdating: boolean;
 }) => {
   const status = ORDER_STATUSES.find(s => s.value === order.status) || ORDER_STATUSES[0];
+  const isManual = order.delivery_type === "personal" && !order.user_id;
+  const isPaid = order.payment_status === "paid";
+  
+  const handleDownloadInvoice = () => {
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const orderNum = esc(order.display_order_number || `#${order.order_number.toString().padStart(4, "0")}`);
+    const date = new Date(order.created_at).toLocaleDateString("fr-FR", {
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+    const name = esc(order.guest_name || "Client");
+    const delivery = order.delivery_type === "personal" ? "Remise en main propre" : order.delivery_type === "relay" ? "Point Relais" : "Envoi postal";
+
+    const itemsHtml = (order.order_items || []).map(item => {
+      const qty = item.weight ? `${item.weight}g` : `x${item.quantity}`;
+      return `<tr>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt">${esc(item.product_name)}</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt;text-align:center">${qty}</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt;text-align:right">${item.unit_price.toFixed(2)}€</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt;text-align:right;font-weight:600">${item.total_price.toFixed(2)}€</td>
+      </tr>`;
+    }).join("");
+
+    const w = window.open("", "_blank", "width=500,height=700");
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html><html><head>
+      <title>Facture ${orderNum}</title>
+      <style>
+        @page { size: A5; margin: 10mm; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #e0d5c0; background: #0a0a0a; padding: 8mm; }
+        .header { text-align: center; border-bottom: 2px solid #b8860b; padding-bottom: 4mm; margin-bottom: 4mm; }
+        .header .brand { font-size: 14pt; font-weight: bold; color: #b8860b; letter-spacing: 1px; }
+        .header .sub { font-size: 8pt; color: #888; margin-top: 1mm; }
+        .info { display: flex; justify-content: space-between; font-size: 8pt; color: #999; margin-bottom: 4mm; padding-bottom: 3mm; border-bottom: 0.5px solid #333; }
+        .info .num { font-weight: bold; font-size: 10pt; color: #b8860b; font-family: monospace; }
+        .client { font-size: 9pt; margin-bottom: 4mm; padding-bottom: 3mm; border-bottom: 0.5px solid #333; }
+        .client .cname { font-weight: bold; font-size: 10pt; }
+        .client .label { color: #888; font-size: 7pt; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 4mm; }
+        thead th { font-size: 7pt; text-transform: uppercase; color: #b8860b; border-bottom: 1px solid #b8860b; padding: 2mm; text-align: left; }
+        thead th:nth-child(2) { text-align: center; }
+        thead th:nth-child(3), thead th:nth-child(4) { text-align: right; }
+        .total { border-top: 2px solid #b8860b; padding-top: 3mm; display: flex; justify-content: space-between; font-size: 12pt; font-weight: bold; }
+        .total .amount { color: #b8860b; font-size: 14pt; }
+        .badge { display: inline-block; background: #b8860b22; color: #b8860b; padding: 1mm 3mm; border-radius: 3px; font-size: 8pt; font-weight: 600; margin-top: 3mm; }
+        .footer { text-align: center; font-size: 7pt; color: #666; border-top: 0.5px solid #333; padding-top: 3mm; margin-top: 6mm; }
+        .footer .thanks { font-size: 9pt; color: #b8860b; font-weight: 600; margin-bottom: 1mm; }
+      </style>
+    </head><body>
+      <div class="header"><div class="brand">HIGH SOCIETY BOTANICALS</div><div class="sub">FACTURE — highsocietybotanicals.com</div></div>
+      <div class="info"><div><span class="num">${orderNum}</span></div><div>${date}</div></div>
+      <div class="client">
+        <div class="cname">${name}</div>
+        ${order.guest_phone || order.contact_phone ? `<div><span class="label">Tél :</span> ${esc(order.guest_phone || order.contact_phone || "")}</div>` : ""}
+        ${order.guest_email || order.user_email ? `<div><span class="label">Email :</span> ${esc(order.guest_email || order.user_email || "")}</div>` : ""}
+        <div><span class="label">Mode :</span> ${delivery}</div>
+      </div>
+      <table><thead><tr><th>Produit</th><th>Qté</th><th>P.U.</th><th>Total</th></tr></thead><tbody>${itemsHtml}</tbody></table>
+      ${order.promo_code ? `<div style="font-size:8pt;margin-bottom:3mm;"><div style="display:flex;justify-content:space-between;margin-bottom:1mm;"><span>Sous-total</span><span>${(order.total_amount + (order.promo_discount_amount || 0)).toFixed(2)}€</span></div><div style="display:flex;justify-content:space-between;color:#b8860b;font-weight:600;"><span>Code ${esc(order.promo_code)} (-${order.promo_discount_percent}%)</span><span>-${(order.promo_discount_amount || 0).toFixed(2)}€</span></div></div>` : ""}
+      <div class="total"><span>TOTAL TTC</span><span class="amount">${order.total_amount.toFixed(2)}€</span></div>
+      <div class="badge">✅ PAYÉ</div>
+      <div class="footer"><div class="thanks">Merci pour votre confiance ! 🌿</div><div>High Society Botanicals — France</div></div>
+    </body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 300);
+  };
   
   return (
     <TableRow>
@@ -215,10 +287,11 @@ const OrderRow = ({
       </TableCell>
       <TableCell>
         <div>
-          <p className="text-sm">{order.user_email}</p>
+          <p className="text-sm">{order.guest_name || order.user_email}</p>
           <p className="text-xs text-muted-foreground">
             {format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}
           </p>
+          {order.guest_email && <p className="text-xs text-muted-foreground">{order.guest_email}</p>}
         </div>
       </TableCell>
       <TableCell>
@@ -235,11 +308,40 @@ const OrderRow = ({
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="capitalize">
-            {order.delivery_type === "personal" ? "Remise en main propre" : "Envoi postal"}
+          <Badge variant="outline" className="capitalize text-xs">
+            {order.delivery_type === "personal" ? "Main propre" : order.delivery_type === "relay" ? "Relais" : "Postal"}
           </Badge>
           <OrderSummaryPrint order={order} />
-          <ShippingLabel order={order} />
+          {order.delivery_type !== "personal" && <ShippingLabel order={order} />}
+        </div>
+      </TableCell>
+      {/* Payment status */}
+      <TableCell>
+        <div className="flex items-center gap-2">
+          {isPaid ? (
+            <Badge className="bg-green-600/20 text-green-500 border-green-600/30">Payé</Badge>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPaymentStatusChange("paid")}
+              className="gap-1 border-green-600/50 text-green-500 hover:bg-green-600/10 text-xs"
+            >
+              <DollarSign className="h-3 w-3" />
+              Marquer payé
+            </Button>
+          )}
+          {isPaid && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDownloadInvoice}
+              className="text-primary"
+              title="Télécharger la facture"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </TableCell>
       <TableCell>
@@ -248,7 +350,7 @@ const OrderRow = ({
           onValueChange={(value) => { try { onStatusChange(value); } catch (e) { console.error("Status change error:", e); } }}
           disabled={isUpdating}
         >
-          <SelectTrigger className={`w-[160px] ${status.color}`}>
+          <SelectTrigger className={`w-[150px] ${status.color}`}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -281,6 +383,7 @@ const AdminPage = () => {
     validateVat,
     rejectVat,
     updateOrderStatus,
+    updatePaymentStatus,
     approveReview,
     deleteReview,
     isValidating,
@@ -332,6 +435,9 @@ const AdminPage = () => {
 
           {/* Section Gestion des Prix */}
           <PriceManagement />
+
+          {/* Section Codes Promo */}
+          <PromoCodeManager />
 
           {/* Section Commande Manuelle */}
           <ManualOrderCreator />
@@ -511,7 +617,7 @@ const AdminPage = () => {
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <Table>
+                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>N°</TableHead>
@@ -519,6 +625,7 @@ const AdminPage = () => {
                           <TableHead>Articles</TableHead>
                           <TableHead>Total</TableHead>
                           <TableHead>Livraison</TableHead>
+                          <TableHead>Paiement</TableHead>
                           <TableHead>Statut</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -528,6 +635,7 @@ const AdminPage = () => {
                             key={order.id}
                             order={order}
                             onStatusChange={(status) => updateOrderStatus(order.id, status)}
+                            onPaymentStatusChange={(ps) => updatePaymentStatus(order.id, ps)}
                             isUpdating={isUpdatingOrder}
                           />
                         ))}
