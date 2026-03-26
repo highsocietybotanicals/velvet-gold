@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, ShoppingCart, Gift, Package, ChevronDown, Zap } from "lucide-react";
-import { allProducts } from "@/data/products";
+import { allProducts, PriceGroup } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
@@ -62,6 +62,9 @@ const ProductPage = () => {
   // Check if user qualifies for Pro HT pricing (requires VAT validated by admin)
   const isProWithValidatedVat = isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated;
 
+  // Get price group from product (default to A if not defined)
+  const priceGroup: PriceGroup = product?.priceGroup || "A";
+
   const priceInfo = useMemo(() => {
     if (!product) return null;
     if (isProWithValidatedVat && proPrice) {
@@ -76,12 +79,12 @@ const ProductPage = () => {
         isHT: true,
       };
     }
-    // Standard pricing with tiered discounts
+    // Standard pricing with tiered discounts based on price group
     return {
-      ...calculatePrice(basePrice, selectedWeight),
+      ...calculatePrice(basePrice, selectedWeight, priceGroup),
       isHT: false,
     };
-  }, [product, basePrice, proPrice, selectedWeight, isProWithValidatedVat]);
+  }, [product, basePrice, proPrice, selectedWeight, isProWithValidatedVat, priceGroup]);
 
   const gifts = useMemo(() => {
     // No gifts for Pro users with validated VAT
