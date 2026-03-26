@@ -255,74 +255,105 @@ const CartDrawer = () => {
   const handleApplyPromo = async () => {
     const code = promoInput.trim().toUpperCase();
     if (!code) return;
-    
-    if (code !== "BIENVENUE15" && code !== "DEMI160") {
-      setPromoError("Code promo invalide");
-      return;
-    }
-
-    if (!user) {
-      setPromoError("Connecte-toi pour utiliser un code promo");
-      return;
-    }
 
     setPromoLoading(true);
     setPromoError("");
 
     try {
+      // Special hardcoded codes first
       if (code === "DEMI160") {
-        // Check cart contains exactly 50g total flower/resin weight
         if (totalFlowerWeight !== 50) {
           setPromoError("Ce code est valable uniquement pour exactement 50g au total");
           setPromoLoading(false);
           return;
         }
-
-        // Check global usage (not per-user, single use globally)
         const { data: globalUsage } = await supabase
           .from("promo_code_usage")
           .select("id")
           .eq("code", "DEMI160")
           .maybeSingle();
-
         if (globalUsage) {
           setPromoError("Ce code a déjà été utilisé");
           setPromoLoading(false);
           return;
         }
-
         if (totalPrice <= 160) {
           setPromoError("Le total est déjà inférieur à 160€");
           setPromoLoading(false);
           return;
         }
-
         const discountPercent = Math.round(((totalPrice - 160) / totalPrice) * 10000) / 100;
-
         setPromoCode("DEMI160");
         setPromoDiscount(discountPercent);
         setFreeShipping(true);
         toast.success("Code DEMI160 appliqué ! 50g à 160€ + livraison offerte 🎉");
-      } else {
-        // BIENVENUE15 logic
+      } else if (code === "BIENVENUE15") {
+        if (!user) {
+          setPromoError("Connecte-toi pour utiliser un code promo");
+          setPromoLoading(false);
+          return;
+        }
         const { data: usage } = await supabase
           .from("promo_code_usage")
           .select("id")
           .eq("user_id", user.id)
           .eq("code", "BIENVENUE15")
           .maybeSingle();
-
         if (usage) {
           setPromoError("Tu as déjà utilisé ce code 😅");
           setPromoLoading(false);
           return;
         }
-
         setPromoCode("BIENVENUE15");
         setPromoDiscount(15);
-      }
-      if (code === "BIENVENUE15") {
         toast.success("Code promo BIENVENUE15 appliqué ! -15% 🎉");
+      } else {
+        // Check database promo_codes table
+        const { data: dbCode, error } = await supabase
+          .from("promo_codes" as any)
+          .select("*")
+          .eq("code", code)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (error || !dbCode) {
+          setPromoError("Code promo invalide");
+          setPromoLoading(false);
+          return;
+        }
+
+        // Check expiry
+        if (dbCode.expires_at && new Date(dbCode.expires_at) < new Date()) {
+          setPromoError("Ce code promo a expiré");
+          setPromoLoading(false);
+          return;
+        }
+
+        // Check max uses
+        if (dbCode.max_uses && dbCode.current_uses >= dbCode.max_uses) {
+          setPromoError("Ce code promo a atteint son nombre maximum d'utilisations");
+          setPromoLoading(false);
+          return;
+        }
+
+        // Check if user already used this code
+        if (user) {
+          const { data: usage } = await supabase
+            .from("promo_code_usage")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("code", code)
+            .maybeSingle();
+          if (usage) {
+            setPromoError("Tu as déjà utilisé ce code 😅");
+            setPromoLoading(false);
+            return;
+          }
+        }
+
+        setPromoCode(code);
+        setPromoDiscount(dbCode.discount_percent);
+        toast.success(`Code ${code} appliqué ! -${dbCode.discount_percent}% 🎉`);
       }
     } catch (err) {
       setPromoError("Erreur lors de la vérification");
