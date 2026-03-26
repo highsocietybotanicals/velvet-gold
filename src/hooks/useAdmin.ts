@@ -30,6 +30,7 @@ export interface AdminOrder {
   display_order_number: string | null;
   user_id: string;
   status: string;
+  payment_status: string;
   total_amount: number;
   total_flower_weight: number;
   delivery_type: string;
@@ -42,6 +43,8 @@ export interface AdminOrder {
   guest_phone: string | null;
   tracking_number: string | null;
   tracking_url: string | null;
+  relay_point_name: string | null;
+  relay_point_address: string | null;
   created_at: string;
   user_email?: string;
   promo_code?: string;
