@@ -290,6 +290,31 @@ export const useAdmin = () => {
     },
   });
 
+  const updatePaymentStatusMutation = useMutation({
+    mutationFn: async ({ orderId, paymentStatus }: { orderId: string; paymentStatus: string }) => {
+      const { error } = await supabase.from("orders").update({ payment_status: paymentStatus }).eq("id", orderId);
+      if (error) throw error;
+
+      // If marking as paid and the order has a guest email, send invoice
+      if (paymentStatus === "paid") {
+        const order = allOrders?.find(o => o.id === orderId);
+        const email = order?.guest_email || order?.user_email;
+        if (email && email !== "Email inconnu") {
+          supabase.functions.invoke("send-order-confirmation", {
+            body: { orderId },
+          }).catch((e) => console.error("Invoice email error:", e));
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      toast({ title: "Paiement mis à jour ✅" });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le paiement.", variant: "destructive" });
+    },
+  });
+
   return {
     proRequests: proRequests || [],
     vatRequests: vatRequests || [],
@@ -305,6 +330,8 @@ export const useAdmin = () => {
     rejectVat: (userId: string) => rejectVatMutation.mutate(userId),
     updateOrderStatus: (orderId: string, status: string) =>
       updateOrderStatusMutation.mutate({ orderId, status }),
+    updatePaymentStatus: (orderId: string, paymentStatus: string) =>
+      updatePaymentStatusMutation.mutate({ orderId, paymentStatus }),
     approveReview: (reviewId: string) => approveReviewMutation.mutate(reviewId),
     deleteReview: (reviewId: string) => deleteReviewMutation.mutate(reviewId),
     isValidating: validateProMutation.isPending,
@@ -312,6 +339,7 @@ export const useAdmin = () => {
     isValidatingVat: validateVatMutation.isPending,
     isRejectingVat: rejectVatMutation.isPending,
     isUpdatingOrder: updateOrderStatusMutation.isPending,
+    isUpdatingPayment: updatePaymentStatusMutation.isPending,
     isApprovingReview: approveReviewMutation.isPending,
     isDeletingReview: deleteReviewMutation.isPending,
   };
