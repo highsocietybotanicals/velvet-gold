@@ -309,8 +309,8 @@ const CartDrawer = () => {
         toast.success("Code promo BIENVENUE15 appliqué ! -15% 🎉");
       } else {
         // Check database promo_codes table
-        const { data: dbCode, error } = await supabase
-          .from("promo_codes" as any)
+        const { data: dbCode, error } = await (supabase as any)
+          .from("promo_codes")
           .select("*")
           .eq("code", code)
           .eq("is_active", true)
