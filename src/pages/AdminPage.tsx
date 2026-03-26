@@ -382,6 +382,7 @@ const AdminPage = () => {
     validateVat,
     rejectVat,
     updateOrderStatus,
+    updatePaymentStatus,
     approveReview,
     deleteReview,
     isValidating,
@@ -612,7 +613,7 @@ const AdminPage = () => {
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <Table>
+                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>N°</TableHead>
@@ -620,6 +621,7 @@ const AdminPage = () => {
                           <TableHead>Articles</TableHead>
                           <TableHead>Total</TableHead>
                           <TableHead>Livraison</TableHead>
+                          <TableHead>Paiement</TableHead>
                           <TableHead>Statut</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -629,6 +631,7 @@ const AdminPage = () => {
                             key={order.id}
                             order={order}
                             onStatusChange={(status) => updateOrderStatus(order.id, status)}
+                            onPaymentStatusChange={(ps) => updatePaymentStatus(order.id, ps)}
                             isUpdating={isUpdatingOrder}
                           />
                         ))}
