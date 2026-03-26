@@ -435,6 +435,9 @@ const AdminPage = () => {
           {/* Section Gestion des Prix */}
           <PriceManagement />
 
+          {/* Section Codes Promo */}
+          <PromoCodeManager />
+
           {/* Section Commande Manuelle */}
           <ManualOrderCreator />
 
