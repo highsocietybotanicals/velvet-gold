@@ -226,17 +226,23 @@ const OrderRow = ({
     const delivery = order.delivery_type === "personal" ? "Remise en main propre" : order.delivery_type === "relay" ? "Point Relais" : "Envoi postal";
     const address = order.delivery_address ? esc(order.delivery_address) : "";
 
+    const TVA_RATE = 20; // 20% TVA
+    const totalTTC = order.total_amount;
+    const totalHT = totalTTC / (1 + TVA_RATE / 100);
+    const totalTVA = totalTTC - totalHT;
+
     const itemsHtml = (order.order_items || []).map(item => {
       const qty = item.weight ? `${item.weight}g` : `x${item.quantity}`;
+      const unitHT = item.unit_price / (1 + TVA_RATE / 100);
+      const totalItemHT = item.total_price / (1 + TVA_RATE / 100);
       return `<tr>
         <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt">${esc(item.product_name)}</td>
         <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:center">${qty}</td>
-        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${item.unit_price.toFixed(2)} €</td>
-        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right;font-weight:600">${item.total_price.toFixed(2)} €</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${unitHT.toFixed(2)} €</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${TVA_RATE}%</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right;font-weight:600">${totalItemHT.toFixed(2)} €</td>
       </tr>`;
     }).join("");
-
-    const subtotal = (order.order_items || []).reduce((sum, item) => sum + item.total_price, 0);
 
     const w = window.open("", "_blank", "width=700,height=900");
     if (!w) return;
@@ -260,7 +266,7 @@ const OrderRow = ({
         table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
         thead th { font-size: 7pt; text-transform: uppercase; color: #fff; background: #b8860b; padding: 2.5mm 2mm; text-align: left; }
         thead th:nth-child(2) { text-align: center; }
-        thead th:nth-child(3), thead th:nth-child(4) { text-align: right; }
+        thead th:nth-child(3), thead th:nth-child(4), thead th:nth-child(5) { text-align: right; }
         .totals { margin-top: 3mm; border-top: 2px solid #b8860b; padding-top: 4mm; }
         .totals-row { display: flex; justify-content: flex-end; gap: 10mm; font-size: 10pt; padding: 1mm 0; }
         .totals-row.grand { font-size: 14pt; font-weight: bold; color: #b8860b; border-top: 1px solid #b8860b; padding-top: 3mm; margin-top: 2mm; }
@@ -279,8 +285,8 @@ const OrderRow = ({
         </div>
         <div class="company-info">
           <strong>High Society Botanicals</strong><br/>
-          SIRET : 123 456 789 00012<br/>
-          TVA Intra. : FR12345678901<br/>
+          SIRET : 994 621 910 00011<br/>
+          TVA Intra. : FR 48 994 621 910<br/>
           France
         </div>
       </div>
@@ -309,22 +315,21 @@ const OrderRow = ({
       </div>
 
       <table>
-        <thead><tr><th>Désignation</th><th>Quantité</th><th>Prix unitaire</th><th>Total</th></tr></thead>
+        <thead><tr><th>Désignation</th><th>Quantité</th><th>Prix unit. HT</th><th>TVA</th><th>Total HT</th></tr></thead>
         <tbody>${itemsHtml}</tbody>
       </table>
 
       <div class="totals">
-        <div class="totals-row"><span class="label">Sous-total HT :</span><span class="value">${subtotal.toFixed(2)} €</span></div>
-        <div class="totals-row"><span class="label">TVA (0%) :</span><span class="value">0.00 €</span></div>
+        <div class="totals-row"><span class="label">Total HT :</span><span class="value">${totalHT.toFixed(2)} €</span></div>
+        <div class="totals-row"><span class="label">TVA (${TVA_RATE}%) :</span><span class="value">${totalTVA.toFixed(2)} €</span></div>
         ${order.promo_code ? `<div class="totals-row" style="color:#b8860b;font-weight:600;"><span class="label">Code promo ${esc(order.promo_code)} (-${order.promo_discount_percent}%) :</span><span class="value">-${(order.promo_discount_amount || 0).toFixed(2)} €</span></div>` : ""}
-        <div class="totals-row grand"><span class="label">TOTAL TTC :</span><span class="value">${order.total_amount.toFixed(2)} €</span></div>
+        <div class="totals-row grand"><span class="label">TOTAL TTC :</span><span class="value">${totalTTC.toFixed(2)} €</span></div>
       </div>
 
       <div class="payment-badge">✅ PAYÉ</div>
 
       <div class="legal">
-        TVA non applicable, art. 293 B du CGI.<br/>
-        High Society Botanicals — SIRET : 123 456 789 00012 — TVA Intra. : FR12345678901
+        High Society Botanicals — SIRET : 994 621 910 00011 — TVA Intra. : FR 48 994 621 910
       </div>
 
       <div class="footer">
