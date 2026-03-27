@@ -365,7 +365,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
               </span>
             </div>
             <p className="text-[10px] text-muted-foreground mt-1 ml-6">
-              ({gifts.contents.pochonMoyen}x Pochon, {gifts.contents.feuillesSlim}x Slim, {gifts.contents.briquetHSB}x Briquet)
+              ({gifts.contents.feuillesSlim}x Slim, {gifts.contents.briquetBIC}x Briquet)
             </p>
           </motion.div>
         )}
