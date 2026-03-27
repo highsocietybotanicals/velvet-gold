@@ -285,8 +285,8 @@ const OrderRow = ({
         </div>
         <div class="company-info">
           <strong>High Society Botanicals</strong><br/>
-          SIRET : 123 456 789 00012<br/>
-          TVA Intra. : FR12345678901<br/>
+          SIRET : 994 621 910 00011<br/>
+          TVA Intra. : FR 48 994 621 910<br/>
           France
         </div>
       </div>
@@ -315,22 +315,21 @@ const OrderRow = ({
       </div>
 
       <table>
-        <thead><tr><th>Désignation</th><th>Quantité</th><th>Prix unitaire</th><th>Total</th></tr></thead>
+        <thead><tr><th>Désignation</th><th>Quantité</th><th>Prix unit. HT</th><th>TVA</th><th>Total HT</th></tr></thead>
         <tbody>${itemsHtml}</tbody>
       </table>
 
       <div class="totals">
-        <div class="totals-row"><span class="label">Sous-total HT :</span><span class="value">${subtotal.toFixed(2)} €</span></div>
-        <div class="totals-row"><span class="label">TVA (0%) :</span><span class="value">0.00 €</span></div>
+        <div class="totals-row"><span class="label">Total HT :</span><span class="value">${totalHT.toFixed(2)} €</span></div>
+        <div class="totals-row"><span class="label">TVA (${TVA_RATE}%) :</span><span class="value">${totalTVA.toFixed(2)} €</span></div>
         ${order.promo_code ? `<div class="totals-row" style="color:#b8860b;font-weight:600;"><span class="label">Code promo ${esc(order.promo_code)} (-${order.promo_discount_percent}%) :</span><span class="value">-${(order.promo_discount_amount || 0).toFixed(2)} €</span></div>` : ""}
-        <div class="totals-row grand"><span class="label">TOTAL TTC :</span><span class="value">${order.total_amount.toFixed(2)} €</span></div>
+        <div class="totals-row grand"><span class="label">TOTAL TTC :</span><span class="value">${totalTTC.toFixed(2)} €</span></div>
       </div>
 
       <div class="payment-badge">✅ PAYÉ</div>
 
       <div class="legal">
-        TVA non applicable, art. 293 B du CGI.<br/>
-        High Society Botanicals — SIRET : 123 456 789 00012 — TVA Intra. : FR12345678901
+        High Society Botanicals — SIRET : 994 621 910 00011 — TVA Intra. : FR 48 994 621 910
       </div>
 
       <div class="footer">
