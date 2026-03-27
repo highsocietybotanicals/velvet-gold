@@ -266,7 +266,7 @@ const OrderRow = ({
         table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
         thead th { font-size: 7pt; text-transform: uppercase; color: #fff; background: #b8860b; padding: 2.5mm 2mm; text-align: left; }
         thead th:nth-child(2) { text-align: center; }
-        thead th:nth-child(3), thead th:nth-child(4) { text-align: right; }
+        thead th:nth-child(3), thead th:nth-child(4), thead th:nth-child(5) { text-align: right; }
         .totals { margin-top: 3mm; border-top: 2px solid #b8860b; padding-top: 4mm; }
         .totals-row { display: flex; justify-content: flex-end; gap: 10mm; font-size: 10pt; padding: 1mm 0; }
         .totals-row.grand { font-size: 14pt; font-weight: bold; color: #b8860b; border-top: 1px solid #b8860b; padding-top: 3mm; margin-top: 2mm; }
