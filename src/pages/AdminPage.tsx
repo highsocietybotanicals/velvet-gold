@@ -226,17 +226,23 @@ const OrderRow = ({
     const delivery = order.delivery_type === "personal" ? "Remise en main propre" : order.delivery_type === "relay" ? "Point Relais" : "Envoi postal";
     const address = order.delivery_address ? esc(order.delivery_address) : "";
 
+    const TVA_RATE = 20; // 20% TVA
+    const totalTTC = order.total_amount;
+    const totalHT = totalTTC / (1 + TVA_RATE / 100);
+    const totalTVA = totalTTC - totalHT;
+
     const itemsHtml = (order.order_items || []).map(item => {
       const qty = item.weight ? `${item.weight}g` : `x${item.quantity}`;
+      const unitHT = item.unit_price / (1 + TVA_RATE / 100);
+      const totalItemHT = item.total_price / (1 + TVA_RATE / 100);
       return `<tr>
         <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt">${esc(item.product_name)}</td>
         <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:center">${qty}</td>
-        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${item.unit_price.toFixed(2)} €</td>
-        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right;font-weight:600">${item.total_price.toFixed(2)} €</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${unitHT.toFixed(2)} €</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${TVA_RATE}%</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right;font-weight:600">${totalItemHT.toFixed(2)} €</td>
       </tr>`;
     }).join("");
-
-    const subtotal = (order.order_items || []).reduce((sum, item) => sum + item.total_price, 0);
 
     const w = window.open("", "_blank", "width=700,height=900");
     if (!w) return;
