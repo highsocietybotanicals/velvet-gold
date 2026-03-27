@@ -6,8 +6,7 @@
 // - pochon-moyen.jpg actually contains feuilles slim image
 // - feuilles-slim.jpg actually contains moyen pochon image
 import pochonPetit from "@/assets/accessories/briquet-hsb.jpg"; // swapped
-import pochonMoyen from "@/assets/accessories/feuilles-slim.jpg"; // swapped
-import pochonGrand from "@/assets/accessories/pochon-grand.jpg"; // new correct image
+import pochonGrand from "@/assets/accessories/pochon-grand.jpg";
 import feuillesSlim from "@/assets/accessories/pochon-moyen.jpg"; // swapped
 import briquetHSB from "@/assets/accessories/pochon-petit.jpg"; // swapped
 import type { Accessory } from "@/contexts/CartContext";
@@ -19,17 +18,9 @@ export const accessories: Accessory[] = [
   {
     id: "pochon-petit",
     name: "Petit Pochon",
-    price: 0.50,
+    price: 1.50,
     image: pochonPetit,
     description: "The Originals - 1g/3.5g",
-    category: "pochon",
-  },
-  {
-    id: "pochon-moyen",
-    name: "Moyen Pochon",
-    price: 2.50,
-    image: pochonMoyen,
-    description: "Collection Privée - 7g/14g",
     category: "pochon",
   },
   {
@@ -51,7 +42,7 @@ export const accessories: Accessory[] = [
   {
     id: "briquet-hsb",
     name: "Briquet HSB",
-    price: 3.00,
+    price: 2.50,
     image: briquetHSB,
     description: "BIC personnalisé noir & or",
     category: "accessoire",
@@ -61,23 +52,20 @@ export const accessories: Accessory[] = [
 // Images for pochon visual logic based on weight
 export const pochonImages = {
   petit: pochonPetit,
-  moyen: pochonMoyen,
   grand: pochonGrand,
 };
 
 // Export individual corrected images for use in CartDrawer
-export { pochonMoyen, feuillesSlim, briquetHSB };
+export { feuillesSlim, briquetHSB };
 
 // Get pochon image based on weight
 export const getPochonImage = (weight: number): string => {
   if (weight < 10) return pochonPetit;
-  if (weight < 30) return pochonMoyen;
   return pochonGrand;
 };
 
 // Get pochon size label
 export const getPochonLabel = (weight: number): string => {
   if (weight < 10) return "Petit Pochon";
-  if (weight < 30) return "Moyen Pochon";
   return "Grand Pochon";
 };
