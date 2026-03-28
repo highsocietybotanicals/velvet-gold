@@ -53,6 +53,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <ProductSection />
+        <AccessoriesSection />
       </main>
       <Footer />
       {showWelcomePopup && (
