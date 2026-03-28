@@ -37,11 +37,10 @@ const ACCESSORY_BULK_DISCOUNT = 0.33;
 const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor"]);
 
 const ACCESSORY_PRICES: Record<string, number> = {
-  "pochon-petit": 0.50,
-  "pochon-moyen": 2.50,
+  "pochon-petit": 1.50,
   "pochon-grand": 3.00,
-  "feuilles-slim": 1.00,
-  "briquet-hsb": 2.00,
+  "feuilles-slim": 3.00,
+  "briquet-hsb": 2.50,
 };
 
 function getDiscountTier(weight: number, priceGroup: string): WeightTier {
