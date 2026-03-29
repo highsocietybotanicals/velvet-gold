@@ -122,13 +122,15 @@ export const useAdmin = () => {
 
       if (ordersError) throw ordersError;
 
-      const userIds = [...new Set(ordersData.map(o => o.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, email")
-        .in("id", userIds);
-
-      const emailMap = new Map(profiles?.map(p => [p.id, p.email]) || []);
+      const userIds = [...new Set(ordersData.map(o => o.user_id).filter(Boolean))] as string[];
+      let emailMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, email")
+          .in("id", userIds);
+        emailMap = new Map(profiles?.map(p => [p.id, p.email]) || []);
+      }
 
       const orderIds = ordersData.map(o => o.id);
       const { data: promoData } = await supabase
@@ -140,7 +142,7 @@ export const useAdmin = () => {
 
       return ordersData.map(order => ({
         ...order,
-        user_email: emailMap.get(order.user_id) || "Email inconnu",
+        user_email: emailMap.get(order.user_id) || order.guest_email || "Email inconnu",
         promo_code: order.promo_code ?? promoMap.get(order.id)?.code ?? undefined,
         promo_discount_percent: order.promo_discount_percent ?? promoMap.get(order.id)?.discount_percent ?? undefined,
         promo_discount_amount: order.promo_discount_amount ?? promoMap.get(order.id)?.discount_amount ?? undefined,
