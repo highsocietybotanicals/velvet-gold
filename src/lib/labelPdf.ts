@@ -9,7 +9,6 @@ import labelIceOLator from "@/assets/labels/ice-o-lator-label.png";
 import labelAmnesia from "@/assets/labels/amnesia-label.png";
 import labelMintKush from "@/assets/labels/mint-kush-label.png";
 import labelPlatinumOg from "@/assets/labels/platinum-og-label.png";
-import labelLegal from "@/assets/labels/legal-label.png";
 
 const LABEL_MAP: Record<string, string> = {
   "911-og-indoor": label911og,
@@ -46,34 +45,21 @@ export async function generateProductLabel({ productName, weight, productId }: L
   const labelUrl = LABEL_MAP[productId];
   if (!labelUrl) throw new Error(`No label image for product: ${productId}`);
 
-  // Convert images to base64 in parallel
-  const [labelB64, legalB64] = await Promise.all([
-    toBase64(labelUrl),
-    toBase64(labelLegal),
-  ]);
+  const labelB64 = await toBase64(labelUrl);
 
   // PDF 100mm x 150mm portrait
   const doc = new jsPDF({ unit: "mm", format: [100, 150], orientation: "portrait" });
   const W = 100;
 
-  // --- Top: product label image (0 → 90mm) ---
-  doc.addImage(labelB64, "PNG", 0, 0, W, 90);
+  // Full image covering most of the page
+  doc.addImage(labelB64, "JPEG", 0, 0, W, 138);
 
-  // --- Middle: weight ---
+  // Weight at the bottom
   const weightText = `${weight}g`;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(28);
   doc.setTextColor(30, 30, 30);
-  doc.text(weightText, W / 2, 102, { align: "center" });
+  doc.text(weightText, W / 2, 146, { align: "center" });
 
-  // Thin separator line
-  doc.setDrawColor(180, 160, 120);
-  doc.setLineWidth(0.3);
-  doc.line(20, 106, 80, 106);
-
-  // --- Bottom: legal label image (108 → 150mm) ---
-  doc.addImage(legalB64, "PNG", 2, 108, W - 4, 40);
-
-  // Download PDF directly (avoids Chrome popup blocker)
   doc.save(`etiquette-${productId}-${weight}g.pdf`);
 }
