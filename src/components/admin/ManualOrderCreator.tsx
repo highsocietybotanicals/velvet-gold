@@ -120,6 +120,30 @@ const ManualOrderCreator = () => {
     return sum + l.weight;
   }, 0);
 
+  // Nombre d'échantillons autorisés (1 par tranche de 10g de fleurs)
+  const allowedSamples = Math.floor(totalFlowerWeight / 10);
+  // Nombre de kits cadeaux (feuilles + briquet par tranche de 10g)
+  const giftKitsCount = includeGifts ? Math.floor(totalFlowerWeight / 10) : 0;
+
+  // Auto-trim samples if flower weight decreases
+  const effectiveSamples = sampleLines.slice(0, allowedSamples);
+  if (effectiveSamples.length !== sampleLines.length) {
+    // Will be trimmed on next render via the UI
+  }
+
+  const addSample = () => {
+    if (effectiveSamples.length >= allowedSamples) return;
+    setSampleLines(prev => [...prev, { productId: "" }]);
+  };
+
+  const removeSample = (idx: number) => {
+    setSampleLines(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateSample = (idx: number, productId: string) => {
+    setSampleLines(prev => prev.map((s, i) => i === idx ? { productId } : s));
+  };
+
   const buildInvoiceHtml = (orderData: any, items: any[]) => {
     const orderNum = orderData.display_order_number || `#${orderData.order_number?.toString().padStart(4, "0") || "0000"}`;
     const date = new Date(orderData.created_at).toLocaleDateString("fr-FR", {
