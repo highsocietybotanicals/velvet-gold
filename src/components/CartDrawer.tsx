@@ -33,6 +33,24 @@ const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFl
       toast.error("Veuillez sélectionner un point relais");
       return;
     }
+    if (deliveryType === "relay") {
+      if (!user && (!guestName || guestName.trim().length === 0)) {
+        toast.error("Veuillez renseigner votre nom et prénom pour la livraison en point relais");
+        return;
+      }
+      if (!user && (!guestEmail || !guestEmail.includes("@"))) {
+        toast.error("Veuillez renseigner un email valide pour la livraison en point relais");
+        return;
+      }
+      if (!user && (!guestPhone || guestPhone.trim().length < 10)) {
+        toast.error("Veuillez renseigner un numéro de téléphone valide pour la livraison en point relais");
+        return;
+      }
+      if (user && (!contactPhone || contactPhone.trim().length < 10)) {
+        toast.error("Veuillez renseigner un numéro de téléphone valide pour la livraison en point relais");
+        return;
+      }
+    }
     if (totalPrice <= 0) return;
     (window as any).__isNavigatingAway = true;
     setIsLoading(true);
@@ -819,10 +837,11 @@ const CartDrawer = () => {
                     />
                     <Input
                       type="tel"
-                      placeholder="Téléphone (optionnel)"
+                      placeholder={deliveryType === "relay" ? "Téléphone *" : "Téléphone (optionnel)"}
                       value={guestPhone}
                       onChange={(e) => setGuestPhone(e.target.value)}
                       className="h-9 text-sm"
+                      required={deliveryType === "relay"}
                     />
                   </div>
                 )}
