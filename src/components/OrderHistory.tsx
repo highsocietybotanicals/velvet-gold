@@ -14,7 +14,42 @@ interface OrderHistoryProps {
 
 const OrderHistoryItem = ({ order }: { order: Order }) => {
   const [expanded, setExpanded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const statusInfo = ORDER_STATUS[order.status as keyof typeof ORDER_STATUS] || ORDER_STATUS.pending;
+
+  const handleDownloadInvoice = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDownloading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-invoice-pdf", {
+        body: { orderId: order.id },
+      });
+      if (error) throw error;
+      if (data?.pdfBase64) {
+        const byteCharacters = atob(data.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = data.invoiceNumber ? `${data.invoiceNumber}.pdf` : `facture-${order.display_order_number || order.order_number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Facture téléchargée !");
+      }
+    } catch (err) {
+      console.error("Download invoice error:", err);
+      toast.error("Erreur lors du téléchargement de la facture");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
