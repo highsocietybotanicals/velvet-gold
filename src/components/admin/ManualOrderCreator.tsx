@@ -146,73 +146,121 @@ const ManualOrderCreator = () => {
 
   const buildInvoiceHtml = (orderData: any, items: any[]) => {
     const orderNum = orderData.display_order_number || `#${orderData.order_number?.toString().padStart(4, "0") || "0000"}`;
+    const invoiceNum = `FA-${orderNum.replace("HSB-", "")}`;
     const date = new Date(orderData.created_at).toLocaleDateString("fr-FR", {
-      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+      day: "2-digit", month: "2-digit", year: "numeric"
     });
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+    const TVA_RATE = 20;
+    const totalTTC = orderData.total_amount;
+    const totalHT = totalTTC / (1 + TVA_RATE / 100);
+    const totalTVA = totalTTC - totalHT;
+
     const itemsHtml = items.map(item => {
       const qty = item.weight ? `${item.weight}g` : `x${item.quantity}`;
+      const unitHT = item.unit_price / (1 + TVA_RATE / 100);
+      const totalItemHT = item.total_price / (1 + TVA_RATE / 100);
       return `<tr>
-        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt">${esc(item.product_name)}</td>
-        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt;text-align:center">${qty}</td>
-        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt;text-align:right">${item.unit_price.toFixed(2)}€</td>
-        <td style="padding:3mm 2mm;border-bottom:0.5px solid #333;font-size:9pt;text-align:right;font-weight:600">${item.total_price.toFixed(2)}€</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt">${esc(item.product_name)}</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:center">${qty}</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${unitHT.toFixed(2)} €</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${TVA_RATE}%</td>
+        <td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right;font-weight:600">${totalItemHT.toFixed(2)} €</td>
       </tr>`;
     }).join("");
 
+    const hasPromo = promoDiscount !== null && promoDiscount > 0;
+
     return `<!DOCTYPE html><html><head>
-      <title>Facture ${orderNum}</title>
+      <title>Facture ${invoiceNum}</title>
       <style>
-        @page { size: A5; margin: 10mm; }
+        @page { size: A4; margin: 15mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; color: #e0d5c0; background: #0a0a0a; padding: 8mm; }
-        .header { text-align: center; border-bottom: 2px solid #b8860b; padding-bottom: 4mm; margin-bottom: 4mm; }
-        .header .brand { font-size: 14pt; font-weight: bold; color: #b8860b; letter-spacing: 1px; }
-        .header .sub { font-size: 8pt; color: #888; margin-top: 1mm; }
-        .info { display: flex; justify-content: space-between; font-size: 8pt; color: #999; margin-bottom: 4mm; padding-bottom: 3mm; border-bottom: 0.5px solid #333; }
-        .info .num { font-weight: bold; font-size: 10pt; color: #b8860b; font-family: monospace; }
-        .client { font-size: 9pt; margin-bottom: 4mm; padding-bottom: 3mm; border-bottom: 0.5px solid #333; }
-        .client .cname { font-weight: bold; font-size: 10pt; color: #e0d5c0; }
-        .client .label { color: #888; font-size: 7pt; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 4mm; }
-        thead th { font-size: 7pt; text-transform: uppercase; color: #b8860b; border-bottom: 1px solid #b8860b; padding: 2mm; text-align: left; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #222; background: #fff; padding: 15mm; font-size: 10pt; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8mm; padding-bottom: 5mm; border-bottom: 3px solid #b8860b; }
+        .brand { font-size: 16pt; font-weight: bold; color: #b8860b; letter-spacing: 1px; }
+        .brand-sub { font-size: 8pt; color: #666; margin-top: 1mm; }
+        .company-info { font-size: 8pt; color: #555; text-align: right; line-height: 1.6; }
+        .company-info strong { color: #333; }
+        .invoice-title { font-size: 18pt; font-weight: bold; color: #b8860b; text-align: center; margin: 6mm 0; letter-spacing: 2px; }
+        .meta-row { display: flex; justify-content: space-between; margin-bottom: 8mm; }
+        .meta-box { background: #f9f7f3; border: 1px solid #e8e0d0; border-radius: 4px; padding: 4mm; width: 48%; }
+        .meta-box h3 { font-size: 7pt; text-transform: uppercase; color: #b8860b; margin-bottom: 2mm; letter-spacing: 1px; }
+        .meta-box p { font-size: 9pt; line-height: 1.5; color: #333; }
+        .meta-box .highlight { font-weight: bold; font-size: 10pt; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+        thead th { font-size: 7pt; text-transform: uppercase; color: #fff; background: #b8860b; padding: 2.5mm 2mm; text-align: left; }
         thead th:nth-child(2) { text-align: center; }
-        thead th:nth-child(3), thead th:nth-child(4) { text-align: right; }
-        .total { border-top: 2px solid #b8860b; padding-top: 3mm; display: flex; justify-content: space-between; font-size: 12pt; font-weight: bold; }
-        .total .amount { color: #b8860b; font-size: 14pt; }
-        .badge { display: inline-block; background: #b8860b22; color: #b8860b; padding: 1mm 3mm; border-radius: 3px; font-size: 8pt; font-weight: 600; margin-top: 3mm; }
-        .footer { margin-top: auto; text-align: center; font-size: 7pt; color: #666; border-top: 0.5px solid #333; padding-top: 3mm; margin-top: 6mm; }
-        .footer .thanks { font-size: 9pt; color: #b8860b; font-weight: 600; margin-bottom: 1mm; }
+        thead th:nth-child(3), thead th:nth-child(4), thead th:nth-child(5) { text-align: right; }
+        .totals { margin-top: 3mm; border-top: 2px solid #b8860b; padding-top: 4mm; }
+        .totals-row { display: flex; justify-content: flex-end; gap: 10mm; font-size: 10pt; padding: 1mm 0; }
+        .totals-row.grand { font-size: 14pt; font-weight: bold; color: #b8860b; border-top: 1px solid #b8860b; padding-top: 3mm; margin-top: 2mm; }
+        .totals-row .label { min-width: 40mm; text-align: right; }
+        .totals-row .value { min-width: 25mm; text-align: right; }
+        .payment-badge { display: inline-block; background: #fff3cd; color: #856404; padding: 2mm 4mm; border-radius: 4px; font-size: 9pt; font-weight: 600; margin-top: 4mm; }
+        .footer { text-align: center; font-size: 7pt; color: #999; border-top: 1px solid #ddd; padding-top: 4mm; margin-top: 10mm; line-height: 1.6; }
+        .footer .thanks { font-size: 10pt; color: #b8860b; font-weight: 600; margin-bottom: 2mm; }
+        .legal { font-size: 7pt; color: #888; margin-top: 4mm; text-align: center; line-height: 1.5; }
       </style>
     </head><body>
       <div class="header">
-        <div class="brand">HIGH SOCIETY BOTANICALS</div>
-        <div class="sub">FACTURE — highsocietybotanicals.com</div>
+        <div>
+          <div class="brand">HIGH SOCIETY BOTANICALS</div>
+          <div class="brand-sub">highsocietybotanicals.com</div>
+        </div>
+        <div class="company-info">
+          <strong>High Society Botanicals</strong><br/>
+          SIRET : 994 621 910 00011<br/>
+          TVA Intra. : FR 48 994 621 910<br/>
+          France
+        </div>
       </div>
-      <div class="info">
-        <div><span class="num">${esc(orderNum)}</span></div>
-        <div>${date}</div>
+
+      <div class="invoice-title">FACTURE</div>
+
+      <div class="meta-row">
+        <div class="meta-box">
+          <h3>Informations facture</h3>
+          <p>
+            <span class="highlight">${esc(invoiceNum)}</span><br/>
+            Commande : ${esc(orderNum)}<br/>
+            Date : ${date}<br/>
+            Mode : Remise en main propre
+          </p>
+        </div>
+        <div class="meta-box">
+          <h3>Client</h3>
+          <p>
+            <span class="highlight">${esc(orderData.guest_name || "Client")}</span><br/>
+            ${orderData.guest_email ? `${esc(orderData.guest_email)}<br/>` : ""}
+            ${orderData.guest_phone ? `Tél : ${esc(orderData.guest_phone)}<br/>` : ""}
+            ${orderData.delivery_address ? `${esc(orderData.delivery_address)}` : ""}
+          </p>
+        </div>
       </div>
-      <div class="client">
-        <div class="cname">${esc(orderData.guest_name || "Client")}</div>
-        ${orderData.guest_phone ? `<div><span class="label">Tél :</span> ${esc(orderData.guest_phone)}</div>` : ""}
-        ${orderData.guest_email ? `<div><span class="label">Email :</span> ${esc(orderData.guest_email)}</div>` : ""}
-        ${orderData.delivery_address ? `<div><span class="label">Adresse :</span> ${esc(orderData.delivery_address)}</div>` : ""}
-        <div><span class="label">Mode :</span> Remise en main propre</div>
-      </div>
+
       <table>
-        <thead><tr><th>Produit</th><th>Qté</th><th>P.U.</th><th>Total</th></tr></thead>
+        <thead><tr><th>Désignation</th><th>Quantité</th><th>Prix unit. HT</th><th>TVA</th><th>Total HT</th></tr></thead>
         <tbody>${itemsHtml}</tbody>
       </table>
-      <div class="total">
-        <span>TOTAL TTC</span>
-        <span class="amount">${orderData.total_amount.toFixed(2)}€</span>
+
+      <div class="totals">
+        <div class="totals-row"><span class="label">Total HT :</span><span class="value">${totalHT.toFixed(2)} €</span></div>
+        <div class="totals-row"><span class="label">TVA (${TVA_RATE}%) :</span><span class="value">${totalTVA.toFixed(2)} €</span></div>
+        ${hasPromo ? `<div class="totals-row" style="color:#b8860b;font-weight:600;"><span class="label">Code promo ${esc(promoCode)} (-${promoDiscount}%) :</span><span class="value">-${discountAmount.toFixed(2)} €</span></div>` : ""}
+        <div class="totals-row grand"><span class="label">TOTAL TTC :</span><span class="value">${totalTTC.toFixed(2)} €</span></div>
       </div>
-      <div class="badge">✅ PAYÉ — Remise en main propre</div>
+
+      <div class="payment-badge">⏳ EN ATTENTE DE PAIEMENT — Remise en main propre</div>
+
+      <div class="legal">
+        High Society Botanicals — SIRET : 994 621 910 00011 — TVA Intra. : FR 48 994 621 910
+      </div>
+
       <div class="footer">
         <div class="thanks">Merci pour votre confiance ! 🌿</div>
-        <div>High Society Botanicals — France</div>
+        <div>High Society Botanicals — France — highsocietybotanicals.com</div>
       </div>
     </body></html>`;
   };
