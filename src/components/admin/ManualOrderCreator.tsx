@@ -272,6 +272,47 @@ const ManualOrderCreator = () => {
         };
       });
 
+      // Add sample items (1g gratuit par tranche de 10g)
+      const validSamples = effectiveSamples.filter(s => s.productId);
+      validSamples.forEach(s => {
+        const product = allProducts.find(p => p.id === s.productId);
+        if (product) {
+          items.push({
+            order_id: order.id,
+            product_id: s.productId,
+            product_name: `${product.name} (Échantillon)`,
+            product_type: "sample",
+            weight: 1,
+            unit_price: 0,
+            total_price: 0,
+          });
+        }
+      });
+
+      // Add gift kits (feuilles + briquet par tranche de 10g)
+      if (giftKitsCount > 0) {
+        items.push({
+          order_id: order.id,
+          product_id: "gift-feuilles",
+          product_name: "Feuilles Slim RAW (Cadeau)",
+          product_type: "gift",
+          weight: null as any,
+          quantity: giftKitsCount,
+          unit_price: 0,
+          total_price: 0,
+        });
+        items.push({
+          order_id: order.id,
+          product_id: "gift-briquet",
+          product_name: "Briquet BIC (Cadeau)",
+          product_type: "gift",
+          weight: null as any,
+          quantity: giftKitsCount,
+          unit_price: 0,
+          total_price: 0,
+        });
+      }
+
       const { error: itemsError } = await supabase.from("order_items").insert(items);
       if (itemsError) throw itemsError;
 
