@@ -461,6 +461,31 @@ const AdminPage = () => {
     isApprovingReview,
     isDeletingReview
   } = useAdmin();
+  const { toast } = useToast();
+  const [trackingSyncing, setTrackingSyncing] = useState(false);
+
+  const handleTrackingSync = async () => {
+    setTrackingSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-colissimo-status");
+      if (error) throw error;
+      toast({
+        title: `Suivi mis à jour`,
+        description: data?.updated > 0
+          ? `${data.updated} commande(s) mise(s) à jour sur ${data.checked} vérifiée(s).`
+          : `${data.checked} commande(s) vérifiée(s), aucune mise à jour.`,
+      });
+    } catch (err: any) {
+      console.error("Tracking sync error:", err);
+      toast({
+        title: "Erreur",
+        description: "Impossible de synchroniser le suivi Colissimo.",
+        variant: "destructive",
+      });
+    } finally {
+      setTrackingSyncing(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
