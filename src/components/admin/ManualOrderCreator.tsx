@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag } from "lucide-react";
+import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
@@ -23,6 +23,10 @@ interface OrderLine {
   weight: number;
 }
 
+interface SampleLine {
+  productId: string;
+}
+
 const ManualOrderCreator = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -32,6 +36,8 @@ const ManualOrderCreator = () => {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1 }]);
+  const [sampleLines, setSampleLines] = useState<SampleLine[]>([]);
+  const [includeGifts, setIncludeGifts] = useState(true);
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState<number | null>(null);
   const [promoError, setPromoError] = useState("");
@@ -113,6 +119,30 @@ const ManualOrderCreator = () => {
     if (!product || product.category !== "fleur") return sum;
     return sum + l.weight;
   }, 0);
+
+  // Nombre d'échantillons autorisés (1 par tranche de 10g de fleurs)
+  const allowedSamples = Math.floor(totalFlowerWeight / 10);
+  // Nombre de kits cadeaux (feuilles + briquet par tranche de 10g)
+  const giftKitsCount = includeGifts ? Math.floor(totalFlowerWeight / 10) : 0;
+
+  // Auto-trim samples if flower weight decreases
+  const effectiveSamples = sampleLines.slice(0, allowedSamples);
+  if (effectiveSamples.length !== sampleLines.length) {
+    // Will be trimmed on next render via the UI
+  }
+
+  const addSample = () => {
+    if (effectiveSamples.length >= allowedSamples) return;
+    setSampleLines(prev => [...prev, { productId: "" }]);
+  };
+
+  const removeSample = (idx: number) => {
+    setSampleLines(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateSample = (idx: number, productId: string) => {
+    setSampleLines(prev => prev.map((s, i) => i === idx ? { productId } : s));
+  };
 
   const buildInvoiceHtml = (orderData: any, items: any[]) => {
     const orderNum = orderData.display_order_number || `#${orderData.order_number?.toString().padStart(4, "0") || "0000"}`;
@@ -228,7 +258,16 @@ const ManualOrderCreator = () => {
 
       if (orderError) throw orderError;
 
-      const items = validLines.map(l => {
+      const items: Array<{
+        order_id: string;
+        product_id: string;
+        product_name: string;
+        product_type: string;
+        weight?: number | null;
+        quantity?: number | null;
+        unit_price: number;
+        total_price: number;
+      }> = validLines.map(l => {
         const product = allProducts.find(p => p.id === l.productId)!;
         const lineTotal = calculateLineTotal(l);
         return {
@@ -242,6 +281,47 @@ const ManualOrderCreator = () => {
         };
       });
 
+      // Add sample items (1g gratuit par tranche de 10g)
+      const validSamples = effectiveSamples.filter(s => s.productId);
+      validSamples.forEach(s => {
+        const product = allProducts.find(p => p.id === s.productId);
+        if (product) {
+          items.push({
+            order_id: order.id,
+            product_id: s.productId,
+            product_name: `${product.name} (Échantillon)`,
+            product_type: "sample",
+            weight: 1,
+            unit_price: 0,
+            total_price: 0,
+          });
+        }
+      });
+
+      // Add gift kits (feuilles + briquet par tranche de 10g)
+      if (giftKitsCount > 0) {
+        items.push({
+          order_id: order.id,
+          product_id: "gift-feuilles",
+          product_name: "Feuilles Slim RAW (Cadeau)",
+          product_type: "gift",
+          weight: null,
+          quantity: giftKitsCount,
+          unit_price: 0,
+          total_price: 0,
+        });
+        items.push({
+          order_id: order.id,
+          product_id: "gift-briquet",
+          product_name: "Briquet BIC (Cadeau)",
+          product_type: "gift",
+          weight: null,
+          quantity: giftKitsCount,
+          unit_price: 0,
+          total_price: 0,
+        });
+      }
+
       const { error: itemsError } = await supabase.from("order_items").insert(items);
       if (itemsError) throw itemsError;
 
@@ -254,6 +334,7 @@ const ManualOrderCreator = () => {
       setCustomerPhone("");
       setCustomerAddress("");
       setLines([{ productId: "", weight: 1 }]);
+      setSampleLines([]);
       clearPromo();
     } catch (error) {
       console.error("Error creating manual order:", error);
@@ -340,6 +421,58 @@ const ManualOrderCreator = () => {
               <Plus className="h-4 w-4" /> Ajouter un produit
             </Button>
           </div>
+
+          {/* Échantillons & cadeaux */}
+          {allowedSamples > 0 && (
+            <div className="space-y-3 rounded-lg border border-gold/20 bg-gold/5 p-4">
+              <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                <Gift className="h-4 w-4 text-gold" /> Cadeaux ({Math.floor(totalFlowerWeight / 10)} tranche{Math.floor(totalFlowerWeight / 10) > 1 ? "s" : ""} de 10g)
+              </label>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={includeGifts}
+                  onChange={e => setIncludeGifts(e.target.checked)}
+                  className="accent-gold"
+                  id="include-gifts"
+                />
+                <label htmlFor="include-gifts" className="text-sm text-muted-foreground">
+                  Inclure {giftKitsCount > 0 ? `${giftKitsCount}x` : ""} Feuilles Slim RAW + Briquet BIC (offerts)
+                </label>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Échantillons 1g offerts : {effectiveSamples.length}/{allowedSamples} utilisé{effectiveSamples.length > 1 ? "s" : ""}
+                </p>
+                {effectiveSamples.map((sample, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Select value={sample.productId} onValueChange={v => updateSample(idx, v)}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Choisir un échantillon (1g)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allProducts.filter(p => p.category === "fleur").map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-muted-foreground">1g</span>
+                    <span className="text-xs font-medium text-green-500">OFFERT</span>
+                    <Button variant="ghost" size="sm" onClick={() => removeSample(idx)} className="text-destructive h-7 w-7 p-0">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+                {effectiveSamples.length < allowedSamples && (
+                  <Button variant="outline" size="sm" onClick={addSample} className="gap-1 text-xs">
+                    <Plus className="h-3.5 w-3.5" /> Ajouter un échantillon
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Promo code */}
           <div className="space-y-2">
