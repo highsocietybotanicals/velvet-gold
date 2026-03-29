@@ -46,12 +46,26 @@ Deno.serve(async (req) => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const shippingDate = `${String(tomorrow.getDate()).padStart(2, "0")}/${String(tomorrow.getMonth() + 1).padStart(2, "0")}/${tomorrow.getFullYear()}`;
 
+    // Resolve city from postal code if not provided
+    let resolvedCity = city || "";
+    if (!resolvedCity) {
+      try {
+        const geoRes = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${postalCode}&fields=nom&limit=1`);
+        const geoData = await geoRes.json();
+        if (geoData && geoData.length > 0) {
+          resolvedCity = geoData[0].nom;
+        }
+      } catch (e) {
+        console.warn("City lookup failed:", e);
+      }
+    }
+
     const body = {
       accountNumber: contractNumber,
       password: password,
       countryCode: "FR",
       zipCode: postalCode,
-      city: city || "",
+      city: resolvedCity,
       weight: "500",
       shippingDate,
       filterRelay: "1",
@@ -60,7 +74,7 @@ Deno.serve(async (req) => {
       optionInter: "0",
     };
 
-    console.log("Calling Colissimo relay API for postal code:", postalCode);
+    console.log("Calling Colissimo relay API for postal code:", postalCode, "city:", resolvedCity);
 
     const colissimoUrl = COLISSIMO_RELAY_URL;
     console.log("Calling URL:", colissimoUrl);
