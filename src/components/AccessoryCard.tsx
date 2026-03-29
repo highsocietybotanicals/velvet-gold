@@ -39,6 +39,7 @@ const AccessoryCard = ({ accessory, index }: AccessoryCardProps) => {
         <img
           src={accessory.image}
           alt={accessory.name}
+          loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110"
           onError={(e) => {
             e.currentTarget.src = "/placeholder.svg";
