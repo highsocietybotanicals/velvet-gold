@@ -23,6 +23,10 @@ interface OrderLine {
   weight: number;
 }
 
+interface SampleLine {
+  productId: string;
+}
+
 const ManualOrderCreator = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
