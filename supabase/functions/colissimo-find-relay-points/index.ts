@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     }
 
     // Extract relay points from response
-    const rawPoints = data.listePointRetraitAchworking || [];
+    const rawPoints = data.listePointRetraitAcheminement || [];
     const points = rawPoints.map((p: any) => ({
       id: p.identifiant,
       name: p.nom,
