@@ -168,6 +168,7 @@ const ManualOrderCreator = () => {
         <div class="cname">${esc(orderData.guest_name || "Client")}</div>
         ${orderData.guest_phone ? `<div><span class="label">Tél :</span> ${esc(orderData.guest_phone)}</div>` : ""}
         ${orderData.guest_email ? `<div><span class="label">Email :</span> ${esc(orderData.guest_email)}</div>` : ""}
+        ${orderData.delivery_address ? `<div><span class="label">Adresse :</span> ${esc(orderData.delivery_address)}</div>` : ""}
         <div><span class="label">Mode :</span> Remise en main propre</div>
       </div>
       <table>
