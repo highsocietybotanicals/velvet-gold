@@ -1,8 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin, ProRequest, AdminOrder, VatRequest, PendingReview } from "@/hooks/useAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PriceManagement from "@/components/admin/PriceManagement";
@@ -44,7 +46,8 @@ import {
   Star,
   MessageSquare,
   DollarSign,
-  Download
+  Download,
+  RefreshCw
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -458,6 +461,31 @@ const AdminPage = () => {
     isApprovingReview,
     isDeletingReview
   } = useAdmin();
+  const { toast } = useToast();
+  const [trackingSyncing, setTrackingSyncing] = useState(false);
+
+  const handleTrackingSync = async () => {
+    setTrackingSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-colissimo-status");
+      if (error) throw error;
+      toast({
+        title: `Suivi mis à jour`,
+        description: data?.updated > 0
+          ? `${data.updated} commande(s) mise(s) à jour sur ${data.checked} vérifiée(s).`
+          : `${data.checked} commande(s) vérifiée(s), aucune mise à jour.`,
+      });
+    } catch (err: any) {
+      console.error("Tracking sync error:", err);
+      toast({
+        title: "Erreur",
+        description: "Impossible de synchroniser le suivi Colissimo.",
+        variant: "destructive",
+      });
+    } finally {
+      setTrackingSyncing(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -665,7 +693,7 @@ const AdminPage = () => {
             transition={{ delay: 0.2 }}
           >
             <Card className="border-gold/20">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-gold" />
                   Toutes les commandes
@@ -673,6 +701,20 @@ const AdminPage = () => {
                     {allOrders.length}
                   </Badge>
                 </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTrackingSync}
+                  disabled={trackingSyncing}
+                  className="border-primary/30 text-primary hover:bg-primary/10"
+                >
+                  {trackingSyncing ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                  )}
+                  Sync Colissimo
+                </Button>
               </CardHeader>
               <CardContent>
                 {allOrders.length === 0 ? (
