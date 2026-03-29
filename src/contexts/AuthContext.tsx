@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { saveContact } from "@/lib/saveContact";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -173,6 +174,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
       if (error) throw error;
+
+      // Save contact
+      saveContact({ email, source: "signup" });
 
       // If Pro account, update profile with company info
       if (accountType === 'pro' && proInfo && data.user) {
