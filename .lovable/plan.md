@@ -1,69 +1,70 @@
 
 
-# Livraison en Point Relais Colissimo
+# Plan : Étiquettes produit 10x15 cm avec jsPDF
 
 ## Résumé
 
-Ajouter une option "Point Relais" au checkout. Le client entre son code postal, une liste de points relais Colissimo s'affiche, il en sélectionne un. L'étiquette Colissimo est générée avec le code produit `A2P` (relay) au lieu de `DOM` (domicile).
+Ajouter un bouton "Étiquette 10×15" dans l'admin, par ligne produit d'une commande. Au clic, un PDF 100mm×150mm est généré client-side avec jsPDF, combinant :
+- **Haut** : les images d'étiquette uploadées (devant marque avec cadre vintage, nom variété, description)
+- **Bas** : le bloc légal pot-pourri trilingue + pictogrammes
+- **Milieu** : grammage en gros
 
-## Changements
+## Approche clé : utiliser les images uploadées directement
 
-### 1. Migration — Colonnes relay sur `orders`
+Les 8 images de référence (911 OG, Blue Mango, Nuage de Mousseux, Golden, Ice-O-Lator, Amnesia, Mint Kush, Platinum OG) et l'image légale seront copiées dans `src/assets/labels/` et utilisées comme images dans le PDF via `doc.addImage()`. Pas besoin de recréer le cadre vintage programmatiquement -- on utilise les vrais designs.
 
-```sql
-ALTER TABLE public.orders
-  ADD COLUMN relay_point_id text,
-  ADD COLUMN relay_point_name text,
-  ADD COLUMN relay_point_address text;
-```
+## Fichiers
 
-### 2. Edge function `colissimo-find-relay-points/index.ts` (nouveau)
+### 1. Copier les assets (9 images)
+- `src/assets/labels/911-og-label.png` (from user-uploads://1773092414184.png)
+- `src/assets/labels/nuage-label.png` (from user-uploads://1773092636365.png)
+- `src/assets/labels/blue-mango-label.png` (from user-uploads://1773092731734.png)
+- `src/assets/labels/golden-label.png` (from user-uploads://1773092947110.png)
+- `src/assets/labels/ice-o-lator-label.png` (from user-uploads://1773093024196.png)
+- `src/assets/labels/amnesia-label.png` (from user-uploads://1773093253659.png)
+- `src/assets/labels/mint-kush-label.png` (from user-uploads://1773093501496.png)
+- `src/assets/labels/platinum-og-label.png` (from user-uploads://1773093638540.png)
+- `src/assets/labels/legal-label.png` (from user-uploads://1774021876107.png)
 
-- Reçoit `{ postalCode }` en body
-- Appelle l'API Colissimo Point Retrait : `https://ws.colissimo.fr/pointretrait-ws-cxf/PointRetraitServiceWSRest/2.0/findRDVPointRetraitAchworking` avec le `accountNumber` (COLISSIMO_CONTRACT_NUMBER) et le code postal
-- Retourne la liste des points (identifiant, nom, adresse, horaires, type)
-- CORS + validation du code postal (5 chiffres)
+### 2. `src/lib/labelPdf.ts` (NEW)
+- Install `jspdf` dependency
+- Map product IDs to their label images
+- Function `generateProductLabel(productName, productDescription, weight, productId)`:
+  - Create jsPDF doc `{ unit: 'mm', format: [100, 150], orientation: 'portrait' }`
+  - **Top ~60%** : draw the product label image (cadre vintage + nom + description)
+  - **Middle** : grammage bold (ex: "5g") in large font, centered
+  - **Bottom ~35%** : draw the legal label image (mentions trilingues + pictogrammes)
+  - Return blob URL or trigger download
 
-### 3. `DeliverySection.tsx` — Option "Point Relais"
+### 3. `src/components/admin/MolecularLabel.tsx` (NEW)
+- Button component receiving order item data (product_name, weight, product_id)
+- Matches product_id against `allProducts` to find the correct label image
+- On click: calls `generateProductLabel()` and opens PDF
+- Icon: Tag or Printer, text "Étiquette 10×15"
+- **Applies to ALL 8 products**, not just Force Noire
 
-- Étendre le type `deliveryType` à `"postal" | "personal" | "relay"`
-- Nouveau bouton radio "Point Relais Colissimo" avec icône MapPin
-- Quand sélectionné : champ code postal + bouton "Rechercher"
-- Liste des résultats cliquables (nom, adresse, type de point)
-- Point sélectionné affiché en surbrillance
-- Nouvelles props : `relayPointId`, `relayPointName`, `relayPointAddress` remontées au parent
+### 4. `src/pages/AdminPage.tsx` (EDIT)
+- Import `MolecularLabel`
+- In the order items column (lines 361-365), add the label button next to each product line
+- The button appears for any product that has a matching label image
 
-### 4. `CartDrawer.tsx` — Prise en charge du type relay
+## Mapping produit → image étiquette
 
-- État pour `relayPointId`, `relayPointName`, `relayPointAddress`
-- Passer ces infos au `PaymentButton`
-- Dans le body envoyé à `create-viva-payment` : ajouter `relayPointId`, `relayPointName`, `relayPointAddress`
-- Validation : un point relais doit être sélectionné si `deliveryType === "relay"`
+| Product ID | Label Image |
+|---|---|
+| `911-og-indoor` | 911-og-label.png |
+| `blue-mango-indoor` | blue-mango-label.png |
+| `nuage-de-mousseux` | nuage-label.png |
+| `golden-cbn` | golden-label.png |
+| `ice-o-lator` | ice-o-lator-label.png |
+| `amnesia-signature-oniria` | amnesia-label.png |
+| `mint-kush` | mint-kush-label.png |
+| `platinum-og` | platinum-og-label.png |
 
-### 5. `create-viva-payment/index.ts` — Stocker les infos relay
+## Détails techniques
 
-- Lire les champs `relayPointId`, `relayPointName`, `relayPointAddress` du body
-- Les insérer dans la commande lors de la création
-
-### 6. `generate-colissimo-label/index.ts` — Code produit A2P
-
-- Si `order.relay_point_id` est présent :
-  - `productCode: "A2P"` au lieu de `"DOM"`
-  - Ajouter `pickupLocationId: order.relay_point_id` dans le service
-- Sinon : comportement actuel inchangé (`DOM`)
-
-### 7. `OrderSummaryPrint.tsx` — Afficher le point relais
-
-- Si la commande a un `relay_point_name` : afficher "Point Relais : [nom] — [adresse]" dans la facture
-
-## Fichiers créés/modifiés
-
-- Migration SQL (3 colonnes sur orders)
-- `supabase/functions/colissimo-find-relay-points/index.ts` — nouveau
-- `supabase/config.toml` — ajouter config pour la nouvelle function
-- `src/components/DeliverySection.tsx`
-- `src/components/CartDrawer.tsx`
-- `supabase/functions/create-viva-payment/index.ts`
-- `supabase/functions/generate-colissimo-label/index.ts`
-- `src/components/admin/OrderSummaryPrint.tsx`
+- Les images uploadées sont utilisées telles quelles dans le PDF (haute qualité, design déjà finalisé)
+- Le grammage est ajouté programmatiquement entre les deux images
+- Format fixe 100×150mm, le contenu est redimensionné pour s'adapter sans déformation
+- jsPDF supporte l'ajout d'images PNG en base64 via import Vite
 
