@@ -404,6 +404,20 @@ const DeliverySection = ({
               <p className="text-xs text-muted-foreground mt-1">{relayPointAddress}</p>
             </div>
           )}
+
+          {/* Phone for relay (logged-in users) */}
+          <div>
+            <Label className="text-xs text-muted-foreground">Téléphone *</Label>
+            <Input
+              type="tel"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              placeholder="06 12 34 56 78"
+              className="mt-1 bg-background border-border text-sm"
+              required
+            />
+            <p className="text-xs text-muted-foreground mt-1">Requis pour le retrait en point relais</p>
+          </div>
         </motion.div>
       )}
 
