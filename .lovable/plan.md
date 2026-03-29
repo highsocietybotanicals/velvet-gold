@@ -1,46 +1,45 @@
 
 
-# Plan : Simplifier les étiquettes — une seule image + grammage
+# Plan : Envoyer la facture PDF au client par email
 
-## Contexte
+## Problème
 
-Les nouvelles images uploadées contiennent DEJA le design de marque ET les mentions legales fusionnes dans une seule image. Il suffit donc d'utiliser cette image unique en pleine page et d'ajouter le grammage dynamiquement par-dessus.
+Actuellement, la facture n'existe que côté admin (impression navigateur). Le client ne reçoit jamais sa facture, ni en pièce jointe, ni via un lien de téléchargement.
+
+## Approche proposée
+
+Générer un PDF de facture côté serveur (edge function) et l'envoyer par email au client lors de la confirmation de commande ou du passage en statut "payé".
 
 ## Modifications
 
-### 1. Remplacer les 9 assets labels par les 8 nouvelles images
+### 1. Nouvelle edge function `generate-invoice-pdf`
 
-Copier les uploads vers `src/assets/labels/`, en ecrasant les anciens fichiers. Supprimer `legal-label.png` qui n'est plus necessaire.
+- Reprend le template HTML de facture existant (`OrderSummaryPrint`)
+- Utilise une librairie comme jsPDF (ou rendu HTML vers PDF) pour générer le PDF côté serveur
+- Accepte un `order_id`, récupère les données de commande + items + profil client
+- Retourne le PDF en base64
 
-| Upload | Destination |
-|---|---|
-| `user-uploads://911OG.jpg` | `src/assets/labels/911-og-label.png` |
-| `user-uploads://blue_mango.jpg` | `src/assets/labels/blue-mango-label.png` |
-| `user-uploads://Nuage_de_mousseux.jpg` | `src/assets/labels/nuage-label.png` |
-| `user-uploads://golden.jpg` | `src/assets/labels/golden-label.png` |
-| `user-uploads://ice_o_lator.jpg` | `src/assets/labels/ice-o-lator-label.png` |
-| `user-uploads://amnesia.jpg` | `src/assets/labels/amnesia-label.png` |
-| `user-uploads://mint_kush.jpg` | `src/assets/labels/mint-kush-label.png` |
-| `user-uploads://platinium_og.jpg` | `src/assets/labels/platinum-og-label.png` |
+### 2. Modifier `send-order-confirmation` pour attacher la facture
 
-### 2. Simplifier `src/lib/labelPdf.ts`
+- Après génération de la commande, appelle `generate-invoice-pdf`
+- Encode le PDF en base64 et l'inclut dans l'email via Gmail SMTP (pièce jointe)
+- Alternative : stocker le PDF dans un bucket Supabase Storage et inclure un lien de téléchargement dans l'email
 
-- Supprimer l'import de `labelLegal` (plus besoin)
-- L'image unique occupe quasi toute la page (0 a ~140mm)
-- Le grammage (ex: "5g") est ajoute en gros caracteres bold, positionne en bas de l'etiquette (~145mm), centre
-- Plus de separateur ni de deuxieme image
+### 3. Accès client dans l'espace profil (optionnel)
 
-```text
-┌──────────────────┐  0mm
-│                  │
-│  IMAGE COMPLETE  │  L'image contient deja
-│  (marque + legal │  le design + mentions
-│   + pictogrammes)│
-│                  │
-│                  │
-│                  │
-├──────────────────┤  ~138mm
-│      5g          │  Grammage dynamique bold
-└──────────────────┘  150mm
-```
+- Ajouter un bouton "Télécharger la facture" dans `OrderHistory` / `OrderTracking` côté client
+- Le bouton appelle l'edge function et déclenche le téléchargement
+
+## Détails techniques
+
+- Le PDF sera généré avec `jsPDF` dans l'edge function (compatible Deno)
+- L'email Gmail SMTP supporte les pièces jointes en base64 via le format MIME multipart
+- Le template de facture réutilisera les mêmes données et calculs TVA que `OrderSummaryPrint`
+
+## Question à clarifier
+
+Il y a deux approches pour la livraison de la facture :
+- **Pièce jointe email** : le PDF est directement attaché à l'email de confirmation
+- **Lien de téléchargement** : le PDF est stocké en storage, un lien est inclus dans l'email + disponible dans l'espace client
+- **Les deux** : pièce jointe + accès depuis le profil
 
