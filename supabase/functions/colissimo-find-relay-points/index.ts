@@ -63,7 +63,17 @@ Deno.serve(async (req) => {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data: any;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error("Colissimo returned non-JSON:", responseText.substring(0, 200));
+      return new Response(
+        JSON.stringify({ error: "L'API Colissimo a retourné une réponse invalide", points: [] }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!response.ok) {
       console.error("Colissimo relay API error:", response.status, data);
