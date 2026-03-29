@@ -255,7 +255,35 @@ Deno.serve(async (req) => {
       "L'equipe HSB",
     ].join("\n");
 
-    // Send via Gmail SMTP
+    // Generate invoice PDF
+    let invoicePdfBase64: string | null = null;
+    let invoiceFileName = `facture-${orderNumber}.pdf`;
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const invoiceRes = await fetch(`${supabaseUrl}/functions/v1/generate-invoice-pdf`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({ orderId }),
+      });
+      if (invoiceRes.ok) {
+        const invoiceData = await invoiceRes.json();
+        invoicePdfBase64 = invoiceData.pdfBase64;
+        if (invoiceData.invoiceNumber) {
+          invoiceFileName = `${invoiceData.invoiceNumber}.pdf`;
+        }
+        console.log("Invoice PDF generated successfully");
+      } else {
+        console.error("Failed to generate invoice PDF:", await invoiceRes.text());
+      }
+    } catch (invoiceErr) {
+      console.error("Invoice generation error:", invoiceErr);
+    }
+
+    // Send via Gmail SMTP with MIME multipart (attachment if PDF available)
     const gmailUser = Deno.env.get("GMAIL_USER")!;
     const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD")!;
 
@@ -271,13 +299,27 @@ Deno.serve(async (req) => {
       },
     });
 
-    await client.send({
+    const sendOptions: any = {
       from: `HSB <${gmailUser}>`,
       to: recipientEmail,
       subject: `Merci ${orderNumber} - HSB`,
       content: textContent,
       html: htmlEmail,
-    });
+    };
+
+    if (invoicePdfBase64) {
+      // denomailer supports attachments
+      sendOptions.attachments = [
+        {
+          encoding: "base64",
+          filename: invoiceFileName,
+          content: invoicePdfBase64,
+          contentType: "application/pdf",
+        },
+      ];
+    }
+
+    await client.send(sendOptions);
 
     await client.close();
 

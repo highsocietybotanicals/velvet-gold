@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { History, ChevronDown, ChevronUp, Package } from "lucide-react";
+import { History, ChevronDown, ChevronUp, Package, FileDown, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Order, ORDER_STATUS } from "@/hooks/useOrders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface OrderHistoryProps {
   orders: Order[];
