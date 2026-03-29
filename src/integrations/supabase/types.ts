@@ -198,6 +198,9 @@ export type Database = {
           id: string
           order_number: number
           payment_status: string
+          promo_code: string | null
+          promo_discount_amount: number | null
+          promo_discount_percent: number | null
           relay_point_address: string | null
           relay_point_id: string | null
           relay_point_name: string | null
@@ -224,6 +227,9 @@ export type Database = {
           id?: string
           order_number?: number
           payment_status?: string
+          promo_code?: string | null
+          promo_discount_amount?: number | null
+          promo_discount_percent?: number | null
           relay_point_address?: string | null
           relay_point_id?: string | null
           relay_point_name?: string | null
@@ -250,6 +256,9 @@ export type Database = {
           id?: string
           order_number?: number
           payment_status?: string
+          promo_code?: string | null
+          promo_discount_amount?: number | null
+          promo_discount_percent?: number | null
           relay_point_address?: string | null
           relay_point_id?: string | null
           relay_point_name?: string | null
