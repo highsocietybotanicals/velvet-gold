@@ -453,8 +453,8 @@ const ManualOrderCreator = () => {
                         <SelectValue placeholder="Choisir un échantillon (1g)" />
                       </SelectTrigger>
                       <SelectContent>
-                        {allProducts.filter(p => p.category === "fleur").map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        {allProducts.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.name} ({p.category === "fleur" ? "Fleur" : "Résine"})</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
