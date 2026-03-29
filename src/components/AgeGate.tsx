@@ -1,10 +1,39 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo.jpeg";
 
 interface AgeGateProps {
   onVerified: () => void;
 }
+
+const GoldParticlesGate = () => {
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 20 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        yDrift: Math.random() * -200,
+        duration: 4 + Math.random() * 4,
+        delay: Math.random() * 2,
+      })),
+    []
+  );
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          className="absolute w-1 h-1 rounded-full bg-primary"
+          style={{ left: `${p.x}%`, top: `${p.y}%` }}
+          animate={{ y: [0, p.yDrift], opacity: [0, 0.8, 0] }}
+          transition={{ duration: p.duration, repeat: Infinity, delay: p.delay }}
+        />
+      ))}
+    </div>
+  );
+};
 
 const AgeGate = ({ onVerified }: AgeGateProps) => {
   const [isExiting, setIsExiting] = useState(false);
@@ -28,28 +57,7 @@ const AgeGate = ({ onVerified }: AgeGateProps) => {
           <div className="absolute inset-0 texture-velvet opacity-50" />
           
           {/* Floating gold particles */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {[...Array(20)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 rounded-full bg-primary"
-                initial={{
-                  x: Math.random() * window.innerWidth,
-                  y: Math.random() * window.innerHeight,
-                  opacity: 0,
-                }}
-                animate={{
-                  y: [null, Math.random() * -200],
-                  opacity: [0, 0.8, 0],
-                }}
-                transition={{
-                  duration: 4 + Math.random() * 4,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                }}
-              />
-            ))}
-          </div>
+          <GoldParticlesGate />
 
           {/* Content */}
           <motion.div

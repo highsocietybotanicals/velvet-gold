@@ -1,51 +1,62 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "./PageTransition";
 import Index from "@/pages/Index";
-import CataloguePage from "@/pages/CataloguePage";
-import ProductPage from "@/pages/ProductPage";
-import AccessoryPage from "@/pages/AccessoryPage";
-import SampleSelectionPage from "@/pages/SampleSelectionPage";
-import SommelierPage from "@/pages/SommelierPage";
-import SocietePage from "@/pages/SocietePage";
-import ContactPage from "@/pages/ContactPage";
-import AuthPage from "@/pages/AuthPage";
-import ProfilePage from "@/pages/ProfilePage";
-import AdminPage from "@/pages/AdminPage";
-import MentionsLegalesPage from "@/pages/MentionsLegalesPage";
-import ConfidentialitePage from "@/pages/ConfidentialitePage";
-import CGVPage from "@/pages/CGVPage";
-import LivraisonRetoursPage from "@/pages/LivraisonRetoursPage";
-import NotFound from "@/pages/NotFound";
-import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
-import PaymentFailurePage from "@/pages/PaymentFailurePage";
+
+// Lazy load non-critical pages for faster initial load
+const CataloguePage = lazy(() => import("@/pages/CataloguePage"));
+const ProductPage = lazy(() => import("@/pages/ProductPage"));
+const AccessoryPage = lazy(() => import("@/pages/AccessoryPage"));
+const SampleSelectionPage = lazy(() => import("@/pages/SampleSelectionPage"));
+const SommelierPage = lazy(() => import("@/pages/SommelierPage"));
+const SocietePage = lazy(() => import("@/pages/SocietePage"));
+const ContactPage = lazy(() => import("@/pages/ContactPage"));
+const AuthPage = lazy(() => import("@/pages/AuthPage"));
+const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
+const AdminPage = lazy(() => import("@/pages/AdminPage"));
+const MentionsLegalesPage = lazy(() => import("@/pages/MentionsLegalesPage"));
+const ConfidentialitePage = lazy(() => import("@/pages/ConfidentialitePage"));
+const CGVPage = lazy(() => import("@/pages/CGVPage"));
+const LivraisonRetoursPage = lazy(() => import("@/pages/LivraisonRetoursPage"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const PaymentSuccessPage = lazy(() => import("@/pages/PaymentSuccessPage"));
+const PaymentFailurePage = lazy(() => import("@/pages/PaymentFailurePage"));
+
+const LazyFallback = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-        <Route path="/catalogue" element={<PageTransition><CataloguePage /></PageTransition>} />
-        <Route path="/produit/:id" element={<PageTransition><ProductPage /></PageTransition>} />
-        <Route path="/accessoire/:id" element={<PageTransition><AccessoryPage /></PageTransition>} />
-        <Route path="/echantillon" element={<PageTransition><SampleSelectionPage /></PageTransition>} />
-        <Route path="/sommelier" element={<PageTransition><SommelierPage /></PageTransition>} />
-        <Route path="/societe" element={<PageTransition><SocietePage /></PageTransition>} />
-        <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
-        <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
-        <Route path="/profil" element={<PageTransition><ProfilePage /></PageTransition>} />
-        <Route path="/admin" element={<PageTransition><AdminPage /></PageTransition>} />
-        <Route path="/mentions-legales" element={<PageTransition><MentionsLegalesPage /></PageTransition>} />
-        <Route path="/confidentialite" element={<PageTransition><ConfidentialitePage /></PageTransition>} />
-        <Route path="/cgv" element={<PageTransition><CGVPage /></PageTransition>} />
-        <Route path="/livraison-retours" element={<PageTransition><LivraisonRetoursPage /></PageTransition>} />
-        <Route path="/payment-success" element={<PageTransition><PaymentSuccessPage /></PageTransition>} />
-        <Route path="/payment-failure" element={<PageTransition><PaymentFailurePage /></PageTransition>} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
+    <Suspense fallback={<LazyFallback />}>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+          <Route path="/catalogue" element={<PageTransition><CataloguePage /></PageTransition>} />
+          <Route path="/produit/:id" element={<PageTransition><ProductPage /></PageTransition>} />
+          <Route path="/accessoire/:id" element={<PageTransition><AccessoryPage /></PageTransition>} />
+          <Route path="/echantillon" element={<PageTransition><SampleSelectionPage /></PageTransition>} />
+          <Route path="/sommelier" element={<PageTransition><SommelierPage /></PageTransition>} />
+          <Route path="/societe" element={<PageTransition><SocietePage /></PageTransition>} />
+          <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
+          <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
+          <Route path="/profil" element={<PageTransition><ProfilePage /></PageTransition>} />
+          <Route path="/admin" element={<PageTransition><AdminPage /></PageTransition>} />
+          <Route path="/mentions-legales" element={<PageTransition><MentionsLegalesPage /></PageTransition>} />
+          <Route path="/confidentialite" element={<PageTransition><ConfidentialitePage /></PageTransition>} />
+          <Route path="/cgv" element={<PageTransition><CGVPage /></PageTransition>} />
+          <Route path="/livraison-retours" element={<PageTransition><LivraisonRetoursPage /></PageTransition>} />
+          <Route path="/payment-success" element={<PageTransition><PaymentSuccessPage /></PageTransition>} />
+          <Route path="/payment-failure" element={<PageTransition><PaymentFailurePage /></PageTransition>} />
+          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        </Routes>
+      </AnimatePresence>
+    </Suspense>
   );
 };
 

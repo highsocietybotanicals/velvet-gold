@@ -228,9 +228,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const totalFlowerWeight = items.reduce((sum, item) => sum + item.weight, 0);
   
   const totalPrice = 
-    // Flower prices
+    // Flower prices (pass priceGroup for correct tier discounts)
     items.reduce((sum, item) => {
-      const { finalPrice } = calculateItemPrice(item.product.price, item.weight);
+      const priceGroup = item.product.priceGroup || "A";
+      const { finalPrice } = calculateItemPrice(item.product.price, item.weight, priceGroup);
       return sum + finalPrice;
     }, 0) +
     // Accessory prices

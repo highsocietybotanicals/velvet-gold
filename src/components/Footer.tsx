@@ -137,7 +137,7 @@ const Footer = () => {
         <div className="pt-8 border-t border-border/30">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground/60 font-body text-center md:text-left">
-              © 2024 High Society Botanicals - SASU au capital de 1€ - Paris
+              © 2025 High Society Botanicals - SASU au capital de 1€ - Paris
             </p>
             <p className="text-xs text-muted-foreground/60 font-body text-center">
               Fleurs de collection issues de variétés Cannabis Sativa L. autorisées, &lt;0.3% THC
