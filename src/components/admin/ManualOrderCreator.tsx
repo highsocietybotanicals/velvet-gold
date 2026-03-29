@@ -251,6 +251,7 @@ const ManualOrderCreator = () => {
       setCustomerName("");
       setCustomerEmail("");
       setCustomerPhone("");
+      setCustomerAddress("");
       setLines([{ productId: "", weight: 1 }]);
       clearPromo();
     } catch (error) {
