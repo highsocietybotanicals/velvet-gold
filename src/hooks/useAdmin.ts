@@ -140,9 +140,9 @@ export const useAdmin = () => {
       return ordersData.map(order => ({
         ...order,
         user_email: emailMap.get(order.user_id) || "Email inconnu",
-        promo_code: promoMap.get(order.id)?.code || undefined,
-        promo_discount_percent: promoMap.get(order.id)?.discount_percent || undefined,
-        promo_discount_amount: promoMap.get(order.id)?.discount_amount || undefined,
+        promo_code: order.promo_code ?? promoMap.get(order.id)?.code ?? undefined,
+        promo_discount_percent: order.promo_discount_percent ?? promoMap.get(order.id)?.discount_percent ?? undefined,
+        promo_discount_amount: order.promo_discount_amount ?? promoMap.get(order.id)?.discount_amount ?? undefined,
       })) as AdminOrder[];
     },
     enabled: !!user && isAdmin,
