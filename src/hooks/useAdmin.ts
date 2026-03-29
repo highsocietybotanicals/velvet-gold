@@ -122,13 +122,15 @@ export const useAdmin = () => {
 
       if (ordersError) throw ordersError;
 
-      const userIds = [...new Set(ordersData.map(o => o.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, email")
-        .in("id", userIds);
-
-      const emailMap = new Map(profiles?.map(p => [p.id, p.email]) || []);
+      const userIds = [...new Set(ordersData.map(o => o.user_id).filter(Boolean))] as string[];
+      let emailMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, email")
+          .in("id", userIds);
+        emailMap = new Map(profiles?.map(p => [p.id, p.email]) || []);
+      }
 
       const orderIds = ordersData.map(o => o.id);
       const { data: promoData } = await supabase
