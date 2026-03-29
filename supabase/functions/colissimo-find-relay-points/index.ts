@@ -51,13 +51,20 @@ Deno.serve(async (req) => {
     if (!resolvedCity) {
       try {
         const geoRes = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${postalCode}&fields=nom&limit=1`);
-        const geoData = await geoRes.json();
-        if (geoData && geoData.length > 0) {
+        const geoText = await geoRes.text();
+        console.log("Geo API response:", geoText.substring(0, 200));
+        const geoData = JSON.parse(geoText);
+        if (Array.isArray(geoData) && geoData.length > 0) {
           resolvedCity = geoData[0].nom;
         }
       } catch (e) {
-        console.warn("City lookup failed:", e);
+        console.warn("City lookup failed:", String(e));
       }
+    }
+    // Fallback: if still no city, use a generic placeholder
+    if (!resolvedCity) {
+      resolvedCity = "COMMUNE";
+      console.warn("Using fallback city name for postal code:", postalCode);
     }
 
     const body = {
