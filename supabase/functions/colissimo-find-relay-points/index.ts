@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const COLISSIMO_RELAY_URL =
-  "https://ws.colissimo.fr/pointretrait-ws-cxf/PointRetraitServiceWSRest/2.0/findRDVPointRetraitAchworking";
+  "https://ws.colissimo.fr/pointretrait-ws-cxf/rest/v2/pointretrait/findRDVPointRetraitAcheminement";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { postalCode } = await req.json();
+    const { postalCode, city } = await req.json();
 
     // Validate postal code (5 digits)
     if (!postalCode || !/^\d{5}$/.test(postalCode)) {
@@ -41,29 +41,70 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Generate shipping date (tomorrow)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const shippingDate = `${String(tomorrow.getDate()).padStart(2, "0")}/${String(tomorrow.getMonth() + 1).padStart(2, "0")}/${tomorrow.getFullYear()}`;
+
+    // Resolve city from postal code if not provided
+    let resolvedCity = city || "";
+    if (!resolvedCity) {
+      try {
+        const geoRes = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${postalCode}&fields=nom&limit=1`);
+        const geoText = await geoRes.text();
+        console.log("Geo API response:", geoText.substring(0, 200));
+        const geoData = JSON.parse(geoText);
+        if (Array.isArray(geoData) && geoData.length > 0) {
+          resolvedCity = geoData[0].nom;
+        }
+      } catch (e) {
+        console.warn("City lookup failed:", String(e));
+      }
+    }
+    // Fallback: if still no city, use a generic placeholder
+    if (!resolvedCity) {
+      resolvedCity = "COMMUNE";
+      console.warn("Using fallback city name for postal code:", postalCode);
+    }
+
     const body = {
       accountNumber: contractNumber,
       password: password,
-      codTiersPour498: "",
       countryCode: "FR",
       zipCode: postalCode,
-      city: "",
+      city: resolvedCity,
       weight: "500",
+      shippingDate,
       filterRelay: "1",
       requestId: crypto.randomUUID(),
       lang: "FR",
       optionInter: "0",
     };
 
-    console.log("Calling Colissimo relay API for postal code:", postalCode);
+    console.log("Calling Colissimo relay API for postal code:", postalCode, "city:", resolvedCity);
 
-    const response = await fetch(COLISSIMO_RELAY_URL, {
+    const colissimoUrl = COLISSIMO_RELAY_URL;
+    console.log("Calling URL:", colissimoUrl);
+
+    const response = await fetch(colissimoUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    console.log("Response status:", response.status, "Body preview:", responseText.substring(0, 300));
+    
+    let data: any;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error("Colissimo returned non-JSON:", responseText.substring(0, 200));
+      return new Response(
+        JSON.stringify({ error: "L'API Colissimo a retourné une réponse invalide", points: [] }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!response.ok) {
       console.error("Colissimo relay API error:", response.status, data);
@@ -82,7 +123,7 @@ Deno.serve(async (req) => {
     }
 
     // Extract relay points from response
-    const rawPoints = data.listePointRetraitAchworking || [];
+    const rawPoints = data.listePointRetraitAcheminement || [];
     const points = rawPoints.map((p: any) => ({
       id: p.identifiant,
       name: p.nom,
