@@ -305,7 +305,7 @@ const ManualOrderCreator = () => {
           product_id: "gift-feuilles",
           product_name: "Feuilles Slim RAW (Cadeau)",
           product_type: "gift",
-          weight: null as any,
+          weight: null,
           quantity: giftKitsCount,
           unit_price: 0,
           total_price: 0,
@@ -315,7 +315,7 @@ const ManualOrderCreator = () => {
           product_id: "gift-briquet",
           product_name: "Briquet BIC (Cadeau)",
           product_type: "gift",
-          weight: null as any,
+          weight: null,
           quantity: giftKitsCount,
           unit_price: 0,
           total_price: 0,
@@ -334,6 +334,7 @@ const ManualOrderCreator = () => {
       setCustomerPhone("");
       setCustomerAddress("");
       setLines([{ productId: "", weight: 1 }]);
+      setSampleLines([]);
       clearPromo();
     } catch (error) {
       console.error("Error creating manual order:", error);
