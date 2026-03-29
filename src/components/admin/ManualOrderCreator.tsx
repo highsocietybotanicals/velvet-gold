@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag } from "lucide-react";
+import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
