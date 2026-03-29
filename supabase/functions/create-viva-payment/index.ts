@@ -348,6 +348,9 @@ Deno.serve(async (req) => {
       relay_point_id: (relayPointId || '').slice(0, 50) || null,
       relay_point_name: (relayPointName || '').slice(0, 200) || null,
       relay_point_address: (relayPointAddress || '').slice(0, 500) || null,
+      promo_code: validPromoCode || null,
+      promo_discount_percent: promoDiscountPercent > 0 ? promoDiscountPercent : null,
+      promo_discount_amount: promoDiscountAmount > 0 ? promoDiscountAmount : null,
     };
 
     if (userId) {
