@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Leaf, Sparkles, ShoppingCart, Gift, Package, ChevronDown, Zap } from "lucide-react";
+import { Leaf, Sparkles, ShoppingCart, Zap } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
@@ -134,7 +134,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   const isProWithValidatedVat = isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated;
 
   // Get price group from product (default to A if not defined)
-  const priceGroup: PriceGroup = (product as any).priceGroup || "A";
+  const priceGroup: PriceGroup = product.priceGroup || "A";
 
   const priceInfo = useMemo(() => {
     if (isProWithValidatedVat && proPrice) {
@@ -156,8 +156,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
     };
   }, [basePrice, proPrice, selectedWeight, isProWithValidatedVat, priceGroup]);
 
-  // Cadeaux désactivés temporairement - accessoires en rupture
-  const gifts = null;
+
 
 
   const handlePresetClick = (weight: number) => {
@@ -347,37 +346,6 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           </button>
         </div>
 
-        {/* Gifts display */}
-        {gifts && (
-          <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-2 rounded-md bg-primary/10 border border-primary/20"
-          >
-            <div className="flex items-center gap-2">
-              {gifts.type === "kit" ? (
-                <Package className="w-4 h-4 text-primary" />
-              ) : (
-                <Gift className="w-4 h-4 text-primary" />
-              )}
-              <span className="text-xs text-primary font-medium">
-                + {gifts.label} offert{gifts.count > 1 ? "s" : ""}
-              </span>
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-1 ml-6">
-              ({gifts.contents.feuillesSlim}x Slim, {gifts.contents.briquetBIC}x Briquet)
-            </p>
-          </motion.div>
-        )}
-
-        {/* Lien accessoires masqué temporairement - rupture de stock */}
-        {/* <a
-          href="#accessoires"
-          className="flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors pt-1"
-        >
-          Besoin d'un pochon en plus ?
-          <ChevronDown className="w-3 h-3" />
-        </a> */}
       </div>
     </motion.div>
   );

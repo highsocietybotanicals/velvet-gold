@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 
 interface Particle {
@@ -11,22 +11,21 @@ interface Particle {
 }
 
 const GoldParticles = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const particles: Particle[] = [...Array(30)].map((_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: 2 + Math.random() * 4,
-    duration: 8 + Math.random() * 8,
-    delay: Math.random() * 5,
-  }));
+  const particles = useMemo<Particle[]>(
+    () =>
+      Array.from({ length: 30 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: 2 + Math.random() * 4,
+        duration: 8 + Math.random() * 8,
+        delay: Math.random() * 5,
+      })),
+    []
+  );
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 overflow-hidden pointer-events-none"
-    >
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {particles.map((particle) => (
         <motion.div
           key={particle.id}
