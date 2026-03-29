@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText } from "lucide-react";
+import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
@@ -31,8 +31,53 @@ const ManualOrderCreator = () => {
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1 }]);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState<number | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [lastCreatedOrder, setLastCreatedOrder] = useState<any>(null);
+
+  const validatePromoCode = async () => {
+    if (!promoCode.trim()) return;
+    setIsValidatingPromo(true);
+    setPromoError("");
+    setPromoDiscount(null);
+    try {
+      const { data, error } = await supabase
+        .from("promo_codes")
+        .select("*")
+        .eq("code", promoCode.trim().toUpperCase())
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        setPromoError("Code invalide ou inactif");
+        return;
+      }
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        setPromoError("Code expiré");
+        return;
+      }
+      if (data.max_uses && data.current_uses >= data.max_uses) {
+        setPromoError("Code épuisé (utilisations max atteintes)");
+        return;
+      }
+      setPromoDiscount(data.discount_percent);
+      toast({ title: "Code promo validé ✅", description: `-${data.discount_percent}% appliqué` });
+    } catch {
+      setPromoError("Erreur de validation");
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  const clearPromo = () => {
+    setPromoCode("");
+    setPromoDiscount(null);
+    setPromoError("");
+  };
 
   const addLine = () => setLines([...lines, { productId: "", weight: 1 }]);
   const removeLine = (idx: number) => setLines(lines.filter((_, i) => i !== idx));
@@ -59,7 +104,9 @@ const ManualOrderCreator = () => {
     return calculateItemPrice(base, line.weight, group).finalPrice;
   };
 
-  const totalAmount = lines.reduce((sum, l) => sum + calculateLineTotal(l), 0);
+  const subtotal = lines.reduce((sum, l) => sum + calculateLineTotal(l), 0);
+  const discountAmount = promoDiscount ? subtotal * (promoDiscount / 100) : 0;
+  const totalAmount = subtotal - discountAmount;
   const totalFlowerWeight = lines.reduce((sum, l) => {
     const product = allProducts.find(p => p.id === l.productId);
     if (!product || product.category !== "fleur") return sum;
@@ -203,6 +250,7 @@ const ManualOrderCreator = () => {
       setCustomerEmail("");
       setCustomerPhone("");
       setLines([{ productId: "", weight: 1 }]);
+      clearPromo();
     } catch (error) {
       console.error("Error creating manual order:", error);
       toast({ title: "Erreur", description: "Impossible de créer la commande.", variant: "destructive" });
@@ -285,9 +333,41 @@ const ManualOrderCreator = () => {
             </Button>
           </div>
 
+          {/* Promo code */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-gold" /> Code promo (optionnel)
+            </label>
+            <div className="flex items-center gap-2">
+              <Input
+                value={promoCode}
+                onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoError(""); setPromoDiscount(null); }}
+                placeholder="Ex: WELCOME10"
+                className="w-48 uppercase"
+                disabled={promoDiscount !== null}
+              />
+              {promoDiscount === null ? (
+                <Button variant="outline" size="sm" onClick={validatePromoCode} disabled={!promoCode.trim() || isValidatingPromo}>
+                  {isValidatingPromo ? <Loader2 className="h-4 w-4 animate-spin" /> : "Appliquer"}
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={clearPromo} className="text-destructive">
+                  Retirer
+                </Button>
+              )}
+            </div>
+            {promoError && <p className="text-xs text-destructive">{promoError}</p>}
+            {promoDiscount !== null && (
+              <p className="text-xs text-green-500">✅ -{promoDiscount}% appliqué (-{discountAmount.toFixed(2)}€)</p>
+            )}
+          </div>
+
           {/* Total & submit */}
           <div className="flex items-center justify-between pt-4 border-t border-border/30">
             <div>
+              {promoDiscount !== null && (
+                <div className="text-sm text-muted-foreground line-through">{subtotal.toFixed(2)}€</div>
+              )}
               <span className="text-sm text-muted-foreground">Total : </span>
               <span className="text-2xl font-bold text-primary">{totalAmount.toFixed(2)}€</span>
             </div>
