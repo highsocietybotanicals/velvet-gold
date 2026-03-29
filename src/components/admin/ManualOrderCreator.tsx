@@ -220,6 +220,7 @@ const ManualOrderCreator = () => {
           guest_name: customerName.trim(),
           guest_email: customerEmail.trim() || null,
           guest_phone: customerPhone.trim() || null,
+          delivery_address: customerAddress.trim() || null,
         })
         .select("id, display_order_number, order_number, created_at, total_amount, guest_name, guest_email, guest_phone")
         .single();
