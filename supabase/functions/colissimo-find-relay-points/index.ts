@@ -57,13 +57,18 @@ Deno.serve(async (req) => {
 
     console.log("Calling Colissimo relay API for postal code:", postalCode);
 
-    const response = await fetch(COLISSIMO_RELAY_URL, {
+    const colissimoUrl = COLISSIMO_RELAY_URL;
+    console.log("Calling URL:", colissimoUrl);
+
+    const response = await fetch(colissimoUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
     const responseText = await response.text();
+    console.log("Response status:", response.status, "Body preview:", responseText.substring(0, 300));
+    
     let data: any;
     try {
       data = JSON.parse(responseText);
