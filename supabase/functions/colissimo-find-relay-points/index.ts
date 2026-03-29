@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { postalCode } = await req.json();
+    const { postalCode, city } = await req.json();
 
     // Validate postal code (5 digits)
     if (!postalCode || !/^\d{5}$/.test(postalCode)) {
@@ -41,14 +41,19 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Generate shipping date (tomorrow)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const shippingDate = `${String(tomorrow.getDate()).padStart(2, "0")}/${String(tomorrow.getMonth() + 1).padStart(2, "0")}/${tomorrow.getFullYear()}`;
+
     const body = {
       accountNumber: contractNumber,
       password: password,
-      codTiersPour498: "",
       countryCode: "FR",
       zipCode: postalCode,
-      city: "",
+      city: city || "",
       weight: "500",
+      shippingDate,
       filterRelay: "1",
       requestId: crypto.randomUUID(),
       lang: "FR",
