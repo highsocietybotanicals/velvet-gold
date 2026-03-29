@@ -30,6 +30,7 @@ const ManualOrderCreator = () => {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
   const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1 }]);
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState<number | null>(null);
@@ -167,6 +168,7 @@ const ManualOrderCreator = () => {
         <div class="cname">${esc(orderData.guest_name || "Client")}</div>
         ${orderData.guest_phone ? `<div><span class="label">Tél :</span> ${esc(orderData.guest_phone)}</div>` : ""}
         ${orderData.guest_email ? `<div><span class="label">Email :</span> ${esc(orderData.guest_email)}</div>` : ""}
+        ${orderData.delivery_address ? `<div><span class="label">Adresse :</span> ${esc(orderData.delivery_address)}</div>` : ""}
         <div><span class="label">Mode :</span> Remise en main propre</div>
       </div>
       <table>
@@ -219,8 +221,9 @@ const ManualOrderCreator = () => {
           guest_name: customerName.trim(),
           guest_email: customerEmail.trim() || null,
           guest_phone: customerPhone.trim() || null,
+          delivery_address: customerAddress.trim() || null,
         })
-        .select("id, display_order_number, order_number, created_at, total_amount, guest_name, guest_email, guest_phone")
+        .select("id, display_order_number, order_number, created_at, total_amount, guest_name, guest_email, guest_phone, delivery_address")
         .single();
 
       if (orderError) throw orderError;
@@ -249,6 +252,7 @@ const ManualOrderCreator = () => {
       setCustomerName("");
       setCustomerEmail("");
       setCustomerPhone("");
+      setCustomerAddress("");
       setLines([{ productId: "", weight: 1 }]);
       clearPromo();
     } catch (error) {
@@ -288,6 +292,10 @@ const ManualOrderCreator = () => {
               <label className="text-sm text-muted-foreground mb-1 block">Téléphone (optionnel)</label>
               <Input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="06 ..." />
             </div>
+          </div>
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Adresse (optionnel)</label>
+            <Input value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} placeholder="Adresse complète du client" />
           </div>
 
           {/* Order lines */}
