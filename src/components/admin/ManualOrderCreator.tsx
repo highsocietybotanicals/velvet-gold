@@ -290,6 +290,10 @@ const ManualOrderCreator = () => {
               <Input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="06 ..." />
             </div>
           </div>
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Adresse (optionnel)</label>
+            <Input value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} placeholder="Adresse complète du client" />
+          </div>
 
           {/* Order lines */}
           <div className="space-y-3">
