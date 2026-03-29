@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { History, ChevronDown, ChevronUp, Package } from "lucide-react";
+import { History, ChevronDown, ChevronUp, Package, FileDown, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Order, ORDER_STATUS } from "@/hooks/useOrders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface OrderHistoryProps {
   orders: Order[];
@@ -11,7 +14,42 @@ interface OrderHistoryProps {
 
 const OrderHistoryItem = ({ order }: { order: Order }) => {
   const [expanded, setExpanded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const statusInfo = ORDER_STATUS[order.status as keyof typeof ORDER_STATUS] || ORDER_STATUS.pending;
+
+  const handleDownloadInvoice = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDownloading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-invoice-pdf", {
+        body: { orderId: order.id },
+      });
+      if (error) throw error;
+      if (data?.pdfBase64) {
+        const byteCharacters = atob(data.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = data.invoiceNumber ? `${data.invoiceNumber}.pdf` : `facture-${order.display_order_number || order.order_number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Facture téléchargée !");
+      }
+    } catch (err) {
+      console.error("Download invoice error:", err);
+      toast.error("Erreur lors du téléchargement de la facture");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
@@ -70,6 +108,24 @@ const OrderHistoryItem = ({ order }: { order: Order }) => {
                     <span className="text-foreground">Total</span>
                     <span className="text-primary">{order.total_amount.toFixed(2)}€</span>
                   </div>
+                  {order.payment_status === "paid" && (
+                    <div className="pt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownloadInvoice}
+                        disabled={downloading}
+                        className="border-primary/30 text-primary hover:bg-primary/10 w-full"
+                      >
+                        {downloading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <FileDown className="h-4 w-4 mr-2" />
+                        )}
+                        Télécharger la facture
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">Aucun détail disponible</p>
