@@ -422,6 +422,58 @@ const ManualOrderCreator = () => {
             </Button>
           </div>
 
+          {/* Échantillons & cadeaux */}
+          {allowedSamples > 0 && (
+            <div className="space-y-3 rounded-lg border border-gold/20 bg-gold/5 p-4">
+              <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                <Gift className="h-4 w-4 text-gold" /> Cadeaux ({Math.floor(totalFlowerWeight / 10)} tranche{Math.floor(totalFlowerWeight / 10) > 1 ? "s" : ""} de 10g)
+              </label>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={includeGifts}
+                  onChange={e => setIncludeGifts(e.target.checked)}
+                  className="accent-gold"
+                  id="include-gifts"
+                />
+                <label htmlFor="include-gifts" className="text-sm text-muted-foreground">
+                  Inclure {giftKitsCount > 0 ? `${giftKitsCount}x` : ""} Feuilles Slim RAW + Briquet BIC (offerts)
+                </label>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Échantillons 1g offerts : {effectiveSamples.length}/{allowedSamples} utilisé{effectiveSamples.length > 1 ? "s" : ""}
+                </p>
+                {effectiveSamples.map((sample, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Select value={sample.productId} onValueChange={v => updateSample(idx, v)}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Choisir un échantillon (1g)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allProducts.filter(p => p.category === "fleur").map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-muted-foreground">1g</span>
+                    <span className="text-xs font-medium text-green-500">OFFERT</span>
+                    <Button variant="ghost" size="sm" onClick={() => removeSample(idx)} className="text-destructive h-7 w-7 p-0">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+                {effectiveSamples.length < allowedSamples && (
+                  <Button variant="outline" size="sm" onClick={addSample} className="gap-1 text-xs">
+                    <Plus className="h-3.5 w-3.5" /> Ajouter un échantillon
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Promo code */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
