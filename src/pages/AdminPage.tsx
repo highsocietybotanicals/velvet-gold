@@ -10,6 +10,7 @@ import OrderSummaryPrint from "@/components/admin/OrderSummaryPrint";
 import ShippingLabel from "@/components/admin/ShippingLabel";
 import SocialMediaManager from "@/components/admin/SocialMediaManager";
 import ManualOrderCreator from "@/components/admin/ManualOrderCreator";
+import { MolecularLabel } from "@/components/admin/MolecularLabel";
 import PromoCodeManager from "@/components/admin/PromoCodeManager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -358,9 +359,10 @@ const OrderRow = ({
       </TableCell>
       <TableCell>
         <div className="text-sm">
-          {order.order_items?.map((item, idx) => (
-            <div key={idx} className="text-muted-foreground">
-              {item.product_name} {item.weight ? `(${item.weight}g)` : `x${item.quantity}`}
+         {order.order_items?.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-1 text-muted-foreground">
+              <span>{item.product_name} {item.weight ? `(${item.weight}g)` : `x${item.quantity}`}</span>
+              <MolecularLabel productId={item.product_id} productName={item.product_name} weight={item.weight} />
             </div>
           ))}
         </div>

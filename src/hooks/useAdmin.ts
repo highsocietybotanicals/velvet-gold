@@ -52,6 +52,7 @@ export interface AdminOrder {
   promo_discount_amount?: number;
   order_items?: {
     id: string;
+    product_id: string;
     product_name: string;
     product_type: string;
     weight: number | null;
