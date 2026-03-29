@@ -105,29 +105,15 @@ export const useOrders = () => {
     enabled: !!user?.id,
   });
 
-  // Realtime subscription for order status changes
+  // Poll for order status changes every 30 seconds
   useEffect(() => {
     if (!user?.id) return;
 
-    const channel = supabase
-      .channel("order-status-updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "orders",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["orders", user.id] });
-        }
-      )
-      .subscribe();
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["orders", user.id] });
+    }, 30000);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => clearInterval(interval);
   }, [user?.id, queryClient]);
 
   // Only show paid orders
