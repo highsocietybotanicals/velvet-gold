@@ -1,70 +1,46 @@
 
 
-# Plan : Étiquettes produit 10x15 cm avec jsPDF
+# Plan : Simplifier les étiquettes — une seule image + grammage
 
-## Résumé
+## Contexte
 
-Ajouter un bouton "Étiquette 10×15" dans l'admin, par ligne produit d'une commande. Au clic, un PDF 100mm×150mm est généré client-side avec jsPDF, combinant :
-- **Haut** : les images d'étiquette uploadées (devant marque avec cadre vintage, nom variété, description)
-- **Bas** : le bloc légal pot-pourri trilingue + pictogrammes
-- **Milieu** : grammage en gros
+Les nouvelles images uploadées contiennent DEJA le design de marque ET les mentions legales fusionnes dans une seule image. Il suffit donc d'utiliser cette image unique en pleine page et d'ajouter le grammage dynamiquement par-dessus.
 
-## Approche clé : utiliser les images uploadées directement
+## Modifications
 
-Les 8 images de référence (911 OG, Blue Mango, Nuage de Mousseux, Golden, Ice-O-Lator, Amnesia, Mint Kush, Platinum OG) et l'image légale seront copiées dans `src/assets/labels/` et utilisées comme images dans le PDF via `doc.addImage()`. Pas besoin de recréer le cadre vintage programmatiquement -- on utilise les vrais designs.
+### 1. Remplacer les 9 assets labels par les 8 nouvelles images
 
-## Fichiers
+Copier les uploads vers `src/assets/labels/`, en ecrasant les anciens fichiers. Supprimer `legal-label.png` qui n'est plus necessaire.
 
-### 1. Copier les assets (9 images)
-- `src/assets/labels/911-og-label.png` (from user-uploads://1773092414184.png)
-- `src/assets/labels/nuage-label.png` (from user-uploads://1773092636365.png)
-- `src/assets/labels/blue-mango-label.png` (from user-uploads://1773092731734.png)
-- `src/assets/labels/golden-label.png` (from user-uploads://1773092947110.png)
-- `src/assets/labels/ice-o-lator-label.png` (from user-uploads://1773093024196.png)
-- `src/assets/labels/amnesia-label.png` (from user-uploads://1773093253659.png)
-- `src/assets/labels/mint-kush-label.png` (from user-uploads://1773093501496.png)
-- `src/assets/labels/platinum-og-label.png` (from user-uploads://1773093638540.png)
-- `src/assets/labels/legal-label.png` (from user-uploads://1774021876107.png)
-
-### 2. `src/lib/labelPdf.ts` (NEW)
-- Install `jspdf` dependency
-- Map product IDs to their label images
-- Function `generateProductLabel(productName, productDescription, weight, productId)`:
-  - Create jsPDF doc `{ unit: 'mm', format: [100, 150], orientation: 'portrait' }`
-  - **Top ~60%** : draw the product label image (cadre vintage + nom + description)
-  - **Middle** : grammage bold (ex: "5g") in large font, centered
-  - **Bottom ~35%** : draw the legal label image (mentions trilingues + pictogrammes)
-  - Return blob URL or trigger download
-
-### 3. `src/components/admin/MolecularLabel.tsx` (NEW)
-- Button component receiving order item data (product_name, weight, product_id)
-- Matches product_id against `allProducts` to find the correct label image
-- On click: calls `generateProductLabel()` and opens PDF
-- Icon: Tag or Printer, text "Étiquette 10×15"
-- **Applies to ALL 8 products**, not just Force Noire
-
-### 4. `src/pages/AdminPage.tsx` (EDIT)
-- Import `MolecularLabel`
-- In the order items column (lines 361-365), add the label button next to each product line
-- The button appears for any product that has a matching label image
-
-## Mapping produit → image étiquette
-
-| Product ID | Label Image |
+| Upload | Destination |
 |---|---|
-| `911-og-indoor` | 911-og-label.png |
-| `blue-mango-indoor` | blue-mango-label.png |
-| `nuage-de-mousseux` | nuage-label.png |
-| `golden-cbn` | golden-label.png |
-| `ice-o-lator` | ice-o-lator-label.png |
-| `amnesia-signature-oniria` | amnesia-label.png |
-| `mint-kush` | mint-kush-label.png |
-| `platinum-og` | platinum-og-label.png |
+| `user-uploads://911OG.jpg` | `src/assets/labels/911-og-label.png` |
+| `user-uploads://blue_mango.jpg` | `src/assets/labels/blue-mango-label.png` |
+| `user-uploads://Nuage_de_mousseux.jpg` | `src/assets/labels/nuage-label.png` |
+| `user-uploads://golden.jpg` | `src/assets/labels/golden-label.png` |
+| `user-uploads://ice_o_lator.jpg` | `src/assets/labels/ice-o-lator-label.png` |
+| `user-uploads://amnesia.jpg` | `src/assets/labels/amnesia-label.png` |
+| `user-uploads://mint_kush.jpg` | `src/assets/labels/mint-kush-label.png` |
+| `user-uploads://platinium_og.jpg` | `src/assets/labels/platinum-og-label.png` |
 
-## Détails techniques
+### 2. Simplifier `src/lib/labelPdf.ts`
 
-- Les images uploadées sont utilisées telles quelles dans le PDF (haute qualité, design déjà finalisé)
-- Le grammage est ajouté programmatiquement entre les deux images
-- Format fixe 100×150mm, le contenu est redimensionné pour s'adapter sans déformation
-- jsPDF supporte l'ajout d'images PNG en base64 via import Vite
+- Supprimer l'import de `labelLegal` (plus besoin)
+- L'image unique occupe quasi toute la page (0 a ~140mm)
+- Le grammage (ex: "5g") est ajoute en gros caracteres bold, positionne en bas de l'etiquette (~145mm), centre
+- Plus de separateur ni de deuxieme image
+
+```text
+┌──────────────────┐  0mm
+│                  │
+│  IMAGE COMPLETE  │  L'image contient deja
+│  (marque + legal │  le design + mentions
+│   + pictogrammes)│
+│                  │
+│                  │
+│                  │
+├──────────────────┤  ~138mm
+│      5g          │  Grammage dynamique bold
+└──────────────────┘  150mm
+```
 
