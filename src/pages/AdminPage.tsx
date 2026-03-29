@@ -693,7 +693,7 @@ const AdminPage = () => {
             transition={{ delay: 0.2 }}
           >
             <Card className="border-gold/20">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-gold" />
                   Toutes les commandes
@@ -701,6 +701,20 @@ const AdminPage = () => {
                     {allOrders.length}
                   </Badge>
                 </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTrackingSync}
+                  disabled={trackingSyncing}
+                  className="border-primary/30 text-primary hover:bg-primary/10"
+                >
+                  {trackingSyncing ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                  )}
+                  Sync Colissimo
+                </Button>
               </CardHeader>
               <CardContent>
                 {allOrders.length === 0 ? (
