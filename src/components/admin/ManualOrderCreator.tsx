@@ -258,7 +258,16 @@ const ManualOrderCreator = () => {
 
       if (orderError) throw orderError;
 
-      const items = validLines.map(l => {
+      const items: Array<{
+        order_id: string;
+        product_id: string;
+        product_name: string;
+        product_type: string;
+        weight?: number | null;
+        quantity?: number | null;
+        unit_price: number;
+        total_price: number;
+      }> = validLines.map(l => {
         const product = allProducts.find(p => p.id === l.productId)!;
         const lineTotal = calculateLineTotal(l);
         return {
