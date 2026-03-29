@@ -36,6 +36,8 @@ const ManualOrderCreator = () => {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1 }]);
+  const [sampleLines, setSampleLines] = useState<SampleLine[]>([]);
+  const [includeGifts, setIncludeGifts] = useState(true);
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState<number | null>(null);
   const [promoError, setPromoError] = useState("");
