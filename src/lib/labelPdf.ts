@@ -74,8 +74,6 @@ export async function generateProductLabel({ productName, weight, productId }: L
   // --- Bottom: legal label image (108 → 150mm) ---
   doc.addImage(legalB64, "PNG", 2, 108, W - 4, 40);
 
-  // Open PDF in new tab
-  const pdfBlob = doc.output("blob");
-  const url = URL.createObjectURL(pdfBlob);
-  window.open(url, "_blank");
+  // Download PDF directly (avoids Chrome popup blocker)
+  doc.save(`etiquette-${productId}-${weight}g.pdf`);
 }
