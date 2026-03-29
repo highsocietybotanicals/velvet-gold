@@ -4,6 +4,7 @@ import { X, Gift, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { saveContact } from "@/lib/saveContact";
 import { toast } from "sonner";
 
 interface WelcomePopupProps {
@@ -31,6 +32,7 @@ const WelcomePopup = ({ onClose }: WelcomePopupProps) => {
       if (error) throw error;
 
       setIsSubmitted(true);
+      saveContact({ email, source: "welcome_popup" });
       localStorage.setItem("hsb-welcome-popup-shown", "true");
       toast.success("Code promo envoyé dans votre boîte mail !");
       setTimeout(onClose, 3000);

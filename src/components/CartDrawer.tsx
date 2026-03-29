@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { calculateItemPrice, getDiscountLabel, getGifts, calculateAccessoryPrice, calculateProItemPrice } from "@/lib/pricing";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { saveContact } from "@/lib/saveContact";
 import DeliverySection from "./DeliverySection";
 
 
@@ -103,6 +104,8 @@ const PaymentButton = ({ items, accessoryItems, sampleItems, totalPrice, totalFl
         body.guestEmail = guestEmail;
         body.guestName = guestName || null;
         body.guestPhone = guestPhone || null;
+        // Save guest contact
+        saveContact({ email: guestEmail, phone: guestPhone, name: guestName, source: "checkout_guest" });
       }
 
       const { data, error } = await supabase.functions.invoke("create-viva-payment", {
