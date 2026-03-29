@@ -108,6 +108,24 @@ const OrderHistoryItem = ({ order }: { order: Order }) => {
                     <span className="text-foreground">Total</span>
                     <span className="text-primary">{order.total_amount.toFixed(2)}€</span>
                   </div>
+                  {order.payment_status === "paid" && (
+                    <div className="pt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownloadInvoice}
+                        disabled={downloading}
+                        className="border-primary/30 text-primary hover:bg-primary/10 w-full"
+                      >
+                        {downloading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <FileDown className="h-4 w-4 mr-2" />
+                        )}
+                        Télécharger la facture
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">Aucun détail disponible</p>
