@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const COLISSIMO_RELAY_URL =
-  "https://ws.colissimo.fr/pointretrait-ws-cxf/PointRetraitServiceWSRest/2.0/findRDVPointRetraitAcheminement";
+  "https://ws.colissimo.fr/pointretrait-ws-cxf/rest/v2/pointretrait/findRDVPointRetraitAcheminement";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
