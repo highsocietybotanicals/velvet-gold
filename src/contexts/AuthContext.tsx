@@ -85,9 +85,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const checkProStatus = async (userId: string) => {
+  const checkProStatus = async (_userId: string) => {
     try {
-      const { data, error } = await supabase.rpc("is_pro", { _user_id: userId });
+      const { data, error } = await supabase.rpc("is_pro" as any);
       if (error) throw error;
       setIsPro(data || false);
     } catch (error) {
@@ -96,12 +96,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const checkAdminStatus = async (userId: string) => {
+  const checkAdminStatus = async (_userId: string) => {
     try {
-      const { data, error } = await supabase.rpc("has_role", { 
-        _user_id: userId, 
-        _role: "admin" 
-      });
+      const { data, error } = await supabase.rpc("is_admin" as any);
       if (error) throw error;
       setIsAdmin(data || false);
     } catch (error) {
