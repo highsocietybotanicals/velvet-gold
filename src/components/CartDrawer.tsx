@@ -329,52 +329,22 @@ const CartDrawer = () => {
         setPromoDiscount(15);
         toast.success("Code promo BIENVENUE15 appliqué ! -15% 🎉");
       } else {
-        // Check database promo_codes table
-        const { data: dbCode, error } = await (supabase as any)
-          .from("promo_codes")
-          .select("*")
-          .eq("code", code)
-          .eq("is_active", true)
-          .maybeSingle();
+        // Validate promo code server-side via RPC
+        const { data: result, error } = await supabase.rpc("validate_promo_code" as any, {
+          p_code: code,
+          p_user_id: user?.id || null,
+        });
 
-        if (error || !dbCode) {
-          setPromoError("Code promo invalide");
+        if (error || !result || !(result as any).valid) {
+          setPromoError((result as any)?.error || "Code promo invalide");
           setPromoLoading(false);
           return;
         }
 
-        // Check expiry
-        if (dbCode.expires_at && new Date(dbCode.expires_at) < new Date()) {
-          setPromoError("Ce code promo a expiré");
-          setPromoLoading(false);
-          return;
-        }
-
-        // Check max uses
-        if (dbCode.max_uses && dbCode.current_uses >= dbCode.max_uses) {
-          setPromoError("Ce code promo a atteint son nombre maximum d'utilisations");
-          setPromoLoading(false);
-          return;
-        }
-
-        // Check if user already used this code
-        if (user) {
-          const { data: usage } = await supabase
-            .from("promo_code_usage")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("code", code)
-            .maybeSingle();
-          if (usage) {
-            setPromoError("Tu as déjà utilisé ce code 😅");
-            setPromoLoading(false);
-            return;
-          }
-        }
-
-        setPromoCode(code);
-        setPromoDiscount(dbCode.discount_percent);
-        toast.success(`Code ${code} appliqué ! -${dbCode.discount_percent}% 🎉`);
+        const validResult = result as any;
+        setPromoCode(validResult.code);
+        setPromoDiscount(validResult.discount_percent);
+        toast.success(`Code ${validResult.code} appliqué ! -${validResult.discount_percent}% 🎉`);
       }
     } catch (err) {
       setPromoError("Erreur lors de la vérification");
