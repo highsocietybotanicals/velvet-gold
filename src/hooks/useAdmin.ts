@@ -298,11 +298,25 @@ export const useAdmin = () => {
       const { error } = await supabase.from("orders").update({ payment_status: paymentStatus }).eq("id", orderId);
       if (error) throw error;
 
-      // If marking as paid and the order has a guest email, send invoice
+      // If marking as paid, fetch fresh order data and send confirmation email
       if (paymentStatus === "paid") {
-        const order = allOrders?.find(o => o.id === orderId);
-        const email = order?.guest_email || order?.user_email;
-        if (email && email !== "Email inconnu") {
+        const { data: freshOrder } = await supabase
+          .from("orders")
+          .select("guest_email, user_id")
+          .eq("id", orderId)
+          .single();
+
+        let email = freshOrder?.guest_email;
+        if (!email && freshOrder?.user_id) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("id", freshOrder.user_id)
+            .single();
+          email = profile?.email;
+        }
+
+        if (email) {
           supabase.functions.invoke("send-order-confirmation", {
             body: { orderId },
           }).catch((e) => console.error("Invoice email error:", e));
