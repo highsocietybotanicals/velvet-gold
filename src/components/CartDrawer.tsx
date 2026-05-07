@@ -396,9 +396,11 @@ const CartDrawer = () => {
   // Calculate discounted total
   const discountedTotal = promoCode === "DEMI160"
     ? 160
-    : promoDiscount > 0
-      ? Math.round(totalPrice * (1 - promoDiscount / 100) * 100) / 100
-      : totalPrice;
+    : promoCode === "NUAGE90"
+      ? 90
+      : promoDiscount > 0
+        ? Math.round(totalPrice * (1 - promoDiscount / 100) * 100) / 100
+        : totalPrice;
   const discountAmount = totalPrice - discountedTotal;
 
   return (
