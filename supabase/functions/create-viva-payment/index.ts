@@ -309,6 +309,29 @@ Deno.serve(async (req) => {
           }
         }
       }
+    } else if (promoCode === "NUAGE90") {
+      // Global single-use: exactly 20g of nuage-de-mousseux only, fixed price 90€
+      const { data: globalUsage } = await supabaseAdmin
+        .from("promo_code_usage")
+        .select("id")
+        .eq("code", "NUAGE90")
+        .maybeSingle();
+
+      if (!globalUsage) {
+        const nuageItems = serverItems.filter((i: any) => i.product_id === "nuage-de-mousseux");
+        const nuageWeight = nuageItems.reduce((s: number, i: any) => s + (i.weight || 0), 0);
+        const otherFlowerWeight = serverItems
+          .filter((i: any) => i.product_type !== "accessoire" && i.product_type !== "sample" && i.product_type !== "gift" && i.product_id !== "nuage-de-mousseux")
+          .reduce((s: number, i: any) => s + (i.weight || 0), 0);
+        if (nuageWeight === 20 && otherFlowerWeight === 0) {
+          promoDiscountAmount = Math.round((serverTotal - 90) * 100) / 100;
+          if (promoDiscountAmount > 0) {
+            serverTotal = 90;
+            promoDiscountPercent = Math.round((promoDiscountAmount / (serverTotal + promoDiscountAmount)) * 10000) / 100;
+            validPromoCode = "NUAGE90";
+          }
+        }
+      }
     } else if (promoCode && promoCode === "BIENVENUE15" && userId) {
       const { data: existingUsage } = await supabaseAdmin
         .from("promo_code_usage")
