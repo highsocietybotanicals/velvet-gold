@@ -907,7 +907,7 @@ const CartDrawer = () => {
                       <span className="text-sm text-muted-foreground line-through">{totalPrice.toFixed(2)}€</span>
                     </div>
                   )}
-                  {promoDiscount > 0 && promoCode !== "DEMI160" && (
+                  {promoDiscount > 0 && promoCode !== "DEMI160" && promoCode !== "NUAGE90" && (
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-primary">Réduction -{promoDiscount}%</span>
                       <span className="text-sm text-primary">-{discountAmount.toFixed(2)}€</span>
@@ -916,6 +916,12 @@ const CartDrawer = () => {
                   {promoCode === "DEMI160" && (
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-primary">Offre DEMI160</span>
+                      <span className="text-sm text-primary">-{discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
+                  {promoCode === "NUAGE90" && (
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-primary">Offre NUAGE90</span>
                       <span className="text-sm text-primary">-{discountAmount.toFixed(2)}€</span>
                     </div>
                   )}
