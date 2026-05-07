@@ -308,6 +308,38 @@ const CartDrawer = () => {
         setPromoDiscount(discountPercent);
         setFreeShipping(true);
         toast.success("Code DEMI160 appliqué ! 50g à 160€ + livraison offerte 🎉");
+      } else if (code === "NUAGE90") {
+        const nuageWeight = items
+          .filter((i) => i.product.id === "nuage-de-mousseux")
+          .reduce((s, i) => s + i.weight, 0);
+        const otherFlowerWeight = items
+          .filter((i) => i.product.id !== "nuage-de-mousseux")
+          .reduce((s, i) => s + i.weight, 0);
+        if (nuageWeight !== 20 || otherFlowerWeight !== 0) {
+          setPromoError("Ce code donne 20g de Nuage de Mousseux pour 90€ (uniquement ce produit)");
+          setPromoLoading(false);
+          return;
+        }
+        const { data: globalUsage } = await supabase
+          .from("promo_code_usage")
+          .select("id")
+          .eq("code", "NUAGE90")
+          .maybeSingle();
+        if (globalUsage) {
+          setPromoError("Ce code a déjà été utilisé");
+          setPromoLoading(false);
+          return;
+        }
+        if (totalPrice <= 90) {
+          setPromoError("Le total est déjà inférieur à 90€");
+          setPromoLoading(false);
+          return;
+        }
+        const discountPercent = Math.round(((totalPrice - 90) / totalPrice) * 10000) / 100;
+        setPromoCode("NUAGE90");
+        setPromoDiscount(discountPercent);
+        setFreeShipping(true);
+        toast.success("Code NUAGE90 appliqué ! 20g de Nuage de Mousseux à 90€ + livraison offerte 🎉");
       } else if (code === "BIENVENUE15") {
         if (!user) {
           setPromoError("Connecte-toi pour utiliser un code promo");
