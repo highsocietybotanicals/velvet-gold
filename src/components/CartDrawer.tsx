@@ -866,6 +866,8 @@ const CartDrawer = () => {
                         <span className="text-sm font-mono font-bold text-primary">{promoCode}</span>
                         {promoCode === "DEMI160" ? (
                           <span className="text-xs text-muted-foreground">50g à 160€ tout compris</span>
+                        ) : promoCode === "NUAGE90" ? (
+                          <span className="text-xs text-muted-foreground">20g Nuage de Mousseux à 90€</span>
                         ) : (
                           <span className="text-xs text-muted-foreground">(-{promoDiscount}%)</span>
                         )}
