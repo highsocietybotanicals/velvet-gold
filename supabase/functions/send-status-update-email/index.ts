@@ -101,9 +101,8 @@ Deno.serve(async (req) => {
     }
 
     if (!recipientEmail) {
-      console.error("No email for order:", orderId);
-      return new Response(JSON.stringify({ error: "No recipient email" }), {
-        status: 400,
+      console.log("No email for order (skipping):", orderId);
+      return new Response(JSON.stringify({ success: true, status: "skipped_no_email" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
