@@ -127,6 +127,21 @@ export const calculateForceNoirePrice = (productId: string, weight: number): num
 // Ancien système pour compatibilité (utilise Groupe A par défaut)
 export const WEIGHT_TIERS: WeightTier[] = WEIGHT_TIERS_A;
 
+// Retourne le prix au gramme le plus bas atteignable pour un produit (palier 100g)
+export const getLowestPricePerGram = (
+  basePrice: number,
+  priceGroup: PriceGroup = "A",
+  productId?: string
+): number => {
+  if (productId && FORCE_NOIRE_PRICE_GRID[productId]) {
+    const total = calculateForceNoirePrice(productId, 100);
+    if (total && total > 0) return total / 100;
+  }
+  const tiers = priceGroup === "B" ? WEIGHT_TIERS_B : WEIGHT_TIERS_A;
+  const best = tiers[tiers.length - 1];
+  return basePrice * (1 - best.discount);
+};
+
 export const PRESET_WEIGHTS = [1, 2.5, 10, 25, 50, 100];
 
 // Accessory bulk discount threshold
