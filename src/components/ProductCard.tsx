@@ -156,6 +156,11 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
     };
   }, [basePrice, proPrice, selectedWeight, isProWithValidatedVat, priceGroup, product.id]);
 
+  const lowestPerGram = useMemo(
+    () => getLowestPricePerGram(basePrice, priceGroup, product.id),
+    [basePrice, priceGroup, product.id]
+  );
+
 
 
 
