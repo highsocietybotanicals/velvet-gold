@@ -1,37 +1,23 @@
 ## Objectif
 
-Remplacer l'affichage du prix par défaut (basé sur 1g) par **« À partir de X€/g »** sur chaque produit, où X est le **prix au gramme le plus bas** atteignable (palier 100g pour les CBD classiques, palier le plus avantageux pour l'Élixir Noir).
+Remplacer **complètement** l'affichage du prix de base (12€, 13€, 15€…) par la mention **« À partir de X€/g »** sur les cartes produits et la fiche produit. Le prix dynamique calculé selon le poids sélectionné reste affiché tel quel plus bas (sélecteur + total).
 
-## Prix le plus bas par produit
+## Changements
 
-**Groupe A — CBD classiques (12€/g de base, -50% à partir de 100g)**
-- Tous → **À partir de 6,00€/g**
+### 1. `ProductCard.tsx`
+- **Supprimer** le bloc « Prix/g » à droite du radar terpénique (lignes ~270-280) qui affiche `{basePrice}€`.
+- **Déplacer / conserver** uniquement la mention « À partir de X€/g » (déjà ajoutée sous le sous-titre) — la mettre plus en valeur (taille un peu plus grande, gold).
+- Le bloc « total selon poids sélectionné » en bas de carte est inchangé.
 
-**Élixir Noir (grille fixe + dégressif additionnel -20% au-delà de 100g)**
-- Nuage de Mousseux : 65€/10g → -20% à 100g → **À partir de 5,20€/g**
-- 911 OG : 90€/10g → -20% à 100g → **À partir de 7,20€/g**
-- Blue Mango : 80€/10g → -20% à 100g → **À partir de 6,40€/g**
+### 2. `ProductPage.tsx`
+- Remplacer le gros prix `{basePrice}€ /gramme` (lignes ~222-234) par : **« À partir de X€/g »** en `text-3xl font-display`.
+- Conserver le badge HT pour les Pros (ils continuent à voir leur prix Pro fixe).
+- Conserver le badge CBD/molecule à droite.
+- Le total dynamique selon poids sélectionné reste affiché plus bas.
 
-## Où afficher la mention
+### 3. Cas Pro (TVA validée)
+- Les Pros voient leur prix HT fixe inchangé (pas de « À partir de »), car leur tarif est unique sans dégressif.
 
-1. **Cartes produits** (`ProductCard.tsx`) — petit label "À partir de X€/g" affiché sous (ou à côté de) le nom, en complément du prix dynamique selon le poids sélectionné. Reste visible même quand l'utilisateur change le format.
-2. **Page produit** (`ProductPage.tsx`) — même mention, près du titre / du sélecteur de poids.
-3. **Catalogue** — hérite via `ProductCard`.
-
-Le prix principal (calculé selon le poids choisi) reste affiché tel quel — la mention « À partir de » est une **information additionnelle** pour montrer le meilleur tarif possible, pas un remplacement du prix dynamique.
-
-## Détails techniques
-
-- Ajouter dans `src/lib/pricing.ts` une fonction `getLowestPricePerGram(basePrice, priceGroup, productId)` qui :
-  - Pour Force Noire : prend la grille du produit, calcule `calculateForceNoirePrice(productId, 100) / 100`.
-  - Pour Groupe A/B : applique le `discount` du dernier palier (100g+) à `basePrice`.
-- Ajouter un petit composant d'affichage (texte gold/muted, type `text-xs text-muted-foreground`) dans `ProductCard.tsx` et `ProductPage.tsx` : `À partir de {prix.toFixed(2)}€/g`.
-- Pas de changement DB, pas de changement panier, pas de changement de la logique de calcul existante.
-
-## Question ouverte
-
-Tu veux la mention :
-- **Uniquement sur les cartes du catalogue** (visible avant clic), ou
-- **Partout** (cartes + page produit détaillée) — recommandé pour cohérence.
-
-Par défaut je pars sur **partout**.
+## Aucun changement
+- `pricing.ts` (la fonction `getLowestPricePerGram` existe déjà)
+- Logique panier, calculs, DB
