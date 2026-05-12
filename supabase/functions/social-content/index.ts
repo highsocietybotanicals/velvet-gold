@@ -22,6 +22,8 @@ async function requireAdmin(req: Request, serviceClient: any): Promise<Response 
   }
 
   const token = authHeader.replace("Bearer ", "");
+  if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return null;
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
   if (!anonKey) return jsonResponse({ error: "Authentication unavailable" }, 500);
