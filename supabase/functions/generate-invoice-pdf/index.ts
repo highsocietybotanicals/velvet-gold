@@ -67,6 +67,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const auth = await getAuthClaims(req);
+    if ("response" in auth) return auth.response;
+
     // Fetch order
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -79,6 +82,15 @@ Deno.serve(async (req) => {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    const claims = auth.claims;
+    if (claims.role !== "service_role") {
+      const callerId = claims.sub;
+      const callerIsAdmin = callerId ? await isAdmin(supabase, callerId) : false;
+      if (!callerIsAdmin && (!order.user_id || order.user_id !== callerId)) {
+        return jsonResponse({ error: "Forbidden" }, 403);
+      }
     }
 
     // Fetch order items
