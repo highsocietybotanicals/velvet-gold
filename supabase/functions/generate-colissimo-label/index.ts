@@ -17,6 +17,41 @@ const SENDER = {
   zipCode: "44390",
 };
 
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function requireAdmin(req: Request, serviceClient: any): Promise<Response | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return jsonResponse({ error: "Unauthorized" }, 401);
+
+  const token = authHeader.replace("Bearer ", "");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  if (!anonKey) return jsonResponse({ error: "Authentication unavailable" }, 500);
+
+  const authClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data, error } = await authClient.auth.getClaims(token);
+  const userId = data?.claims?.sub;
+  if (error || !userId) return jsonResponse({ error: "Unauthorized" }, 401);
+  if (data.claims.role === "service_role") return null;
+
+  const { data: role, error: roleError } = await serviceClient
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (roleError || !role) return jsonResponse({ error: "Forbidden" }, 403);
+  return null;
+}
+
 function parseAddress(raw: string): {
   line2: string;
   zipCode: string;
