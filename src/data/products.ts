@@ -113,7 +113,7 @@ const groupA: Product[] = [
     subtitle: "Triple Cannabinoïdes",
     badge: "Royal Sleep",
     description: "25% CBD / 10% CBN / 10% CBG. Le combo ultime pour un sommeil royal.",
-    price: 11,
+    price: 12,
     priceGroup: "A",
     cbdPercentage: "25% CBD / 10% CBN / 10% CBG",
     image: goldenCBN,
