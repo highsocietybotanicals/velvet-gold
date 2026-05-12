@@ -480,7 +480,7 @@ const CartDrawer = () => {
                           const priceInfo = useProPricing
                             ? calculateProItemPrice(proPrice, item.weight)
                             : calculateItemPrice(item.product.price, item.weight, item.product.priceGroup || "A", item.product.id);
-                          const discountLabel = useProPricing ? null : getDiscountLabel(item.weight, item.product.priceGroup || "A");
+                          const discountLabel = useProPricing ? null : getDiscountLabel(item.weight, item.product.priceGroup || "A", item.product.id, item.product.price);
                           const hasDiscount = !useProPricing && 'discount' in priceInfo && (priceInfo as { discount: number }).discount > 0;
                           
                           return (
