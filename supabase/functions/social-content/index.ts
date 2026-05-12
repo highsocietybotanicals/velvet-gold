@@ -30,12 +30,17 @@ async function requireAdmin(req: Request, serviceClient: any): Promise<Response 
     global: { headers: { Authorization: authHeader } },
   });
   const { data, error } = await authClient.auth.getClaims(token);
-  const userId = data?.claims?.sub;
-  if (error || !userId) {
+  const claims = data?.claims;
+  if (error || !claims) {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
-  if (data.claims.role === "service_role") return null;
+  if (claims.role === "service_role") return null;
+
+  const userId = claims.sub;
+  if (!userId) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
 
   const { data: role, error: roleError } = await serviceClient
     .from("user_roles")
