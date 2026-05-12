@@ -97,6 +97,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const authError = await requireAdmin(req, supabase);
+    if (authError) return authError;
+
     const { action, postId, chatId, products, theme } = await req.json();
 
     // ── GENERATE SERIES ──
