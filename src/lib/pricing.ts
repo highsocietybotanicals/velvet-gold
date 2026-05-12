@@ -138,7 +138,7 @@ export const getDiscountTier = (weight: number, priceGroup: PriceGroup = "A"): W
   return tiers.find(tier => weight >= tier.min && weight <= tier.max) || tiers[0];
 };
 
-export const calculatePrice = (basePrice: number, weight: number, priceGroup: PriceGroup = "A"): PriceInfo => {
+export const calculatePrice = (basePrice: number, weight: number, priceGroup: PriceGroup = "A", productId?: string): PriceInfo => {
   // Handle invalid weights
   if (!weight || weight <= 0 || isNaN(weight)) {
     return {
@@ -150,10 +150,24 @@ export const calculatePrice = (basePrice: number, weight: number, priceGroup: Pr
     };
   }
 
+  // Force Noire : grille fixe par produit
+  if (productId && FORCE_NOIRE_PRICE_GRID[productId]) {
+    const finalPrice = calculateForceNoirePrice(productId, weight) ?? 0;
+    const rawPrice = basePrice * weight;
+    const discount = rawPrice > 0 ? 1 - finalPrice / rawPrice : 0;
+    return {
+      rawPrice: rawPrice.toFixed(2),
+      finalPrice: finalPrice.toFixed(2),
+      discount,
+      discountLabel: discount > 0.005 ? `-${Math.round(discount * 100)}%` : "0%",
+      savings: (rawPrice - finalPrice).toFixed(2),
+    };
+  }
+
   const tier = getDiscountTier(weight, priceGroup);
   const rawPrice = basePrice * weight;
   const discountedPrice = rawPrice * (1 - tier.discount);
-  
+
   return {
     rawPrice: rawPrice.toFixed(2),
     finalPrice: discountedPrice.toFixed(2),
@@ -164,15 +178,23 @@ export const calculatePrice = (basePrice: number, weight: number, priceGroup: Pr
 };
 
 // Returns raw numbers for cart calculations
-export const calculateItemPrice = (basePrice: number, weight: number, priceGroup: PriceGroup = "A") => {
+export const calculateItemPrice = (basePrice: number, weight: number, priceGroup: PriceGroup = "A", productId?: string) => {
   if (!weight || weight <= 0 || isNaN(weight)) {
     return { rawPrice: 0, finalPrice: 0, discount: 0 };
+  }
+
+  // Force Noire : grille fixe par produit
+  if (productId && FORCE_NOIRE_PRICE_GRID[productId]) {
+    const finalPrice = calculateForceNoirePrice(productId, weight) ?? 0;
+    const rawPrice = basePrice * weight;
+    const discount = rawPrice > 0 ? 1 - finalPrice / rawPrice : 0;
+    return { rawPrice, finalPrice, discount };
   }
 
   const tier = getDiscountTier(weight, priceGroup);
   const rawPrice = basePrice * weight;
   const discountedPrice = rawPrice * (1 - tier.discount);
-  
+
   return {
     rawPrice,
     finalPrice: discountedPrice,
