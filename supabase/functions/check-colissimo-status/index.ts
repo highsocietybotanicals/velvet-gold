@@ -120,6 +120,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const authError = await requireServiceRoleOrAdmin(req, supabase);
+    if (authError) return authError;
+
     // Fetch all shipped/in_delivery orders with tracking numbers
     const { data: orders, error: fetchError } = await supabase
       .from("orders")
