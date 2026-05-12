@@ -386,6 +386,7 @@ Deno.serve(async (req) => {
       // Send status update email (fire-and-forget)
       supabase.functions
         .invoke("send-status-update-email", {
+          headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
           body: { orderId, newStatus: "shipped" },
         })
         .catch((e: any) => console.error("Status email error:", e));
