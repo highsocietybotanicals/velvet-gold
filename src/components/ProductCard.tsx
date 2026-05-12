@@ -256,6 +256,11 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             <p className="text-xs text-muted-foreground italic">
               {product.subtitle}
             </p>
+            {!isProWithValidatedVat && (
+              <p className="text-[11px] text-primary/80 mt-1.5 tracking-wide">
+                À partir de <span className="font-semibold">{lowestPerGram.toFixed(2)}€</span>/g
+              </p>
+            )}
           </div>
 
           {/* Terpene radar */}
