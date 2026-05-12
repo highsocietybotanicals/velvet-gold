@@ -324,7 +324,6 @@ Deno.serve(async (req) => {
     const responseText = new TextDecoder().decode(responseBody);
 
     console.log("Colissimo response status:", colissimoResponse.status, "content-type:", responseContentType);
-    console.log("Colissimo raw response (first 500):", responseText.substring(0, 500));
 
     const { jsonPart, pdfBase64 } = parseMultipartResponse(
       responseBody,
@@ -404,7 +403,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Generate Colissimo label error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal error", details: String(error) }),
+      JSON.stringify({ error: "Internal error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
