@@ -219,25 +219,32 @@ const ProductPage = () => {
                 {product.subtitle}
               </p>
 
-              <div className="flex items-center gap-4 mb-2">
-                <span className="text-3xl font-display text-primary">
-                  {isProWithValidatedVat && proPrice ? proPrice : basePrice}€
-                </span>
-                <span className="text-muted-foreground">/gramme</span>
-                {isProWithValidatedVat && proPrice && (
-                  <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">
-                    HT
-                  </span>
+              <div className="flex items-center gap-4 mb-6 flex-wrap">
+                {isProWithValidatedVat && proPrice ? (
+                  <>
+                    <span className="text-3xl font-display text-primary">
+                      {proPrice}€
+                    </span>
+                    <span className="text-muted-foreground">/gramme</span>
+                    <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">
+                      HT
+                    </span>
+                  </>
+                ) : (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-sm text-muted-foreground uppercase tracking-wider">
+                      À partir de
+                    </span>
+                    <span className="text-3xl font-display text-primary">
+                      {getLowestPricePerGram(basePrice, priceGroup, product.id).toFixed(2)}€
+                    </span>
+                    <span className="text-muted-foreground">/g</span>
+                  </div>
                 )}
                 <span className="ml-auto px-4 py-1 bg-secondary/50 rounded-full text-sm text-foreground">
                   {product.isForceNoire || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
                 </span>
               </div>
-              {!isProWithValidatedVat && (
-                <p className="text-sm text-primary/80 mb-6 tracking-wide">
-                  À partir de <span className="font-semibold">{getLowestPricePerGram(basePrice, priceGroup, product.id).toFixed(2)}€</span>/g (palier 100g)
-                </p>
-              )}
 
               <p className="text-muted-foreground leading-relaxed mb-6">
                 {product.description}

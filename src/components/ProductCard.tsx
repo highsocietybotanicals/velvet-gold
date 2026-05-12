@@ -256,23 +256,20 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             <p className="text-xs text-muted-foreground italic">
               {product.subtitle}
             </p>
-            {!isProWithValidatedVat && (
-              <p className="text-[11px] text-primary/80 mt-1.5 tracking-wide">
-                À partir de <span className="font-semibold">{lowestPerGram.toFixed(2)}€</span>/g
-              </p>
-            )}
           </div>
 
           {/* Terpene radar */}
           <div className="flex items-start justify-between mb-4">
             <TerpeneRadar terpenes={product.terpenes} />
-            
+
             <div className="text-right">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                Prix/g {isProWithValidatedVat && proPrice ? "HT" : ""}
+                {isProWithValidatedVat && proPrice ? "Prix/g HT" : "À partir de"}
               </p>
               <p className="font-display text-lg text-primary">
-                {isProWithValidatedVat && proPrice ? proPrice : basePrice}€
+                {isProWithValidatedVat && proPrice
+                  ? `${proPrice}€`
+                  : `${lowestPerGram.toFixed(2)}€/g`}
               </p>
             </div>
           </div>
