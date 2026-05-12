@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
 import { Product, TerpeneProfile, PriceGroup } from "@/data/products";
 import { Input } from "@/components/ui/input";
-import { PRESET_WEIGHTS, calculatePrice } from "@/lib/pricing";
+import { PRESET_WEIGHTS, calculatePrice, getLowestPricePerGram } from "@/lib/pricing";
 
 
 interface ProductCardProps {
