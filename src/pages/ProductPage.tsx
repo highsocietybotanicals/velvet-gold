@@ -219,7 +219,7 @@ const ProductPage = () => {
                 {product.subtitle}
               </p>
 
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-4 mb-2">
                 <span className="text-3xl font-display text-primary">
                   {isProWithValidatedVat && proPrice ? proPrice : basePrice}€
                 </span>
@@ -233,6 +233,11 @@ const ProductPage = () => {
                   {product.isForceNoire || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
                 </span>
               </div>
+              {!isProWithValidatedVat && (
+                <p className="text-sm text-primary/80 mb-6 tracking-wide">
+                  À partir de <span className="font-semibold">{getLowestPricePerGram(basePrice, priceGroup, product.id).toFixed(2)}€</span>/g (palier 100g)
+                </p>
+              )}
 
               <p className="text-muted-foreground leading-relaxed mb-6">
                 {product.description}
