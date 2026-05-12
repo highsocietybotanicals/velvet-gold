@@ -39,6 +39,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authError = await requireServiceRole(req);
+    if (authError) return authError;
+
     const { orderId } = await req.json();
 
     if (!orderId) {
