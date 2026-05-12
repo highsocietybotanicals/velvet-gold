@@ -223,7 +223,7 @@ const CartDrawer = () => {
         return sum + finalPrice;
       } else {
         // Regular: with weight-based discounts
-        const { finalPrice } = calculateItemPrice(item.product.price, item.weight);
+        const { finalPrice } = calculateItemPrice(item.product.price, item.weight, item.product.priceGroup || "A", item.product.id);
         return sum + finalPrice;
       }
     }, 0) +
@@ -479,8 +479,8 @@ const CartDrawer = () => {
                           
                           const priceInfo = useProPricing
                             ? calculateProItemPrice(proPrice, item.weight)
-                            : calculateItemPrice(item.product.price, item.weight);
-                          const discountLabel = useProPricing ? null : getDiscountLabel(item.weight);
+                            : calculateItemPrice(item.product.price, item.weight, item.product.priceGroup || "A", item.product.id);
+                          const discountLabel = useProPricing ? null : getDiscountLabel(item.weight, item.product.priceGroup || "A", item.product.id, item.product.price);
                           const hasDiscount = !useProPricing && 'discount' in priceInfo && (priceInfo as { discount: number }).discount > 0;
                           
                           return (

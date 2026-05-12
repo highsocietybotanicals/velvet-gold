@@ -108,7 +108,7 @@ const ManualOrderCreator = () => {
     if (!line.productId || line.weight <= 0) return 0;
     const base = getProductPrice(line.productId);
     const group = getProductGroup(line.productId);
-    return calculateItemPrice(base, line.weight, group).finalPrice;
+    return calculateItemPrice(base, line.weight, group, line.productId).finalPrice;
   };
 
   const subtotal = lines.reduce((sum, l) => sum + calculateLineTotal(l), 0);

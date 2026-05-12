@@ -1,0 +1,1 @@
+UPDATE public.products SET price = 12 WHERE id IN ('amnesia-signature-oniria','golden-cbn','mint-kush','platinum-og');

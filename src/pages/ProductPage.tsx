@@ -81,7 +81,7 @@ const ProductPage = () => {
     }
     // Standard pricing with tiered discounts based on price group
     return {
-      ...calculatePrice(basePrice, selectedWeight, priceGroup),
+      ...calculatePrice(basePrice, selectedWeight, priceGroup, product.id),
       isHT: false,
     };
   }, [product, basePrice, proPrice, selectedWeight, isProWithValidatedVat, priceGroup]);
