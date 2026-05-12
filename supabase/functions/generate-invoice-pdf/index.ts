@@ -406,7 +406,7 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("Generate invoice error:", error);
-    return new Response(JSON.stringify({ error: String(error) }), {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
