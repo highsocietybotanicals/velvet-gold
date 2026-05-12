@@ -21,6 +21,10 @@ async function getAuthClaims(req: Request): Promise<{ claims: any } | { response
   if (!authHeader?.startsWith("Bearer ")) return { response: jsonResponse({ error: "Unauthorized" }, 401) };
 
   const token = authHeader.replace("Bearer ", "");
+  if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+    return { claims: { role: "service_role" } };
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
   if (!anonKey) return { response: jsonResponse({ error: "Authentication unavailable" }, 500) };
