@@ -213,6 +213,7 @@ Deno.serve(async (req) => {
             if (newStatus === "delivered") {
               supabase.functions
                 .invoke("send-status-update-email", {
+                  headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
                   body: { orderId: order.id, newStatus },
                 })
                 .catch((e: any) => console.error("Status email error:", e));
@@ -243,7 +244,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Check Colissimo status error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal error", details: String(error) }),
+      JSON.stringify({ error: "Internal error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
