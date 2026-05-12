@@ -81,7 +81,7 @@ const groupA: Product[] = [
     subtitle: "Indica Dominant",
     badge: "Cali Genetics",
     description: "Génétique Californienne Premium. Notes de menthe fraîche et d'épices douces.",
-    price: 15,
+    price: 12,
     priceGroup: "A",
     cbdPercentage: "20%",
     image: mintKush,
