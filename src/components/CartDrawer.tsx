@@ -223,7 +223,7 @@ const CartDrawer = () => {
         return sum + finalPrice;
       } else {
         // Regular: with weight-based discounts
-        const { finalPrice } = calculateItemPrice(item.product.price, item.weight);
+        const { finalPrice } = calculateItemPrice(item.product.price, item.weight, item.product.priceGroup || "A", item.product.id);
         return sum + finalPrice;
       }
     }, 0) +
