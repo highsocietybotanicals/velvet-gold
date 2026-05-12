@@ -158,7 +158,7 @@ High Society Botanicals`;
   } catch (error) {
     console.error("Error sending welcome promo:", error);
     return new Response(
-      JSON.stringify({ error: "Erreur d'envoi", details: String(error) }),
+      JSON.stringify({ error: "Erreur d'envoi" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

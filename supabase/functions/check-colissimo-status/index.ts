@@ -6,6 +6,46 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function requireServiceRoleOrAdmin(req: Request, serviceClient: any): Promise<Response | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return jsonResponse({ error: "Unauthorized" }, 401);
+
+  const token = authHeader.replace("Bearer ", "");
+  if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return null;
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  if (!anonKey) return jsonResponse({ error: "Authentication unavailable" }, 500);
+
+  const authClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data, error } = await authClient.auth.getClaims(token);
+  const claims = data?.claims;
+  if (error || !claims) return jsonResponse({ error: "Unauthorized" }, 401);
+  if (claims.role === "service_role") return null;
+
+  const userId = claims.sub;
+  if (!userId) return jsonResponse({ error: "Unauthorized" }, 401);
+
+  const { data: role, error: roleError } = await serviceClient
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (roleError || !role) return jsonResponse({ error: "Forbidden" }, 403);
+  return null;
+}
+
 // La Poste Suivi API v2
 const LAPOSTE_TRACKING_URL = "https://api.laposte.fr/suivi/v2/idships/";
 
@@ -81,6 +121,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    const authError = await requireServiceRoleOrAdmin(req, supabase);
+    if (authError) return authError;
 
     // Fetch all shipped/in_delivery orders with tracking numbers
     const { data: orders, error: fetchError } = await supabase
@@ -172,6 +215,7 @@ Deno.serve(async (req) => {
             if (newStatus === "delivered") {
               supabase.functions
                 .invoke("send-status-update-email", {
+                  headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
                   body: { orderId: order.id, newStatus },
                 })
                 .catch((e: any) => console.error("Status email error:", e));
@@ -202,7 +246,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Check Colissimo status error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal error", details: String(error) }),
+      JSON.stringify({ error: "Internal error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

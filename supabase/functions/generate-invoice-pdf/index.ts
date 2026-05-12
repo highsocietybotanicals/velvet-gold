@@ -9,6 +9,45 @@ const corsHeaders = {
 
 const TVA_RATE = 20;
 
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function getAuthClaims(req: Request): Promise<{ claims: any } | { response: Response }> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return { response: jsonResponse({ error: "Unauthorized" }, 401) };
+
+  const token = authHeader.replace("Bearer ", "");
+  if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+    return { claims: { role: "service_role" } };
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  if (!anonKey) return { response: jsonResponse({ error: "Authentication unavailable" }, 500) };
+
+  const authClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data, error } = await authClient.auth.getClaims(token);
+  if (error || !data?.claims) return { response: jsonResponse({ error: "Unauthorized" }, 401) };
+
+  return { claims: data.claims };
+}
+
+async function isAdmin(serviceClient: any, userId: string): Promise<boolean> {
+  const { data } = await serviceClient
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
+}
+
 function esc(s: string): string {
   return s || "";
 }
@@ -32,6 +71,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const auth = await getAuthClaims(req);
+    if ("response" in auth) return auth.response;
+
     // Fetch order
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -44,6 +86,15 @@ Deno.serve(async (req) => {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    const claims = auth.claims;
+    if (claims.role !== "service_role") {
+      const callerId = claims.sub;
+      const callerIsAdmin = callerId ? await isAdmin(supabase, callerId) : false;
+      if (!callerIsAdmin && (!order.user_id || order.user_id !== callerId)) {
+        return jsonResponse({ error: "Forbidden" }, 403);
+      }
     }
 
     // Fetch order items
@@ -359,7 +410,7 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("Generate invoice error:", error);
-    return new Response(JSON.stringify({ error: String(error) }), {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

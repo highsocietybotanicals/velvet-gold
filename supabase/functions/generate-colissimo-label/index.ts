@@ -17,6 +17,46 @@ const SENDER = {
   zipCode: "44390",
 };
 
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function requireAdmin(req: Request, serviceClient: any): Promise<Response | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return jsonResponse({ error: "Unauthorized" }, 401);
+
+  const token = authHeader.replace("Bearer ", "");
+  if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return null;
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  if (!anonKey) return jsonResponse({ error: "Authentication unavailable" }, 500);
+
+  const authClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data, error } = await authClient.auth.getClaims(token);
+  const claims = data?.claims;
+  if (error || !claims) return jsonResponse({ error: "Unauthorized" }, 401);
+  if (claims.role === "service_role") return null;
+
+  const userId = claims.sub;
+  if (!userId) return jsonResponse({ error: "Unauthorized" }, 401);
+
+  const { data: role, error: roleError } = await serviceClient
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (roleError || !role) return jsonResponse({ error: "Forbidden" }, 403);
+  return null;
+}
+
 function parseAddress(raw: string): {
   line2: string;
   zipCode: string;
@@ -179,6 +219,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const authError = await requireAdmin(req, supabase);
+    if (authError) return authError;
+
     // Fetch order
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -286,7 +329,6 @@ Deno.serve(async (req) => {
     const responseText = new TextDecoder().decode(responseBody);
 
     console.log("Colissimo response status:", colissimoResponse.status, "content-type:", responseContentType);
-    console.log("Colissimo raw response (first 500):", responseText.substring(0, 500));
 
     const { jsonPart, pdfBase64 } = parseMultipartResponse(
       responseBody,
@@ -346,6 +388,7 @@ Deno.serve(async (req) => {
       // Send status update email (fire-and-forget)
       supabase.functions
         .invoke("send-status-update-email", {
+          headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
           body: { orderId, newStatus: "shipped" },
         })
         .catch((e: any) => console.error("Status email error:", e));
@@ -366,7 +409,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Generate Colissimo label error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal error", details: String(error) }),
+      JSON.stringify({ error: "Internal error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
