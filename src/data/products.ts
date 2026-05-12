@@ -49,7 +49,7 @@ const groupA: Product[] = [
     subtitle: "Sativa Dominant",
     badge: "Artiste Edition",
     description: "Fleur d'artiste par Oniria. Arômes d'agrumes et de terre, stimulante et énergisante.",
-    price: 10,
+    price: 12,
     priceGroup: "A",
     cbdPercentage: "27%",
     image: amnesiaOniria,
