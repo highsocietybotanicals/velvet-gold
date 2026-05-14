@@ -27,16 +27,16 @@ const HeroSection = () => {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.1, duration: 0.4 }}
             className="text-primary/80 tracking-[0.3em] uppercase text-sm mb-4 font-body"
           >
             Collection Exclusive
           </motion.p>
 
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0, duration: 0.3 }}
             className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight mb-6"
           >
             <span className="text-gold-gradient">L'Excellence</span>
