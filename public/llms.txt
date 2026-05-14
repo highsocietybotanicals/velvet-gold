@@ -1,0 +1,19 @@
+# High Society Botanicals
+
+> Maison française de fleurs et résines CBD haute couture. Sélection raffinée cultivée Indoor pour connaisseurs exigeants, avec service Sommelier et livraison discrète.
+
+## Pages
+
+- [Accueil](/): Présentation de la maison et collections phares.
+- [Catalogue](/catalogue): Fleurs et résines CBD premium, collection Classique et Force Noire.
+- [Sommelier](/sommelier): Quiz Botaniste pour recommander la variété adaptée à votre intention (détente, sommeil, plaisir).
+- [Société](/societe): Notre histoire, notre savoir-faire et nos engagements qualité.
+- [Contact](/contact): Nous écrire pour toute question ou conseil personnalisé.
+- [Livraison & retours](/livraison-retours): Modes de livraison Colissimo, Point Relais et livraison locale.
+- [CGV](/cgv): Conditions générales de vente.
+- [Mentions légales](/mentions-legales): Informations légales de l'éditeur.
+- [Confidentialité](/confidentialite): Politique de confidentialité et gestion des données.
+
+## Optional
+
+- [Espace client](/profil): Suivi de commandes et programme de fidélité (1g offert tous les 10g).
