@@ -90,9 +90,14 @@ const DeliverySection = ({
   // Assemble address whenever fields change
   useEffect(() => {
     if (deliveryType === "relay") return;
+    if (deliveryType === "personal") {
+      const zone = ZONE_OPTIONS.find((z) => z.value === personalDeliveryZone);
+      setAddress(zone ? `Livraison personnelle — Zone ${zone.label}` : "");
+      return;
+    }
     const parts = [street, complement, postalCode, city, "France"].filter(Boolean);
     setAddress(parts.join(", "));
-  }, [street, complement, postalCode, city, setAddress, deliveryType]);
+  }, [street, complement, postalCode, city, setAddress, deliveryType, personalDeliveryZone]);
 
   const handlePostalCodeChange = (value: string) => {
     const cleaned = value.replace(/\D/g, "").slice(0, 5);
