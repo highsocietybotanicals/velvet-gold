@@ -191,7 +191,7 @@ const CartDrawer = () => {
 
   // Delivery state
   const [deliveryType, setDeliveryType] = useState<"postal" | "personal" | "relay">("postal");
-  const [isWithin100km, setIsWithin100km] = useState(false);
+  const [personalDeliveryZone, setPersonalDeliveryZone] = useState<import("./DeliverySection").PersonalDeliveryZone>(null);
   const [address, setAddress] = useState("");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState("");
@@ -804,8 +804,8 @@ const CartDrawer = () => {
                 <DeliverySection
                   deliveryType={deliveryType}
                   setDeliveryType={setDeliveryType}
-                  isWithin100km={isWithin100km}
-                  setIsWithin100km={setIsWithin100km}
+                  personalDeliveryZone={personalDeliveryZone}
+                  setPersonalDeliveryZone={setPersonalDeliveryZone}
                   address={address}
                   setAddress={setAddress}
                   scheduledDate={scheduledDate}

@@ -18,11 +18,13 @@ interface RelayPoint {
   distance: number;
 }
 
+export type PersonalDeliveryZone = "10" | "25" | "50" | "100" | null;
+
 interface DeliverySectionProps {
   deliveryType: "postal" | "personal" | "relay";
   setDeliveryType: (type: "postal" | "personal" | "relay") => void;
-  isWithin100km: boolean;
-  setIsWithin100km: (value: boolean) => void;
+  personalDeliveryZone: PersonalDeliveryZone;
+  setPersonalDeliveryZone: (value: PersonalDeliveryZone) => void;
   address: string;
   setAddress: (value: string) => void;
   scheduledDate: Date | undefined;
@@ -39,11 +41,18 @@ interface DeliverySectionProps {
   setRelayPointAddress?: (address: string) => void;
 }
 
+const ZONE_OPTIONS: { value: Exclude<PersonalDeliveryZone, null>; label: string; min: number }[] = [
+  { value: "10", label: "Moins de 10 km", min: 2.5 },
+  { value: "25", label: "Moins de 25 km", min: 5 },
+  { value: "50", label: "Moins de 50 km", min: 50 },
+  { value: "100", label: "Moins de 100 km", min: 100 },
+];
+
 const DeliverySection = ({
   deliveryType,
   setDeliveryType,
-  isWithin100km,
-  setIsWithin100km,
+  personalDeliveryZone,
+  setPersonalDeliveryZone,
   address,
   setAddress,
   scheduledDate,
@@ -63,7 +72,7 @@ const DeliverySection = ({
   const { totalFlowerWeight } = useCart();
 
   const isProActive = isPro && isProValidated;
-  const canAccessPersonalDelivery = isProActive || totalFlowerWeight >= 100;
+  const canAccessPersonalDelivery = isProActive || totalFlowerWeight >= 2.5;
 
   // Structured address fields
   const [street, setStreet] = useState("");
@@ -81,9 +90,14 @@ const DeliverySection = ({
   // Assemble address whenever fields change
   useEffect(() => {
     if (deliveryType === "relay") return;
+    if (deliveryType === "personal") {
+      const zone = ZONE_OPTIONS.find((z) => z.value === personalDeliveryZone);
+      setAddress(zone ? `Livraison personnelle — Zone ${zone.label}` : "");
+      return;
+    }
     const parts = [street, complement, postalCode, city, "France"].filter(Boolean);
     setAddress(parts.join(", "));
-  }, [street, complement, postalCode, city, setAddress, deliveryType]);
+  }, [street, complement, postalCode, city, setAddress, deliveryType, personalDeliveryZone]);
 
   const handlePostalCodeChange = (value: string) => {
     const cleaned = value.replace(/\D/g, "").slice(0, 5);
@@ -219,12 +233,12 @@ const DeliverySection = ({
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Je me déplace chez vous (rayon de 100km autour de notre entrepôt, Loire-Atlantique)
+                Je me déplace chez vous (Loire-Atlantique, jusqu'à 100 km) — à partir de 2,5 g
               </p>
               {!canAccessPersonalDelivery && (
                 <div className="flex items-center gap-1 mt-2 text-xs text-amber-500">
                   <AlertCircle className="w-3 h-3" />
-                  <span>Disponible à partir de 100g de fleurs</span>
+                  <span>Disponible à partir de 2,5 g de fleurs</span>
                 </div>
               )}
             </div>
@@ -429,24 +443,49 @@ const DeliverySection = ({
           exit={{ opacity: 0, height: 0 }}
           className="space-y-4 pt-2"
         >
-          <label className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border cursor-pointer hover:border-primary/50 transition-colors">
-            <input
-              type="checkbox"
-              checked={isWithin100km}
-              onChange={(e) => setIsWithin100km(e.target.checked)}
-              className="mt-1 rounded border-primary text-primary focus:ring-primary"
-            />
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Je confirme être situé à moins de 100km de notre entrepôt (Loire-Atlantique, 44)
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Nous vous contacterons pour confirmer le rendez-vous.
-              </p>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">
+              Indiquez votre zone (par rapport à notre entrepôt, Loire-Atlantique 44)
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {ZONE_OPTIONS.map((zone) => {
+                const eligible = isProActive || totalFlowerWeight >= zone.min;
+                const selected = personalDeliveryZone === zone.value;
+                return (
+                  <button
+                    key={zone.value}
+                    type="button"
+                    disabled={!eligible}
+                    onClick={() => setPersonalDeliveryZone(zone.value)}
+                    className={`p-3 rounded-lg border-2 text-left transition-all flex items-center gap-3 ${
+                      !eligible
+                        ? "border-border/50 opacity-50 cursor-not-allowed"
+                        : selected
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      selected ? "border-primary bg-primary" : "border-muted-foreground"
+                    }`}>
+                      {selected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                    </div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <span className="text-sm text-foreground">{zone.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {eligible ? `min ${zone.min} g` : `À partir de ${zone.min} g`}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </label>
+            <p className="text-xs text-muted-foreground">
+              Nous vous contacterons pour confirmer le rendez-vous.
+            </p>
+          </div>
 
-          {isWithin100km && (
+          {personalDeliveryZone && (
             <DeliveryScheduler
               scheduledDate={scheduledDate}
               setScheduledDate={setScheduledDate}
