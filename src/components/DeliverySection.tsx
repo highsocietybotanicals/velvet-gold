@@ -443,24 +443,49 @@ const DeliverySection = ({
           exit={{ opacity: 0, height: 0 }}
           className="space-y-4 pt-2"
         >
-          <label className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border cursor-pointer hover:border-primary/50 transition-colors">
-            <input
-              type="checkbox"
-              checked={isWithin100km}
-              onChange={(e) => setIsWithin100km(e.target.checked)}
-              className="mt-1 rounded border-primary text-primary focus:ring-primary"
-            />
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Je confirme être situé à moins de 100km de notre entrepôt (Loire-Atlantique, 44)
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Nous vous contacterons pour confirmer le rendez-vous.
-              </p>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">
+              Indiquez votre zone (par rapport à notre entrepôt, Loire-Atlantique 44)
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {ZONE_OPTIONS.map((zone) => {
+                const eligible = isProActive || totalFlowerWeight >= zone.min;
+                const selected = personalDeliveryZone === zone.value;
+                return (
+                  <button
+                    key={zone.value}
+                    type="button"
+                    disabled={!eligible}
+                    onClick={() => setPersonalDeliveryZone(zone.value)}
+                    className={`p-3 rounded-lg border-2 text-left transition-all flex items-center gap-3 ${
+                      !eligible
+                        ? "border-border/50 opacity-50 cursor-not-allowed"
+                        : selected
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      selected ? "border-primary bg-primary" : "border-muted-foreground"
+                    }`}>
+                      {selected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                    </div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <span className="text-sm text-foreground">{zone.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {eligible ? `min ${zone.min} g` : `À partir de ${zone.min} g`}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </label>
+            <p className="text-xs text-muted-foreground">
+              Nous vous contacterons pour confirmer le rendez-vous.
+            </p>
+          </div>
 
-          {isWithin100km && (
+          {personalDeliveryZone && (
             <DeliveryScheduler
               scheduledDate={scheduledDate}
               setScheduledDate={setScheduledDate}
