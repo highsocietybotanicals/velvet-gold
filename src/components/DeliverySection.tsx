@@ -233,12 +233,12 @@ const DeliverySection = ({
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Je me déplace chez vous (rayon de 100km autour de notre entrepôt, Loire-Atlantique)
+                Je me déplace chez vous (Loire-Atlantique, jusqu'à 100 km) — à partir de 2,5 g
               </p>
               {!canAccessPersonalDelivery && (
                 <div className="flex items-center gap-1 mt-2 text-xs text-amber-500">
                   <AlertCircle className="w-3 h-3" />
-                  <span>Disponible à partir de 100g de fleurs</span>
+                  <span>Disponible à partir de 2,5 g de fleurs</span>
                 </div>
               )}
             </div>
