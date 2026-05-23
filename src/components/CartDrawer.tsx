@@ -804,8 +804,8 @@ const CartDrawer = () => {
                 <DeliverySection
                   deliveryType={deliveryType}
                   setDeliveryType={setDeliveryType}
-                  isWithin100km={isWithin100km}
-                  setIsWithin100km={setIsWithin100km}
+                  personalDeliveryZone={personalDeliveryZone}
+                  setPersonalDeliveryZone={setPersonalDeliveryZone}
                   address={address}
                   setAddress={setAddress}
                   scheduledDate={scheduledDate}
