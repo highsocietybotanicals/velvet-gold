@@ -18,21 +18,38 @@ async function requireServiceRole(req: Request): Promise<Response | null> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return jsonResponse({ error: "Unauthorized" }, 401);
 
-  const token = authHeader.replace("Bearer ", "");
-  if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return null;
+  const token = authHeader.replace("Bearer ", "").trim();
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
-  if (!anonKey) return jsonResponse({ error: "Authentication unavailable" }, 500);
+  // Accept any of the project's server-side secret keys
+  const candidates = [
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+    Deno.env.get("SUPABASE_SECRET_KEYS"),
+  ].filter(Boolean) as string[];
 
-  const authClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data, error } = await authClient.auth.getClaims(token);
-  if (error || data?.claims?.role !== "service_role") {
-    return jsonResponse({ error: "Forbidden" }, 403);
+  for (const c of candidates) {
+    // SUPABASE_SECRET_KEYS may contain multiple keys (comma/newline separated)
+    const keys = c.split(/[\s,]+/).map((k) => k.trim()).filter(Boolean);
+    if (keys.includes(token)) return null;
   }
-  return null;
+
+  // Fallback: verify JWT claims for service_role
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey =
+      Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+    if (anonKey) {
+      const authClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data } = await authClient.auth.getClaims(token);
+      if (data?.claims?.role === "service_role") return null;
+    }
+  } catch (_e) {
+    // ignore and fall through
+  }
+
+  console.error("send-order-confirmation: forbidden caller (token did not match service key)");
+  return jsonResponse({ error: "Forbidden" }, 403);
 }
 
 Deno.serve(async (req) => {
