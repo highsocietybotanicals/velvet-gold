@@ -18,11 +18,13 @@ interface RelayPoint {
   distance: number;
 }
 
+export type PersonalDeliveryZone = "10" | "25" | "50" | "100" | null;
+
 interface DeliverySectionProps {
   deliveryType: "postal" | "personal" | "relay";
   setDeliveryType: (type: "postal" | "personal" | "relay") => void;
-  isWithin100km: boolean;
-  setIsWithin100km: (value: boolean) => void;
+  personalDeliveryZone: PersonalDeliveryZone;
+  setPersonalDeliveryZone: (value: PersonalDeliveryZone) => void;
   address: string;
   setAddress: (value: string) => void;
   scheduledDate: Date | undefined;
@@ -39,11 +41,18 @@ interface DeliverySectionProps {
   setRelayPointAddress?: (address: string) => void;
 }
 
+const ZONE_OPTIONS: { value: Exclude<PersonalDeliveryZone, null>; label: string; min: number }[] = [
+  { value: "10", label: "Moins de 10 km", min: 2.5 },
+  { value: "25", label: "Moins de 25 km", min: 5 },
+  { value: "50", label: "Moins de 50 km", min: 50 },
+  { value: "100", label: "Moins de 100 km", min: 100 },
+];
+
 const DeliverySection = ({
   deliveryType,
   setDeliveryType,
-  isWithin100km,
-  setIsWithin100km,
+  personalDeliveryZone,
+  setPersonalDeliveryZone,
   address,
   setAddress,
   scheduledDate,
@@ -63,7 +72,7 @@ const DeliverySection = ({
   const { totalFlowerWeight } = useCart();
 
   const isProActive = isPro && isProValidated;
-  const canAccessPersonalDelivery = isProActive || totalFlowerWeight >= 100;
+  const canAccessPersonalDelivery = isProActive || totalFlowerWeight >= 2.5;
 
   // Structured address fields
   const [street, setStreet] = useState("");
