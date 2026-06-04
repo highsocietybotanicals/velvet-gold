@@ -784,6 +784,7 @@ const AdminPage = () => {
                           <TableHead>Livraison</TableHead>
                           <TableHead>Paiement</TableHead>
                           <TableHead>Statut</TableHead>
+                          <TableHead></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -793,7 +794,9 @@ const AdminPage = () => {
                             order={order}
                             onStatusChange={(status) => updateOrderStatus(order.id, status)}
                             onPaymentStatusChange={(ps) => updatePaymentStatus(order.id, ps)}
+                            onDelete={() => deleteOrder(order.id)}
                             isUpdating={isUpdatingOrder}
+                            isDeleting={isDeletingOrder}
                           />
                         ))}
                       </TableBody>
