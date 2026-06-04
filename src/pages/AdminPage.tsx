@@ -499,11 +499,13 @@ const AdminPage = () => {
     updatePaymentStatus,
     approveReview,
     deleteReview,
+    deleteOrder,
     isValidating,
     isRejecting,
     isValidatingVat,
     isRejectingVat,
     isUpdatingOrder,
+    isDeletingOrder,
     isApprovingReview,
     isDeletingReview
   } = useAdmin();
