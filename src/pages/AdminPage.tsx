@@ -446,6 +446,35 @@ const OrderRow = ({
           </SelectContent>
         </Select>
       </TableCell>
+      <TableCell>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={isDeleting}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              title="Supprimer la commande"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer définitivement cette commande ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est irréversible. La commande, ses articles et son historique seront supprimés.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </TableCell>
     </TableRow>
   );
 };
