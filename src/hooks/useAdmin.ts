@@ -332,6 +332,26 @@ export const useAdmin = () => {
     },
   });
 
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      // Best-effort cleanup of dependent rows (no FK cascade defined)
+      await supabase.from("order_items").delete().eq("order_id", orderId);
+      await supabase.from("order_status_history" as any).delete().eq("order_id", orderId);
+      await supabase.from("delivery_mileage" as any).delete().eq("order_id", orderId);
+      await supabase.from("promo_code_usage" as any).delete().eq("order_id", orderId);
+      const { error } = await supabase.from("orders").delete().eq("id", orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      toast({ title: "Commande supprimée 🗑️" });
+    },
+    onError: (e: any) => {
+      toast({ title: "Erreur", description: e?.message || "Impossible de supprimer la commande.", variant: "destructive" });
+    },
+  });
+
+
   return {
     proRequests: proRequests || [],
     vatRequests: vatRequests || [],
@@ -351,6 +371,8 @@ export const useAdmin = () => {
       updatePaymentStatusMutation.mutate({ orderId, paymentStatus }),
     approveReview: (reviewId: string) => approveReviewMutation.mutate(reviewId),
     deleteReview: (reviewId: string) => deleteReviewMutation.mutate(reviewId),
+    deleteOrder: (orderId: string) => deleteOrderMutation.mutate(orderId),
+    isDeletingOrder: deleteOrderMutation.isPending,
     isValidating: validateProMutation.isPending,
     isRejecting: rejectProMutation.isPending,
     isValidatingVat: validateVatMutation.isPending,

@@ -48,8 +48,20 @@ import {
   MessageSquare,
   DollarSign,
   Download,
-  RefreshCw
+  RefreshCw,
+  Trash2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -209,12 +221,16 @@ const OrderRow = ({
   order, 
   onStatusChange,
   onPaymentStatusChange,
-  isUpdating
+  onDelete,
+  isUpdating,
+  isDeleting
 }: { 
   order: AdminOrder; 
   onStatusChange: (status: string) => void;
   onPaymentStatusChange: (status: string) => void;
+  onDelete: () => void;
   isUpdating: boolean;
+  isDeleting: boolean;
 }) => {
   const status = ORDER_STATUSES.find(s => s.value === order.status) || ORDER_STATUSES[0];
   const isManual = order.delivery_type === "personal" && !order.user_id;
@@ -430,6 +446,35 @@ const OrderRow = ({
           </SelectContent>
         </Select>
       </TableCell>
+      <TableCell>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={isDeleting}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              title="Supprimer la commande"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer définitivement cette commande ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est irréversible. La commande, ses articles et son historique seront supprimés.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </TableCell>
     </TableRow>
   );
 };
@@ -454,11 +499,13 @@ const AdminPage = () => {
     updatePaymentStatus,
     approveReview,
     deleteReview,
+    deleteOrder,
     isValidating,
     isRejecting,
     isValidatingVat,
     isRejectingVat,
     isUpdatingOrder,
+    isDeletingOrder,
     isApprovingReview,
     isDeletingReview
   } = useAdmin();
@@ -737,6 +784,7 @@ const AdminPage = () => {
                           <TableHead>Livraison</TableHead>
                           <TableHead>Paiement</TableHead>
                           <TableHead>Statut</TableHead>
+                          <TableHead></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -746,7 +794,9 @@ const AdminPage = () => {
                             order={order}
                             onStatusChange={(status) => updateOrderStatus(order.id, status)}
                             onPaymentStatusChange={(ps) => updatePaymentStatus(order.id, ps)}
+                            onDelete={() => deleteOrder(order.id)}
                             isUpdating={isUpdatingOrder}
+                            isDeleting={isDeletingOrder}
                           />
                         ))}
                       </TableBody>
