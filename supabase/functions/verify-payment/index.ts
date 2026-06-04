@@ -139,6 +139,21 @@ Deno.serve(async (req) => {
         console.error("Email trigger error:", e);
       }
 
+      // Compute mileage for personal delivery (fire-and-forget)
+      try {
+        const mileageUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/compute-mileage`;
+        fetch(mileageUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({ orderId }),
+        }).catch((e) => console.error("Fire-and-forget mileage error:", e));
+      } catch (e) {
+        console.error("Mileage trigger error:", e);
+      }
+
       return new Response(JSON.stringify({ success: true, status: "paid" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
