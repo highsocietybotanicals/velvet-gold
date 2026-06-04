@@ -35,3 +35,7 @@ verify_jwt = false
 
 [functions.check-colissimo-status]
 verify_jwt = false
+
+[functions.compute-mileage]
+verify_jwt = false
+
