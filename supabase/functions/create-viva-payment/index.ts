@@ -15,21 +15,75 @@ interface WeightTier {
   discount: number;
 }
 
+// Aligned with src/lib/pricing.ts
 const WEIGHT_TIERS_A: WeightTier[] = [
-  { min: 0, max: 9.99, discount: 0 },
-  { min: 10, max: 24.99, discount: 0.15 },
-  { min: 25, max: 49.99, discount: 0.25 },
-  { min: 50, max: 99.99, discount: 0.35 },
+  { min: 0, max: 2.49, discount: 0 },
+  { min: 2.5, max: 4.99, discount: 0.17 },
+  { min: 5, max: 9.99, discount: 0.25 },
+  { min: 10, max: 24.99, discount: 0.33 },
+  { min: 25, max: 49.99, discount: 0.40 },
+  { min: 50, max: 99.99, discount: 0.45 },
   { min: 100, max: Infinity, discount: 0.50 },
 ];
 
 const WEIGHT_TIERS_B: WeightTier[] = [
-  { min: 0, max: 9.99, discount: 0 },
-  { min: 10, max: 24.99, discount: 0.10 },
-  { min: 25, max: 49.99, discount: 0.20 },
-  { min: 50, max: 99.99, discount: 0.25 },
-  { min: 100, max: Infinity, discount: 0.35 },
+  { min: 0, max: 2.49, discount: 0 },
+  { min: 2.5, max: 4.99, discount: 0.07 },
+  { min: 5, max: 9.99, discount: 0.13 },
+  { min: 10, max: 24.99, discount: 0.35 },
+  { min: 25, max: 49.99, discount: 0.40 },
+  { min: 50, max: 99.99, discount: 0.45 },
+  { min: 100, max: Infinity, discount: 0.50 },
 ];
+
+// Force Noire / Élixir Noir fixed price grids (mirrors src/lib/pricing.ts)
+const FORCE_NOIRE_PRICE_GRID: Record<string, { weight: number; price: number }[]> = {
+  "nuage-de-mousseux": [
+    { weight: 1, price: 13 },
+    { weight: 2.5, price: 30 },
+    { weight: 5, price: 55 },
+    { weight: 10, price: 65 },
+  ],
+  "911-og-indoor": [
+    { weight: 1, price: 15 },
+    { weight: 2.5, price: 35 },
+    { weight: 5, price: 65 },
+    { weight: 10, price: 90 },
+  ],
+  "blue-mango-indoor": [
+    { weight: 1, price: 13 },
+    { weight: 2.5, price: 30 },
+    { weight: 5, price: 55 },
+    { weight: 10, price: 80 },
+  ],
+};
+
+function calculateForceNoirePrice(productId: string, weight: number): number | null {
+  const grid = FORCE_NOIRE_PRICE_GRID[productId];
+  if (!grid || !weight || weight <= 0) return null;
+  const exact = grid.find((g) => g.weight === weight);
+  if (exact) return exact.price;
+  const tier10 = grid[grid.length - 1];
+  const pricePerGram10 = tier10.price / tier10.weight;
+  if (weight < 10) {
+    let lower = grid[0];
+    let upper = grid[grid.length - 1];
+    for (let i = 0; i < grid.length - 1; i++) {
+      if (weight >= grid[i].weight && weight <= grid[i + 1].weight) {
+        lower = grid[i];
+        upper = grid[i + 1];
+        break;
+      }
+    }
+    const ratio = (weight - lower.weight) / (upper.weight - lower.weight);
+    return lower.price + (upper.price - lower.price) * ratio;
+  }
+  let extraDiscount = 0;
+  if (weight >= 100) extraDiscount = 0.20;
+  else if (weight >= 50) extraDiscount = 0.15;
+  else if (weight >= 25) extraDiscount = 0.10;
+  return weight * pricePerGram10 * (1 - extraDiscount);
+}
 
 const ACCESSORY_BULK_THRESHOLD = 10;
 const ACCESSORY_BULK_DISCOUNT = 0.33;
@@ -48,8 +102,12 @@ function getDiscountTier(weight: number, priceGroup: string): WeightTier {
   return tiers.find(t => weight >= t.min && weight <= t.max) || tiers[0];
 }
 
-function calculateItemPrice(basePrice: number, weight: number, priceGroup: string): number {
+function calculateItemPrice(basePrice: number, weight: number, priceGroup: string, productId?: string): number {
   if (!weight || weight <= 0) return 0;
+  if (productId && FORCE_NOIRE_PRICE_GRID[productId]) {
+    const fn = calculateForceNoirePrice(productId, weight);
+    if (fn !== null) return fn;
+  }
   const tier = getDiscountTier(weight, priceGroup);
   return basePrice * weight * (1 - tier.discount);
 }
