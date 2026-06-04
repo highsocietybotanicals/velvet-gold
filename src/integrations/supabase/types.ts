@@ -289,6 +289,8 @@ export type Database = {
       }
       orders: {
         Row: {
+          abandoned_email_24h_sent_at: string | null
+          abandoned_email_2h_sent_at: string | null
           contact_phone: string | null
           created_at: string | null
           delivery_address: string | null
@@ -318,6 +320,8 @@ export type Database = {
           viva_order_code: string | null
         }
         Insert: {
+          abandoned_email_24h_sent_at?: string | null
+          abandoned_email_2h_sent_at?: string | null
           contact_phone?: string | null
           created_at?: string | null
           delivery_address?: string | null
@@ -347,6 +351,8 @@ export type Database = {
           viva_order_code?: string | null
         }
         Update: {
+          abandoned_email_24h_sent_at?: string | null
+          abandoned_email_2h_sent_at?: string | null
           contact_phone?: string | null
           created_at?: string | null
           delivery_address?: string | null
