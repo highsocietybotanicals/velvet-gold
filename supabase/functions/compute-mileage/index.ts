@@ -46,8 +46,7 @@ Deno.serve(async (req) => {
     }
 
     if (!order.delivery_address) {
-      return new Response(JSON.stringify({ error: "No delivery address" }), {
-        status: 400,
+      return new Response(JSON.stringify({ skipped: true, reason: "no delivery address" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
