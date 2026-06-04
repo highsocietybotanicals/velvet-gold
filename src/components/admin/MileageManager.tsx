@@ -70,26 +70,37 @@ const MileageManager = () => {
 
   const loadRows = async () => {
     setLoading(true);
-    const [year, mon] = month.split("-").map(Number);
-    const start = new Date(year, mon - 1, 1).toISOString();
-    const end = new Date(year, mon, 1).toISOString();
+    try {
+      const [year, mon] = month.split("-").map(Number);
+      if (!year || !mon) {
+        setRows([]);
+        return;
+      }
+      const start = new Date(year, mon - 1, 1).toISOString();
+      const end = new Date(year, mon, 1).toISOString();
 
-    const { data, error } = await (supabase as any)
-      .from("delivery_mileage")
-      .select(`
-        *,
-        orders!inner ( display_order_number, created_at, delivery_address, contact_phone, guest_name )
-      `)
-      .gte("created_at", start)
-      .lt("created_at", end)
-      .order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any)
+        .from("delivery_mileage")
+        .select(`
+          *,
+          orders ( display_order_number, created_at, delivery_address, contact_phone, guest_name )
+        `)
+        .gte("created_at", start)
+        .lt("created_at", end)
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } else {
-      setRows((data as MileageRow[]) || []);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        setRows([]);
+      } else {
+        setRows((data as MileageRow[]) || []);
+      }
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e?.message ?? String(e), variant: "destructive" });
+      setRows([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {

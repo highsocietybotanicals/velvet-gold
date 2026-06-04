@@ -1,0 +1,1 @@
+ALTER TABLE public.delivery_mileage ADD CONSTRAINT delivery_mileage_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
