@@ -221,12 +221,16 @@ const OrderRow = ({
   order, 
   onStatusChange,
   onPaymentStatusChange,
-  isUpdating
+  onDelete,
+  isUpdating,
+  isDeleting
 }: { 
   order: AdminOrder; 
   onStatusChange: (status: string) => void;
   onPaymentStatusChange: (status: string) => void;
+  onDelete: () => void;
   isUpdating: boolean;
+  isDeleting: boolean;
 }) => {
   const status = ORDER_STATUSES.find(s => s.value === order.status) || ORDER_STATUSES[0];
   const isManual = order.delivery_type === "personal" && !order.user_id;
