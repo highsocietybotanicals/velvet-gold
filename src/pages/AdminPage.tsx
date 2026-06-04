@@ -15,6 +15,7 @@ import ManualOrderCreator from "@/components/admin/ManualOrderCreator";
 import { MolecularLabel } from "@/components/admin/MolecularLabel";
 import PromoCodeManager from "@/components/admin/PromoCodeManager";
 import MileageManager from "@/components/admin/MileageManager";
+import StatsManager from "@/components/admin/StatsManager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -572,6 +573,11 @@ const AdminPage = () => {
               Gérez les demandes Pro et les commandes
             </p>
           </motion.div>
+
+          {/* Dashboard Statistiques */}
+          <div className="mb-8">
+            <StatsManager />
+          </div>
 
           {/* Section Gestion des Prix */}
           <PriceManagement />

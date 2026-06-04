@@ -304,6 +304,21 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.error("Mileage trigger error:", e);
       }
+
+      // Notify admin via Telegram (fire-and-forget)
+      try {
+        const tgUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-admin-telegram`;
+        fetch(tgUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({ orderId: merchantTrns, eventType: "paid" }),
+        }).catch((e) => console.error("Telegram notify error:", e));
+      } catch (e) {
+        console.error("Telegram trigger error:", e);
+      }
     } else {
       console.log(`Order ${merchantTrns} received but StatusId is: ${eventData.StatusId}`);
     }

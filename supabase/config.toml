@@ -39,3 +39,7 @@ verify_jwt = false
 [functions.compute-mileage]
 verify_jwt = false
 
+[functions.notify-admin-telegram]
+verify_jwt = false
+
+
