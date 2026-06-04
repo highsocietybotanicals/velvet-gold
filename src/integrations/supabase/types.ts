@@ -41,6 +41,57 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_mileage: {
+        Row: {
+          arrival_address: string
+          computed_at: string | null
+          cost_euros: number | null
+          created_at: string
+          departure_address: string
+          distance_km_one_way: number | null
+          distance_km_round_trip: number | null
+          duration_min: number | null
+          error_message: string | null
+          id: string
+          order_id: string
+          rate_per_km: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          arrival_address: string
+          computed_at?: string | null
+          cost_euros?: number | null
+          created_at?: string
+          departure_address: string
+          distance_km_one_way?: number | null
+          distance_km_round_trip?: number | null
+          duration_min?: number | null
+          error_message?: string | null
+          id?: string
+          order_id: string
+          rate_per_km?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          arrival_address?: string
+          computed_at?: string | null
+          cost_euros?: number | null
+          created_at?: string
+          departure_address?: string
+          distance_km_one_way?: number | null
+          distance_km_round_trip?: number | null
+          duration_min?: number | null
+          error_message?: string | null
+          id?: string
+          order_id?: string
+          rate_per_km?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -125,6 +176,24 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      mileage_settings: {
+        Row: {
+          id: number
+          rate_per_km: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          rate_per_km?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          rate_per_km?: number
+          updated_at?: string
         }
         Relationships: []
       }
