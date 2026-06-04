@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
           itemTotal = calculateProItemPrice(proPrice, weight);
           unitPrice = proPrice;
         } else {
-          itemTotal = calculateItemPrice(dbProduct.price, weight, priceGroup);
+          itemTotal = calculateItemPrice(dbProduct.price, weight, priceGroup, item.productId);
           unitPrice = dbProduct.price;
         }
 
