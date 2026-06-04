@@ -574,6 +574,11 @@ const AdminPage = () => {
             </p>
           </motion.div>
 
+          {/* Dashboard Statistiques */}
+          <div className="mb-8">
+            <StatsManager />
+          </div>
+
           {/* Section Gestion des Prix */}
           <PriceManagement />
 
