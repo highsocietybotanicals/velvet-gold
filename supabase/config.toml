@@ -42,4 +42,9 @@ verify_jwt = false
 [functions.notify-admin-telegram]
 verify_jwt = false
 
+[functions.send-abandoned-cart-email]
+verify_jwt = false
+
+
+
 
