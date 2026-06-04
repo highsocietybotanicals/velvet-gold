@@ -371,6 +371,8 @@ export const useAdmin = () => {
       updatePaymentStatusMutation.mutate({ orderId, paymentStatus }),
     approveReview: (reviewId: string) => approveReviewMutation.mutate(reviewId),
     deleteReview: (reviewId: string) => deleteReviewMutation.mutate(reviewId),
+    deleteOrder: (orderId: string) => deleteOrderMutation.mutate(orderId),
+    isDeletingOrder: deleteOrderMutation.isPending,
     isValidating: validateProMutation.isPending,
     isRejecting: rejectProMutation.isPending,
     isValidatingVat: validateVatMutation.isPending,
