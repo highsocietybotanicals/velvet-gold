@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
 
     // Table header
     const colX = [margin, margin + 75, margin + 110, margin + 135, margin + 160];
-    const colLabels = ["Designation", "Quantite", "Prix unit. HT", "TVA", "Total HT"];
+    const colLabels = ["Designation", "Quantite", "Prix unit. TTC", "TVA", "Total TTC"];
 
     doc.setFillColor(...gold);
     doc.rect(margin, y, contentW, 8, "F");
@@ -265,16 +265,16 @@ Deno.serve(async (req) => {
         y = margin;
       }
       const qty = item.weight ? `${item.weight}g` : `x${item.quantity || 1}`;
-      const unitHT = Number(item.unit_price || 0) / (1 + TVA_RATE / 100);
-      const totalItemHT = Number(item.total_price || 0) / (1 + TVA_RATE / 100);
+      const unitTTC = Number(item.unit_price || 0);
+      const totalItemTTC = Number(item.total_price || 0);
 
       doc.setTextColor(...dark);
       doc.text(esc(item.product_name), colX[0] + 2, y + 4);
       doc.text(qty, colX[1] + 20, y + 4, { align: "right" });
-      doc.text(`${unitHT.toFixed(2)} EUR`, colX[2] + 20, y + 4, { align: "right" });
+      doc.text(`${unitTTC.toFixed(2)} EUR`, colX[2] + 20, y + 4, { align: "right" });
       doc.text(`${TVA_RATE}%`, colX[3] + 20, y + 4, { align: "right" });
       doc.setFont("helvetica", "bold");
-      doc.text(`${totalItemHT.toFixed(2)} EUR`, colX[4] + 18, y + 4, { align: "right" });
+      doc.text(`${totalItemTTC.toFixed(2)} EUR`, colX[4] + 18, y + 4, { align: "right" });
       doc.setFont("helvetica", "normal");
 
       // separator
