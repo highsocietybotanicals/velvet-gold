@@ -16,30 +16,34 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 
 async function requireServiceRole(req: Request): Promise<Response | null> {
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return jsonResponse({ error: "Unauthorized" }, 401);
-
-  const token = authHeader.replace("Bearer ", "").trim();
-
-  // Accept any of the project's server-side secret keys
-  const candidates = [
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
-    Deno.env.get("SUPABASE_SECRET_KEYS"),
-  ].filter(Boolean) as string[];
-
-  for (const c of candidates) {
-    // SUPABASE_SECRET_KEYS may contain multiple keys (comma/newline separated)
-    const keys = c.split(/[\s,]+/).map((k) => k.trim()).filter(Boolean);
-    if (keys.includes(token)) return null;
+  if (!authHeader?.startsWith("Bearer ")) {
+    console.error("send-order-confirmation: missing Bearer header");
+    return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
-  // Fallback: verify JWT claims for service_role
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+  // Build a set of accepted server-side secret keys
+  const accepted = new Set<string>();
+  const addAll = (val?: string | null) => {
+    if (!val) return;
+    for (const k of val.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean)) {
+      accepted.add(k);
+    }
+  };
+  addAll(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+  addAll(Deno.env.get("SUPABASE_SECRET_KEYS"));
+
+  if (accepted.has(token)) return null;
+
+  // Fallback: verify as a JWT with service_role claim
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey =
       Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
     if (anonKey) {
       const authClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
+        global: { headers: { Authorization: `Bearer ${token}` } },
       });
       const { data } = await authClient.auth.getClaims(token);
       if (data?.claims?.role === "service_role") return null;
@@ -48,7 +52,9 @@ async function requireServiceRole(req: Request): Promise<Response | null> {
     // ignore and fall through
   }
 
-  console.error("send-order-confirmation: forbidden caller (token did not match service key)");
+  console.error(
+    `send-order-confirmation: forbidden caller. token.len=${token.length}, accepted.count=${accepted.size}`
+  );
   return jsonResponse({ error: "Forbidden" }, 403);
 }
 
