@@ -201,6 +201,32 @@ const Header = () => {
           >
             <nav className="container mx-auto px-6 py-6 flex flex-col gap-4">
               {navLinks.map((link, i) => renderLink(link, i, true))}
+              {user && (
+                <Link
+                  to="/profil"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-lg hover:text-primary transition-colors py-2 font-display text-foreground flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" /> Mon Profil
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-lg hover:text-primary transition-colors py-2 font-display text-primary flex items-center gap-2"
+                >
+                  <Shield className="w-4 h-4" /> Administration
+                </Link>
+              )}
+              {user && (
+                <button
+                  onClick={() => { setIsMenuOpen(false); handleSignOut(); }}
+                  className="text-lg hover:text-destructive transition-colors py-2 font-display text-destructive flex items-center gap-2 text-left"
+                >
+                  <LogOut className="w-4 h-4" /> Déconnexion
+                </button>
+              )}
               <Link
                 to="/catalogue"
                 onClick={() => setIsMenuOpen(false)}
