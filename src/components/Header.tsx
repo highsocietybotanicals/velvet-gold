@@ -149,6 +149,17 @@ const Header = () => {
               </motion.div>
             )}
 
+            {/* Admin shortcut (always visible when admin) */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                aria-label="Administration"
+                className="p-2 hover:bg-muted rounded-full transition-colors text-primary"
+              >
+                <Shield className="w-5 h-5" />
+              </Link>
+            )}
+
             {/* Cart button */}
             <motion.button
               initial={{ opacity: 0, x: 20 }}
