@@ -173,6 +173,11 @@ High Society Botanicals`;
 
     console.log("Welcome promo email sent to:", normalizedEmail);
 
+    // Record contact to enforce one-shot idempotency on future calls
+    await adminClient
+      .from("contacts")
+      .upsert({ email: normalizedEmail, source: "welcome_popup" }, { onConflict: "email" });
+
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
