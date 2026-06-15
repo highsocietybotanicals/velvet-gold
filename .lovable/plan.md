@@ -1,32 +1,27 @@
-## Problème
+## Objectif
 
-Les prix unitaires sur la facture PDF s'affichent **HT** alors que les prix sur le site sont **TTC**.
+Permettre, dans le formulaire de commande manuelle de l'admin, de récupérer en un clic les coordonnées d'un ancien client (nom, email, téléphone, adresse) au lieu de tout retaper.
 
-- Ice O Lator / Golden CBN : 12 € TTC sur le site → 10,00 € HT sur la facture (12 ÷ 1,20)
-- 911 OG : 15 € TTC sur le site → 12,50 € HT sur la facture (15 ÷ 1,20)
+## Modifications
 
-D'où la confusion : la facture est mathématiquement correcte (TVA 20%), mais le client lit la colonne "Prix unit." comme du TTC. Les prix stockés dans `order_items.unit_price` sont bien corrects (12 € et 15 €, en TTC).
+**Fichier : `src/components/admin/ManualOrderCreator.tsx`**
 
-## Solution
+1. Ajouter en haut du bloc "Client info" un champ de recherche/sélection « Client existant » (Combobox avec recherche par nom ou email).
+2. Au chargement (et avec mise en cache via React Query), récupérer la liste des clients déjà connus en agrégeant :
+   - les profils utilisateurs (`profiles` : `full_name`, `email`, `phone`, `address_line1`, `city`, `postal_code`)
+   - les commandes invitées passées (`orders` distinct par `guest_email`/`guest_phone` : `guest_name`, `guest_email`, `guest_phone`, `delivery_address`)
+   - dédoublonnage par email (ou téléphone si pas d'email), tri alphabétique, libellé : `Nom — email/téléphone`.
+3. À la sélection d'un client, pré-remplir automatiquement les 4 champs existants (`customerName`, `customerEmail`, `customerPhone`, `customerAddress`). L'admin peut ensuite éditer librement.
+4. Bouton « Effacer » à côté du sélecteur pour repartir d'un client vide.
 
-Dans `supabase/functions/generate-invoice-pdf/index.ts`, basculer le tableau d'articles en **TTC** pour qu'il corresponde exactement à ce que voit le client sur le site, tout en gardant le détail HT / TVA / TTC dans le bloc des totaux (obligation comptable).
+## Détails techniques
 
-### Changements précis
+- Utiliser le composant `Command` (shadcn) déjà présent (`src/components/ui/command.tsx`) pour la recherche filtrable, encapsulé dans un `Popover`.
+- Hook `useQuery(["admin","known-customers"], …)` activé uniquement quand le panneau est ouvert (lazy), avec `staleTime: 5 min`.
+- Aucun changement de schéma DB, aucune nouvelle policy : les requêtes utilisent les policies admin existantes sur `profiles` et `orders`.
+- Aucun changement à la logique de création de commande, prix, cadeaux, promo, facture.
 
-1. **Tableau articles** :
-   - Colonne "Prix unit. HT" → **"Prix unit. TTC"**, affichée avec `item.unit_price` brut (12 €, 15 €).
-   - Colonne "Total HT" → **"Total TTC"**, affichée avec `item.total_price` brut.
-   - Colonne "TVA" conservée (20 %).
+## Hors scope
 
-2. **Bloc des totaux** (inchangé) :
-   - Sous-total TTC, remise promo, Total HT, TVA, **TOTAL TTC** restent affichés. Cela conserve la conformité (mention HT + TVA + TTC obligatoire sur une facture).
-
-3. **Aucun changement DB / aucune autre fonction touchée**. Les commandes existantes pourront regénérer une facture corrigée si besoin (le PDF est régénéré à la demande).
-
-### Fichier modifié
-
-- `supabase/functions/generate-invoice-pdf/index.ts` (lignes ~244-285 : libellés colonnes + calcul `unitHT`/`totalItemHT` retirés au profit de `unit_price` / `total_price` directs).
-
-### Vérification
-
-Après déploiement, regénérer la facture de la dernière commande pour valider : Ice O Lator s'affichera bien à **12,00 € / g** et 911 OG à **15,00 € / g**, avec le Total TTC inchangé.
+- Pas de gestion de "fiches clients" dédiées (table dédiée).
+- Pas de modification des autres formulaires (checkout public, etc.).
