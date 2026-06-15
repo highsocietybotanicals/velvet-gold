@@ -112,7 +112,7 @@ High Society Botanicals`;
 
     const rawEmail = [
       `From: High Society Botanicals <${gmailUser}>`,
-      `To: ${email}`,
+      `To: ${normalizedEmail}`,
       `Subject: ${encodeSubject(subject)}`,
       `MIME-Version: 1.0`,
       `Content-Type: multipart/alternative; boundary="${boundary}"`,
@@ -161,7 +161,7 @@ High Society Botanicals`;
 
     // MAIL FROM / RCPT TO
     await sendCommand(`MAIL FROM:<${gmailUser}>`);
-    await sendCommand(`RCPT TO:<${email}>`);
+    await sendCommand(`RCPT TO:<${normalizedEmail}>`);
 
     // DATA
     await sendCommand("DATA");
@@ -171,7 +171,7 @@ High Society Botanicals`;
     await sendCommand("QUIT");
     conn.close();
 
-    console.log("Welcome promo email sent to:", email);
+    console.log("Welcome promo email sent to:", normalizedEmail);
 
     return new Response(
       JSON.stringify({ success: true }),
