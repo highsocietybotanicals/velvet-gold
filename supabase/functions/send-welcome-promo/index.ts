@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -20,10 +22,30 @@ Deno.serve(async (req) => {
   try {
     const { email } = await req.json();
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email || /* basic validation */ typeof email !== "string" || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return new Response(
         JSON.stringify({ error: "Email invalide" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Idempotency: prevent abusive re-sends to arbitrary addresses
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: existing } = await adminClient
+      .from("contacts")
+      .select("id")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+    if (existing) {
+      // Silently succeed so we don't leak which emails are subscribed
+      return new Response(
+        JSON.stringify({ success: true, alreadySent: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
