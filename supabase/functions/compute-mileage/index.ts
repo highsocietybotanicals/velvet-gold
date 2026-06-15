@@ -9,10 +9,41 @@ const corsHeaders = {
 const DEPARTURE = "15 rue des écoles, 44170 Abbaretz, France";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
 
+async function isAuthorized(req: Request, serviceClient: any): Promise<boolean> {
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!token) return false;
+  if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return true;
+  try {
+    const { data: { user } } = await serviceClient.auth.getUser(token);
+    if (!user) return false;
+    const { data: role } = await serviceClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    return !!role;
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    if (!(await isAuthorized(req, supabase))) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { orderId } = await req.json();
     if (!orderId) {
       return new Response(JSON.stringify({ error: "Missing orderId" }), {
@@ -21,10 +52,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     const { data: order, error: orderErr } = await supabase
       .from("orders")
@@ -145,7 +172,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, status, ...payload }), {
+    // Do not include arrival_address (PII) in response
+    const { arrival_address: _omit, departure_address: _omit2, ...safePayload } = payload;
+    return new Response(JSON.stringify({ success: true, status, ...safePayload }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
