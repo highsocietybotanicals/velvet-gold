@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
     if (productItemIds.length > 0) {
       const { data } = await supabaseAdmin
         .from("products")
-        .select("id, price, pro_price, category")
+        .select("id, price, category")
         .in("id", productItemIds);
       dbProducts = data || [];
     }
@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
         let itemTotal: number;
         let unitPrice: number;
 
-        const proPrice = proPriceMap[item.productId] || dbProduct.pro_price;
+        const proPrice = proPriceMap[item.productId];
         if (isProActive && proPrice) {
           itemTotal = calculateProItemPrice(proPrice, weight);
           unitPrice = proPrice;
