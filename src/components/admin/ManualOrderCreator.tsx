@@ -47,6 +47,92 @@ const ManualOrderCreator = () => {
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [lastCreatedOrder, setLastCreatedOrder] = useState<any>(null);
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+
+  type KnownCustomer = {
+    key: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+
+  const { data: knownCustomers = [], isLoading: isLoadingCustomers } = useQuery<KnownCustomer[]>({
+    queryKey: ["admin", "known-customers"],
+    enabled: customerPickerOpen,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const [profilesRes, ordersRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name,email,phone,address_line1,city,postal_code"),
+        supabase
+          .from("orders")
+          .select("guest_name,guest_email,guest_phone,delivery_address,created_at")
+          .not("guest_name", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(500),
+      ]);
+
+      const map = new Map<string, KnownCustomer>();
+      const norm = (s?: string | null) => (s || "").trim();
+      const keyFor = (email: string, phone: string, name: string) =>
+        (email.toLowerCase() || phone.replace(/\s+/g, "") || name.toLowerCase()).trim();
+
+      for (const p of profilesRes.data || []) {
+        const name = norm(p.full_name);
+        const email = norm(p.email);
+        const phone = norm(p.phone);
+        const addr = [norm(p.address_line1), norm(p.postal_code), norm(p.city)]
+          .filter(Boolean)
+          .join(", ");
+        if (!name && !email && !phone) continue;
+        const k = keyFor(email, phone, name);
+        if (!k) continue;
+        if (!map.has(k)) {
+          map.set(k, { key: k, name: name || email || phone, email, phone, address: addr });
+        }
+      }
+
+      for (const o of ordersRes.data || []) {
+        const name = norm(o.guest_name);
+        const email = norm(o.guest_email);
+        const phone = norm(o.guest_phone);
+        const addr = norm(o.delivery_address);
+        if (!name && !email && !phone) continue;
+        const k = keyFor(email, phone, name);
+        if (!k) continue;
+        if (!map.has(k)) {
+          map.set(k, { key: k, name: name || email || phone, email, phone, address: addr });
+        } else {
+          // enrich missing fields with most recent order data
+          const existing = map.get(k)!;
+          if (!existing.address && addr) existing.address = addr;
+          if (!existing.phone && phone) existing.phone = phone;
+          if (!existing.email && email) existing.email = email;
+        }
+      }
+
+      return Array.from(map.values()).sort((a, b) =>
+        a.name.localeCompare(b.name, "fr", { sensitivity: "base" })
+      );
+    },
+  });
+
+  const selectCustomer = (c: KnownCustomer) => {
+    setCustomerName(c.name);
+    setCustomerEmail(c.email);
+    setCustomerPhone(c.phone);
+    setCustomerAddress(c.address);
+    setCustomerPickerOpen(false);
+  };
+
+  const clearCustomer = () => {
+    setCustomerName("");
+    setCustomerEmail("");
+    setCustomerPhone("");
+    setCustomerAddress("");
+  };
 
   const validatePromoCode = async () => {
     if (!promoCode.trim()) return;
