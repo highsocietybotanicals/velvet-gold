@@ -1,15 +1,18 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag, Gift } from "lucide-react";
+import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag, Gift, Users, Check, ChevronsUpDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
 import { calculateItemPrice } from "@/lib/pricing";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -44,6 +47,92 @@ const ManualOrderCreator = () => {
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [lastCreatedOrder, setLastCreatedOrder] = useState<any>(null);
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+
+  type KnownCustomer = {
+    key: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+
+  const { data: knownCustomers = [], isLoading: isLoadingCustomers } = useQuery<KnownCustomer[]>({
+    queryKey: ["admin", "known-customers"],
+    enabled: customerPickerOpen,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const [profilesRes, ordersRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name,email,phone,address_line1,city,postal_code"),
+        supabase
+          .from("orders")
+          .select("guest_name,guest_email,guest_phone,delivery_address,created_at")
+          .not("guest_name", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(500),
+      ]);
+
+      const map = new Map<string, KnownCustomer>();
+      const norm = (s?: string | null) => (s || "").trim();
+      const keyFor = (email: string, phone: string, name: string) =>
+        (email.toLowerCase() || phone.replace(/\s+/g, "") || name.toLowerCase()).trim();
+
+      for (const p of profilesRes.data || []) {
+        const name = norm(p.full_name);
+        const email = norm(p.email);
+        const phone = norm(p.phone);
+        const addr = [norm(p.address_line1), norm(p.postal_code), norm(p.city)]
+          .filter(Boolean)
+          .join(", ");
+        if (!name && !email && !phone) continue;
+        const k = keyFor(email, phone, name);
+        if (!k) continue;
+        if (!map.has(k)) {
+          map.set(k, { key: k, name: name || email || phone, email, phone, address: addr });
+        }
+      }
+
+      for (const o of ordersRes.data || []) {
+        const name = norm(o.guest_name);
+        const email = norm(o.guest_email);
+        const phone = norm(o.guest_phone);
+        const addr = norm(o.delivery_address);
+        if (!name && !email && !phone) continue;
+        const k = keyFor(email, phone, name);
+        if (!k) continue;
+        if (!map.has(k)) {
+          map.set(k, { key: k, name: name || email || phone, email, phone, address: addr });
+        } else {
+          // enrich missing fields with most recent order data
+          const existing = map.get(k)!;
+          if (!existing.address && addr) existing.address = addr;
+          if (!existing.phone && phone) existing.phone = phone;
+          if (!existing.email && email) existing.email = email;
+        }
+      }
+
+      return Array.from(map.values()).sort((a, b) =>
+        a.name.localeCompare(b.name, "fr", { sensitivity: "base" })
+      );
+    },
+  });
+
+  const selectCustomer = (c: KnownCustomer) => {
+    setCustomerName(c.name);
+    setCustomerEmail(c.email);
+    setCustomerPhone(c.phone);
+    setCustomerAddress(c.address);
+    setCustomerPickerOpen(false);
+  };
+
+  const clearCustomer = () => {
+    setCustomerName("");
+    setCustomerEmail("");
+    setCustomerPhone("");
+    setCustomerAddress("");
+  };
 
   const validatePromoCode = async () => {
     if (!promoCode.trim()) return;
@@ -410,6 +499,80 @@ const ManualOrderCreator = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Customer picker */}
+          <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+            <div className="flex-1">
+              <label className="text-sm text-muted-foreground mb-1 block flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-gold" /> Client existant (optionnel)
+              </label>
+              <Popover open={customerPickerOpen} onOpenChange={setCustomerPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between font-normal"
+                  >
+                    <span className="truncate">
+                      {customerName
+                        ? `${customerName}${customerEmail ? ` — ${customerEmail}` : customerPhone ? ` — ${customerPhone}` : ""}`
+                        : "Rechercher un client (nom ou email)..."}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command
+                    filter={(value, search) =>
+                      value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+                    }
+                  >
+                    <CommandInput placeholder="Tapez nom, email ou téléphone..." />
+                    <CommandList>
+                      {isLoadingCustomers ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
+                        </div>
+                      ) : (
+                        <>
+                          <CommandEmpty>Aucun client trouvé.</CommandEmpty>
+                          <CommandGroup>
+                            {knownCustomers.map((c) => (
+                              <CommandItem
+                                key={c.key}
+                                value={`${c.name} ${c.email} ${c.phone}`}
+                                onSelect={() => selectCustomer(c)}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    customerName === c.name && customerEmail === c.email
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{c.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {[c.email, c.phone].filter(Boolean).join(" • ") || "—"}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            {(customerName || customerEmail || customerPhone || customerAddress) && (
+              <Button variant="ghost" size="sm" onClick={clearCustomer} className="gap-1 text-destructive">
+                <X className="h-4 w-4" /> Effacer
+              </Button>
+            )}
+          </div>
+
           {/* Client info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
