@@ -128,7 +128,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   // Get dynamic price from database
   const dbPrice = getPrice(product.id);
   const basePrice = dbPrice?.price ?? product.price;
-  const proPrice = dbPrice?.pro_price;
+  const { getProPrice } = useProPrices();
+  const proPrice = getProPrice(product.id);
 
   // Check if user qualifies for Pro HT pricing (requires VAT validated by admin)
   const isProWithValidatedVat = isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated;
