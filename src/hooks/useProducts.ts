@@ -8,7 +8,6 @@ export interface ProductPrice {
   name: string;
   category: "fleur" | "resine";
   price: number;
-  pro_price: number | null;
   is_active: boolean;
 }
 
@@ -18,7 +17,7 @@ export const useProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select("id, name, category, price, is_active")
         .order("category", { ascending: true })
         .order("name", { ascending: true });
 
@@ -44,12 +43,26 @@ export const useAdminProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select("id, name, category, price, is_active")
         .order("category", { ascending: true })
         .order("name", { ascending: true });
 
       if (error) throw error;
       return data as ProductPrice[];
+    },
+    enabled: isAdmin,
+  });
+
+  const { data: proPricesMap } = useQuery({
+    queryKey: ["admin", "pro-prices"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pro_prices")
+        .select("product_id, pro_price");
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      (data || []).forEach((r: any) => { map[r.product_id] = Number(r.pro_price); });
+      return map;
     },
     enabled: isAdmin,
   });
@@ -66,14 +79,29 @@ export const useAdminProducts = () => {
     }) => {
       const { error } = await supabase
         .from("products")
-        .update({ price, pro_price: proPrice })
+        .update({ price })
         .eq("id", productId);
 
       if (error) throw error;
+
+      if (proPrice === null) {
+        const { error: delErr } = await supabase
+          .from("pro_prices")
+          .delete()
+          .eq("product_id", productId);
+        if (delErr) throw delErr;
+      } else {
+        const { error: upErr } = await supabase
+          .from("pro_prices")
+          .upsert({ product_id: productId, pro_price: proPrice }, { onConflict: "product_id" });
+        if (upErr) throw upErr;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "pro-prices"] });
       queryClient.invalidateQueries({ queryKey: ["products-prices"] });
+      queryClient.invalidateQueries({ queryKey: ["pro-prices"] });
       toast({
         title: "Prix mis à jour ✅",
         description: "Les modifications ont été enregistrées.",
@@ -124,6 +152,7 @@ export const useAdminProducts = () => {
 
   return {
     products: products || [],
+    proPrices: proPricesMap || {},
     isLoading,
     updatePrice: (productId: string, price: number, proPrice: number | null) =>
       updatePriceMutation.mutate({ productId, price, proPrice }),
