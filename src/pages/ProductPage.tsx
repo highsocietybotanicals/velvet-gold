@@ -6,6 +6,7 @@ import { allProducts, PriceGroup } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
+import { useProPrices } from "@/hooks/useProPrices";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerpeneRadar from "@/components/TerpeneRadar";
@@ -49,6 +50,7 @@ const ProductPage = () => {
   const { addToCart } = useCart();
   const { isPro, isProValidated, profile } = useAuth();
   const { getPrice } = useProducts();
+  const { getProPrice } = useProPrices();
   
   const product = allProducts.find((p) => p.id === id);
   const [selectedWeight, setSelectedWeight] = useState<number>(1);
@@ -57,7 +59,7 @@ const ProductPage = () => {
   // Get dynamic price from database
   const dbPrice = product ? getPrice(product.id) : null;
   const basePrice = dbPrice?.price ?? product?.price ?? 0;
-  const proPrice = dbPrice?.pro_price;
+  const proPrice = product ? getProPrice(product.id) : null;
 
   // Check if user qualifies for Pro HT pricing (requires VAT validated by admin)
   const isProWithValidatedVat = isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated;

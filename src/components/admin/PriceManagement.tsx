@@ -17,15 +17,16 @@ import {
 
 interface EditableRowProps {
   product: ProductPrice;
+  initialProPrice: number | null;
   onSave: (productId: string, price: number, proPrice: number | null) => void;
   onToggle: (productId: string, isActive: boolean) => void;
   isUpdating: boolean;
   isToggling: boolean;
 }
 
-const EditableRow = ({ product, onSave, onToggle, isUpdating, isToggling }: EditableRowProps) => {
+const EditableRow = ({ product, initialProPrice, onSave, onToggle, isUpdating, isToggling }: EditableRowProps) => {
   const [price, setPrice] = useState(product.price.toString());
-  const [proPrice, setProPrice] = useState(product.pro_price?.toString() || "");
+  const [proPrice, setProPrice] = useState(initialProPrice?.toString() || "");
   const [hasChanges, setHasChanges] = useState(false);
 
   const handlePriceChange = (value: string) => {
@@ -126,7 +127,7 @@ const EditableRow = ({ product, onSave, onToggle, isUpdating, isToggling }: Edit
 };
 
 const PriceManagement = () => {
-  const { products, isLoading, updatePrice, toggleProduct, isUpdating, isToggling } = useAdminProducts();
+  const { products, proPrices, isLoading, updatePrice, toggleProduct, isUpdating, isToggling } = useAdminProducts();
 
   const flowers = products.filter((p) => p.category === "fleur");
   const resins = products.filter((p) => p.category === "resine");
@@ -182,6 +183,7 @@ const PriceManagement = () => {
                     <EditableRow
                       key={product.id}
                       product={product}
+                      initialProPrice={proPrices[product.id] ?? null}
                       onSave={updatePrice}
                       onToggle={toggleProduct}
                       isUpdating={isUpdating}
@@ -216,6 +218,7 @@ const PriceManagement = () => {
                     <EditableRow
                       key={product.id}
                       product={product}
+                      initialProPrice={proPrices[product.id] ?? null}
                       onSave={updatePrice}
                       onToggle={toggleProduct}
                       isUpdating={isUpdating}
