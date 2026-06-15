@@ -499,6 +499,80 @@ const ManualOrderCreator = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Customer picker */}
+          <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+            <div className="flex-1">
+              <label className="text-sm text-muted-foreground mb-1 block flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-gold" /> Client existant (optionnel)
+              </label>
+              <Popover open={customerPickerOpen} onOpenChange={setCustomerPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between font-normal"
+                  >
+                    <span className="truncate">
+                      {customerName
+                        ? `${customerName}${customerEmail ? ` — ${customerEmail}` : customerPhone ? ` — ${customerPhone}` : ""}`
+                        : "Rechercher un client (nom ou email)..."}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command
+                    filter={(value, search) =>
+                      value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+                    }
+                  >
+                    <CommandInput placeholder="Tapez nom, email ou téléphone..." />
+                    <CommandList>
+                      {isLoadingCustomers ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
+                        </div>
+                      ) : (
+                        <>
+                          <CommandEmpty>Aucun client trouvé.</CommandEmpty>
+                          <CommandGroup>
+                            {knownCustomers.map((c) => (
+                              <CommandItem
+                                key={c.key}
+                                value={`${c.name} ${c.email} ${c.phone}`}
+                                onSelect={() => selectCustomer(c)}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    customerName === c.name && customerEmail === c.email
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{c.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {[c.email, c.phone].filter(Boolean).join(" • ") || "—"}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            {(customerName || customerEmail || customerPhone || customerAddress) && (
+              <Button variant="ghost" size="sm" onClick={clearCustomer} className="gap-1 text-destructive">
+                <X className="h-4 w-4" /> Effacer
+              </Button>
+            )}
+          </div>
+
           {/* Client info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
