@@ -14,7 +14,7 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   });
 }
 
-async function requireServiceRole(req: Request): Promise<Response | null> {
+async function requireServiceRoleOrAdmin(req: Request, serviceClient: any): Promise<Response | null> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     console.error("send-order-confirmation: missing Bearer header");
@@ -36,7 +36,7 @@ async function requireServiceRole(req: Request): Promise<Response | null> {
 
   if (accepted.has(token)) return null;
 
-  // Fallback: verify as a JWT with service_role claim
+  // Fallback: verify as a JWT with service_role claim or an admin user role
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey =
@@ -46,7 +46,20 @@ async function requireServiceRole(req: Request): Promise<Response | null> {
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
       const { data } = await authClient.auth.getClaims(token);
-      if (data?.claims?.role === "service_role") return null;
+      const claims = data?.claims;
+      if (claims?.role === "service_role") return null;
+
+      const userId = claims?.sub;
+      if (userId) {
+        const { data: role, error: roleError } = await serviceClient
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .maybeSingle();
+
+        if (!roleError && role) return null;
+      }
     }
   } catch (_e) {
     // ignore and fall through
@@ -64,7 +77,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authError = await requireServiceRole(req);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const authError = await requireServiceRoleOrAdmin(req, supabase);
     if (authError) return authError;
 
     const { orderId } = await req.json();
@@ -75,11 +93,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     // Idempotency check
     const { data: existingLog } = await supabase
