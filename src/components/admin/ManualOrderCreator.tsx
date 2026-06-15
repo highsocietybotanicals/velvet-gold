@@ -1,15 +1,18 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag, Gift } from "lucide-react";
+import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag, Gift, Users, Check, ChevronsUpDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
 import { calculateItemPrice } from "@/lib/pricing";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
