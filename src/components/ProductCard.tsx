@@ -5,6 +5,7 @@ import { Leaf, Sparkles, ShoppingCart, Zap } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
+import { useProPrices } from "@/hooks/useProPrices";
 import { Product, TerpeneProfile, PriceGroup } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { PRESET_WEIGHTS, calculatePrice, getLowestPricePerGram } from "@/lib/pricing";
