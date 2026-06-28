@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, TrendingUp, TrendingDown, ShoppingBag, Users, Euro, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, TrendingUp, TrendingDown, ShoppingBag, Users, Euro, Package, History, Download } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -19,7 +20,7 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 
 interface OrderRow {
@@ -37,14 +38,18 @@ interface OrderRow {
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(217 91% 60%)", "hsl(142 71% 45%)", "hsl(0 72% 51%)"];
 
+type Period = 7 | 30 | 90;
+
 const StatsManager = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<Period>(30);
 
   useEffect(() => {
     (async () => {
       try {
-        const since = subDays(new Date(), 90).toISOString();
+        // Fetch 13 months back so monthly history covers 12 full months + current
+        const since = subMonths(new Date(), 13).toISOString();
         const { data, error } = await supabase
           .from("orders")
           .select("id, user_id, guest_email, total_amount, total_flower_weight, delivery_type, payment_status, status, created_at, order_items(product_name, product_id, total_price, weight, quantity)")
@@ -83,9 +88,9 @@ const StatsManager = () => {
 
     const delta = (a: number, b: number) => (b === 0 ? (a > 0 ? 100 : 0) : ((a - b) / b) * 100);
 
-    // CA last 30 days
+    // CA on selected period (daily)
     const daily: { date: string; ca: number; count: number }[] = [];
-    for (let i = 29; i >= 0; i--) {
+    for (let i = period - 1; i >= 0; i--) {
       const day = subDays(now, i);
       const dayStr = format(day, "yyyy-MM-dd");
       const dayOrders = orders.filter((o) => o.created_at.startsWith(dayStr));
@@ -96,7 +101,27 @@ const StatsManager = () => {
       });
     }
 
-    // Top products (by grams + CA) — flowers/resin only
+    // Monthly history — last 12 months
+    const monthly: { month: string; ca: number; ht: number; count: number; clients: number }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const mStart = startOfMonth(subMonths(now, i));
+      const mEnd = endOfMonth(mStart);
+      const mOrders = orders.filter((o) => {
+        const d = new Date(o.created_at);
+        return d >= mStart && d <= mEnd;
+      });
+      const ca = sum(mOrders);
+      const uniqClients = new Set(mOrders.map((o) => o.user_id || o.guest_email || "anon")).size;
+      monthly.push({
+        month: format(mStart, "MMM yy", { locale: fr }),
+        ca: Math.round(ca * 100) / 100,
+        ht: Math.round((ca / 1.2) * 100) / 100,
+        count: mOrders.length,
+        clients: uniqClients,
+      });
+    }
+
+    // Top products (mois en cours) — flowers/resin only
     const productMap: Record<string, { name: string; grams: number; ca: number }> = {};
     thisMonth.forEach((o) => {
       o.order_items?.forEach((it) => {
@@ -124,7 +149,8 @@ const StatsManager = () => {
 
     // Top clients (90 days)
     const clientMap: Record<string, { key: string; total: number; count: number }> = {};
-    orders.forEach((o) => {
+    const ninety = subDays(now, 90);
+    orders.filter((o) => new Date(o.created_at) >= ninety).forEach((o) => {
       const key = o.user_id || o.guest_email || "anon";
       if (!clientMap[key]) clientMap[key] = { key, total: 0, count: 0 };
       clientMap[key].total += Number(o.total_amount);
@@ -163,13 +189,34 @@ const StatsManager = () => {
       deltaOrders: delta(thisMonth.length, lastMonth.length),
       deltaAvg: delta(avg, avgLast),
       daily,
+      monthly,
       topProducts,
       deliveryData,
       topClients,
       newClients,
       returning,
     };
-  }, [orders]);
+  }, [orders, period]);
+
+  const exportMonthlyCSV = () => {
+    const headers = ["Mois", "CA TTC", "CA HT", "Commandes", "Clients uniques", "Panier moyen TTC"];
+    const rows = stats.monthly.map((m) => [
+      m.month,
+      m.ca.toFixed(2),
+      m.ht.toFixed(2),
+      m.count.toString(),
+      m.clients.toString(),
+      (m.count ? m.ca / m.count : 0).toFixed(2),
+    ]);
+    const csv = [headers, ...rows].map((r) => r.join(";")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `historique-stats-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return (
@@ -190,6 +237,11 @@ const StatsManager = () => {
       </Badge>
     );
   };
+
+  // Cumulative totals on 12 months
+  const total12m = stats.monthly.reduce((s, m) => s + m.ca, 0);
+  const totalOrders12m = stats.monthly.reduce((s, m) => s + m.count, 0);
+  const bestMonth = stats.monthly.reduce((best, m) => (m.ca > best.ca ? m : best), stats.monthly[0] || { month: "—", ca: 0 });
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -246,10 +298,101 @@ const StatsManager = () => {
         </CardContent>
       </Card>
 
+      {/* === HISTORIQUE 12 MOIS === */}
+      <Card className="border-gold/30">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <History className="h-5 w-5 text-gold" />
+              Historique — 12 derniers mois
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={exportMonthlyCSV} className="gap-1">
+              <Download className="h-4 w-4" />
+              Exporter CSV
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3 rounded-lg border border-border/40 bg-card">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">CA cumulé 12m</p>
+              <p className="text-lg font-bold text-gold">{total12m.toFixed(2)}€</p>
+            </div>
+            <div className="p-3 rounded-lg border border-border/40 bg-card">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Commandes 12m</p>
+              <p className="text-lg font-bold text-primary">{totalOrders12m}</p>
+            </div>
+            <div className="p-3 rounded-lg border border-border/40 bg-card">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Meilleur mois</p>
+              <p className="text-lg font-bold text-primary">{bestMonth.month}</p>
+              <p className="text-[10px] text-gold">{bestMonth.ca.toFixed(2)}€</p>
+            </div>
+          </div>
+
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={stats.monthly}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+              <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+              <Tooltip
+                contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                formatter={(v: number, n: string) => [n === "ca" ? `${v.toFixed(2)}€` : `${v}`, n === "ca" ? "CA TTC" : "Commandes"]}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar yAxisId="left" dataKey="ca" name="CA TTC (€)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="right" dataKey="count" name="Commandes" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/40 text-xs uppercase text-muted-foreground">
+                  <th className="text-left py-2">Mois</th>
+                  <th className="text-right py-2">CA TTC</th>
+                  <th className="text-right py-2 hidden sm:table-cell">CA HT</th>
+                  <th className="text-right py-2">Cmd</th>
+                  <th className="text-right py-2 hidden sm:table-cell">Clients</th>
+                  <th className="text-right py-2">Panier moy.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...stats.monthly].reverse().map((m) => (
+                  <tr key={m.month} className="border-b border-border/20">
+                    <td className="py-2 capitalize">{m.month}</td>
+                    <td className="text-right py-2 font-semibold text-gold">{m.ca.toFixed(2)}€</td>
+                    <td className="text-right py-2 text-muted-foreground hidden sm:table-cell">{m.ht.toFixed(2)}€</td>
+                    <td className="text-right py-2">{m.count}</td>
+                    <td className="text-right py-2 hidden sm:table-cell">{m.clients}</td>
+                    <td className="text-right py-2">{m.count ? (m.ca / m.count).toFixed(2) : "0.00"}€</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">CA quotidien — 30 derniers jours</CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <CardTitle className="text-base">CA quotidien</CardTitle>
+              <div className="flex gap-1">
+                {([7, 30, 90] as Period[]).map((p) => (
+                  <Button
+                    key={p}
+                    variant={period === p ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPeriod(p)}
+                    className="text-xs h-7 px-2"
+                  >
+                    {p}j
+                  </Button>
+                ))}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
