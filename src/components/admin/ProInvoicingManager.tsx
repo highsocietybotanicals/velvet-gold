@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Receipt, Plus, Trash2, FileText, Download, CheckCircle2, Building2 } from "lucide-react";
+import { useProducts } from "@/hooks/useProducts";
 
 interface Partner {
   id: string;
