@@ -83,7 +83,8 @@ Deno.serve(async (req) => {
       .order("sold_at", { ascending: true });
 
     const lines = deposits || [];
-    const commission = Number(invoice.commission_percent || 30);
+    const rawCommission = invoice.commission_percent;
+    const commission = rawCommission === null || rawCommission === undefined ? 30 : Number(rawCommission);
     const sellerShare = (100 - commission) / 100; // ce que je facture (ex: 0.70)
 
     const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
@@ -205,11 +206,11 @@ Deno.serve(async (req) => {
       doc.text("HT CEDE", cHT, y + 5.5, { align: "right" });
       doc.text("TTC CEDE", rightEdge, y + 5.5, { align: "right" });
     } else {
-      // Direct B2B layout: Designation | Format | Qte | PU HT | Total HT | Total TTC
+      // Direct B2B layout: Designation | Format | Qte | PU HT/g | Total HT | Total TTC
       doc.text("DESIGNATION", cDesig, y + 5.5);
       doc.text("FORMAT", cFormat, y + 5.5, { align: "right" });
       doc.text("QTE", cQte, y + 5.5, { align: "right" });
-      doc.text("PU HT", cPuTTC, y + 5.5, { align: "right" });
+      doc.text("PU HT/g", cPuTTC, y + 5.5, { align: "right" });
       doc.text("TOTAL HT", cPvTTC + 6, y + 5.5, { align: "right" });
       doc.text("TOTAL TTC", rightEdge, y + 5.5, { align: "right" });
     }
@@ -229,7 +230,10 @@ Deno.serve(async (req) => {
       const unitTTC = qty > 0 ? retail / qty : retail;
       const lineTotalTTC = isDeposit ? retail * sellerShare : retail;
       const lineHT = lineTotalTTC / (1 + TVA_RATE / 100);
-      const lineUnitHT = qty > 0 ? lineHT / qty : lineHT;
+      const totalGrams = weight && qty > 0 ? weight * qty : 0;
+      const lineUnitHT = isDeposit
+        ? (qty > 0 ? lineHT / qty : lineHT)
+        : (totalGrams > 0 ? lineHT / totalGrams : lineHT);
 
       totalRetail += retail;
       totalInvoicedTTC += lineTotalTTC;
