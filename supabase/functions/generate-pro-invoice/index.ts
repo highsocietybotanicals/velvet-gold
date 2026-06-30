@@ -317,8 +317,10 @@ Deno.serve(async (req) => {
     doc.setTextColor(...gray);
     doc.setFont("helvetica", "normal");
     doc.text(
-      "Vente B2B en contrat de revente. TVA acquittée sur les débits. Marchandise cédée à " +
-        (sellerShare * 100).toFixed(0) + "% du PV public.",
+      isDeposit
+        ? "Vente B2B en contrat de revente. TVA acquittée sur les débits. Marchandise cédée à " +
+            (sellerShare * 100).toFixed(0) + "% du PV public."
+        : "Vente directe B2B entre professionnels. TVA acquittée sur les débits.",
       margin,
       y,
     );
