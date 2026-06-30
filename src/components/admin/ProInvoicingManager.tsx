@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Receipt, Plus, Trash2, FileText, Download, CheckCircle2, Building2 } from "lucide-react";
+import { useProducts } from "@/hooks/useProducts";
 
 interface Partner {
   id: string;
@@ -81,6 +82,7 @@ const STATUS_BADGE: Record<string, string> = {
 export default function ProInvoicingManager() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { prices: productList } = useProducts();
   const [tab, setTab] = useState("partners");
   const [editingPartner, setEditingPartner] = useState<Partial<Partner> | null>(null);
   const [partnerOpen, setPartnerOpen] = useState(false);
@@ -498,18 +500,48 @@ export default function ProInvoicingManager() {
                   </div>
                   <div className="col-span-2">
                     <Label className="text-xs">Produit</Label>
-                    <Input value={newDeposit.product_name} onChange={e => setNewDeposit({ ...newDeposit, product_name: e.target.value })} placeholder="911 OG, Ice O Lator..." />
+                    <Select
+                      value={newDeposit.product_name}
+                      onValueChange={(name) => {
+                        const prod = productList.find(p => p.name === name);
+                        const w = Number(newDeposit.weight_grams) || 0;
+                        const q = Number(newDeposit.quantity) || 1;
+                        const autoPrice = prod && w > 0 ? (prod.price * w * q).toFixed(2) : newDeposit.retail_price_ttc;
+                        setNewDeposit({ ...newDeposit, product_name: name, retail_price_ttc: autoPrice });
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Choisir un produit..." /></SelectTrigger>
+                      <SelectContent>
+                        {productList.filter(p => p.is_active).map(p => (
+                          <SelectItem key={p.id} value={p.name}>
+                            {p.name} — {p.price}€/g
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label className="text-xs">Poids (g)</Label>
-                    <Input type="number" step="0.5" value={newDeposit.weight_grams} onChange={e => setNewDeposit({ ...newDeposit, weight_grams: e.target.value })} />
+                    <Input type="number" step="0.5" value={newDeposit.weight_grams} onChange={e => {
+                      const w = Number(e.target.value) || 0;
+                      const q = Number(newDeposit.quantity) || 1;
+                      const prod = productList.find(p => p.name === newDeposit.product_name);
+                      const autoPrice = prod && w > 0 ? (prod.price * w * q).toFixed(2) : newDeposit.retail_price_ttc;
+                      setNewDeposit({ ...newDeposit, weight_grams: e.target.value, retail_price_ttc: autoPrice });
+                    }} />
                   </div>
                   <div>
                     <Label className="text-xs">Qté</Label>
-                    <Input type="number" value={newDeposit.quantity} onChange={e => setNewDeposit({ ...newDeposit, quantity: e.target.value })} />
+                    <Input type="number" value={newDeposit.quantity} onChange={e => {
+                      const q = Number(e.target.value) || 1;
+                      const w = Number(newDeposit.weight_grams) || 0;
+                      const prod = productList.find(p => p.name === newDeposit.product_name);
+                      const autoPrice = prod && w > 0 ? (prod.price * w * q).toFixed(2) : newDeposit.retail_price_ttc;
+                      setNewDeposit({ ...newDeposit, quantity: e.target.value, retail_price_ttc: autoPrice });
+                    }} />
                   </div>
                   <div>
-                    <Label className="text-xs">PV public TTC (total ligne)</Label>
+                    <Label className="text-xs">PV public TTC (total)</Label>
                     <Input type="number" step="0.01" value={newDeposit.retail_price_ttc} onChange={e => setNewDeposit({ ...newDeposit, retail_price_ttc: e.target.value })} />
                   </div>
                   <div>
