@@ -16,6 +16,7 @@ import { MolecularLabel } from "@/components/admin/MolecularLabel";
 import PromoCodeManager from "@/components/admin/PromoCodeManager";
 import MileageManager from "@/components/admin/MileageManager";
 import StatsManager from "@/components/admin/StatsManager";
+import ProInvoicingManager from "@/components/admin/ProInvoicingManager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -590,6 +591,9 @@ const AdminPage = () => {
 
           {/* Section Frais Kilométriques */}
           <MileageManager />
+
+          {/* Section Facturation Pro / Dépôt-vente */}
+          <ProInvoicingManager />
 
           {/* Section Demandes Pro */}
           <motion.section
