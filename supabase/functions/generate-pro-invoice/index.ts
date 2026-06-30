@@ -178,57 +178,74 @@ Deno.serve(async (req) => {
 
     y += boxH + 10;
 
-    // Table header
-    const colX = [margin, margin + 70, margin + 95, margin + 120, margin + 150, margin + 178];
+    // Table header — 7 columns
+    // x positions (right edges for right-aligned numerics)
+    const cDesig = margin + 2;           // left-aligned start
+    const cFormat = margin + 78;          // right edge
+    const cQte = margin + 96;             // right edge
+    const cPuTTC = margin + 122;          // right edge
+    const cPvTTC = margin + 148;          // right edge
+    const cHT = margin + 168;             // right edge
+    const cTTC = margin + 195 - margin;   // right edge ~ W-margin-2
+    const rightEdge = W - margin - 2;
+
     doc.setFillColor(...gold);
     doc.rect(margin, y, contentW, 8, "F");
     doc.setFontSize(7);
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.text("DESIGNATION", colX[0] + 2, y + 5.5);
-    doc.text("QTE", colX[1] + 20, y + 5.5, { align: "right" });
-    doc.text("PV PUBLIC TTC", colX[2] + 22, y + 5.5, { align: "right" });
-    doc.text("PU HT", colX[3] + 22, y + 5.5, { align: "right" });
-    doc.text("TVA", colX[4] + 22, y + 5.5, { align: "right" });
-    doc.text("TOTAL TTC", colX[5] + 14, y + 5.5, { align: "right" });
+    doc.text("DESIGNATION", cDesig, y + 5.5);
+    doc.text("FORMAT", cFormat, y + 5.5, { align: "right" });
+    doc.text("QTE", cQte, y + 5.5, { align: "right" });
+    doc.text("PU TTC", cPuTTC, y + 5.5, { align: "right" });
+    doc.text("PV TOTAL TTC", cPvTTC, y + 5.5, { align: "right" });
+    doc.text("HT CEDE", cHT, y + 5.5, { align: "right" });
+    doc.text("TTC CEDE", rightEdge, y + 5.5, { align: "right" });
     y += 10;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     let totalRetail = 0;
     let totalInvoicedTTC = 0;
+    let rowIdx = 0;
 
     lines.forEach((line: any) => {
-      if (y > 255) { doc.addPage(); y = margin; }
-      const qty = line.weight_grams
-        ? `${Number(line.weight_grams)}g`
-        : `x${line.quantity || 1}`;
-      const retail = Number(line.retail_price_ttc || 0);
-      const lineQty = line.weight_grams ? Number(line.weight_grams) : (line.quantity || 1);
-      const lineTotalRetail = retail * (line.weight_grams ? 1 : 1); // retail is unit price
-      // We treat retail_price_ttc as TOTAL retail for the line (saisi par admin)
+      if (y > 250) { doc.addPage(); y = margin; }
+      const weight = line.weight_grams ? Number(line.weight_grams) : null;
+      const qty = Number(line.quantity || 1);
+      const retail = Number(line.retail_price_ttc || 0); // total ligne PV public
+      const unitTTC = qty > 0 ? retail / qty : retail;
       const lineTotalTTC = retail * sellerShare;
       const lineHT = lineTotalTTC / (1 + TVA_RATE / 100);
-      const lineTVA = lineTotalTTC - lineHT;
-      const puHT = lineHT; // already total HT for the line
 
       totalRetail += retail;
       totalInvoicedTTC += lineTotalTTC;
 
+      // zebra background
+      if (rowIdx % 2 === 0) {
+        doc.setFillColor(252, 250, 245);
+        doc.rect(margin, y - 1, contentW, 8, "F");
+      }
+      rowIdx++;
+
       doc.setTextColor(...dark);
-      doc.text(String(line.product_name).slice(0, 40), colX[0] + 2, y + 4);
-      doc.text(qty, colX[1] + 20, y + 4, { align: "right" });
-      doc.text(`${retail.toFixed(2)} EUR`, colX[2] + 22, y + 4, { align: "right" });
-      doc.text(`${puHT.toFixed(2)} EUR`, colX[3] + 22, y + 4, { align: "right" });
-      doc.text(`${lineTVA.toFixed(2)} EUR`, colX[4] + 22, y + 4, { align: "right" });
+      doc.setFont("helvetica", "normal");
+      doc.text(String(line.product_name).slice(0, 36), cDesig, y + 4);
+      doc.text(weight ? `${weight} g` : "-", cFormat, y + 4, { align: "right" });
+      doc.text(`x ${qty}`, cQte, y + 4, { align: "right" });
+      doc.text(`${unitTTC.toFixed(2)} EUR`, cPuTTC, y + 4, { align: "right" });
+      doc.text(`${retail.toFixed(2)} EUR`, cPvTTC, y + 4, { align: "right" });
+      doc.text(`${lineHT.toFixed(2)} EUR`, cHT, y + 4, { align: "right" });
       doc.setFont("helvetica", "bold");
-      doc.text(`${lineTotalTTC.toFixed(2)} EUR`, colX[5] + 14, y + 4, { align: "right" });
+      doc.setTextColor(...gold);
+      doc.text(`${lineTotalTTC.toFixed(2)} EUR`, rightEdge, y + 4, { align: "right" });
+      doc.setTextColor(...dark);
       doc.setFont("helvetica", "normal");
 
       doc.setDrawColor(...lightGray);
-      doc.setLineWidth(0.2);
+      doc.setLineWidth(0.15);
       doc.line(margin, y + 7, W - margin, y + 7);
-      y += 9;
+      y += 8;
     });
 
     const totalHT = totalInvoicedTTC / (1 + TVA_RATE / 100);
