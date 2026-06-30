@@ -849,12 +849,21 @@ export default function ProInvoicingManager() {
 
                     </div>
 
-                    <div className="text-right text-sm border-t border-gold/20 pt-3">
-                      <span className="text-muted-foreground mr-3">Total TTC :</span>
-                      <span className="font-bold text-gold text-lg">
-                        {directLines.reduce((s, l) => s + Number(l.total_ttc || 0), 0).toFixed(2)} €
-                      </span>
+                    <div className="text-right text-sm border-t border-gold/20 pt-3 space-y-1">
+                      {(() => {
+                        const ttc = directLines.reduce((s, l) => s + Number(l.total_ttc || 0), 0);
+                        const ht = ttc / 1.2;
+                        const tva = ttc - ht;
+                        return (
+                          <>
+                            <div><span className="text-muted-foreground mr-3">Total HT :</span><span className="font-medium">{ht.toFixed(2)} €</span></div>
+                            <div><span className="text-muted-foreground mr-3">TVA 20% :</span><span className="font-medium">{tva.toFixed(2)} €</span></div>
+                            <div><span className="text-muted-foreground mr-3">Total TTC :</span><span className="font-bold text-gold text-lg">{ttc.toFixed(2)} €</span></div>
+                          </>
+                        );
+                      })()}
                     </div>
+
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setDirectOpen(false)}>Annuler</Button>
