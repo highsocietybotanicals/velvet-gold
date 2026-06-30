@@ -278,10 +278,14 @@ Deno.serve(async (req) => {
     const labelX = totalsX - 60;
     doc.setFontSize(10);
     doc.setTextColor(...dark);
-    doc.text("PV public total TTC (info) :", labelX, y, { align: "right" });
-    doc.text(`${totalRetail.toFixed(2)} EUR`, totalsX, y, { align: "right" });
-    y += 6;
-    doc.text(`Part cédée (${(sellerShare * 100).toFixed(0)}%) HT :`, labelX, y, { align: "right" });
+    if (isDeposit) {
+      doc.text("PV public total TTC (info) :", labelX, y, { align: "right" });
+      doc.text(`${totalRetail.toFixed(2)} EUR`, totalsX, y, { align: "right" });
+      y += 6;
+      doc.text(`Part cédée (${(sellerShare * 100).toFixed(0)}%) HT :`, labelX, y, { align: "right" });
+    } else {
+      doc.text(`Total HT :`, labelX, y, { align: "right" });
+    }
     doc.text(`${totalHT.toFixed(2)} EUR`, totalsX, y, { align: "right" });
     y += 6;
     doc.text(`TVA (${TVA_RATE}%) :`, labelX, y, { align: "right" });
