@@ -82,6 +82,7 @@ const STATUS_BADGE: Record<string, string> = {
 export default function ProInvoicingManager() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { prices: productList } = useProducts();
   const [tab, setTab] = useState("partners");
   const [editingPartner, setEditingPartner] = useState<Partial<Partner> | null>(null);
   const [partnerOpen, setPartnerOpen] = useState(false);
