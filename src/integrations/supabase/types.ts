@@ -383,6 +383,185 @@ export type Database = {
         }
         Relationships: []
       }
+      pro_deposits: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          partner_id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          retail_price_ttc: number
+          sold_at: string
+          updated_at: string
+          weight_grams: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          partner_id: string
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          retail_price_ttc: number
+          sold_at?: string
+          updated_at?: string
+          weight_grams?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          partner_id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          retail_price_ttc?: number
+          sold_at?: string
+          updated_at?: string
+          weight_grams?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pro_deposits_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "pro_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pro_deposits_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "pro_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pro_invoices: {
+        Row: {
+          commission_percent: number
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          issued_at: string
+          notes: string | null
+          paid_at: string | null
+          partner_id: string
+          pdf_path: string | null
+          status: string
+          total_invoiced_ht: number
+          total_invoiced_ttc: number
+          total_retail_ttc: number
+          total_vat: number
+          updated_at: string
+        }
+        Insert: {
+          commission_percent?: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          issued_at?: string
+          notes?: string | null
+          paid_at?: string | null
+          partner_id: string
+          pdf_path?: string | null
+          status?: string
+          total_invoiced_ht?: number
+          total_invoiced_ttc?: number
+          total_retail_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Update: {
+          commission_percent?: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          issued_at?: string
+          notes?: string | null
+          paid_at?: string | null
+          partner_id?: string
+          pdf_path?: string | null
+          status?: string
+          total_invoiced_ht?: number
+          total_invoiced_ttc?: number
+          total_retail_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pro_invoices_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "pro_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pro_partners: {
+        Row: {
+          address_line1: string | null
+          city: string | null
+          commission_percent: number
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          siret: string | null
+          updated_at: string
+          vat_number: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          city?: string | null
+          commission_percent?: number
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          siret?: string | null
+          updated_at?: string
+          vat_number?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          city?: string | null
+          commission_percent?: number
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          siret?: string | null
+          updated_at?: string
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
       pro_prices: {
         Row: {
           created_at: string | null
