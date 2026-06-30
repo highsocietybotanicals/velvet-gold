@@ -298,6 +298,70 @@ export default function ProInvoicingManager() {
     },
   });
 
+  // ---- direct (no-deposit) invoice
+  const [directOpen, setDirectOpen] = useState(false);
+  const [directPartner, setDirectPartner] = useState<string>("");
+  const [directDue, setDirectDue] = useState<string>("");
+  const [directLines, setDirectLines] = useState<Array<{
+    product_name: string; weight_grams: string; quantity: string; total_ttc: string;
+  }>>([{ product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }]);
+
+  const resetDirect = () => {
+    setDirectPartner(""); setDirectDue("");
+    setDirectLines([{ product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }]);
+  };
+
+  const createDirectInvoice = useMutation({
+    mutationFn: async () => {
+      if (!directPartner) throw new Error("Sélectionne un partenaire");
+      const valid = directLines.filter(l => l.product_name && Number(l.total_ttc) > 0);
+      if (valid.length === 0) throw new Error("Ajoute au moins une ligne valide");
+
+      // Vente directe = 100% facturé (pas de commission/dépôt)
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: inv, error: invErr } = await supabase
+        .from("pro_invoices")
+        .insert({
+          partner_id: directPartner,
+          commission_percent: 0,
+          status: "draft",
+          due_date: directDue || null,
+        } as any)
+        .select()
+        .single();
+      if (invErr) throw invErr;
+
+      const payload = valid.map(l => ({
+        partner_id: directPartner,
+        product_name: l.product_name,
+        weight_grams: l.weight_grams ? Number(l.weight_grams) : null,
+        quantity: Number(l.quantity || 1),
+        retail_price_ttc: Number(l.total_ttc),
+        sold_at: today,
+        invoice_id: inv.id,
+      }));
+      const { error: depErr } = await supabase.from("pro_deposits").insert(payload);
+      if (depErr) throw depErr;
+
+      const { data, error } = await supabase.functions.invoke("generate-pro-invoice", {
+        body: { invoiceId: inv.id },
+      });
+      if (error) throw error;
+      if (data?.pdfBase64) {
+        const blob = await (await fetch(`data:application/pdf;base64,${data.pdfBase64}`)).blob();
+        window.open(URL.createObjectURL(blob), "_blank");
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pro_invoices"] });
+      qc.invalidateQueries({ queryKey: ["pro_deposits"] });
+      setDirectOpen(false);
+      resetDirect();
+      toast({ title: "Facture directe générée" });
+    },
+    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+  });
+
   // ---- KPIs per partner
   const kpisByPartner = useMemo(() => {
     return partners.map(p => {
