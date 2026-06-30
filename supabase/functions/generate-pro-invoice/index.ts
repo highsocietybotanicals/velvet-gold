@@ -151,8 +151,12 @@ Deno.serve(async (req) => {
       const due = new Date(invoice.due_date).toLocaleDateString("fr-FR");
       doc.text(`Échéance : ${due}`, margin + 4, y + 23);
     }
-    doc.text(`Commission partenaire : ${commission}%`, margin + 4, y + 28);
-    doc.text(`Part cédée (facturée) : ${(sellerShare * 100).toFixed(0)}%`, margin + 4, y + 33);
+    if (commission > 0) {
+      doc.text(`Commission partenaire : ${commission}%`, margin + 4, y + 28);
+      doc.text(`Part cédée (facturée) : ${(sellerShare * 100).toFixed(0)}%`, margin + 4, y + 33);
+    } else {
+      doc.text(`Type : Vente directe B2B`, margin + 4, y + 28);
+    }
 
     const boxX2 = margin + boxW + 6;
     doc.setFillColor(249, 247, 243);
@@ -178,15 +182,13 @@ Deno.serve(async (req) => {
 
     y += boxH + 10;
 
-    // Table header — 7 columns
-    // x positions (right edges for right-aligned numerics)
-    const cDesig = margin + 2;           // left-aligned start
-    const cFormat = margin + 78;          // right edge
-    const cQte = margin + 96;             // right edge
-    const cPuTTC = margin + 122;          // right edge
-    const cPvTTC = margin + 148;          // right edge
-    const cHT = margin + 168;             // right edge
-    const cTTC = margin + 195 - margin;   // right edge ~ W-margin-2
+    const isDeposit = commission > 0;
+    const cDesig = margin + 2;
+    const cFormat = margin + 78;
+    const cQte = margin + 96;
+    const cPuTTC = margin + 122;
+    const cPvTTC = margin + 148;
+    const cHT = margin + 168;
     const rightEdge = W - margin - 2;
 
     doc.setFillColor(...gold);
@@ -194,13 +196,23 @@ Deno.serve(async (req) => {
     doc.setFontSize(7);
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.text("DESIGNATION", cDesig, y + 5.5);
-    doc.text("FORMAT", cFormat, y + 5.5, { align: "right" });
-    doc.text("QTE", cQte, y + 5.5, { align: "right" });
-    doc.text("PU TTC", cPuTTC, y + 5.5, { align: "right" });
-    doc.text("PV TOTAL TTC", cPvTTC, y + 5.5, { align: "right" });
-    doc.text("HT CEDE", cHT, y + 5.5, { align: "right" });
-    doc.text("TTC CEDE", rightEdge, y + 5.5, { align: "right" });
+    if (isDeposit) {
+      doc.text("DESIGNATION", cDesig, y + 5.5);
+      doc.text("FORMAT", cFormat, y + 5.5, { align: "right" });
+      doc.text("QTE", cQte, y + 5.5, { align: "right" });
+      doc.text("PU TTC", cPuTTC, y + 5.5, { align: "right" });
+      doc.text("PV TOTAL TTC", cPvTTC, y + 5.5, { align: "right" });
+      doc.text("HT CEDE", cHT, y + 5.5, { align: "right" });
+      doc.text("TTC CEDE", rightEdge, y + 5.5, { align: "right" });
+    } else {
+      // Direct B2B layout: Designation | Format | Qte | PU HT | Total HT | Total TTC
+      doc.text("DESIGNATION", cDesig, y + 5.5);
+      doc.text("FORMAT", cFormat, y + 5.5, { align: "right" });
+      doc.text("QTE", cQte, y + 5.5, { align: "right" });
+      doc.text("PU HT", cPuTTC, y + 5.5, { align: "right" });
+      doc.text("TOTAL HT", cPvTTC + 6, y + 5.5, { align: "right" });
+      doc.text("TOTAL TTC", rightEdge, y + 5.5, { align: "right" });
+    }
     y += 10;
 
     doc.setFont("helvetica", "normal");
@@ -213,15 +225,15 @@ Deno.serve(async (req) => {
       if (y > 250) { doc.addPage(); y = margin; }
       const weight = line.weight_grams ? Number(line.weight_grams) : null;
       const qty = Number(line.quantity || 1);
-      const retail = Number(line.retail_price_ttc || 0); // total ligne PV public
+      const retail = Number(line.retail_price_ttc || 0);
       const unitTTC = qty > 0 ? retail / qty : retail;
-      const lineTotalTTC = retail * sellerShare;
+      const lineTotalTTC = isDeposit ? retail * sellerShare : retail;
       const lineHT = lineTotalTTC / (1 + TVA_RATE / 100);
+      const lineUnitHT = qty > 0 ? lineHT / qty : lineHT;
 
       totalRetail += retail;
       totalInvoicedTTC += lineTotalTTC;
 
-      // zebra background
       if (rowIdx % 2 === 0) {
         doc.setFillColor(252, 250, 245);
         doc.rect(margin, y - 1, contentW, 8, "F");
@@ -233,9 +245,14 @@ Deno.serve(async (req) => {
       doc.text(String(line.product_name).slice(0, 36), cDesig, y + 4);
       doc.text(weight ? `${weight} g` : "-", cFormat, y + 4, { align: "right" });
       doc.text(`x ${qty}`, cQte, y + 4, { align: "right" });
-      doc.text(`${unitTTC.toFixed(2)} EUR`, cPuTTC, y + 4, { align: "right" });
-      doc.text(`${retail.toFixed(2)} EUR`, cPvTTC, y + 4, { align: "right" });
-      doc.text(`${lineHT.toFixed(2)} EUR`, cHT, y + 4, { align: "right" });
+      if (isDeposit) {
+        doc.text(`${unitTTC.toFixed(2)} EUR`, cPuTTC, y + 4, { align: "right" });
+        doc.text(`${retail.toFixed(2)} EUR`, cPvTTC, y + 4, { align: "right" });
+        doc.text(`${lineHT.toFixed(2)} EUR`, cHT, y + 4, { align: "right" });
+      } else {
+        doc.text(`${lineUnitHT.toFixed(2)} EUR`, cPuTTC, y + 4, { align: "right" });
+        doc.text(`${lineHT.toFixed(2)} EUR`, cPvTTC + 6, y + 4, { align: "right" });
+      }
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...gold);
       doc.text(`${lineTotalTTC.toFixed(2)} EUR`, rightEdge, y + 4, { align: "right" });
@@ -261,10 +278,14 @@ Deno.serve(async (req) => {
     const labelX = totalsX - 60;
     doc.setFontSize(10);
     doc.setTextColor(...dark);
-    doc.text("PV public total TTC (info) :", labelX, y, { align: "right" });
-    doc.text(`${totalRetail.toFixed(2)} EUR`, totalsX, y, { align: "right" });
-    y += 6;
-    doc.text(`Part cédée (${(sellerShare * 100).toFixed(0)}%) HT :`, labelX, y, { align: "right" });
+    if (isDeposit) {
+      doc.text("PV public total TTC (info) :", labelX, y, { align: "right" });
+      doc.text(`${totalRetail.toFixed(2)} EUR`, totalsX, y, { align: "right" });
+      y += 6;
+      doc.text(`Part cédée (${(sellerShare * 100).toFixed(0)}%) HT :`, labelX, y, { align: "right" });
+    } else {
+      doc.text(`Total HT :`, labelX, y, { align: "right" });
+    }
     doc.text(`${totalHT.toFixed(2)} EUR`, totalsX, y, { align: "right" });
     y += 6;
     doc.text(`TVA (${TVA_RATE}%) :`, labelX, y, { align: "right" });
@@ -296,8 +317,10 @@ Deno.serve(async (req) => {
     doc.setTextColor(...gray);
     doc.setFont("helvetica", "normal");
     doc.text(
-      "Vente B2B en contrat de revente. TVA acquittée sur les débits. Marchandise cédée à " +
-        (sellerShare * 100).toFixed(0) + "% du PV public.",
+      isDeposit
+        ? "Vente B2B en contrat de revente. TVA acquittée sur les débits. Marchandise cédée à " +
+            (sellerShare * 100).toFixed(0) + "% du PV public."
+        : "Vente directe B2B entre professionnels. TVA acquittée sur les débits.",
       margin,
       y,
     );
