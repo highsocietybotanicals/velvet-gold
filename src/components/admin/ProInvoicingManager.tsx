@@ -303,13 +303,14 @@ export default function ProInvoicingManager() {
   const [directPartner, setDirectPartner] = useState<string>("");
   const [directDue, setDirectDue] = useState<string>("");
   const [directLines, setDirectLines] = useState<Array<{
-    product_name: string; weight_grams: string; quantity: string; total_ttc: string;
-  }>>([{ product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }]);
+    product_name: string; weight_grams: string; quantity: string; price_ht_per_g: string; total_ttc: string;
+  }>>([{ product_name: "", weight_grams: "", quantity: "1", price_ht_per_g: "", total_ttc: "" }]);
 
   const resetDirect = () => {
     setDirectPartner(""); setDirectDue("");
-    setDirectLines([{ product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }]);
+    setDirectLines([{ product_name: "", weight_grams: "", quantity: "1", price_ht_per_g: "", total_ttc: "" }]);
   };
+
 
   const createDirectInvoice = useMutation({
     mutationFn: async () => {
