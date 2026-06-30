@@ -45,6 +45,9 @@ verify_jwt = false
 [functions.send-abandoned-cart-email]
 verify_jwt = false
 
+[functions.generate-pro-invoice]
+verify_jwt = false
+
 
 
 
