@@ -298,6 +298,70 @@ export default function ProInvoicingManager() {
     },
   });
 
+  // ---- direct (no-deposit) invoice
+  const [directOpen, setDirectOpen] = useState(false);
+  const [directPartner, setDirectPartner] = useState<string>("");
+  const [directDue, setDirectDue] = useState<string>("");
+  const [directLines, setDirectLines] = useState<Array<{
+    product_name: string; weight_grams: string; quantity: string; total_ttc: string;
+  }>>([{ product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }]);
+
+  const resetDirect = () => {
+    setDirectPartner(""); setDirectDue("");
+    setDirectLines([{ product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }]);
+  };
+
+  const createDirectInvoice = useMutation({
+    mutationFn: async () => {
+      if (!directPartner) throw new Error("Sélectionne un partenaire");
+      const valid = directLines.filter(l => l.product_name && Number(l.total_ttc) > 0);
+      if (valid.length === 0) throw new Error("Ajoute au moins une ligne valide");
+
+      // Vente directe = 100% facturé (pas de commission/dépôt)
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: inv, error: invErr } = await supabase
+        .from("pro_invoices")
+        .insert({
+          partner_id: directPartner,
+          commission_percent: 0,
+          status: "draft",
+          due_date: directDue || null,
+        } as any)
+        .select()
+        .single();
+      if (invErr) throw invErr;
+
+      const payload = valid.map(l => ({
+        partner_id: directPartner,
+        product_name: l.product_name,
+        weight_grams: l.weight_grams ? Number(l.weight_grams) : null,
+        quantity: Number(l.quantity || 1),
+        retail_price_ttc: Number(l.total_ttc),
+        sold_at: today,
+        invoice_id: inv.id,
+      }));
+      const { error: depErr } = await supabase.from("pro_deposits").insert(payload);
+      if (depErr) throw depErr;
+
+      const { data, error } = await supabase.functions.invoke("generate-pro-invoice", {
+        body: { invoiceId: inv.id },
+      });
+      if (error) throw error;
+      if (data?.pdfBase64) {
+        const blob = await (await fetch(`data:application/pdf;base64,${data.pdfBase64}`)).blob();
+        window.open(URL.createObjectURL(blob), "_blank");
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pro_invoices"] });
+      qc.invalidateQueries({ queryKey: ["pro_deposits"] });
+      setDirectOpen(false);
+      resetDirect();
+      toast({ title: "Facture directe générée" });
+    },
+    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+  });
+
   // ---- KPIs per partner
   const kpisByPartner = useMemo(() => {
     return partners.map(p => {
@@ -647,11 +711,146 @@ export default function ProInvoicingManager() {
 
           {/* ============== INVOICES ============== */}
           <TabsContent value="invoices" className="space-y-4 pt-4">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Dialog open={directOpen} onOpenChange={(o) => { setDirectOpen(o); if (!o) resetDirect(); }}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" /> Nouvelle facture directe (B2B)
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>Facture pro directe — vente classique (100%)</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Client professionnel *</Label>
+                        <Select value={directPartner} onValueChange={setDirectPartner}>
+                          <SelectTrigger><SelectValue placeholder="Choisir un partenaire" /></SelectTrigger>
+                          <SelectContent>
+                            {partners.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Pas dans la liste ? Crée-le dans l'onglet "Partenaires".
+                        </p>
+                      </div>
+                      <div>
+                        <Label>Échéance</Label>
+                        <Input type="date" value={directDue} onChange={e => setDirectDue(e.target.value)} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Lignes</Label>
+                      {directLines.map((l, idx) => (
+                        <div key={idx} className="grid grid-cols-12 gap-2 items-end">
+                          <div className="col-span-5">
+                            <Select
+                              value={l.product_name}
+                              onValueChange={(v) => {
+                                const arr = [...directLines];
+                                arr[idx].product_name = v;
+                                const prod = productList.find((p: any) => p.name === v);
+                                const w = Number(arr[idx].weight_grams || 0);
+                                const q = Number(arr[idx].quantity || 1);
+                                if (prod && w > 0) arr[idx].total_ttc = (prod.price * w * q).toFixed(2);
+                                setDirectLines(arr);
+                              }}
+                            >
+                              <SelectTrigger><SelectValue placeholder="Produit" /></SelectTrigger>
+                              <SelectContent>
+                                {productList.map((p: any) => (
+                                  <SelectItem key={p.id} value={p.name}>{p.name} ({p.price}€/g)</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="col-span-2">
+                            <Input
+                              placeholder="Poids g"
+                              type="number" step="0.1"
+                              value={l.weight_grams}
+                              onChange={e => {
+                                const arr = [...directLines];
+                                arr[idx].weight_grams = e.target.value;
+                                const prod = productList.find((p: any) => p.name === arr[idx].product_name);
+                                const w = Number(e.target.value || 0);
+                                const q = Number(arr[idx].quantity || 1);
+                                if (prod && w > 0) arr[idx].total_ttc = (prod.price * w * q).toFixed(2);
+                                setDirectLines(arr);
+                              }}
+                            />
+                          </div>
+                          <div className="col-span-1">
+                            <Input
+                              placeholder="Qté"
+                              type="number" min="1"
+                              value={l.quantity}
+                              onChange={e => {
+                                const arr = [...directLines];
+                                arr[idx].quantity = e.target.value;
+                                const prod = productList.find((p: any) => p.name === arr[idx].product_name);
+                                const w = Number(arr[idx].weight_grams || 0);
+                                const q = Number(e.target.value || 1);
+                                if (prod && w > 0) arr[idx].total_ttc = (prod.price * w * q).toFixed(2);
+                                setDirectLines(arr);
+                              }}
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <Input
+                              placeholder="Total TTC €"
+                              type="number" step="0.01"
+                              value={l.total_ttc}
+                              onChange={e => {
+                                const arr = [...directLines];
+                                arr[idx].total_ttc = e.target.value;
+                                setDirectLines(arr);
+                              }}
+                            />
+                          </div>
+                          <div className="col-span-1">
+                            <Button
+                              size="icon" variant="ghost"
+                              onClick={() => setDirectLines(directLines.filter((_, i) => i !== idx))}
+                              disabled={directLines.length === 1}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <Button
+                        variant="outline" size="sm"
+                        onClick={() => setDirectLines([...directLines, { product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }])}
+                        className="gap-2"
+                      >
+                        <Plus className="h-3 w-3" /> Ajouter une ligne
+                      </Button>
+                    </div>
+
+                    <div className="text-right text-sm border-t border-gold/20 pt-3">
+                      <span className="text-muted-foreground mr-3">Total TTC :</span>
+                      <span className="font-bold text-gold text-lg">
+                        {directLines.reduce((s, l) => s + Number(l.total_ttc || 0), 0).toFixed(2)} €
+                      </span>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setDirectOpen(false)}>Annuler</Button>
+                    <Button onClick={() => createDirectInvoice.mutate()} disabled={createDirectInvoice.isPending}>
+                      Générer la facture
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               <Button variant="outline" onClick={exportCSV} className="gap-2">
                 <Download className="h-4 w-4" /> Export CSV
               </Button>
             </div>
+
             <Table>
               <TableHeader>
                 <TableRow>
