@@ -21,7 +21,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Receipt, Plus, Trash2, FileText, Download, CheckCircle2, Building2 } from "lucide-react";
+import { Receipt, Plus, Trash2, FileText, Download, CheckCircle2, Building2, RefreshCw } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 
 interface Partner {
@@ -252,8 +252,31 @@ export default function ProInvoicingManager() {
     onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
   });
 
+  const regeneratePdf = async (inv: ProInvoice, forceDirect = false) => {
+    if (forceDirect && Number(inv.commission_percent) !== 0) {
+      const { error: updateErr } = await supabase
+        .from("pro_invoices")
+        .update({ commission_percent: 0, pdf_path: null })
+        .eq("id", inv.id);
+      if (updateErr) {
+        toast({ title: "Erreur", description: updateErr.message, variant: "destructive" });
+        return;
+      }
+    }
+
+    const { data, error } = await supabase.functions.invoke("generate-pro-invoice", {
+      body: { invoiceId: inv.id },
+    });
+    if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
+    if (data?.pdfBase64) {
+      const blob = await (await fetch(`data:application/pdf;base64,${data.pdfBase64}`)).blob();
+      window.open(URL.createObjectURL(blob), "_blank");
+    }
+    qc.invalidateQueries({ queryKey: ["pro_invoices"] });
+  };
+
   const downloadPdf = async (inv: ProInvoice) => {
-    if (!inv.pdf_path) {
+    if (!inv.pdf_path || Number(inv.commission_percent) === 0) {
       const { data, error } = await supabase.functions.invoke("generate-pro-invoice", {
         body: { invoiceId: inv.id },
       });
@@ -900,7 +923,12 @@ export default function ProInvoicingManager() {
                       <TableCell className="font-mono text-xs">{i.invoice_number}</TableCell>
                       <TableCell className="text-xs">{p?.name || "—"}</TableCell>
                       <TableCell className="text-xs">{new Date(i.issued_at).toLocaleDateString("fr-FR")}</TableCell>
-                      <TableCell className="text-right text-xs">{Number(i.total_retail_ttc).toFixed(2)} €</TableCell>
+                      <TableCell className="text-right text-xs">
+                        <div>{Number(i.total_retail_ttc).toFixed(2)} €</div>
+                        <Badge variant="outline" className="mt-1 text-[10px]">
+                          {Number(i.commission_percent) === 0 ? "B2B direct 100%" : `Dépôt ${100 - Number(i.commission_percent)}%`}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right text-xs">{Number(i.total_invoiced_ht).toFixed(2)} €</TableCell>
                       <TableCell className="text-right text-xs">{Number(i.total_vat).toFixed(2)} €</TableCell>
                       <TableCell className="text-right text-xs font-bold text-gold">{Number(i.total_invoiced_ttc).toFixed(2)} €</TableCell>
@@ -912,6 +940,14 @@ export default function ProInvoicingManager() {
                           <Button size="sm" variant="ghost" title="PDF" onClick={() => downloadPdf(i)}>
                             <FileText className="h-4 w-4" />
                           </Button>
+                          <Button size="sm" variant="ghost" title="Régénérer le PDF" onClick={() => regeneratePdf(i)}>
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          {Number(i.commission_percent) !== 0 && (
+                            <Button size="sm" variant="ghost" title="Corriger en facture directe B2B 100%" onClick={() => regeneratePdf(i, true)}>
+                              100%
+                            </Button>
+                          )}
                           {i.status !== "paid" && (
                             <Button size="sm" variant="ghost" title="Marquer payée" onClick={() => markPaid.mutate(i.id)}>
                               <CheckCircle2 className="h-4 w-4 text-green-500" />
