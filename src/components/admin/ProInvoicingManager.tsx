@@ -303,13 +303,14 @@ export default function ProInvoicingManager() {
   const [directPartner, setDirectPartner] = useState<string>("");
   const [directDue, setDirectDue] = useState<string>("");
   const [directLines, setDirectLines] = useState<Array<{
-    product_name: string; weight_grams: string; quantity: string; total_ttc: string;
-  }>>([{ product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }]);
+    product_name: string; weight_grams: string; quantity: string; price_ht_per_g: string; total_ttc: string;
+  }>>([{ product_name: "", weight_grams: "", quantity: "1", price_ht_per_g: "", total_ttc: "" }]);
 
   const resetDirect = () => {
     setDirectPartner(""); setDirectDue("");
-    setDirectLines([{ product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }]);
+    setDirectLines([{ product_name: "", weight_grams: "", quantity: "1", price_ht_per_g: "", total_ttc: "" }]);
   };
+
 
   const createDirectInvoice = useMutation({
     mutationFn: async () => {
@@ -744,25 +745,33 @@ export default function ProInvoicingManager() {
 
                     <div className="space-y-2">
                       <Label>Lignes</Label>
-                      {directLines.map((l, idx) => (
+                      {directLines.map((l, idx) => {
+                        const recompute = (arr: typeof directLines, i: number) => {
+                          const w = Number(arr[i].weight_grams || 0);
+                          const q = Number(arr[i].quantity || 1);
+                          const ht = Number(arr[i].price_ht_per_g || 0);
+                          if (w > 0 && ht > 0) arr[i].total_ttc = (ht * 1.2 * w * q).toFixed(2);
+                        };
+                        return (
                         <div key={idx} className="grid grid-cols-12 gap-2 items-end">
-                          <div className="col-span-5">
+                          <div className="col-span-4">
                             <Select
                               value={l.product_name}
                               onValueChange={(v) => {
                                 const arr = [...directLines];
                                 arr[idx].product_name = v;
                                 const prod = productList.find((p: any) => p.name === v);
-                                const w = Number(arr[idx].weight_grams || 0);
-                                const q = Number(arr[idx].quantity || 1);
-                                if (prod && w > 0) arr[idx].total_ttc = (prod.price * w * q).toFixed(2);
+                                if (prod && !arr[idx].price_ht_per_g) {
+                                  arr[idx].price_ht_per_g = (prod.price / 1.2).toFixed(2);
+                                }
+                                recompute(arr, idx);
                                 setDirectLines(arr);
                               }}
                             >
                               <SelectTrigger><SelectValue placeholder="Produit" /></SelectTrigger>
                               <SelectContent>
                                 {productList.map((p: any) => (
-                                  <SelectItem key={p.id} value={p.name}>{p.name} ({p.price}€/g)</SelectItem>
+                                  <SelectItem key={p.id} value={p.name}>{p.name} ({p.price}€/g TTC)</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -775,10 +784,7 @@ export default function ProInvoicingManager() {
                               onChange={e => {
                                 const arr = [...directLines];
                                 arr[idx].weight_grams = e.target.value;
-                                const prod = productList.find((p: any) => p.name === arr[idx].product_name);
-                                const w = Number(e.target.value || 0);
-                                const q = Number(arr[idx].quantity || 1);
-                                if (prod && w > 0) arr[idx].total_ttc = (prod.price * w * q).toFixed(2);
+                                recompute(arr, idx);
                                 setDirectLines(arr);
                               }}
                             />
@@ -791,15 +797,25 @@ export default function ProInvoicingManager() {
                               onChange={e => {
                                 const arr = [...directLines];
                                 arr[idx].quantity = e.target.value;
-                                const prod = productList.find((p: any) => p.name === arr[idx].product_name);
-                                const w = Number(arr[idx].weight_grams || 0);
-                                const q = Number(e.target.value || 1);
-                                if (prod && w > 0) arr[idx].total_ttc = (prod.price * w * q).toFixed(2);
+                                recompute(arr, idx);
                                 setDirectLines(arr);
                               }}
                             />
                           </div>
-                          <div className="col-span-3">
+                          <div className="col-span-2">
+                            <Input
+                              placeholder="PU HT €/g"
+                              type="number" step="0.01"
+                              value={l.price_ht_per_g}
+                              onChange={e => {
+                                const arr = [...directLines];
+                                arr[idx].price_ht_per_g = e.target.value;
+                                recompute(arr, idx);
+                                setDirectLines(arr);
+                              }}
+                            />
+                          </div>
+                          <div className="col-span-2">
                             <Input
                               placeholder="Total TTC €"
                               type="number" step="0.01"
@@ -821,22 +837,33 @@ export default function ProInvoicingManager() {
                             </Button>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                       <Button
                         variant="outline" size="sm"
-                        onClick={() => setDirectLines([...directLines, { product_name: "", weight_grams: "", quantity: "1", total_ttc: "" }])}
+                        onClick={() => setDirectLines([...directLines, { product_name: "", weight_grams: "", quantity: "1", price_ht_per_g: "", total_ttc: "" }])}
                         className="gap-2"
                       >
                         <Plus className="h-3 w-3" /> Ajouter une ligne
                       </Button>
+
                     </div>
 
-                    <div className="text-right text-sm border-t border-gold/20 pt-3">
-                      <span className="text-muted-foreground mr-3">Total TTC :</span>
-                      <span className="font-bold text-gold text-lg">
-                        {directLines.reduce((s, l) => s + Number(l.total_ttc || 0), 0).toFixed(2)} €
-                      </span>
+                    <div className="text-right text-sm border-t border-gold/20 pt-3 space-y-1">
+                      {(() => {
+                        const ttc = directLines.reduce((s, l) => s + Number(l.total_ttc || 0), 0);
+                        const ht = ttc / 1.2;
+                        const tva = ttc - ht;
+                        return (
+                          <>
+                            <div><span className="text-muted-foreground mr-3">Total HT :</span><span className="font-medium">{ht.toFixed(2)} €</span></div>
+                            <div><span className="text-muted-foreground mr-3">TVA 20% :</span><span className="font-medium">{tva.toFixed(2)} €</span></div>
+                            <div><span className="text-muted-foreground mr-3">Total TTC :</span><span className="font-bold text-gold text-lg">{ttc.toFixed(2)} €</span></div>
+                          </>
+                        );
+                      })()}
                     </div>
+
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setDirectOpen(false)}>Annuler</Button>
