@@ -151,8 +151,12 @@ Deno.serve(async (req) => {
       const due = new Date(invoice.due_date).toLocaleDateString("fr-FR");
       doc.text(`Échéance : ${due}`, margin + 4, y + 23);
     }
-    doc.text(`Commission partenaire : ${commission}%`, margin + 4, y + 28);
-    doc.text(`Part cédée (facturée) : ${(sellerShare * 100).toFixed(0)}%`, margin + 4, y + 33);
+    if (commission > 0) {
+      doc.text(`Commission partenaire : ${commission}%`, margin + 4, y + 28);
+      doc.text(`Part cédée (facturée) : ${(sellerShare * 100).toFixed(0)}%`, margin + 4, y + 33);
+    } else {
+      doc.text(`Type : Vente directe B2B`, margin + 4, y + 28);
+    }
 
     const boxX2 = margin + boxW + 6;
     doc.setFillColor(249, 247, 243);
