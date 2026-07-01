@@ -220,12 +220,15 @@ const StatsManager = () => {
       caTTC,
       caHT,
       caTTClast,
+      caProTTC,
+      caOrdersTTC,
+      proCount: thisMonthPro.length,
       avg,
       avgLast,
-      ordersCount: thisMonth.length,
-      ordersCountLast: lastMonth.length,
+      ordersCount: totalCount,
+      ordersCountLast: totalCountLast,
       deltaCA: delta(caTTC, caTTClast),
-      deltaOrders: delta(thisMonth.length, lastMonth.length),
+      deltaOrders: delta(totalCount, totalCountLast),
       deltaAvg: delta(avg, avgLast),
       daily,
       monthly,
@@ -235,7 +238,7 @@ const StatsManager = () => {
       newClients,
       returning,
     };
-  }, [orders, period]);
+  }, [orders, proInvoices, period]);
 
   const exportMonthlyCSV = () => {
     const headers = ["Mois", "CA TTC", "CA HT", "Commandes", "Clients uniques", "Panier moyen TTC"];
