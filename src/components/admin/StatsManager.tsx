@@ -304,6 +304,11 @@ const StatsManager = () => {
               <p className="text-xs text-muted-foreground uppercase tracking-wide">CA TTC</p>
               <p className="text-2xl font-bold text-gold">{stats.caTTC.toFixed(2)}€</p>
               <p className="text-xs text-muted-foreground mt-1">HT: {stats.caHT.toFixed(2)}€</p>
+              {stats.caProTTC > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  dont Pro : <span className="text-gold">{stats.caProTTC.toFixed(2)}€</span> ({stats.proCount} fact.)
+                </p>
+              )}
             </div>
 
             <div className="p-4 rounded-lg border border-border/50 bg-card">
