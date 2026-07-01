@@ -98,13 +98,22 @@ const StatsManager = () => {
 
     const thisMonth = orders.filter((o) => inRange(new Date(o.created_at), monthStart, monthEnd));
     const lastMonth = orders.filter((o) => inRange(new Date(o.created_at), prevMonthStart, prevMonthEnd));
+    const thisMonthPro = proInvoices.filter((p) => inRange(new Date(p.issued_at), monthStart, monthEnd));
+    const lastMonthPro = proInvoices.filter((p) => inRange(new Date(p.issued_at), prevMonthStart, prevMonthEnd));
 
     const sum = (arr: OrderRow[]) => arr.reduce((s, o) => s + Number(o.total_amount), 0);
-    const caTTC = sum(thisMonth);
-    const caTTClast = sum(lastMonth);
-    const caHT = caTTC / 1.2;
-    const avg = thisMonth.length ? caTTC / thisMonth.length : 0;
-    const avgLast = lastMonth.length ? caTTClast / lastMonth.length : 0;
+    const sumProTTC = (arr: ProInvoiceRow[]) => arr.reduce((s, p) => s + Number(p.total_invoiced_ttc || 0), 0);
+    const sumProHT = (arr: ProInvoiceRow[]) => arr.reduce((s, p) => s + Number(p.total_invoiced_ht || 0), 0);
+
+    const caOrdersTTC = sum(thisMonth);
+    const caProTTC = sumProTTC(thisMonthPro);
+    const caTTC = caOrdersTTC + caProTTC;
+    const caTTClast = sum(lastMonth) + sumProTTC(lastMonthPro);
+    const caHT = caOrdersTTC / 1.2 + sumProHT(thisMonthPro);
+    const totalCount = thisMonth.length + thisMonthPro.length;
+    const totalCountLast = lastMonth.length + lastMonthPro.length;
+    const avg = totalCount ? caTTC / totalCount : 0;
+    const avgLast = totalCountLast ? caTTClast / totalCountLast : 0;
 
     const delta = (a: number, b: number) => (b === 0 ? (a > 0 ? 100 : 0) : ((a - b) / b) * 100);
 
@@ -114,15 +123,16 @@ const StatsManager = () => {
       const day = subDays(now, i);
       const dayStr = format(day, "yyyy-MM-dd");
       const dayOrders = orders.filter((o) => o.created_at.startsWith(dayStr));
+      const dayPro = proInvoices.filter((p) => p.issued_at.startsWith(dayStr));
       daily.push({
         date: format(day, "dd/MM", { locale: fr }),
-        ca: Math.round(sum(dayOrders) * 100) / 100,
-        count: dayOrders.length,
+        ca: Math.round((sum(dayOrders) + sumProTTC(dayPro)) * 100) / 100,
+        count: dayOrders.length + dayPro.length,
       });
     }
 
     // Monthly history — last 12 months
-    const monthly: { month: string; ca: number; ht: number; count: number; clients: number }[] = [];
+    const monthly: { month: string; ca: number; ht: number; count: number; clients: number; caPro: number }[] = [];
     for (let i = 11; i >= 0; i--) {
       const mStart = startOfMonth(subMonths(now, i));
       const mEnd = endOfMonth(mStart);
@@ -130,16 +140,25 @@ const StatsManager = () => {
         const d = new Date(o.created_at);
         return d >= mStart && d <= mEnd;
       });
-      const ca = sum(mOrders);
+      const mPro = proInvoices.filter((p) => {
+        const d = new Date(p.issued_at);
+        return d >= mStart && d <= mEnd;
+      });
+      const caOrders = sum(mOrders);
+      const caPro = sumProTTC(mPro);
+      const ca = caOrders + caPro;
+      const ht = caOrders / 1.2 + sumProHT(mPro);
       const uniqClients = new Set(mOrders.map((o) => o.user_id || o.guest_email || "anon")).size;
       monthly.push({
         month: format(mStart, "MMM yy", { locale: fr }),
         ca: Math.round(ca * 100) / 100,
-        ht: Math.round((ca / 1.2) * 100) / 100,
-        count: mOrders.length,
+        ht: Math.round(ht * 100) / 100,
+        count: mOrders.length + mPro.length,
         clients: uniqClients,
+        caPro: Math.round(caPro * 100) / 100,
       });
     }
+
 
     // Top products (mois en cours) — flowers/resin only
     const productMap: Record<string, { name: string; grams: number; ca: number }> = {};
