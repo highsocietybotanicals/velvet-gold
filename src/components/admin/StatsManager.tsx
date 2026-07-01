@@ -40,8 +40,18 @@ const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(217 91% 60%)",
 
 type Period = 7 | 30 | 90;
 
+interface ProInvoiceRow {
+  id: string;
+  issued_at: string;
+  total_invoiced_ttc: number;
+  total_invoiced_ht: number;
+  status: string;
+  commission_percent: number;
+}
+
 const StatsManager = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [proInvoices, setProInvoices] = useState<ProInvoiceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>(30);
 
@@ -50,15 +60,25 @@ const StatsManager = () => {
       try {
         // Fetch 13 months back so monthly history covers 12 full months + current
         const since = subMonths(new Date(), 13).toISOString();
-        const { data, error } = await supabase
-          .from("orders")
-          .select("id, user_id, guest_email, total_amount, total_flower_weight, delivery_type, payment_status, status, created_at, order_items(product_name, product_id, total_price, weight, quantity)")
-          .eq("payment_status", "paid")
-          .neq("status", "cancelled")
-          .gte("created_at", since)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        setOrders((data as any) || []);
+        const sinceDate = format(subMonths(new Date(), 13), "yyyy-MM-dd");
+        const [ordersRes, proRes] = await Promise.all([
+          supabase
+            .from("orders")
+            .select("id, user_id, guest_email, total_amount, total_flower_weight, delivery_type, payment_status, status, created_at, order_items(product_name, product_id, total_price, weight, quantity)")
+            .eq("payment_status", "paid")
+            .neq("status", "cancelled")
+            .gte("created_at", since)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("pro_invoices")
+            .select("id, issued_at, total_invoiced_ttc, total_invoiced_ht, status, commission_percent")
+            .neq("status", "cancelled")
+            .gte("issued_at", sinceDate),
+        ]);
+        if (ordersRes.error) throw ordersRes.error;
+        if (proRes.error) throw proRes.error;
+        setOrders((ordersRes.data as any) || []);
+        setProInvoices((proRes.data as any) || []);
       } catch (e) {
         console.error("Stats load error:", e);
       } finally {
