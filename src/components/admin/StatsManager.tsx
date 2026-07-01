@@ -40,8 +40,18 @@ const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(217 91% 60%)",
 
 type Period = 7 | 30 | 90;
 
+interface ProInvoiceRow {
+  id: string;
+  issued_at: string;
+  total_invoiced_ttc: number;
+  total_invoiced_ht: number;
+  status: string;
+  commission_percent: number;
+}
+
 const StatsManager = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [proInvoices, setProInvoices] = useState<ProInvoiceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>(30);
 
@@ -50,15 +60,25 @@ const StatsManager = () => {
       try {
         // Fetch 13 months back so monthly history covers 12 full months + current
         const since = subMonths(new Date(), 13).toISOString();
-        const { data, error } = await supabase
-          .from("orders")
-          .select("id, user_id, guest_email, total_amount, total_flower_weight, delivery_type, payment_status, status, created_at, order_items(product_name, product_id, total_price, weight, quantity)")
-          .eq("payment_status", "paid")
-          .neq("status", "cancelled")
-          .gte("created_at", since)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        setOrders((data as any) || []);
+        const sinceDate = format(subMonths(new Date(), 13), "yyyy-MM-dd");
+        const [ordersRes, proRes] = await Promise.all([
+          supabase
+            .from("orders")
+            .select("id, user_id, guest_email, total_amount, total_flower_weight, delivery_type, payment_status, status, created_at, order_items(product_name, product_id, total_price, weight, quantity)")
+            .eq("payment_status", "paid")
+            .neq("status", "cancelled")
+            .gte("created_at", since)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("pro_invoices")
+            .select("id, issued_at, total_invoiced_ttc, total_invoiced_ht, status, commission_percent")
+            .neq("status", "cancelled")
+            .gte("issued_at", sinceDate),
+        ]);
+        if (ordersRes.error) throw ordersRes.error;
+        if (proRes.error) throw proRes.error;
+        setOrders((ordersRes.data as any) || []);
+        setProInvoices((proRes.data as any) || []);
       } catch (e) {
         console.error("Stats load error:", e);
       } finally {
@@ -78,13 +98,22 @@ const StatsManager = () => {
 
     const thisMonth = orders.filter((o) => inRange(new Date(o.created_at), monthStart, monthEnd));
     const lastMonth = orders.filter((o) => inRange(new Date(o.created_at), prevMonthStart, prevMonthEnd));
+    const thisMonthPro = proInvoices.filter((p) => inRange(new Date(p.issued_at), monthStart, monthEnd));
+    const lastMonthPro = proInvoices.filter((p) => inRange(new Date(p.issued_at), prevMonthStart, prevMonthEnd));
 
     const sum = (arr: OrderRow[]) => arr.reduce((s, o) => s + Number(o.total_amount), 0);
-    const caTTC = sum(thisMonth);
-    const caTTClast = sum(lastMonth);
-    const caHT = caTTC / 1.2;
-    const avg = thisMonth.length ? caTTC / thisMonth.length : 0;
-    const avgLast = lastMonth.length ? caTTClast / lastMonth.length : 0;
+    const sumProTTC = (arr: ProInvoiceRow[]) => arr.reduce((s, p) => s + Number(p.total_invoiced_ttc || 0), 0);
+    const sumProHT = (arr: ProInvoiceRow[]) => arr.reduce((s, p) => s + Number(p.total_invoiced_ht || 0), 0);
+
+    const caOrdersTTC = sum(thisMonth);
+    const caProTTC = sumProTTC(thisMonthPro);
+    const caTTC = caOrdersTTC + caProTTC;
+    const caTTClast = sum(lastMonth) + sumProTTC(lastMonthPro);
+    const caHT = caOrdersTTC / 1.2 + sumProHT(thisMonthPro);
+    const totalCount = thisMonth.length + thisMonthPro.length;
+    const totalCountLast = lastMonth.length + lastMonthPro.length;
+    const avg = totalCount ? caTTC / totalCount : 0;
+    const avgLast = totalCountLast ? caTTClast / totalCountLast : 0;
 
     const delta = (a: number, b: number) => (b === 0 ? (a > 0 ? 100 : 0) : ((a - b) / b) * 100);
 
@@ -94,15 +123,16 @@ const StatsManager = () => {
       const day = subDays(now, i);
       const dayStr = format(day, "yyyy-MM-dd");
       const dayOrders = orders.filter((o) => o.created_at.startsWith(dayStr));
+      const dayPro = proInvoices.filter((p) => p.issued_at.startsWith(dayStr));
       daily.push({
         date: format(day, "dd/MM", { locale: fr }),
-        ca: Math.round(sum(dayOrders) * 100) / 100,
-        count: dayOrders.length,
+        ca: Math.round((sum(dayOrders) + sumProTTC(dayPro)) * 100) / 100,
+        count: dayOrders.length + dayPro.length,
       });
     }
 
     // Monthly history — last 12 months
-    const monthly: { month: string; ca: number; ht: number; count: number; clients: number }[] = [];
+    const monthly: { month: string; ca: number; ht: number; count: number; clients: number; caPro: number }[] = [];
     for (let i = 11; i >= 0; i--) {
       const mStart = startOfMonth(subMonths(now, i));
       const mEnd = endOfMonth(mStart);
@@ -110,16 +140,25 @@ const StatsManager = () => {
         const d = new Date(o.created_at);
         return d >= mStart && d <= mEnd;
       });
-      const ca = sum(mOrders);
+      const mPro = proInvoices.filter((p) => {
+        const d = new Date(p.issued_at);
+        return d >= mStart && d <= mEnd;
+      });
+      const caOrders = sum(mOrders);
+      const caPro = sumProTTC(mPro);
+      const ca = caOrders + caPro;
+      const ht = caOrders / 1.2 + sumProHT(mPro);
       const uniqClients = new Set(mOrders.map((o) => o.user_id || o.guest_email || "anon")).size;
       monthly.push({
         month: format(mStart, "MMM yy", { locale: fr }),
         ca: Math.round(ca * 100) / 100,
-        ht: Math.round((ca / 1.2) * 100) / 100,
-        count: mOrders.length,
+        ht: Math.round(ht * 100) / 100,
+        count: mOrders.length + mPro.length,
         clients: uniqClients,
+        caPro: Math.round(caPro * 100) / 100,
       });
     }
+
 
     // Top products (mois en cours) — flowers/resin only
     const productMap: Record<string, { name: string; grams: number; ca: number }> = {};
@@ -181,12 +220,15 @@ const StatsManager = () => {
       caTTC,
       caHT,
       caTTClast,
+      caProTTC,
+      caOrdersTTC,
+      proCount: thisMonthPro.length,
       avg,
       avgLast,
-      ordersCount: thisMonth.length,
-      ordersCountLast: lastMonth.length,
+      ordersCount: totalCount,
+      ordersCountLast: totalCountLast,
       deltaCA: delta(caTTC, caTTClast),
-      deltaOrders: delta(thisMonth.length, lastMonth.length),
+      deltaOrders: delta(totalCount, totalCountLast),
       deltaAvg: delta(avg, avgLast),
       daily,
       monthly,
@@ -196,7 +238,7 @@ const StatsManager = () => {
       newClients,
       returning,
     };
-  }, [orders, period]);
+  }, [orders, proInvoices, period]);
 
   const exportMonthlyCSV = () => {
     const headers = ["Mois", "CA TTC", "CA HT", "Commandes", "Clients uniques", "Panier moyen TTC"];
@@ -262,6 +304,11 @@ const StatsManager = () => {
               <p className="text-xs text-muted-foreground uppercase tracking-wide">CA TTC</p>
               <p className="text-2xl font-bold text-gold">{stats.caTTC.toFixed(2)}€</p>
               <p className="text-xs text-muted-foreground mt-1">HT: {stats.caHT.toFixed(2)}€</p>
+              {stats.caProTTC > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  dont Pro : <span className="text-gold">{stats.caProTTC.toFixed(2)}€</span> ({stats.proCount} fact.)
+                </p>
+              )}
             </div>
 
             <div className="p-4 rounded-lg border border-border/50 bg-card">
