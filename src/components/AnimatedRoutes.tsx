@@ -14,7 +14,15 @@ const SocietePage = lazy(() => import("@/pages/SocietePage"));
 const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const AuthPage = lazy(() => import("@/pages/AuthPage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
-const AdminPage = lazy(() => import("@/pages/AdminPage"));
+const AdminLayout = lazy(() => import("@/pages/admin/AdminLayout"));
+const AdminDashboardPage = lazy(() => import("@/pages/admin/DashboardPage"));
+const AdminOrdersPage = lazy(() => import("@/pages/admin/OrdersPage"));
+const AdminProductsPage = lazy(() => import("@/pages/admin/ProductsPage"));
+const AdminPricesPage = lazy(() => import("@/pages/admin/PricesPage"));
+const AdminProPage = lazy(() => import("@/pages/admin/ProPage"));
+const AdminMarketingPage = lazy(() => import("@/pages/admin/MarketingPage"));
+const AdminLogisticsPage = lazy(() => import("@/pages/admin/LogisticsPage"));
+const AdminAccountingPage = lazy(() => import("@/pages/admin/AccountingPage"));
 const MentionsLegalesPage = lazy(() => import("@/pages/MentionsLegalesPage"));
 const ConfidentialitePage = lazy(() => import("@/pages/ConfidentialitePage"));
 const CGVPage = lazy(() => import("@/pages/CGVPage"));
@@ -46,7 +54,17 @@ const AnimatedRoutes = () => {
           <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
           <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
           <Route path="/profil" element={<PageTransition><ProfilePage /></PageTransition>} />
-          <Route path="/admin" element={<PageTransition><AdminPage /></PageTransition>} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="tableau-de-bord" element={<AdminDashboardPage />} />
+            <Route path="commandes" element={<AdminOrdersPage />} />
+            <Route path="produits" element={<AdminProductsPage />} />
+            <Route path="prix" element={<AdminPricesPage />} />
+            <Route path="pro" element={<AdminProPage />} />
+            <Route path="marketing" element={<AdminMarketingPage />} />
+            <Route path="logistique" element={<AdminLogisticsPage />} />
+            <Route path="comptabilite" element={<AdminAccountingPage />} />
+          </Route>
           <Route path="/mentions-legales" element={<PageTransition><MentionsLegalesPage /></PageTransition>} />
           <Route path="/confidentialite" element={<PageTransition><ConfidentialitePage /></PageTransition>} />
           <Route path="/cgv" element={<PageTransition><CGVPage /></PageTransition>} />

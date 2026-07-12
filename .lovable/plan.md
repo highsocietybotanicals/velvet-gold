@@ -1,104 +1,136 @@
 
-## Réponse à ta question fiscale (avant de coder)
+# Réorganisation de l'admin, gestion produits en base, et export comptable
 
-Tu vends du CBD via un buraliste. Deux modèles existent en droit français — il faut **choisir** car la TVA ne s'applique pas pareil :
+## 1. Nouvelle architecture de l'admin (sidebar + sous-routes)
 
-### Modèle A — Achat-revente (le plus simple et le plus courant pour le tabac)
-- Le buraliste **t'achète** la marchandise à **70% du prix de vente public, TTC**.
-- Tu lui émets une facture : **HT = 70% PV / 1,20** + **TVA 20%** = **70% PV TTC**.
-- Tu reverses la TVA sur ce 70% à l'État.
-- Lui revend à 100% au client final, encaisse sa marge de 30%, et collecte/reverse sa propre TVA sur les 100%.
-- Avantage : simple, le buraliste est ton client, pas de mandat à gérer.
+Passage de la page `/admin` monolithique à un layout avec sidebar et sous-pages.
 
-### Modèle B — Dépôt-vente (mandat / contrat de commission)
-- La marchandise **reste à toi** jusqu'à la vente finale.
-- Tu factures **le client final** à 100% TTC (TVA 20% sur 100%).
-- Le buraliste t'émet **sa** facture de commission de 30% (avec TVA 20% s'il y est assujetti, ce qui est presque toujours le cas).
-- Plus lourd administrativement, ticket de caisse au nom du commettant, etc.
-
-**Recommandation** : pars sur le **Modèle A (achat-revente à 70% TTC)**. C'est celui qui correspond au mot "facture pour le tabac" que tu emploies, et c'est ce que pratiquent 99% des dépôts CBD en buraliste. Le module ci-dessous est conçu pour ce modèle (avec une case "commission %" paramétrable si tu changes d'avis).
-
-**Réponse directe à ta question** : tu lui factures **70% TTC** (donc 70%/1,20 HT + 20% TVA). C'est **toi qui collectes et reverses la TVA** sur ces 70%. Lui s'occupera de la TVA sur les 30% restants côté client final.
-
----
-
-## Plan technique — Module "Pro / Dépôt-vente" dans l'admin
-
-### 1. Base de données (migration)
-
-**Table `pro_partners`** (les tabacs / revendeurs Pro)
-- `name`, `siret`, `vat_number`, `address_line1`, `postal_code`, `city`, `email`, `phone`
-- `commission_percent` (défaut 30) → le partenaire prend 30%, tu factures 70%
-- `notes`, `is_active`
-
-**Table `pro_deposits`** (lignes de vente / dépôt par partenaire)
-- `partner_id`, `product_name`, `product_id` (nullable), `weight_grams` ou `quantity`
-- `retail_price_ttc` (PV public conseillé en boutique)
-- `sold_at` (date)
-- `invoice_id` (nullable — rempli quand facturé)
-- `notes`
-
-**Table `pro_invoices`** (factures émises aux tabacs)
-- `partner_id`, `invoice_number` (format `FA-PRO-XXXXXX` via trigger)
-- `issued_at`, `due_date`, `status` (draft, sent, paid)
-- `total_retail_ttc` (somme PV public)
-- `total_invoiced_ht`, `total_vat`, `total_invoiced_ttc` (= 70% TTC)
-- `commission_percent` (snapshot du %)
-- `pdf_url`, `paid_at`
-
-RLS : admin only sur les trois tables. GRANT à `authenticated` + `service_role`.
-
-### 2. UI Admin — nouveau composant `ProInvoicingManager.tsx`
-
-Monté dans `AdminPage.tsx` à côté de `StatsManager`. 3 onglets internes :
-
-**Onglet "Partenaires"** : CRUD tabacs (nom, SIRET, TVA, adresse, %commission, contact).
-
-**Onglet "Ventes en dépôt"** :
-- Sélection du partenaire
-- Ajout de ligne : produit (autocomplete depuis `products`), poids/quantité, PV public TTC, date
-- Tableau filtrable par partenaire + statut (facturée / non facturée)
-- Bouton "Générer facture" sur les lignes non facturées sélectionnées → crée `pro_invoices` + PDF
-
-**Onglet "Factures & Commissions"** :
-- Liste des factures émises (n°, partenaire, date, montant TTC, statut)
-- Actions : Voir PDF, Marquer payée, Renvoyer par email
-- KPIs par partenaire : CA total dépôt, à facturer, facturé, encaissé
-- Export CSV global
-
-### 3. Edge function `generate-pro-invoice`
-
-Génère un PDF jsPDF (même style que `generate-invoice-pdf` : Art-Déco, gold/noir) avec :
-- En-tête High Society Botanicals (SIRET, TVA intra)
-- Destinataire = partenaire (nom, SIRET, TVA, adresse)
-- Tableau des lignes : produit, qté, PV public TTC, **PV cédé HT** (= PV/1,20 × 70%), **TVA 20%**, **Total TTC** (= PV × 70%)
-- Récap : Total HT, TVA 20%, **Total TTC à régler**
-- Mention légale "TVA acquittée sur les débits — Contrat de revente"
-- Upload bucket `invoices/pro/`
-
-Auth : service-role ou admin via `user_roles` (même pattern que les autres fonctions).
-
-### 4. Calculs (au cœur du module)
-
-Pour chaque ligne :
+### Routes
 ```
-ttc_facture  = PV_public_TTC × commission_inversee   // ex: 100 × 0,70 = 70
-ht_facture   = ttc_facture / 1,20                    // 58,33
-tva          = ttc_facture - ht_facture              // 11,67
-marge_tabac  = PV_public_TTC × commission_percent/100 // 30 (ce qu'il garde)
+/admin                    → redirige vers /admin/tableau-de-bord
+/admin/tableau-de-bord    → StatsManager
+/admin/commandes          → liste + gestion des commandes + sync Colissimo
+/admin/produits           → NOUVEAU : catalogue produits (CRUD complet)
+/admin/prix               → PriceManagement (édition rapide des prix)
+/admin/pro                → demandes Pro, validation TVA, facturation Pro/dépôt
+/admin/marketing          → codes promo, réseaux sociaux, avis
+/admin/logistique         → commande manuelle, frais kilométriques
+/admin/comptabilite       → NOUVEAU : export factures + récap TVA
 ```
 
-### 5. Hors scope (pour cette itération)
-- Pas de portail Pro côté tabac (ils ne se connectent pas eux-mêmes)
-- Pas d'intégration paiement automatique
-- Pas de gestion de stock physique en dépôt (ajoutable plus tard)
+### Layout
+- Nouveau `src/pages/admin/AdminLayout.tsx` : `SidebarProvider` + `AdminSidebar` + `<Outlet />`, guard admin (redirect si non-admin).
+- Nouveau `src/components/admin/AdminSidebar.tsx` : sidebar collapsible avec icônes (`LayoutDashboard`, `Package`, `Euro`, `Users`, `Megaphone`, `Truck`, `Calculator`).
+- Route parent `/admin/*` dans `AnimatedRoutes.tsx` monte `AdminLayout` avec des routes enfants.
+- Chaque sous-page (`src/pages/admin/DashboardPage.tsx`, `OrdersPage.tsx`, …) réutilise les composants existants (`StatsManager`, `PriceManagement`, `PromoCodeManager`, `ProInvoicingManager`, `ManualOrderCreator`, `MileageManager`, `SocialMediaManager`, la table de commandes extraite de `AdminPage.tsx`).
+- La table des commandes + `OrderRow` sont déplacées dans `src/components/admin/OrdersTable.tsx` (extraction 1:1, aucune modif de logique).
+- L'ancien `src/pages/AdminPage.tsx` est supprimé après migration.
 
----
+## 2. Gestion complète des produits en base
 
-## Livrables
-- 1 migration (3 tables + RLS + GRANT + trigger n° facture)
-- 1 edge function `generate-pro-invoice`
-- 1 composant `src/components/admin/ProInvoicingManager.tsx` (3 onglets)
-- Intégration dans `AdminPage.tsx`
+### Migration DB (table `products`)
+Ajout de colonnes pour piloter le catalogue depuis la DB :
+- `subtitle`, `badge`, `description` (text)
+- `cbd_percentage` (text)
+- `image_url` (text) → stockage bucket `product-images`
+- `price_group` (text, 'A'|'B')
+- `is_force_noire` (bool, default false)
+- `mood` (text)
+- `intention_match` (text[])
+- `taste_match` (text[])
+- `terpenes` (jsonb : `{boise, fruite, epice, terreux}`)
+- `pro_price` (numeric, nullable) — remonté depuis `pro_prices` OU maintenu séparé (voir Détails techniques)
+- `display_order` (int, default 0) pour tri
+- policies RLS : lecture publique conservée, écriture réservée aux admins.
+- Nouveau bucket Storage public `product-images` avec policies admin-only pour l'upload.
 
-**Confirme le Modèle A (achat-revente 70% TTC) et je construis. Si tu préfères le Modèle B (dépôt-vente strict avec facture au client final + facture de commission reçue), dis-le, j'adapte la structure des factures.**
+### Page `/admin/produits`
+- Table listant tous les produits (fleurs + résines) avec vignette, nom, groupe, statut actif.
+- Bouton "Nouveau produit" → dialog `ProductForm`.
+- Bouton "Éditer" par ligne → même dialog en mode édition.
+- Bouton "Supprimer" (soft delete via `is_active=false` recommandé, avec confirm alert-dialog pour la suppression dure).
+
+### Composant `ProductForm` (dialog)
+Formulaire complet avec :
+- ID (slug auto depuis le nom en création, non éditable ensuite)
+- Nom, sous-titre, badge, description
+- Catégorie (fleur/résine)
+- Groupe de prix (A/B)
+- Prix TTC/g, Prix Pro HT/g
+- % CBD (texte libre), Mood
+- Upload image (drag & drop) → Supabase Storage
+- Toggle "Force Noire" (isForceNoire)
+- Multi-select intentions (`detente`, `creativite`, `sommeil`, `energie`)
+- Multi-select goûts (`boise`, `fruite`, `floral`)
+- 4 sliders 0-100 pour terpènes
+- Toggle actif
+- Ordre d'affichage
+
+### Refonte du front pour lire la DB
+- Nouveau hook `useCatalogProducts()` : fetch depuis `products` (tous champs), map vers le type `Product` existant.
+- `src/data/products.ts` devient une couche compatibilité : réexporte les types + expose des helpers `getFlowers()`, `getResins()`, `getFeatured()`, `getForceNoire()`, `buildRecommendationMatrix()` qui prennent en entrée la liste renvoyée par le hook.
+- Migration one-shot (via `supabase--insert`) qui insère les 8 produits existants avec leurs images actuelles (URL Storage après upload manuel des images de `src/assets/`) — les IDs conservent les slugs actuels pour ne pas casser les commandes historiques.
+- Tous les composants consommateurs (`ProductSection`, `SommelierSection`, `SampleSelectionPage`, `ProductPage`, `CataloguePage`, `SommelierChatbot` context, matrices de reco) passent par le hook. Aucune logique métier (prix dynamique, samples, gifts, Force Noire) n'est modifiée — seule la source des données change.
+- `PriceManagement` continue de fonctionner (mêmes colonnes `price`, `is_active`).
+
+## 3. Comptabilité — Export factures & récap TVA
+
+### Page `/admin/comptabilite`
+- Sélecteur de plage de dates (2 shadcn DatePicker : "Du" / "Au"), presets rapides (Ce mois, Mois dernier, Trimestre en cours, Année en cours).
+- 4 KPI cards sur la période : Nb factures, Total HT, Total TVA (20%), Total TTC.
+- Filtre "Type" : Toutes / Site (orders) / Pro (pro_invoices).
+- Tableau ligne par ligne trié par date : `N° facture | Date | Type | Client | HT | TVA | TTC | PDF`.
+- Sous-totaux automatiques par mois si la plage couvre > 1 mois.
+- Ligne "TOTAL" en bas figée : HT / TVA / TTC.
+- Boutons : "Télécharger PDF" et "Exporter CSV".
+
+### Sources de données
+- `orders` : `payment_status = 'paid'` AND `status != 'cancelled'` AND `created_at` dans la plage. HT = `total_amount / 1.2`, TVA = TTC − HT, numéro = `display_order_number` préfixé `FA-`.
+- `pro_invoices` : `status = 'paid'` (ou tous selon toggle) AND `issued_at` dans la plage. HT depuis `total_invoiced_ht`, TTC depuis `total_invoiced_ttc`, numéro = `invoice_number`.
+- Fusion + tri par date, mapping vers un type `AccountingLine` unifié.
+
+### PDF récap (`accountingPdf.ts`)
+Généré côté client avec jsPDF + jspdf-autotable :
+- En-tête HSB (branding gold), période, date d'édition.
+- Tableau détaillé de toutes les lignes avec sous-totaux mensuels si applicable.
+- Bloc final récap TVA : Total HT, TVA 20%, Total TTC, nb factures.
+- Mentions légales SIRET / TVA intra en pied de page.
+
+### Export CSV
+Fichier `comptabilite_YYYY-MM-DD_YYYY-MM-DD.csv` avec colonnes : `numero;date;type;client;ht;tva;ttc;statut`, séparateur `;` pour Excel FR.
+
+## Détails techniques
+
+- **`pro_price`** : la table `pro_prices` reste la source de vérité (schéma existant, RLS déjà en place). Le `ProductForm` lit/écrit via les mêmes hooks que `PriceManagement` (upsert/delete dans `pro_prices`). Pas de duplication de colonne dans `products`.
+- **Grants** : la migration ajoute uniquement des colonnes à une table existante, pas besoin de nouveaux GRANT. Le nouveau bucket `product-images` reçoit policies : SELECT public, INSERT/UPDATE/DELETE via `is_admin()`.
+- **Sidebar** : `collapsible="icon"`, `SidebarTrigger` dans un header interne au layout admin. `NavLink` avec `isActive` pour surligner la route courante.
+- **Rétrocompatibilité produits** : les IDs existants (`platinum-og`, `911-og-indoor`, …) sont conservés pour ne pas invalider les `order_items.product_id` déjà enregistrés.
+- **Images** : les 8 images actuelles de `src/assets/flowers/` et `src/assets/resins/` sont uploadées dans le bucket `product-images` lors du seed. Les nouveaux produits utilisent l'uploader du form.
+- **PDF comptable** : réutilise jsPDF déjà installé (utilisé pour les étiquettes produits).
+- Aucun changement des Edge Functions existantes (`generate-pro-invoice`, etc.). Aucun changement de la logique de calcul TVA.
+
+## Fichiers créés / modifiés
+
+**Créés :**
+- `src/pages/admin/AdminLayout.tsx`
+- `src/pages/admin/DashboardPage.tsx`, `OrdersPage.tsx`, `ProductsPage.tsx`, `PricesPage.tsx`, `ProPage.tsx`, `MarketingPage.tsx`, `LogisticsPage.tsx`, `AccountingPage.tsx`
+- `src/components/admin/AdminSidebar.tsx`
+- `src/components/admin/OrdersTable.tsx` (extraction)
+- `src/components/admin/ProductForm.tsx`
+- `src/components/admin/ProductsManager.tsx`
+- `src/components/admin/AccountingManager.tsx`
+- `src/hooks/useCatalogProducts.ts`
+- `src/lib/accountingPdf.ts`
+- Migration SQL (ajout colonnes `products` + bucket `product-images` + policies)
+
+**Modifiés :**
+- `src/components/AnimatedRoutes.tsx` (routes `/admin/*`)
+- `src/data/products.ts` (bascule vers helpers dynamiques)
+- Consommateurs de `products.ts` (`ProductSection`, `SommelierSection`, `CataloguePage`, `SampleSelectionPage`, `ProductPage`, chatbot context) : lecture via `useCatalogProducts`
+- `src/pages/AdminPage.tsx` : supprimé
+
+## Hors périmètre
+
+- Pas de refonte visuelle du front public.
+- Pas de modification du flow checkout, paiement, ou Colissimo.
+- Pas de refonte des Edge Functions de facturation.
