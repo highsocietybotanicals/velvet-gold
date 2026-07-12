@@ -97,7 +97,7 @@ const AccountingManager = () => {
           invoiceNumber: `FA-${(o.display_order_number || `HSB-${String(o.order_number).padStart(6, "0")}`).replace("HSB-", "")}`,
           date: o.created_at,
           type: "site",
-          client: o.guest_name || o.user_email || o.guest_email || "Client",
+          client: o.guest_name || (o.user_id ? userEmails[o.user_id] : "") || o.guest_email || "Client",
           ht,
           tva: ttc - ht,
           ttc,
