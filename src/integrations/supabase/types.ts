@@ -624,30 +624,66 @@ export type Database = {
       }
       products: {
         Row: {
+          badge: string | null
           category: string
+          cbd_percentage: string | null
           created_at: string
+          description: string | null
+          display_order: number
           id: string
+          image_url: string | null
+          intention_match: string[]
           is_active: boolean
+          is_force_noire: boolean
+          mood: string | null
           name: string
           price: number
+          price_group: string
+          subtitle: string | null
+          taste_match: string[]
+          terpenes: Json
           updated_at: string
         }
         Insert: {
+          badge?: string | null
           category: string
+          cbd_percentage?: string | null
           created_at?: string
+          description?: string | null
+          display_order?: number
           id: string
+          image_url?: string | null
+          intention_match?: string[]
           is_active?: boolean
+          is_force_noire?: boolean
+          mood?: string | null
           name: string
           price: number
+          price_group?: string
+          subtitle?: string | null
+          taste_match?: string[]
+          terpenes?: Json
           updated_at?: string
         }
         Update: {
+          badge?: string | null
           category?: string
+          cbd_percentage?: string | null
           created_at?: string
+          description?: string | null
+          display_order?: number
           id?: string
+          image_url?: string | null
+          intention_match?: string[]
           is_active?: boolean
+          is_force_noire?: boolean
+          mood?: string | null
           name?: string
           price?: number
+          price_group?: string
+          subtitle?: string | null
+          taste_match?: string[]
+          terpenes?: Json
           updated_at?: string
         }
         Relationships: []
