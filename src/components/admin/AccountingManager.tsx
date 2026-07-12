@@ -61,7 +61,7 @@ const AccountingManager = () => {
       const [ordersRes, invoicesRes] = await Promise.all([
         supabase
           .from("orders")
-          .select("id, display_order_number, order_number, created_at, total_amount, payment_status, status, guest_name, guest_email, user_email")
+          .select("id, display_order_number, order_number, created_at, total_amount, payment_status, status, guest_name, guest_email, user_id")
           .gte("created_at", fromDate.toISOString())
           .lte("created_at", toDate.toISOString())
           .order("created_at", { ascending: true }),
@@ -82,6 +82,13 @@ const AccountingManager = () => {
         (pData || []).forEach((p: any) => { partners[p.id] = p.company_name; });
       }
 
+      const userIds = Array.from(new Set((ordersRes.data || []).map((o: any) => o.user_id).filter(Boolean)));
+      let userEmails: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: pf } = await supabase.from("profiles").select("id, email, full_name").in("id", userIds);
+        (pf || []).forEach((p: any) => { userEmails[p.id] = p.full_name || p.email || ""; });
+      }
+
       const orderLines: AccountingLine[] = (ordersRes.data || []).map((o: any) => {
         const ttc = Number(o.total_amount) || 0;
         const ht = ttc / 1.2;
@@ -90,7 +97,7 @@ const AccountingManager = () => {
           invoiceNumber: `FA-${(o.display_order_number || `HSB-${String(o.order_number).padStart(6, "0")}`).replace("HSB-", "")}`,
           date: o.created_at,
           type: "site",
-          client: o.guest_name || o.user_email || o.guest_email || "Client",
+          client: o.guest_name || (o.user_id ? userEmails[o.user_id] : "") || o.guest_email || "Client",
           ht,
           tva: ttc - ht,
           ttc,
