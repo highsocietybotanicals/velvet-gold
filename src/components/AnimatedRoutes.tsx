@@ -54,7 +54,17 @@ const AnimatedRoutes = () => {
           <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
           <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
           <Route path="/profil" element={<PageTransition><ProfilePage /></PageTransition>} />
-          <Route path="/admin" element={<PageTransition><AdminPage /></PageTransition>} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="tableau-de-bord" element={<AdminDashboardPage />} />
+            <Route path="commandes" element={<AdminOrdersPage />} />
+            <Route path="produits" element={<AdminProductsPage />} />
+            <Route path="prix" element={<AdminPricesPage />} />
+            <Route path="pro" element={<AdminProPage />} />
+            <Route path="marketing" element={<AdminMarketingPage />} />
+            <Route path="logistique" element={<AdminLogisticsPage />} />
+            <Route path="comptabilite" element={<AdminAccountingPage />} />
+          </Route>
           <Route path="/mentions-legales" element={<PageTransition><MentionsLegalesPage /></PageTransition>} />
           <Route path="/confidentialite" element={<PageTransition><ConfidentialitePage /></PageTransition>} />
           <Route path="/cgv" element={<PageTransition><CGVPage /></PageTransition>} />
