@@ -15,6 +15,7 @@ export interface AccountingLine {
   tva: number;
   ttc: number;
   status: string;
+  paymentStatus?: string;
 }
 
 export interface AccountingSummary {
@@ -24,18 +25,36 @@ export interface AccountingSummary {
   totalTTC: number;
 }
 
+const isCancelled = (l: AccountingLine) => l.status === "cancelled";
+
 export const summarize = (lines: AccountingLine[]): AccountingSummary =>
   lines.reduce(
-    (acc, l) => ({
-      count: acc.count + 1,
-      totalHT: acc.totalHT + l.ht,
-      totalTVA: acc.totalTVA + l.tva,
-      totalTTC: acc.totalTTC + l.ttc,
-    }),
+    (acc, l) => {
+      if (isCancelled(l)) return acc;
+      return {
+        count: acc.count + 1,
+        totalHT: acc.totalHT + l.ht,
+        totalTVA: acc.totalTVA + l.tva,
+        totalTTC: acc.totalTTC + l.ttc,
+      };
+    },
     { count: 0, totalHT: 0, totalTVA: 0, totalTTC: 0 }
   );
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",") + " €";
+
+const statusLabel = (l: AccountingLine) => {
+  if (l.status === "cancelled") return "Annulée";
+  if (l.type === "site") {
+    if (l.paymentStatus === "paid") return "Payée";
+    if (l.paymentStatus === "unpaid") return "Impayée";
+    return l.paymentStatus || l.status || "—";
+  }
+  if (l.status === "paid") return "Payée";
+  if (l.status === "pending") return "En attente";
+  if (l.status === "issued") return "Émise";
+  return l.status || "—";
+};
 
 export const generateAccountingPdf = (
   lines: AccountingLine[],
@@ -73,7 +92,6 @@ export const generateAccountingPdf = (
     44
   );
 
-  // Group by month if spans > 1 month
   const spanMonths =
     (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()) + 1;
   const grouped = new Map<string, AccountingLine[]>();
@@ -91,20 +109,23 @@ export const generateAccountingPdf = (
       body.push([
         {
           content: format(new Date(key + "-01"), "MMMM yyyy", { locale: fr }).toUpperCase(),
-          colSpan: 7,
+          colSpan: 8,
           styles: { fillColor: [245, 240, 225], textColor: [120, 90, 10], fontStyle: "bold", halign: "left" },
         },
       ]);
     }
     monthLines.forEach((l) => {
+      const cancelled = isCancelled(l);
+      const rowStyle: any = cancelled ? { textColor: [160, 40, 40], fontStyle: "italic" } : {};
       body.push([
-        l.invoiceNumber,
-        format(new Date(l.date), "dd/MM/yyyy"),
-        l.type === "site" ? "Site" : "Pro",
-        l.client,
-        { content: fmt(l.ht), styles: { halign: "right" } },
-        { content: fmt(l.tva), styles: { halign: "right" } },
-        { content: fmt(l.ttc), styles: { halign: "right", fontStyle: "bold" } },
+        { content: l.invoiceNumber, styles: rowStyle },
+        { content: format(new Date(l.date), "dd/MM/yyyy"), styles: rowStyle },
+        { content: l.type === "site" ? "Site" : "Pro", styles: rowStyle },
+        { content: l.client, styles: rowStyle },
+        { content: statusLabel(l), styles: rowStyle },
+        { content: fmt(l.ht), styles: { ...rowStyle, halign: "right" } },
+        { content: fmt(l.tva), styles: { ...rowStyle, halign: "right" } },
+        { content: fmt(l.ttc), styles: { ...rowStyle, halign: "right", fontStyle: cancelled ? "italic" : "bold" } },
       ]);
     });
     if (spanMonths > 1) {
@@ -112,7 +133,7 @@ export const generateAccountingPdf = (
       body.push([
         {
           content: `Sous-total ${format(new Date(key + "-01"), "MMMM yyyy", { locale: fr })} (${s.count})`,
-          colSpan: 4,
+          colSpan: 5,
           styles: { fontStyle: "italic", halign: "right", fillColor: [250, 246, 235] },
         },
         { content: fmt(s.totalHT), styles: { halign: "right", fillColor: [250, 246, 235], fontStyle: "italic" } },
@@ -124,23 +145,23 @@ export const generateAccountingPdf = (
 
   autoTable(doc, {
     startY: 50,
-    head: [["N° Facture", "Date", "Type", "Client", "HT", "TVA (20%)", "TTC"]],
+    head: [["N° Facture", "Date", "Type", "Client", "Statut", "HT", "TVA (20%)", "TTC"]],
     body,
     headStyles: { fillColor: [184, 134, 11], textColor: [255, 255, 255], fontSize: 9 },
-    styles: { fontSize: 8, cellPadding: 1.5 },
+    styles: { fontSize: 8, cellPadding: 1.4 },
     columnStyles: {
-      0: { cellWidth: 25 },
-      1: { cellWidth: 22 },
-      2: { cellWidth: 15 },
-      3: { cellWidth: 50 },
-      4: { cellWidth: 22, halign: "right" },
-      5: { cellWidth: 22, halign: "right" },
-      6: { cellWidth: 22, halign: "right" },
+      0: { cellWidth: 24 },
+      1: { cellWidth: 20 },
+      2: { cellWidth: 12 },
+      3: { cellWidth: 40 },
+      4: { cellWidth: 20 },
+      5: { cellWidth: 20, halign: "right" },
+      6: { cellWidth: 20, halign: "right" },
+      7: { cellWidth: 20, halign: "right" },
     },
     margin: { left: 12, right: 12 },
   });
 
-  // Final VAT recap
   const s = summarize(lines);
   const finalY = (doc as any).lastAutoTable.finalY + 8;
   doc.setDrawColor(184, 134, 11);
@@ -150,7 +171,7 @@ export const generateAccountingPdf = (
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(184, 134, 11);
-  doc.text("RÉCAPITULATIF TVA", 12, finalY + 8);
+  doc.text("RÉCAPITULATIF TVA (hors annulées)", 12, finalY + 8);
 
   doc.setFontSize(10);
   doc.setTextColor(30, 30, 30);
@@ -168,7 +189,6 @@ export const generateAccountingPdf = (
   doc.text(`Total TTC :`, 12, rY + 20);
   doc.text(fmt(s.totalTTC), 80, rY + 20, { align: "right" });
 
-  // Footer
   const pageHeight = doc.internal.pageSize.getHeight();
   doc.setFontSize(7);
   doc.setTextColor(120, 120, 120);
@@ -185,7 +205,7 @@ export const generateAccountingPdf = (
 };
 
 export const generateAccountingCsv = (lines: AccountingLine[], from: Date, to: Date) => {
-  const header = "numero;date;type;client;ht;tva;ttc;statut\n";
+  const header = "numero;date;type;client;statut;ht;tva;ttc\n";
   const rows = lines
     .map((l) =>
       [
@@ -193,15 +213,15 @@ export const generateAccountingCsv = (lines: AccountingLine[], from: Date, to: D
         format(new Date(l.date), "yyyy-MM-dd"),
         l.type === "site" ? "Site" : "Pro",
         (l.client || "").replace(/[;\n]/g, " "),
+        statusLabel(l),
         l.ht.toFixed(2).replace(".", ","),
         l.tva.toFixed(2).replace(".", ","),
         l.ttc.toFixed(2).replace(".", ","),
-        l.status,
       ].join(";")
     )
     .join("\n");
   const s = summarize(lines);
-  const totals = `\n;;;TOTAL (${s.count});${s.totalHT.toFixed(2).replace(".", ",")};${s.totalTVA.toFixed(2).replace(".", ",")};${s.totalTTC.toFixed(2).replace(".", ",")};`;
+  const totals = `\n;;;;TOTAL hors annulées (${s.count});${s.totalHT.toFixed(2).replace(".", ",")};${s.totalTVA.toFixed(2).replace(".", ",")};${s.totalTTC.toFixed(2).replace(".", ",")}`;
   const csv = "\uFEFF" + header + rows + totals;
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);

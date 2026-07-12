@@ -18,13 +18,28 @@ import { format, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuart
 import { fr } from "date-fns/locale";
 import { generateAccountingPdf, generateAccountingCsv, summarize, AccountingLine } from "@/lib/accountingPdf";
 
-type FilterType = "all" | "site" | "pro";
+type TypeFilter = "all" | "site" | "pro";
+type StatusFilter = "billable" | "paid" | "all";
+
+const statusMeta = (l: AccountingLine) => {
+  if (l.status === "cancelled") return { label: "Annulée", cls: "bg-red-500/15 text-red-500 border-red-500/40" };
+  if (l.type === "site") {
+    if (l.paymentStatus === "paid") return { label: "Payée", cls: "bg-emerald-500/15 text-emerald-500 border-emerald-500/40" };
+    if (l.paymentStatus === "unpaid") return { label: "Impayée", cls: "bg-orange-500/15 text-orange-500 border-orange-500/40" };
+    return { label: l.paymentStatus || l.status || "—", cls: "" };
+  }
+  if (l.status === "paid") return { label: "Payée", cls: "bg-emerald-500/15 text-emerald-500 border-emerald-500/40" };
+  if (l.status === "pending") return { label: "En attente", cls: "bg-muted text-muted-foreground" };
+  if (l.status === "issued") return { label: "Émise", cls: "bg-blue-500/15 text-blue-500 border-blue-500/40" };
+  return { label: l.status || "—", cls: "" };
+};
 
 const AccountingManager = () => {
   const today = new Date();
   const [from, setFrom] = useState(format(startOfMonth(today), "yyyy-MM-dd"));
   const [to, setTo] = useState(format(endOfMonth(today), "yyyy-MM-dd"));
-  const [filter, setFilter] = useState<FilterType>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("billable");
 
   const applyPreset = (preset: string) => {
     const now = new Date();
@@ -47,15 +62,12 @@ const AccountingManager = () => {
         supabase
           .from("orders")
           .select("id, display_order_number, order_number, created_at, total_amount, payment_status, status, guest_name, guest_email, user_email")
-          .eq("payment_status", "paid")
-          .neq("status", "cancelled")
           .gte("created_at", fromDate.toISOString())
           .lte("created_at", toDate.toISOString())
           .order("created_at", { ascending: true }),
         supabase
           .from("pro_invoices")
           .select("id, invoice_number, issued_at, total_invoiced_ht, total_invoiced_ttc, status, partner_id")
-          .neq("status", "cancelled")
           .gte("issued_at", fromDate.toISOString())
           .lte("issued_at", toDate.toISOString())
           .order("issued_at", { ascending: true }),
@@ -83,6 +95,7 @@ const AccountingManager = () => {
           tva: ttc - ht,
           ttc,
           status: o.status,
+          paymentStatus: o.payment_status,
         };
       });
 
@@ -108,16 +121,29 @@ const AccountingManager = () => {
 
   const lines = useMemo(() => {
     if (!data) return [];
-    if (filter === "all") return data;
-    return data.filter((l) => l.type === filter);
-  }, [data, filter]);
+    let out = data;
+    if (typeFilter !== "all") out = out.filter((l) => l.type === typeFilter);
+    if (statusFilter === "billable") {
+      out = out.filter((l) => {
+        if (l.status === "cancelled") return false;
+        if (l.type === "site") return l.paymentStatus === "paid";
+        return l.status !== "cancelled";
+      });
+    } else if (statusFilter === "paid") {
+      out = out.filter((l) => {
+        if (l.status === "cancelled") return false;
+        if (l.type === "site") return l.paymentStatus === "paid";
+        return l.status === "paid";
+      });
+    }
+    return out;
+  }, [data, typeFilter, statusFilter]);
 
   const totals = useMemo(() => summarize(lines), [lines]);
   const fmtEur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
 
   const spanMonths = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
 
-  // Group by month for sub-totals
   const rowsWithGroups = useMemo(() => {
     if (spanMonths <= 1) return lines.map((l) => ({ kind: "line" as const, line: l }));
     const grouped = new Map<string, AccountingLine[]>();
@@ -146,7 +172,6 @@ const AccountingManager = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Date range + presets + filter */}
           <div className="flex flex-wrap gap-3 items-end">
             <div>
               <Label className="text-xs">Du</Label>
@@ -158,12 +183,23 @@ const AccountingManager = () => {
             </div>
             <div>
               <Label className="text-xs">Type</Label>
-              <Select value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
-                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
+                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toutes</SelectItem>
                   <SelectItem value="site">Site (orders)</SelectItem>
                   <SelectItem value="pro">Pro (factures)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Statut</Label>
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+                <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="billable">Facturable (CA net)</SelectItem>
+                  <SelectItem value="paid">Payées uniquement</SelectItem>
+                  <SelectItem value="all">Toutes (audit)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -175,10 +211,9 @@ const AccountingManager = () => {
             </div>
           </div>
 
-          {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Card className="border-border/50"><CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Nb factures</p>
+              <p className="text-xs text-muted-foreground">Nb factures (hors annulées)</p>
               <p className="text-2xl font-bold">{totals.count}</p>
             </CardContent></Card>
             <Card className="border-border/50"><CardContent className="p-4">
@@ -195,7 +230,6 @@ const AccountingManager = () => {
             </CardContent></Card>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-2 flex-wrap">
             <Button onClick={() => generateAccountingPdf(lines, fromDate, toDate)} disabled={lines.length === 0} className="gap-2">
               <FileText className="w-4 h-4" />Télécharger PDF
@@ -207,7 +241,6 @@ const AccountingManager = () => {
         </CardContent>
       </Card>
 
-      {/* Table */}
       <Card className="border-border/40">
         <CardContent className="p-0">
           {isLoading ? (
@@ -223,6 +256,7 @@ const AccountingManager = () => {
                     <TableHead>Date</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Client</TableHead>
+                    <TableHead>Statut</TableHead>
                     <TableHead className="text-right">HT</TableHead>
                     <TableHead className="text-right">TVA</TableHead>
                     <TableHead className="text-right">TTC</TableHead>
@@ -233,7 +267,7 @@ const AccountingManager = () => {
                     if (r.kind === "header") {
                       return (
                         <TableRow key={`h-${idx}`} className="bg-muted/40">
-                          <TableCell colSpan={7} className="font-semibold uppercase text-primary text-xs tracking-wider">
+                          <TableCell colSpan={8} className="font-semibold uppercase text-primary text-xs tracking-wider">
                             {format(new Date(r.month + "-01"), "MMMM yyyy", { locale: fr })}
                           </TableCell>
                         </TableRow>
@@ -242,7 +276,7 @@ const AccountingManager = () => {
                     if (r.kind === "subtotal") {
                       return (
                         <TableRow key={`s-${idx}`} className="bg-muted/20 italic">
-                          <TableCell colSpan={4} className="text-right">
+                          <TableCell colSpan={5} className="text-right">
                             Sous-total {format(new Date(r.month + "-01"), "MMMM yyyy", { locale: fr })} ({r.summary.count})
                           </TableCell>
                           <TableCell className="text-right">{fmtEur(r.summary.totalHT)}</TableCell>
@@ -252,8 +286,10 @@ const AccountingManager = () => {
                       );
                     }
                     const l: AccountingLine = r.line;
+                    const meta = statusMeta(l);
+                    const cancelled = l.status === "cancelled";
                     return (
-                      <TableRow key={l.id}>
+                      <TableRow key={l.id} className={cancelled ? "opacity-60 line-through" : ""}>
                         <TableCell className="font-mono text-xs">{l.invoiceNumber}</TableCell>
                         <TableCell>{format(new Date(l.date), "dd/MM/yyyy")}</TableCell>
                         <TableCell>
@@ -262,6 +298,9 @@ const AccountingManager = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="max-w-[200px] truncate">{l.client}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={meta.cls}>{meta.label}</Badge>
+                        </TableCell>
                         <TableCell className="text-right">{fmtEur(l.ht)}</TableCell>
                         <TableCell className="text-right">{fmtEur(l.tva)}</TableCell>
                         <TableCell className="text-right font-semibold text-gold">{fmtEur(l.ttc)}</TableCell>
@@ -269,7 +308,7 @@ const AccountingManager = () => {
                     );
                   })}
                   <TableRow className="bg-gold/10 border-t-2 border-gold">
-                    <TableCell colSpan={4} className="font-bold text-right">TOTAL ({totals.count})</TableCell>
+                    <TableCell colSpan={5} className="font-bold text-right">TOTAL hors annulées ({totals.count})</TableCell>
                     <TableCell className="text-right font-bold">{fmtEur(totals.totalHT)}</TableCell>
                     <TableCell className="text-right font-bold text-primary">{fmtEur(totals.totalTVA)}</TableCell>
                     <TableCell className="text-right font-bold text-gold text-lg">{fmtEur(totals.totalTTC)}</TableCell>
