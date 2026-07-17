@@ -402,7 +402,7 @@ const SocialMediaManager = () => {
 
             <div className="flex flex-wrap gap-1.5">
               <Select
-                value={selectedProductId}
+                value={selectedProductId || undefined}
                 onValueChange={(v) => setProductPerPost(prev => ({ ...prev, [post.id]: v }))}
               >
                 <SelectTrigger className="h-7 text-xs w-auto min-w-[190px]">
