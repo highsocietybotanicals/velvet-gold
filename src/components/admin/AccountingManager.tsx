@@ -342,21 +342,24 @@ const AccountingManager = () => {
                     const cancelled = l.status === "cancelled";
                     return (
                       <TableRow key={l.id} className={cancelled ? "opacity-60 line-through" : ""}>
-                        <TableCell className="font-mono text-xs">{l.invoiceNumber}</TableCell>
-                        <TableCell>{format(new Date(l.date), "dd/MM/yyyy")}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={l.type === "pro" ? "border-primary/50 text-primary" : ""}>
-                            {l.type === "site" ? "Site" : "Pro"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">{l.client}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={meta.cls}>{meta.label}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{fmtEur(l.ht)}</TableCell>
-                        <TableCell className="text-right">{fmtEur(l.tva)}</TableCell>
-                        <TableCell className="text-right font-semibold text-gold">{fmtEur(l.ttc)}</TableCell>
-                      </TableRow>
+                    <TableCell className="font-mono text-xs">{l.invoiceNumber}</TableCell>
+                    <TableCell>{format(new Date(l.date), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={l.type === "pro" ? "border-primary/50 text-primary" : l.type === "mileage" ? "border-red-400/50 text-red-400" : ""}>
+                        {l.type === "site" ? "Site" : l.type === "pro" ? "Pro" : "Frais km"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-[200px] truncate" title={l.details || l.client}>
+                      {l.client}
+                      {l.details ? <span className="block text-[10px] text-muted-foreground">{l.details}</span> : null}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={meta.cls}>{meta.label}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{fmtEur(l.ht)}</TableCell>
+                    <TableCell className="text-right">{fmtEur(l.tva)}</TableCell>
+                    <TableCell className={`text-right font-semibold ${l.type === "mileage" ? "text-red-400" : "text-gold"}`}>{fmtEur(l.ttc)}</TableCell>
+                  </TableRow>
                     );
                   })}
                   <TableRow className="bg-gold/10 border-t-2 border-gold">
