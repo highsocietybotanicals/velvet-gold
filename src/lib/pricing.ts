@@ -170,8 +170,8 @@ export const calculatePrice = (basePrice: number, weight: number, priceGroup: Pr
   }
 
   // Force Noire : grille fixe par produit
-  if (productId && FORCE_NOIRE_PRICE_GRID[productId]) {
-    const finalPrice = calculateForceNoirePrice(productId, weight) ?? 0;
+  if (hasForceNoireGrid(productId)) {
+    const finalPrice = calculateForceNoirePrice(productId!, weight, basePrice) ?? 0;
     const rawPrice = basePrice * weight;
     const discount = rawPrice > 0 ? 1 - finalPrice / rawPrice : 0;
     return {
@@ -182,6 +182,7 @@ export const calculatePrice = (basePrice: number, weight: number, priceGroup: Pr
       savings: (rawPrice - finalPrice).toFixed(2),
     };
   }
+
 
   const tier = getDiscountTier(weight, priceGroup);
   const rawPrice = basePrice * weight;
