@@ -1,0 +1,1 @@
+UPDATE public.products SET price = 15 WHERE id IN ('haribo','heisenberg');
