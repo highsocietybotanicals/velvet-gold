@@ -68,8 +68,8 @@ const AccountingManager = () => {
         supabase
           .from("pro_invoices")
           .select("id, invoice_number, issued_at, total_invoiced_ht, total_invoiced_ttc, status, partner_id")
-          .gte("issued_at", fromDate.toISOString())
-          .lte("issued_at", toDate.toISOString())
+          .gte("issued_at", from)
+          .lte("issued_at", to)
           .order("issued_at", { ascending: true }),
       ]);
       if (ordersRes.error) throw ordersRes.error;
@@ -78,8 +78,8 @@ const AccountingManager = () => {
       const partnerIds = Array.from(new Set((invoicesRes.data || []).map((i: any) => i.partner_id).filter(Boolean)));
       let partners: Record<string, string> = {};
       if (partnerIds.length > 0) {
-        const { data: pData } = await supabase.from("pro_partners").select("id, company_name").in("id", partnerIds);
-        (pData || []).forEach((p: any) => { partners[p.id] = p.company_name; });
+        const { data: pData } = await supabase.from("pro_partners").select("id, name").in("id", partnerIds);
+        (pData || []).forEach((p: any) => { partners[p.id] = p.name; });
       }
 
       const userIds = Array.from(new Set((ordersRes.data || []).map((o: any) => o.user_id).filter(Boolean)));
