@@ -136,10 +136,11 @@ export const getLowestPricePerGram = (
   priceGroup: PriceGroup = "A",
   productId?: string
 ): number => {
-  if (productId && FORCE_NOIRE_PRICE_GRID[productId]) {
-    const total = calculateForceNoirePrice(productId, 100);
+  if (hasForceNoireGrid(productId)) {
+    const total = calculateForceNoirePrice(productId!, 100, basePrice);
     if (total && total > 0) return total / 100;
   }
+
   const tiers = priceGroup === "B" ? WEIGHT_TIERS_B : WEIGHT_TIERS_A;
   const best = tiers[tiers.length - 1];
   return basePrice * (1 - best.discount);
