@@ -185,7 +185,7 @@ serve(async (req) => {
     const authError = await requireAdmin(req, supabase);
     if (authError) return authError;
 
-    const { action, postId, chatId, products, theme, sceneType, referenceImageUrl, selectedProductId } = await req.json();
+    const { action, postId, chatId, products, theme, sceneType, referenceImageUrl, referenceImageData, referenceImageMime, selectedProductId } = await req.json();
 
     // ── GENERATE SERIES ──
     if (action === "generate-series") {
@@ -421,11 +421,20 @@ serve(async (req) => {
       let referenceBase64: string | null = null;
       let referenceBytes: Uint8Array | null = null;
       let referenceMime = "image/jpeg";
-      if (realReferenceUrl) {
+      if (typeof referenceImageData === "string" && referenceImageData.length > 0) {
+        try {
+          const cleanBase64 = referenceImageData.includes(",") ? referenceImageData.split(",").pop()! : referenceImageData;
+          referenceBase64 = cleanBase64;
+          referenceMime = typeof referenceImageMime === "string" && referenceImageMime.startsWith("image/") ? referenceImageMime : "image/jpeg";
+          referenceBytes = Uint8Array.from(atob(cleanBase64), (c: string) => c.charCodeAt(0));
+        } catch (e) {
+          console.warn("Reference image data decode error:", e);
+        }
+      } else if (realReferenceUrl) {
         try {
           const imgRes = await fetch(realReferenceUrl);
-          if (imgRes.ok) {
-            const ct = imgRes.headers.get("content-type") || "image/jpeg";
+          const ct = imgRes.headers.get("content-type") || "";
+          if (imgRes.ok && ct.startsWith("image/")) {
             referenceMime = ct.split(";")[0].trim();
             const buf = new Uint8Array(await imgRes.arrayBuffer());
             referenceBytes = buf;
@@ -437,7 +446,7 @@ serve(async (req) => {
             }
             referenceBase64 = btoa(bin);
           } else {
-            console.warn("Reference image fetch failed:", imgRes.status);
+            console.warn("Reference image fetch failed:", imgRes.status, ct || "no content-type");
           }
         } catch (e) {
           console.warn("Reference image fetch error:", e);
