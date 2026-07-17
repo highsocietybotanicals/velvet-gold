@@ -264,25 +264,63 @@ const SocialMediaManager = () => {
         description: p.description,
       }));
 
+      // Build absolute URL of the reference product photo (site image)
+      const productImagePath = post.product_id ? getProductImageUrl(post.product_id) : null;
+      const referenceImageUrl = productImagePath
+        ? (productImagePath.startsWith("http") ? productImagePath : `${window.location.origin}${productImagePath}`)
+        : null;
+
+      const scene = scenePerPost[post.id] || "packshot";
+
       const { data, error } = await supabase.functions.invoke("social-content", {
         body: {
           action: "generate-image",
           postId: post.id,
           products: productsData,
+          sceneType: scene,
+          referenceImageUrl,
         },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success("Visuel IA généré avec succès !");
-      fetchPosts();
+      const variants: string[] = data?.variants || [];
+      if (variants.length === 0) throw new Error("Aucune variante générée");
+
+      setVariantsPerPost(prev => ({ ...prev, [post.id]: variants }));
+      setPickerOpenFor(post.id);
+      toast.success(`${variants.length} variante${variants.length > 1 ? "s" : ""} générée${variants.length > 1 ? "s" : ""} — choisis ta préférée !`);
     } catch (e: any) {
       toast.error(e.message || "Erreur lors de la génération du visuel");
     } finally {
       setGeneratingImage(null);
     }
   };
+
+  const handlePickVariant = async (postId: string, variantUrl: string) => {
+    setPickingVariant(variantUrl);
+    try {
+      const { error } = await supabase
+        .from("social_posts")
+        .update({ image_url: variantUrl })
+        .eq("id", postId);
+      if (error) throw error;
+      toast.success("Visuel choisi et appliqué au post !");
+      setPickerOpenFor(null);
+      setVariantsPerPost(prev => {
+        const next = { ...prev };
+        delete next[postId];
+        return next;
+      });
+      fetchPosts();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors de l'application du visuel");
+    } finally {
+      setPickingVariant(null);
+    }
+  };
+
 
   const handleRestoreOriginal = async (post: SocialPost) => {
     const originalUrl = originalImageUrls[post.id] || (post.product_id ? `${window.location.origin}${getProductImageUrl(post.product_id)}` : null);
