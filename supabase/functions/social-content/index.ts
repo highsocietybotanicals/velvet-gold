@@ -421,45 +421,43 @@ serve(async (req) => {
 
       const hasReference = true;
 
-      // Generate 3 variants in parallel
+      const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+      if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+
+      // Generate 3 variants in parallel via Google Gemini API directly (Nano Banana Pro)
       const variantPromises = VARIANT_HINTS.map(async (hint, idx) => {
         const prompt = buildScenePrompt(scene, productInfo.name, productInfo.description, productInfo.category, hint);
 
-        const userContent: any[] = [{ type: "text", text: prompt }];
-        if (hasReference && referenceBase64) {
-          userContent.push({
-            type: "image_url",
-            image_url: { url: `data:${referenceMime};base64,${referenceBase64}` },
-          });
-        }
-
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
+        const aiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{
+                role: "user",
+                parts: [
+                  { text: prompt },
+                  { inline_data: { mime_type: referenceMime, data: referenceBase64 } },
+                ],
+              }],
+            }),
           },
-          body: JSON.stringify({
-            model: "google/gemini-3.1-flash-image",
-            messages: [{ role: "user", content: userContent }],
-            modalities: ["image", "text"],
-          }),
-        });
+        );
 
         if (!aiResponse.ok) {
           const errText = await aiResponse.text();
           console.error(`Variant ${idx} error:`, aiResponse.status, errText);
-          throw new Error(`AI status ${aiResponse.status}`);
+          throw new Error(`Gemini status ${aiResponse.status}: ${errText}`);
         }
 
         const aiData = await aiResponse.json();
-        const imageData = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-        if (!imageData) throw new Error("No image returned");
+        const parts = aiData?.candidates?.[0]?.content?.parts || [];
+        const imgPart = parts.find((p: any) => p.inline_data?.data || p.inlineData?.data);
+        const b64 = imgPart?.inline_data?.data || imgPart?.inlineData?.data;
+        if (!b64) throw new Error("No image returned");
 
-        const base64Match = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
-        if (!base64Match) throw new Error("Invalid image data");
-
-        const imageBytes = Uint8Array.from(atob(base64Match[2]), (c: string) => c.charCodeAt(0));
+        const imageBytes = Uint8Array.from(atob(b64), (c: string) => c.charCodeAt(0));
         const filePath = `generated/${postId}-v${idx}-${Date.now()}.png`;
 
         const { error: uploadError } = await supabase.storage
@@ -471,6 +469,7 @@ serve(async (req) => {
         const { data: publicUrlData } = supabase.storage.from("social-media").getPublicUrl(filePath);
         return publicUrlData.publicUrl;
       });
+
 
       const results = await Promise.allSettled(variantPromises);
       const variants = results
