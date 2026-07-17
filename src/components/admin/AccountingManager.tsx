@@ -232,11 +232,12 @@ const AccountingManager = () => {
               <Label className="text-xs">Type</Label>
               <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
                 <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes</SelectItem>
-                  <SelectItem value="site">Site (orders)</SelectItem>
-                  <SelectItem value="pro">Pro (factures)</SelectItem>
-                </SelectContent>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="site">Site (orders)</SelectItem>
+                <SelectItem value="pro">Pro (factures)</SelectItem>
+                <SelectItem value="mileage">Frais kilométriques</SelectItem>
+              </SelectContent>
               </Select>
             </div>
             <div>
