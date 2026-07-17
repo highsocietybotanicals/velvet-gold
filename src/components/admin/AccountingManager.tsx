@@ -375,11 +375,11 @@ const AccountingManager = () => {
                   </TableRow>
                     );
                   })}
-                  <TableRow className="bg-gold/10 border-t-2 border-gold">
-                    <TableCell colSpan={5} className="font-bold text-right">TOTAL hors annulées ({totals.count})</TableCell>
-                    <TableCell className="text-right font-bold">{fmtEur(totals.totalHT)}</TableCell>
-                    <TableCell className="text-right font-bold text-primary">{fmtEur(totals.totalTVA)}</TableCell>
-                    <TableCell className="text-right font-bold text-gold text-lg">{fmtEur(totals.totalTTC)}</TableCell>
+                  <TableRow className={`border-t-2 ${typeFilter === "mileage" ? "border-red-400 bg-red-400/10" : "border-gold bg-gold/10"}`}>
+                    <TableCell colSpan={5} className="font-bold text-right">TOTAL hors annulées ({tableTotals.count})</TableCell>
+                    <TableCell className="text-right font-bold">{fmtEur(tableTotals.totalHT)}</TableCell>
+                    <TableCell className="text-right font-bold text-primary">{fmtEur(tableTotals.totalTVA)}</TableCell>
+                    <TableCell className={`text-right font-bold text-lg ${typeFilter === "mileage" ? "text-red-400" : "text-gold"}`}>{fmtEur(tableTotals.totalTTC)}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
