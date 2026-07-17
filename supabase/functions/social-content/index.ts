@@ -423,7 +423,7 @@ serve(async (req) => {
 
       // Generate 3 variants in parallel
       const variantPromises = VARIANT_HINTS.map(async (hint, idx) => {
-        const prompt = buildScenePrompt(scene, productInfo.name, productInfo.description, hasReference, hint);
+        const prompt = buildScenePrompt(scene, productInfo.name, productInfo.description, productInfo.category, hint);
 
         const userContent: any[] = [{ type: "text", text: prompt }];
         if (hasReference && referenceBase64) {
