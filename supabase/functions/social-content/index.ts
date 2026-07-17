@@ -146,6 +146,14 @@ const VARIANT_HINTS = [
   "Variation uniquement sur le fond et la lumière : léger espace négatif premium, produit inchangé et central.",
 ];
 
+// Mix mode: 3 variantes = 3 scènes différentes (packshot, hands, lifestyle) pour un vrai choix visuel
+const MIX_VARIANTS: Array<{ scene: string; hint: string }> = [
+  { scene: "packshot", hint: "Macro studio ultra-net, fond noir profond, rim light doré, produit centré et magnifié." },
+  { scene: "hands", hint: "Plan éditorial élégant, mains gantées ou en costume près du produit, bokeh doré chaleureux." },
+  { scene: "lifestyle", hint: "Nature morte luxe sur marbre noir veiné or, ambiance clair-obscur cinématographique." },
+];
+
+
 function normalizeProductKey(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
