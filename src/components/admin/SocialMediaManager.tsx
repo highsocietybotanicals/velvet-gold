@@ -78,6 +78,11 @@ const SocialMediaManager = () => {
   const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
   const [generatingImage, setGeneratingImage] = useState<string | null>(null);
   const [originalImageUrls, setOriginalImageUrls] = useState<Record<string, string | null>>({});
+  const [scenePerPost, setScenePerPost] = useState<Record<string, SceneType>>({});
+  const [variantsPerPost, setVariantsPerPost] = useState<Record<string, string[]>>({});
+  const [pickerOpenFor, setPickerOpenFor] = useState<string | null>(null);
+  const [pickingVariant, setPickingVariant] = useState<string | null>(null);
+
   useEffect(() => {
     fetchPosts();
   }, []);
