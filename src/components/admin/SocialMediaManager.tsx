@@ -562,6 +562,45 @@ const SocialMediaManager = () => {
           </div>
         )}
       </CardContent>
+
+      {/* Variant picker modal */}
+      <Dialog open={!!pickerOpenFor} onOpenChange={(open) => { if (!open) setPickerOpenFor(null); }}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Paintbrush className="h-5 w-5 text-gold" />
+              Choisis ton visuel préféré
+            </DialogTitle>
+            <DialogDescription>
+              L'IA a généré 3 propositions à partir de la vraie photo produit. Clique sur celle que tu veux appliquer au post.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {(pickerOpenFor ? variantsPerPost[pickerOpenFor] || [] : []).map((url, idx) => (
+              <button
+                key={url}
+                onClick={() => pickerOpenFor && handlePickVariant(pickerOpenFor, url)}
+                disabled={!!pickingVariant}
+                className="group relative aspect-square rounded-lg overflow-hidden border-2 border-border/50 hover:border-gold transition-all disabled:opacity-50"
+              >
+                <img src={url} alt={`Variante ${idx + 1}`} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                  {pickingVariant === url ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-gold" />
+                  ) : (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-gold text-black px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
+                      <Check className="h-4 w-4" />Choisir
+                    </div>
+                  )}
+                </div>
+                <div className="absolute top-2 left-2 bg-black/70 text-gold text-xs px-2 py-0.5 rounded-full">
+                  #{idx + 1}
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
