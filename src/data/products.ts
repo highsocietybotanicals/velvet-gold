@@ -186,6 +186,31 @@ const groupB: Product[] = [
 ];
 
 // ============================================
+// NECTAR DIVIN - Gamme ultra premium (Base 10€/g TTC)
+// Puissance supérieure à l'Élixir Noir
+// ============================================
+
+const nectarDivin: Product[] = [
+  {
+    id: "haribo",
+    name: "Haribo",
+    subtitle: "Résine Nectar Divin",
+    badge: "Nectar Divin",
+    description: "Résine ultra-premium de la gamme Nectar Divin — puissance supérieure à l'Élixir Noir. Arômes gourmands de bonbon fruité, effets sédatifs profonds pour un sommeil royal.",
+    price: 10,
+    priceGroup: "B",
+    cbdPercentage: "70% Nectar Divin",
+    image: hariboAsset.url,
+    terpenes: { boise: 55, fruite: 90, epice: 40, terreux: 70 },
+    mood: "Sommeil royal",
+    category: "resine",
+    intentionMatch: ["sommeil", "detente"],
+    tasteMatch: ["fruite"],
+    isNectarDivin: true,
+  },
+];
+
+// ============================================
 // Exports
 // ============================================
 
