@@ -68,8 +68,8 @@ const AccountingManager = () => {
         supabase
           .from("pro_invoices")
           .select("id, invoice_number, issued_at, total_invoiced_ht, total_invoiced_ttc, status, partner_id")
-          .gte("issued_at", fromDate.toISOString())
-          .lte("issued_at", toDate.toISOString())
+          .gte("issued_at", from)
+          .lte("issued_at", to)
           .order("issued_at", { ascending: true }),
       ]);
       if (ordersRes.error) throw ordersRes.error;
