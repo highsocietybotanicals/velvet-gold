@@ -63,84 +63,69 @@ export const WEIGHT_TIERS_B: WeightTier[] = [
   { min: 100, max: Infinity, discount: 0.50, label: "-50%" },
 ];
 
-// Grille fixe par produit pour l'Élixir Noir (Prix Vitrine TTC du book)
-export const FORCE_NOIRE_PRICE_GRID: Record<string, { weight: number; price: number }[]> = {
-  "nuage-de-mousseux": [
-    { weight: 1, price: 13 },
-    { weight: 2.5, price: 30 },
-    { weight: 5, price: 55 },
-    { weight: 10, price: 65 },
-  ],
-  "911-og-indoor": [
-    { weight: 1, price: 15 },
-    { weight: 2.5, price: 35 },
-    { weight: 5, price: 65 },
-    { weight: 10, price: 90 },
-  ],
-  "blue-mango-indoor": [
-    { weight: 1, price: 13 },
-    { weight: 2.5, price: 30 },
-    { weight: 5, price: 55 },
-    { weight: 10, price: 80 },
-  ],
-  "haribo": [
-    { weight: 1, price: 15 },
-    { weight: 2.5, price: 35 },
-    { weight: 5, price: 60 },
-    { weight: 10, price: 100 },
-  ],
-  "heisenberg": [
-    { weight: 1, price: 15 },
-    { weight: 2.5, price: 35 },
-    { weight: 5, price: 60 },
-    { weight: 10, price: 100 },
-  ],
-  "poussiere-dor": [
-    { weight: 1, price: 12 },
-    { weight: 2.5, price: 28 },
-    { weight: 5, price: 50 },
-    { weight: 10, price: 75 },
-  ],
+// Ratio par produit et par palier pour l'Élixir Noir / Nectar Divin.
+// Le prix final au palier = basePrice (prix DB du 1 g) × weight × ratio.
+// Modifier le prix 1 g dans l'admin met à jour automatiquement TOUS les paliers.
+export const FORCE_NOIRE_RATIOS: Record<string, Record<number, number>> = {
+  "nuage-de-mousseux": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.5 },
+  "911-og-indoor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8667, 10: 0.6 },
+  "blue-mango-indoor": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.6154 },
+  "haribo":            { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
+  "heisenberg":        { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
+  "poussiere-dor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8333, 10: 0.625 },
 };
 
-// Calcule le prix total d'un produit Force Noire selon sa grille fixe
-// Pour les poids hors paliers : utilise le €/g du palier le plus proche par défaut sur le 10g (le plus avantageux)
-// Pour > 10g : applique un dégressif additionnel léger
-export const calculateForceNoirePrice = (productId: string, weight: number): number | null => {
-  const grid = FORCE_NOIRE_PRICE_GRID[productId];
-  if (!grid || !weight || weight <= 0) return null;
+export const hasForceNoireGrid = (productId?: string): boolean =>
+  !!productId && !!FORCE_NOIRE_RATIOS[productId];
 
-  // Match exact d'un palier
-  const exact = grid.find((g) => g.weight === weight);
-  if (exact) return exact.price;
+// Calcule le prix total d'un produit Force Noire à partir du basePrice DB (1 g) et du poids.
+// Pour un poids exact du palier : basePrice × weight × ratio.
+// Pour un poids intermédiaire : interpolation linéaire entre les deux paliers encadrants.
+// Au-delà de 10 g : on utilise le €/g du palier 10 g + dégressif additionnel.
+export const calculateForceNoirePrice = (
+  productId: string,
+  weight: number,
+  basePrice: number,
+): number | null => {
+  const ratios = FORCE_NOIRE_RATIOS[productId];
+  if (!ratios || !weight || weight <= 0 || !basePrice || basePrice <= 0) return null;
 
-  // Calcul basé sur le palier 10g (le plus avantageux) pour les poids intermédiaires/supérieurs
-  const tier10 = grid[grid.length - 1];
-  const pricePerGram10 = tier10.price / tier10.weight;
+  const tiers = Object.keys(ratios)
+    .map((k) => parseFloat(k))
+    .sort((a, b) => a - b);
 
-  if (weight < 10) {
-    // Interpole entre paliers proches
-    let lower = grid[0];
-    let upper = grid[grid.length - 1];
-    for (let i = 0; i < grid.length - 1; i++) {
-      if (weight >= grid[i].weight && weight <= grid[i + 1].weight) {
-        lower = grid[i];
-        upper = grid[i + 1];
+  const priceAt = (w: number) => basePrice * w * ratios[w];
+
+  // Match exact
+  if (ratios[weight] !== undefined) return priceAt(weight);
+
+  const maxTier = tiers[tiers.length - 1];
+
+  if (weight < maxTier) {
+    // Interpolation entre paliers
+    let lower = tiers[0];
+    let upper = maxTier;
+    for (let i = 0; i < tiers.length - 1; i++) {
+      if (weight >= tiers[i] && weight <= tiers[i + 1]) {
+        lower = tiers[i];
+        upper = tiers[i + 1];
         break;
       }
     }
-    const ratio = (weight - lower.weight) / (upper.weight - lower.weight);
-    return lower.price + (upper.price - lower.price) * ratio;
+    const ratio = (weight - lower) / (upper - lower);
+    return priceAt(lower) + (priceAt(upper) - priceAt(lower)) * ratio;
   }
 
-  // Au-delà de 10g : tarif 10g/g + dégressif additionnel
+  // Au-delà du plus haut palier : €/g du palier max + dégressif
+  const pricePerGramMax = priceAt(maxTier) / maxTier;
   let extraDiscount = 0;
   if (weight >= 100) extraDiscount = 0.20;
   else if (weight >= 50) extraDiscount = 0.15;
   else if (weight >= 25) extraDiscount = 0.10;
 
-  return weight * pricePerGram10 * (1 - extraDiscount);
+  return weight * pricePerGramMax * (1 - extraDiscount);
 };
+
 
 // Ancien système pour compatibilité (utilise Groupe A par défaut)
 export const WEIGHT_TIERS: WeightTier[] = WEIGHT_TIERS_A;
