@@ -390,9 +390,10 @@ serve(async (req) => {
     // ── GENERATE IMAGE VARIANTS ──
     if (action === "generate-image") {
       if (!postId) throw new Error("postId required");
-      const scene = (sceneType as string) || "packshot";
-      const validScenes = ["real", "packshot", "hands", "rolling", "lifestyle"];
+      const scene = (sceneType as string) || "mix";
+      const validScenes = ["mix", "real", "packshot", "hands", "rolling", "lifestyle"];
       if (!validScenes.includes(scene)) throw new Error(`Invalid sceneType: ${scene}`);
+
 
       const { data: post, error: postError } = await supabase
         .from("social_posts")
