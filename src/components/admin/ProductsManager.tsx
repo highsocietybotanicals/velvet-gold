@@ -12,6 +12,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useDbProducts, DbProduct } from "@/hooks/useDbProducts";
 import { useAdminProducts } from "@/hooks/useProducts";
 import ProductForm from "./ProductForm";
@@ -19,8 +20,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const ProductsManager = () => {
   const { products, isLoading, deleteProduct } = useDbProducts();
-  const { proPrices } = useAdminProducts();
+  const { proPrices, toggleProduct, isToggling } = useAdminProducts();
   const { toast } = useToast();
+
   const [editing, setEditing] = useState<DbProduct | null>(null);
   const [open, setOpen] = useState(false);
 
