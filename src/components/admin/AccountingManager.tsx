@@ -186,7 +186,7 @@ const AccountingManager = () => {
   const mileageLines = useMemo(() => lines.filter((l) => l.type === "mileage"), [lines]);
   const mileageTotals = useMemo(() => summarize(mileageLines), [mileageLines]);
 
-  const totals = useMemo(() => summarize(lines), [lines]);
+  const totals = useMemo(() => summarize(invoiceLines), [invoiceLines]);
   const fmtEur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
 
   const spanMonths = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
