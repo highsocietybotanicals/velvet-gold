@@ -341,10 +341,10 @@ export const generateAccountingCsv = (lines: AccountingLine[], from: Date, to: D
   const invoiceSummary = summarize(invoiceLines);
   const mileageSummary = summarize(mileageLines);
   const totals = invoiceLines.length > 0
-    ? `\n;;;;TOTAL FACTURES hors annulées (${invoiceSummary.count});${invoiceSummary.totalHT.toFixed(2).replace(".", ",")};${invoiceSummary.totalTVA.toFixed(2).replace(".", ",")};${invoiceSummary.totalTTC.toFixed(2).replace(".", ",")};`
+    ? `\n;;;;TOTAL FACTURES hors annulées (${invoiceSummary.count});${invoiceSummary.totalHT.toFixed(2).replace(".", ",")};${invoiceSummary.totalTVA.toFixed(2).replace(".", ",")};${invoiceSummary.totalTTC.toFixed(2).replace(".", ",")};;;;;`
     : "";
   const mileageTotals = mileageLines.length > 0
-    ? `\n;;;;TOTAL FRAIS KM (${mileageSummary.count});${mileageSummary.totalHT.toFixed(2).replace(".", ",")};${mileageSummary.totalTVA.toFixed(2).replace(".", ",")};${mileageSummary.totalTTC.toFixed(2).replace(".", ",")};`
+    ? `\n;;;;TOTAL FRAIS KM (${mileageSummary.count});${mileageSummary.totalHT.toFixed(2).replace(".", ",")};${mileageSummary.totalTVA.toFixed(2).replace(".", ",")};${mileageSummary.totalTTC.toFixed(2).replace(".", ",")};;;;;`
     : "";
   const csv = "\uFEFF" + header + rows + totals + mileageTotals;
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
