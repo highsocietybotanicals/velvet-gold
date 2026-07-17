@@ -203,13 +203,14 @@ export const calculateItemPrice = (basePrice: number, weight: number, priceGroup
     return { rawPrice: 0, finalPrice: 0, discount: 0 };
   }
 
-  // Force Noire : grille fixe par produit
-  if (productId && FORCE_NOIRE_PRICE_GRID[productId]) {
-    const finalPrice = calculateForceNoirePrice(productId, weight) ?? 0;
+  // Force Noire : grille dynamique par produit
+  if (hasForceNoireGrid(productId)) {
+    const finalPrice = calculateForceNoirePrice(productId!, weight, basePrice) ?? 0;
     const rawPrice = basePrice * weight;
     const discount = rawPrice > 0 ? 1 - finalPrice / rawPrice : 0;
     return { rawPrice, finalPrice, discount };
   }
+
 
   const tier = getDiscountTier(weight, priceGroup);
   const rawPrice = basePrice * weight;
