@@ -1,51 +1,52 @@
-
-# Refonte du "Visuel IA" — Social Media Manager
-
 ## Objectif
-Les visuels générés doivent ressembler **exactement** au vrai produit du site (couleur, texture, forme), avec 4 types de mise en scène et un personnage silhouette qui incarne la DA HSB.
 
-## Ce qu'on change
+Générer un PDF "Dossier de présentation associé" de 5-7 pages, dans la DA du site (fond noir profond, or #C9A96E, typographies Gloock / Crimson Pro, filets Art-Déco, particules d'or discrètes), destiné à un ami qui découvre le CBD et envisage de s'associer.
 
-### 1. Fidélité produit — l'IA "voit" la vraie photo
-Aujourd'hui l'IA génère à partir d'un prompt texte uniquement → jamais fidèle.
-On passe en **édition d'image** : l'URL de la photo produit du site est envoyée en référence visuelle à Gemini `nano-banana` en mode multimodal (image + texte). L'IA doit reproduire strictement la texture/couleur du produit fourni, et le placer dans la scène demandée.
+## Livrable
 
-Fallback : si le post n'est lié à aucun produit (post éducation, teasing, CTA), on garde le prompt texte seul.
+Fichier : `/mnt/documents/HSB-Dossier-Association.pdf` (A4 portrait, ~6 pages)
 
-### 2. Quatre types de scènes sélectionnables
-Nouveau petit menu déroulant sur chaque post à côté du bouton "Visuel IA" :
+Servi via `<presentation-artifact>` en fin de réponse.
 
-- **Packshot studio** — produit seul, fond noir profond, rim light doré, poussière d'or (style actuel amélioré)
-- **Dans les mains** — silhouette en costume noir présente le produit dans ses mains gantées/soignées, visage hors cadre ou dans l'ombre
-- **En train de rouler / effriter** — geste artisanal, fleur effritée sur plateau de marbre noir, ou joint en cours de roulage, selon la catégorie
-- **Lifestyle** — produit dans un décor luxe (velours noir, marbre veiné or, verre de cognac ambré, fauteuil chesterfield en clair-obscur)
+## Structure du document (6 pages)
 
-Chaque scène a son propre bloc de prompt côté edge function, avec les mêmes garde-fous DA (palette noir/or/vert botanique, interdictions logos concurrents, etc.).
+1. **Couverture** — Logo/monogramme HSB doré, titre "Dossier de présentation — Opportunité d'association", sous-titre "Maison française de fleurs & résines CBD Haute Couture", date, mention confidentielle.
 
-### 3. Personnage cohérent
-Description figée réutilisée dans les scènes "mains" et "roulage" :
-> Silhouette masculine élégante en costume trois-pièces noir sur mesure, chemise blanche, cravate soie noire, poignet avec chevalière or discrète et bracelet fin. Peau claire, mains soignées, ongles nets. **Visage jamais visible** — hors cadre, dans l'ombre ou coupé au niveau du menton. Ambiance clair-obscur, éclairage cinématographique chaud.
+2. **La maison en un coup d'œil** — Concept "Haute Couture botanique", positionnement premium/luxe, 4 piliers (100% Indoor · Génétiques d'exception · Élixir Noir / Nectar Divin · Testé en laboratoire), périmètre légal (Cannabis Sativa L., THC < 0,3%, +18 ans).
 
-### 4. Trois variantes au choix
-Au clic sur "Visuel IA", l'edge function appelle Gemini 3 fois en parallèle avec le même prompt (petites variations de composition/angle) et retourne les 3 images.
-Un modal s'ouvre côté admin avec les 3 propositions côte-à-côte → tu cliques celle que tu veux garder → elle est uploadée dans le bucket `social-media` et remplace `image_url` du post. Les 2 autres sont jetées.
+3. **La gamme** — Les 3 collections expliquées simplement :
+   - **Classique** (Groupe A/B) : fleurs & résines premium 12-15 €/g
+   - **Force Noire** (Élixir Noir) : fleurs & résines infusées haute puissance
+   - **Nectar Divin** : ultra-premium (Haribo, Heisenberg) 10-15 €/g, puissance supérieure
+   Format tarifaire dégressif 1g / 2,5g / 5g / 10g. Visuels des 3 gammes.
 
-Bouton "Photo originale" (déjà en place) permet toujours de restaurer la photo du site si besoin.
+4. **Comment on vend** — Les 3 canaux :
+   - **B2C site** (highsocietybotanicals.com) : commande en ligne, paiement Viva Wallet, livraison Colissimo / Point Relais / locale, Sommelier virtuel, fidélité (1g/10g), avis clients
+   - **B2B pro à pro** : facturation HT + TVA 20%, tarifs pros
+   - **Dépôt-vente tabacs** : partenariat 70/30 (nous 70% TTC, buraliste 30%), passage bimensuel, facture pro auto
+   Schéma simple du flux commande → paiement → expédition.
+
+5. **Chiffres clés (confidentiels)** — Chiffres réels tirés de la base :
+   - CA TTC B2C encaissé : **2 636,72 €** (29 commandes payées)
+   - Panier moyen : **90,92 €**
+   - CA Pro facturé : **904,25 €** (2 factures)
+   - **CA total cumulé : 3 540,97 €**
+   - Top produits (résines Nectar Divin, 911 OG, Platinum OG…) tirés des ventes réelles
+   - Marge indicative sur gamme premium, mention de la phase de lancement
+
+6. **Marché & opportunité d'association** —
+   - Marché CBD France : ~700 M€ estimé, croissance annuelle à 2 chiffres, ~2000 boutiques, cadre légal stabilisé depuis arrêt Conseil d'État 2023
+   - Positionnement HSB : niche luxe encore peu occupée face aux enseignes mass-market
+   - Ce qu'un associé apporterait : capital, réseau tabacs/CHR, force commerciale terrain, développement B2B
+   - Prochaines étapes suggérées : NDA → audit chiffres complets → discussion parts/rôles
+   - Contact : contact@highsocietybotanicals.com
 
 ## Détails techniques
-- `supabase/functions/social-content/index.ts` — refonte de l'action `generate-image` :
-  - Nouveau paramètre `sceneType: "packshot" | "hands" | "rolling" | "lifestyle"`
-  - Si `product_id` présent → mode édition d'image (Gemini `google/gemini-3.1-flash-image` avec `image_url` de la photo produit dans les `messages`)
-  - Prompts spécialisés par scène + description figée du personnage
-  - Génération de 3 images en parallèle (`Promise.all`), upload de chacune dans `social-media/generated/{postId}-{variant}.png`, réponse `{ variants: [url1, url2, url3] }`
-  - Nouveau paramètre `pickVariant` optionnel pour confirmer le choix final
-- `src/components/admin/SocialMediaManager.tsx` :
-  - Sélecteur de scène (4 options) à côté du bouton "Visuel IA"
-  - Nouveau composant modal `<VariantPicker>` qui affiche les 3 images, clic = sélection
-  - État local `variants: Record<postId, string[]>` et `pickerOpenFor: string | null`
 
-## Ce qu'on ne touche pas
-- La génération de séries (planification stratégique par l'IA) reste identique
-- La publication Telegram reste identique
-- La table `social_posts` : aucune migration nécessaire, on réutilise `image_url`
-- Le bouton "Photo originale" continue de fonctionner
+- Génération via **ReportLab Python** (Platypus + Canvas pour la couverture).
+- Police Unicode DejaVu Sans (déjà dispo en sandbox) pour tous les caractères accentués, plus une seconde police serif si dispo pour titres, sinon DejaVu Serif.
+- Palette : bg `#0A0A0A`, or `#C9A96E`, texte `#E8E4DC`, filets `#3A2E1F`.
+- Filets Art-Déco fins en haut/bas de chaque page + petit monogramme "HSB" doré.
+- Chiffres extraits en direct de la DB (orders `payment_status='paid'` + `status<>'cancelled'`, pro_invoices `status<>'cancelled'`, top produits via `order_items`).
+- QA obligatoire : conversion PDF → images (`pdftoppm -jpeg -r 150`), inspection page par page (débordements, contraste, lisibilité), corrections, re-QA, puis livraison.
+- Aucune modification de code applicatif — pur artefact document.
