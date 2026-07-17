@@ -149,7 +149,8 @@ const ProductForm = ({ open, onOpenChange, product, initialProPrice }: Props) =>
       queryClient.invalidateQueries({ queryKey: ["admin", "pro-prices"] });
       queryClient.invalidateQueries({ queryKey: ["products-prices"] });
       queryClient.invalidateQueries({ queryKey: ["pro-prices"] });
-      queryClient.invalidateQueries({ queryKey: ["catalog-db-extras"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog", "merged"] });
+
       toast({ title: isEdit ? "Produit mis à jour" : "Produit créé ✅" });
       onOpenChange(false);
     } catch (e: any) {

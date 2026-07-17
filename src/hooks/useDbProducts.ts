@@ -46,7 +46,8 @@ export const useDbProducts = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "db-products"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: ["products-prices"] });
-      queryClient.invalidateQueries({ queryKey: ["catalog-db-extras"] });
+      queryClient.invalidateQueries({ queryKey: ["pro-prices"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog", "merged"] });
     },
   });
 
@@ -57,9 +58,12 @@ export const useDbProducts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "db-products"] });
-      queryClient.invalidateQueries({ queryKey: ["catalog-db-extras"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-prices"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog", "merged"] });
     },
   });
+
 
   return { products: products || [], isLoading, upsertProduct, deleteProduct };
 };
