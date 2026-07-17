@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -22,6 +24,16 @@ import {
   Paintbrush,
   Undo2,
 } from "lucide-react";
+
+type SceneType = "packshot" | "hands" | "rolling" | "lifestyle";
+
+const SCENE_OPTIONS: { value: SceneType; label: string }[] = [
+  { value: "packshot", label: "📸 Packshot studio" },
+  { value: "hands", label: "🤲 Dans les mains" },
+  { value: "rolling", label: "🌿 Effriter / rouler" },
+  { value: "lifestyle", label: "🥃 Lifestyle luxe" },
+];
+
 
 interface SocialPost {
   id: string;
@@ -66,6 +78,11 @@ const SocialMediaManager = () => {
   const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
   const [generatingImage, setGeneratingImage] = useState<string | null>(null);
   const [originalImageUrls, setOriginalImageUrls] = useState<Record<string, string | null>>({});
+  const [scenePerPost, setScenePerPost] = useState<Record<string, SceneType>>({});
+  const [variantsPerPost, setVariantsPerPost] = useState<Record<string, string[]>>({});
+  const [pickerOpenFor, setPickerOpenFor] = useState<string | null>(null);
+  const [pickingVariant, setPickingVariant] = useState<string | null>(null);
+
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -247,25 +264,63 @@ const SocialMediaManager = () => {
         description: p.description,
       }));
 
+      // Build absolute URL of the reference product photo (site image)
+      const productImagePath = post.product_id ? getProductImageUrl(post.product_id) : null;
+      const referenceImageUrl = productImagePath
+        ? (productImagePath.startsWith("http") ? productImagePath : `${window.location.origin}${productImagePath}`)
+        : null;
+
+      const scene = scenePerPost[post.id] || "packshot";
+
       const { data, error } = await supabase.functions.invoke("social-content", {
         body: {
           action: "generate-image",
           postId: post.id,
           products: productsData,
+          sceneType: scene,
+          referenceImageUrl,
         },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success("Visuel IA généré avec succès !");
-      fetchPosts();
+      const variants: string[] = data?.variants || [];
+      if (variants.length === 0) throw new Error("Aucune variante générée");
+
+      setVariantsPerPost(prev => ({ ...prev, [post.id]: variants }));
+      setPickerOpenFor(post.id);
+      toast.success(`${variants.length} variante${variants.length > 1 ? "s" : ""} générée${variants.length > 1 ? "s" : ""} — choisis ta préférée !`);
     } catch (e: any) {
       toast.error(e.message || "Erreur lors de la génération du visuel");
     } finally {
       setGeneratingImage(null);
     }
   };
+
+  const handlePickVariant = async (postId: string, variantUrl: string) => {
+    setPickingVariant(variantUrl);
+    try {
+      const { error } = await supabase
+        .from("social_posts")
+        .update({ image_url: variantUrl })
+        .eq("id", postId);
+      if (error) throw error;
+      toast.success("Visuel choisi et appliqué au post !");
+      setPickerOpenFor(null);
+      setVariantsPerPost(prev => {
+        const next = { ...prev };
+        delete next[postId];
+        return next;
+      });
+      fetchPosts();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors de l'application du visuel");
+    } finally {
+      setPickingVariant(null);
+    }
+  };
+
 
   const handleRestoreOriginal = async (post: SocialPost) => {
     const originalUrl = originalImageUrls[post.id] || (post.product_id ? `${window.location.origin}${getProductImageUrl(post.product_id)}` : null);
@@ -344,6 +399,19 @@ const SocialMediaManager = () => {
                   <Download className="h-3 w-3 mr-1" />Instagram
                 </Button>
               )}
+              <Select
+                value={scenePerPost[post.id] || "packshot"}
+                onValueChange={(v) => setScenePerPost(prev => ({ ...prev, [post.id]: v as SceneType }))}
+              >
+                <SelectTrigger className="h-7 text-xs w-auto min-w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SCENE_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button
                 size="sm"
                 variant="outline"
@@ -352,9 +420,9 @@ const SocialMediaManager = () => {
                 disabled={generatingImage === post.id}
               >
                 {generatingImage === post.id ? (
-                  <><Loader2 className="h-3 w-3 animate-spin mr-1" />Création...</>
+                  <><Loader2 className="h-3 w-3 animate-spin mr-1" />Shooting IA...</>
                 ) : (
-                  <><Paintbrush className="h-3 w-3 mr-1" />Visuel IA</>
+                  <><Paintbrush className="h-3 w-3 mr-1" />Générer 3 visuels</>
                 )}
               </Button>
               {(originalImageUrls[post.id] || post.product_id) && post.image_url?.includes("generated/") && (
@@ -494,6 +562,45 @@ const SocialMediaManager = () => {
           </div>
         )}
       </CardContent>
+
+      {/* Variant picker modal */}
+      <Dialog open={!!pickerOpenFor} onOpenChange={(open) => { if (!open) setPickerOpenFor(null); }}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Paintbrush className="h-5 w-5 text-gold" />
+              Choisis ton visuel préféré
+            </DialogTitle>
+            <DialogDescription>
+              L'IA a généré 3 propositions à partir de la vraie photo produit. Clique sur celle que tu veux appliquer au post.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {(pickerOpenFor ? variantsPerPost[pickerOpenFor] || [] : []).map((url, idx) => (
+              <button
+                key={url}
+                onClick={() => pickerOpenFor && handlePickVariant(pickerOpenFor, url)}
+                disabled={!!pickingVariant}
+                className="group relative aspect-square rounded-lg overflow-hidden border-2 border-border/50 hover:border-gold transition-all disabled:opacity-50"
+              >
+                <img src={url} alt={`Variante ${idx + 1}`} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                  {pickingVariant === url ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-gold" />
+                  ) : (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-gold text-black px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
+                      <Check className="h-4 w-4" />Choisir
+                    </div>
+                  )}
+                </div>
+                <div className="absolute top-2 left-2 bg-black/70 text-gold text-xs px-2 py-0.5 rounded-full">
+                  #{idx + 1}
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

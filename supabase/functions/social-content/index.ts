@@ -91,6 +91,50 @@ STRUCTURE D'UNE SÉRIE (5-7 posts) :
 
 Tu dois retourner un JSON structuré via l'outil fourni.`;
 
+// ── Personnage figé (scènes "hands" et "rolling") ──
+const CHARACTER_DESC = `Silhouette masculine élégante en costume trois-pièces noir sur mesure, chemise blanche impeccable, cravate soie noire, poignet avec chevalière or discrète et bracelet fin en or. Peau claire, mains soignées, ongles nets et courts. VISAGE JAMAIS VISIBLE : hors cadre, dans l'ombre, ou coupé au niveau du menton. Ambiance clair-obscur cinématographique, éclairage chaud tungsten/or.`;
+
+const DA_RULES = `CHARTE VISUELLE HSB — OBLIGATOIRE :
+- Palette EXCLUSIVE : noir profond #000000, or #C8A94E, vert botanique, blanc cassé
+- Poussière d'or flottante subtile en suspension
+- Style "Haute Joaillerie" inspiré des campagnes Rolex/Cartier/Dior
+- Grain photo cinématographique, profondeur de champ
+
+INTERDICTIONS ABSOLUES :
+- AUCUN logo autre que HSB
+- AUCUNE marque concurrente, AUCUNE étiquette inventée
+- AUCUN texte lisible
+- AUCUNE couleur hors palette (pas de rouge, bleu vif, rose, orange criard)
+- Ne jamais déformer la couleur, la texture ou la forme du produit de référence`;
+
+function buildScenePrompt(sceneType: string, productName: string, productDescription: string, hasReference: boolean, variantHint: string): string {
+  const referenceInstruction = hasReference
+    ? `RÉFÉRENCE PRODUIT : L'image jointe montre le VRAI produit "${productName}". Tu dois reproduire EXACTEMENT sa couleur, sa texture, sa forme, ses détails (trichomes, granulométrie, brillance). C'est le même produit, photographié dans une nouvelle mise en scène.`
+    : `PRODUIT : "${productName}"${productDescription ? ` — ${productDescription}` : ""}. Reste réaliste, pas d'illustration.`;
+
+  const scenes: Record<string, string> = {
+    packshot: `Packshot studio ultra haute qualité du produit CBD "${productName}" seul sur fond noir profond, éclairage rim light doré latéral, réflexions dorées subtiles, poussière d'or en suspension. Composition centrée, style joaillerie de luxe. ${variantHint}`,
+
+    hands: `Photographie éditoriale : ${CHARACTER_DESC} Il présente délicatement le produit CBD "${productName}" dans le creux de sa paume ou entre ses doigts, geste précis et raffiné. Le produit est PARFAITEMENT visible et net au premier plan. Fond flou sombre avec bokeh doré. ${variantHint}`,
+
+    rolling: `Photographie éditoriale d'un geste artisanal : ${CHARACTER_DESC} On voit ses mains en train ${productName.toLowerCase().includes("resin") || productName.toLowerCase().includes("hash") ? "d'effriter délicatement la résine sur un plateau de marbre noir veiné d'or, avec une lame fine" : "d'effriter délicatement la fleur CBD sur un plateau de marbre noir veiné d'or, puis de préparer un joint fin avec feuille kraft"}. Le produit "${productName}" est le sujet central, texture ultra visible. Éclairage chaud tungsten venant du haut. ${variantHint}`,
+
+    lifestyle: `Nature morte lifestyle luxueuse : le produit CBD "${productName}" posé dans un décor haute joaillerie — velours noir profond, marbre veiné or, verre en cristal avec cognac ambré, fauteuil chesterfield en cuir noir en arrière-plan flou. Éclairage clair-obscur théâtral, ambiance salon de gentleman. Le produit reste le sujet principal, parfaitement net et fidèle. ${variantHint}`,
+  };
+
+  return `${scenes[sceneType] || scenes.packshot}
+
+${referenceInstruction}
+
+${DA_RULES}`;
+}
+
+const VARIANT_HINTS = [
+  "Cadrage serré macro, angle légèrement plongeant.",
+  "Cadrage moyen, angle de face à hauteur du produit, composition asymétrique.",
+  "Cadrage large avec espace négatif, angle contre-plongée dramatique.",
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -107,7 +151,7 @@ serve(async (req) => {
     const authError = await requireAdmin(req, supabase);
     if (authError) return authError;
 
-    const { action, postId, chatId, products, theme } = await req.json();
+    const { action, postId, chatId, products, theme, sceneType, referenceImageUrl } = await req.json();
 
     // ── GENERATE SERIES ──
     if (action === "generate-series") {
@@ -191,7 +235,6 @@ serve(async (req) => {
       const seriesPlan = JSON.parse(toolCall.function.arguments);
       const seriesId = crypto.randomUUID();
 
-      // Build product image map from frontend data
       const productImageMap: Record<string, string> = {};
       for (const p of products) {
         if (p.id && p.imageUrl) {
@@ -199,7 +242,6 @@ serve(async (req) => {
         }
       }
 
-      // Insert all posts as drafts
       const postsToInsert = seriesPlan.posts.map((post: any) => ({
         series_id: seriesId,
         series_position: post.position,
@@ -299,9 +341,12 @@ serve(async (req) => {
       });
     }
 
-    // ── GENERATE IMAGE ──
+    // ── GENERATE IMAGE VARIANTS ──
     if (action === "generate-image") {
       if (!postId) throw new Error("postId required");
+      const scene = (sceneType as string) || "packshot";
+      const validScenes = ["packshot", "hands", "rolling", "lifestyle"];
+      if (!validScenes.includes(scene)) throw new Error(`Invalid sceneType: ${scene}`);
 
       const { data: post, error: postError } = await supabase
         .from("social_posts")
@@ -311,7 +356,6 @@ serve(async (req) => {
 
       if (postError || !post) throw new Error("Post not found");
 
-      // Get product info if available
       const productInfo = (() => {
         if (products && Array.isArray(products) && post.product_id) {
           const p = products.find((pr: any) => pr.id === post.product_id);
@@ -320,90 +364,102 @@ serve(async (req) => {
         return { name: "produit CBD premium", category: "fleur", description: "" };
       })();
 
-      const categoryDesc = productInfo.category === "resine" || productInfo.category === "hash"
-        ? "résine CBD dorée/ambrée, texture compacte et brillante"
-        : "fleur CBD dense avec trichomes givrés, nuances vertes et violettes";
-
-      const imagePrompt = `Photographie de studio ultra haute qualité d'un produit CBD premium nommé "${productInfo.name}".
-
-CHARTE VISUELLE HSB — OBLIGATOIRE :
-- Fond noir profond #000000, éclairage studio avec rim light doré
-- Poussière d'or flottante subtile, texture velours/mat
-- Style "Haute Joaillerie" inspiré des campagnes Rolex/Cartier
-- Palette EXCLUSIVE : noir, or (#C8A94E), vert botanique
-- Le logo HSB (couronne dorée ornée + initiales HSB + ornements baroques dorés) peut apparaître en filigrane doré discret dans un coin
-- Le produit est une ${categoryDesc}
-${productInfo.description ? `- Description : ${productInfo.description}` : ""}
-
-INTERDICTIONS ABSOLUES :
-- AUCUN logo autre que celui de High Society Botanicals (HSB)
-- AUCUNE marque concurrente
-- AUCUN texte inventé, AUCUNE étiquette
-- AUCUNE couleur hors palette (pas de rouge, bleu vif, rose, orange)
-- Ne jamais inventer une forme de produit irréaliste
-- Le produit doit ressembler à un vrai produit CBD, pas à une illustration`;
-
-      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3.1-flash-image-preview",
-          messages: [{ role: "user", content: imagePrompt }],
-          modalities: ["image", "text"],
-        }),
-      });
-
-      if (!aiResponse.ok) {
-        const errText = await aiResponse.text();
-        console.error("AI image error:", aiResponse.status, errText);
-        if (aiResponse.status === 429) {
-          return new Response(JSON.stringify({ error: "Limite de requêtes atteinte, réessayez dans quelques instants." }), {
-            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+      // Try to fetch reference image and inline as base64 (public URL fallback if fetch fails)
+      let referenceBase64: string | null = null;
+      let referenceMime = "image/jpeg";
+      if (referenceImageUrl) {
+        try {
+          const imgRes = await fetch(referenceImageUrl);
+          if (imgRes.ok) {
+            const ct = imgRes.headers.get("content-type") || "image/jpeg";
+            referenceMime = ct.split(";")[0].trim();
+            const buf = new Uint8Array(await imgRes.arrayBuffer());
+            // Convert to base64 in chunks (avoid stack overflow on large images)
+            let bin = "";
+            const chunk = 0x8000;
+            for (let i = 0; i < buf.length; i += chunk) {
+              bin += String.fromCharCode(...buf.subarray(i, i + chunk));
+            }
+            referenceBase64 = btoa(bin);
+          } else {
+            console.warn("Reference image fetch failed:", imgRes.status);
+          }
+        } catch (e) {
+          console.warn("Reference image fetch error:", e);
         }
-        if (aiResponse.status === 402) {
-          return new Response(JSON.stringify({ error: "Crédits IA insuffisants." }), {
-            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        throw new Error(`AI image generation failed: ${aiResponse.status}`);
       }
 
-      const aiData = await aiResponse.json();
-      const imageData = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-      if (!imageData) throw new Error("No image returned from AI");
+      const hasReference = !!referenceBase64;
 
-      // Extract base64 and upload to storage
-      const base64Match = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
-      if (!base64Match) throw new Error("Invalid image data format");
+      // Generate 3 variants in parallel
+      const variantPromises = VARIANT_HINTS.map(async (hint, idx) => {
+        const prompt = buildScenePrompt(scene, productInfo.name, productInfo.description, hasReference, hint);
 
-      const imageBytes = Uint8Array.from(atob(base64Match[2]), (c: string) => c.charCodeAt(0));
-      const filePath = `generated/${postId}.png`;
+        const userContent: any[] = [{ type: "text", text: prompt }];
+        if (hasReference && referenceBase64) {
+          userContent.push({
+            type: "image_url",
+            image_url: { url: `data:${referenceMime};base64,${referenceBase64}` },
+          });
+        }
 
-      const { error: uploadError } = await supabase.storage
-        .from("social-media")
-        .upload(filePath, imageBytes, {
-          contentType: "image/png",
-          upsert: true,
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3.1-flash-image",
+            messages: [{ role: "user", content: userContent }],
+            modalities: ["image", "text"],
+          }),
         });
 
-      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+        if (!aiResponse.ok) {
+          const errText = await aiResponse.text();
+          console.error(`Variant ${idx} error:`, aiResponse.status, errText);
+          throw new Error(`AI status ${aiResponse.status}`);
+        }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("social-media")
-        .getPublicUrl(filePath);
+        const aiData = await aiResponse.json();
+        const imageData = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        if (!imageData) throw new Error("No image returned");
 
-      const publicUrl = publicUrlData.publicUrl;
+        const base64Match = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (!base64Match) throw new Error("Invalid image data");
 
-      await supabase
-        .from("social_posts")
-        .update({ image_url: publicUrl })
-        .eq("id", postId);
+        const imageBytes = Uint8Array.from(atob(base64Match[2]), (c: string) => c.charCodeAt(0));
+        const filePath = `generated/${postId}-v${idx}-${Date.now()}.png`;
 
-      return new Response(JSON.stringify({ success: true, imageUrl: publicUrl }), {
+        const { error: uploadError } = await supabase.storage
+          .from("social-media")
+          .upload(filePath, imageBytes, { contentType: "image/png", upsert: true });
+
+        if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
+        const { data: publicUrlData } = supabase.storage.from("social-media").getPublicUrl(filePath);
+        return publicUrlData.publicUrl;
+      });
+
+      const results = await Promise.allSettled(variantPromises);
+      const variants = results
+        .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+        .map(r => r.value);
+
+      if (variants.length === 0) {
+        const firstError = results.find(r => r.status === "rejected") as PromiseRejectedResult | undefined;
+        const errMsg = firstError?.reason?.message || "Toutes les variantes ont échoué";
+        if (errMsg.includes("429")) {
+          return jsonResponse({ error: "Limite de requêtes atteinte, réessayez dans quelques instants." }, 429);
+        }
+        if (errMsg.includes("402")) {
+          return jsonResponse({ error: "Crédits IA insuffisants." }, 402);
+        }
+        throw new Error(errMsg);
+      }
+
+      return new Response(JSON.stringify({ success: true, variants }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
