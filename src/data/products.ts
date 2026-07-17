@@ -222,15 +222,19 @@ export const flowers: Product[] = [
 
 // Résines uniquement
 export const resins: Product[] = [
+  ...nectarDivin.filter(p => p.category === "resine"),
   ...groupA.filter(p => p.category === "resine"),
   ...groupB.filter(p => p.category === "resine"),
 ];
 
 // Tous les produits combinés
-export const allProducts: Product[] = [...groupA, ...groupB];
+export const allProducts: Product[] = [...nectarDivin, ...groupA, ...groupB];
 
 // Produits Force Noire (enrichis avec Élixir Noir)
 export const forceNoireProducts: Product[] = allProducts.filter(p => p.isForceNoire);
+
+// Produits Nectar Divin (gamme ultra-premium)
+export const nectarDivinProducts: Product[] = allProducts.filter(p => p.isNectarDivin);
 
 // Produits vedettes pour la page d'accueil
 export const featuredProducts: Product[] = [
