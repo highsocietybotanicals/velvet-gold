@@ -279,24 +279,33 @@ export const generateAccountingPdf = (
 };
 
 export const generateAccountingCsv = (lines: AccountingLine[], from: Date, to: Date) => {
-  const header = "numero;date;type;client;statut;ht;tva;ttc\n";
+  const header = "numero;date;type;client;statut;ht;tva;ttc;details\n";
   const rows = lines
     .map((l) =>
       [
         l.invoiceNumber,
         format(new Date(l.date), "yyyy-MM-dd"),
-        l.type === "site" ? "Site" : "Pro",
+        typeLabel(l),
         (l.client || "").replace(/[;\n]/g, " "),
         statusLabel(l),
         l.ht.toFixed(2).replace(".", ","),
         l.tva.toFixed(2).replace(".", ","),
         l.ttc.toFixed(2).replace(".", ","),
+        (l.details || "").replace(/[;\n]/g, " "),
       ].join(";")
     )
     .join("\n");
-  const s = summarize(lines);
-  const totals = `\n;;;;TOTAL hors annulées (${s.count});${s.totalHT.toFixed(2).replace(".", ",")};${s.totalTVA.toFixed(2).replace(".", ",")};${s.totalTTC.toFixed(2).replace(".", ",")}`;
-  const csv = "\uFEFF" + header + rows + totals;
+  const invoiceLines = lines.filter((l) => l.type !== "mileage");
+  const mileageLines = lines.filter((l) => l.type === "mileage");
+  const invoiceSummary = summarize(invoiceLines);
+  const mileageSummary = summarize(mileageLines);
+  const totals = invoiceLines.length > 0
+    ? `\n;;;;TOTAL FACTURES hors annulées (${invoiceSummary.count});${invoiceSummary.totalHT.toFixed(2).replace(".", ",")};${invoiceSummary.totalTVA.toFixed(2).replace(".", ",")};${invoiceSummary.totalTTC.toFixed(2).replace(".", ",")};`
+    : "";
+  const mileageTotals = mileageLines.length > 0
+    ? `\n;;;;TOTAL FRAIS KM (${mileageSummary.count});${mileageSummary.totalHT.toFixed(2).replace(".", ",")};${mileageSummary.totalTVA.toFixed(2).replace(".", ",")};${mileageSummary.totalTTC.toFixed(2).replace(".", ",")};`
+    : "";
+  const csv = "\uFEFF" + header + rows + totals + mileageTotals;
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
