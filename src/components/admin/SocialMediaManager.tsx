@@ -79,6 +79,7 @@ const SocialMediaManager = () => {
   const [generatingImage, setGeneratingImage] = useState<string | null>(null);
   const [originalImageUrls, setOriginalImageUrls] = useState<Record<string, string | null>>({});
   const [scenePerPost, setScenePerPost] = useState<Record<string, SceneType>>({});
+  const [productPerPost, setProductPerPost] = useState<Record<string, string>>({});
   const [variantsPerPost, setVariantsPerPost] = useState<Record<string, string[]>>({});
   const [pickerOpenFor, setPickerOpenFor] = useState<string | null>(null);
   const [pickingVariant, setPickingVariant] = useState<string | null>(null);
@@ -251,8 +252,14 @@ const SocialMediaManager = () => {
   const handleGenerateImage = async (post: SocialPost) => {
     setGeneratingImage(post.id);
     try {
+      const selectedProductId = productPerPost[post.id] || post.product_id;
+      if (!selectedProductId) {
+        toast.error("Choisis d'abord le vrai produit à photographier.");
+        return;
+      }
+
       // Save original image URL before replacing
-      const currentImage = post.image_url || (post.product_id ? getProductImageUrl(post.product_id) : null);
+      const currentImage = post.image_url || getProductImageUrl(selectedProductId);
       if (!originalImageUrls[post.id]) {
         setOriginalImageUrls(prev => ({ ...prev, [post.id]: currentImage }));
       }
@@ -262,10 +269,11 @@ const SocialMediaManager = () => {
         name: p.name,
         category: p.category,
         description: p.description,
+        imageUrl: `${window.location.origin}${p.image}`,
       }));
 
       // Build absolute URL of the reference product photo (site image)
-      const productImagePath = post.product_id ? getProductImageUrl(post.product_id) : null;
+      const productImagePath = getProductImageUrl(selectedProductId);
       const referenceImageUrl = productImagePath
         ? (productImagePath.startsWith("http") ? productImagePath : `${window.location.origin}${productImagePath}`)
         : null;
@@ -276,6 +284,7 @@ const SocialMediaManager = () => {
         body: {
           action: "generate-image",
           postId: post.id,
+          selectedProductId,
           products: productsData,
           sceneType: scene,
           referenceImageUrl,
@@ -346,6 +355,7 @@ const SocialMediaManager = () => {
   const renderPostCard = (post: SocialPost, compact = false) => {
     const imageUrl = post.image_url || (post.product_id ? getProductImageUrl(post.product_id) : null);
     const productName = post.product_id ? allProducts.find(p => p.id === post.product_id)?.name : null;
+    const selectedProductId = productPerPost[post.id] || post.product_id || "";
     const typeInfo = post.post_type ? POST_TYPE_LABELS[post.post_type] : null;
 
     return (
@@ -391,6 +401,19 @@ const SocialMediaManager = () => {
             />
 
             <div className="flex flex-wrap gap-1.5">
+              <Select
+                value={selectedProductId}
+                onValueChange={(v) => setProductPerPost(prev => ({ ...prev, [post.id]: v }))}
+              >
+                <SelectTrigger className="h-7 text-xs w-auto min-w-[190px]">
+                  <SelectValue placeholder="Produit réel à shooter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allProducts.map(product => (
+                    <SelectItem key={product.id} value={product.id} className="text-xs">{product.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleCopyCaption(post)}>
                 {copiedId === post.id ? <><Check className="h-3 w-3 mr-1" />Copié</> : <><Copy className="h-3 w-3 mr-1" />Copier</>}
               </Button>

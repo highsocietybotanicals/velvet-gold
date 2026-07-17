@@ -151,7 +151,7 @@ serve(async (req) => {
     const authError = await requireAdmin(req, supabase);
     if (authError) return authError;
 
-    const { action, postId, chatId, products, theme, sceneType, referenceImageUrl } = await req.json();
+    const { action, postId, chatId, products, theme, sceneType, referenceImageUrl, selectedProductId } = await req.json();
 
     // ── GENERATE SERIES ──
     if (action === "generate-series") {
@@ -356,20 +356,35 @@ serve(async (req) => {
 
       if (postError || !post) throw new Error("Post not found");
 
+      const requestedProductId = selectedProductId || post.product_id;
+      if (!requestedProductId) {
+        return jsonResponse({ error: "Choisis un produit réel avant de générer un shooting IA." }, 400);
+      }
+
       const productInfo = (() => {
-        if (products && Array.isArray(products) && post.product_id) {
-          const p = products.find((pr: any) => pr.id === post.product_id);
-          if (p) return { name: p.name, category: p.category, description: p.description || "" };
+        if (products && Array.isArray(products)) {
+          const p = products.find((pr: any) => pr.id === requestedProductId);
+          if (p) {
+            return {
+              id: p.id,
+              name: p.name,
+              category: p.category,
+              description: p.description || "",
+              imageUrl: p.imageUrl || null,
+            };
+          }
         }
-        return { name: "produit CBD premium", category: "fleur", description: "" };
+        return { id: requestedProductId, name: "produit CBD premium", category: "fleur", description: "", imageUrl: null };
       })();
 
-      // Try to fetch reference image and inline as base64 (public URL fallback if fetch fails)
+      const realReferenceUrl = referenceImageUrl || productInfo.imageUrl;
+
+      // Fetch reference image and inline as base64. No generic fallback: fidelity requires the real product photo.
       let referenceBase64: string | null = null;
       let referenceMime = "image/jpeg";
-      if (referenceImageUrl) {
+      if (realReferenceUrl) {
         try {
-          const imgRes = await fetch(referenceImageUrl);
+          const imgRes = await fetch(realReferenceUrl);
           if (imgRes.ok) {
             const ct = imgRes.headers.get("content-type") || "image/jpeg";
             referenceMime = ct.split(";")[0].trim();
@@ -389,7 +404,11 @@ serve(async (req) => {
         }
       }
 
-      const hasReference = !!referenceBase64;
+      if (!referenceBase64) {
+        return jsonResponse({ error: "Impossible de lire la photo réelle du produit. Le shooting IA est annulé pour éviter une image non fidèle." }, 400);
+      }
+
+      const hasReference = true;
 
       // Generate 3 variants in parallel
       const variantPromises = VARIANT_HINTS.map(async (hint, idx) => {
