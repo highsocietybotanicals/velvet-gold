@@ -106,6 +106,18 @@ const AccountingManager = () => {
         orderNumberById[o.id] = o.display_order_number || `HSB-${String(o.order_number).padStart(6, "0")}`;
       });
 
+      // Fetch order numbers for mileage entries whose order may be outside the date range
+      const mileageOrderIds = Array.from(new Set((mileageRes.data || []).map((m: any) => m.order_id).filter(Boolean)));
+      if (mileageOrderIds.length > 0) {
+        const { data: missingOrders } = await supabase
+          .from("orders")
+          .select("id, display_order_number, order_number")
+          .in("id", mileageOrderIds);
+        (missingOrders || []).forEach((o: any) => {
+          orderNumberById[o.id] = o.display_order_number || `HSB-${String(o.order_number).padStart(6, "0")}`;
+        });
+      }
+
       const orderLines: AccountingLine[] = (ordersRes.data || []).map((o: any) => {
         const ttc = Number(o.total_amount) || 0;
         const ht = ttc / 1.2;
