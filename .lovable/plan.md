@@ -1,47 +1,21 @@
+## Objectif
+Le rendu actuel de Haribo est une résine ambrée sombre imaginée — trop loin du vrai produit. On repart d'une frame réelle de `HARIBO.mp4` pour garder la couleur (jaune pâle doré, texture friable/cristalline type rosin) et le format (bloc rectangulaire), puis on la restyle en studio noir avec particules dorées pour rester dans la DA du site.
 
-## Correction Haribo — Prix + Visuel
+## Étapes
 
-### 1. Grille de prix (retenue : 15/35/60/100)
+1. **Choix de la frame source**
+   - Utiliser `f_25.jpg` (macro nette du bloc, couleur jaune-doré authentique, texture cristalline visible). Frame alternative: `f_15.jpg` si on préfère montrer une découpe en deux blocs.
 
-Ajouter Haribo à la grille fixe par produit dans `src/lib/pricing.ts`. Cette grille prime déjà sur les tiers Groupe B (voir `FORCE_NOIRE_PRICE_GRID` : quand un produit y figure, `calculatePrice` et `getLowestPricePerGram` utilisent la grille au lieu du dégressif).
+2. **Édition via `imagegen--edit_image` (Nano Banana 2, pro-level)**
+   - Input: la frame réelle extraite.
+   - Prompt: garder la couleur/matière/texture exactes du bloc (jaune pâle doré, surface cristalline granuleuse, éclats blancs), retirer les mains/outils/watermark, recadrer le bloc au centre, remplacer le fond par un fond noir profond studio type haute joaillerie, ajouter un éclairage chiaroscuro doux avec reflets dorés subtils sur les arêtes, particules/poussière d'or fines en suspension autour, style photo produit cohérent avec Ice O Lator / Golden CBN / Elixir Noir.
+   - Output: `src/assets/resins/haribo-premium.jpg` (écrase l'actuel, 1024×1024).
 
-Grille Haribo (TTC) :
-```
-1g   →  15 €
-2.5g →  35 €
-5g   →  60 €
-10g  → 100 €
-```
-Au-delà de 10g : base 10 €/g (100 ÷ 10) + dégressif additionnel léger déjà en place dans la fonction (−10 % à 25g, −15 % à 50g, −20 % à 100g).
+3. **Aucun autre changement**
+   - Le prix (15/35/60/100) et l'import restent tels quels.
+   - Pas de modif DB, ni du code produit.
 
-Renommage minimal : la constante `FORCE_NOIRE_PRICE_GRID` sera renommée `PRODUCT_PRICE_GRID` (plus neutre, car elle sert désormais aussi à Nectar Divin). Toutes les références internes (`calculateForceNoirePrice`, `getLowestPricePerGram`, `calculatePrice`, `calculateItemPrice`, `getDiscountLabel`) sont mises à jour dans le même fichier. La fonction `calculateForceNoirePrice` reste appelée ainsi (comportement identique), pour éviter de toucher d'autres fichiers.
-
-Vérification affichage : le "À partir de" utilisera `getLowestPricePerGram` → grille 100g extrapolée = 10 €/g × (1 − 0.20) = **8 €/g** affiché.
-
-### 2. Visuel produit (retenu : nouvelle photo studio premium)
-
-Générer un nouveau rendu **haute joaillerie** cohérent avec Ice O Lator / Golden CBN / Nuage de Mousseux :
-
-- Fond noir profond, éclairage dramatique clair-obscur, reflets dorés subtils.
-- Sujet : bloc de résine ambrée-dorée translucide (rappel de la couleur du plan HARIBO), texture cristalline/laquée, mise en scène type nature morte de joaillerie.
-- Cadrage carré (1024×1024), profondeur de champ courte, léger reflet au sol.
-- Aucun texte, aucun logo, aucune marque.
-- Style et palette calés sur les autres résines premium du catalogue.
-
-Sortie : `src/assets/resins/haribo-premium.jpg` (image standard, pas d'asset CDN — mêmes conventions que les autres résines du catalogue statique).
-
-L'ancien pointeur CDN `src/assets/resins/haribo.jpg.asset.json` est supprimé (avec `lovable-assets delete` pour retirer aussi le binaire du CDN) puisqu'inutilisé.
-
-### 3. Synchronisation
-
-- `src/data/products.ts` : remplacer `image: hariboAsset.url` par un import du nouveau fichier `haribo-premium.jpg`, retirer l'import du pointeur JSON.
-- `public.products.image_url` en base : mettre à jour vers le chemin du nouvel asset via `supabase--insert` (UPDATE simple).
-- Aucun autre changement (thème Nectar Divin, badge, catégorie, description, catalogue → déjà en place).
-
-### Fichiers touchés
-
-- `src/lib/pricing.ts` — ajout entrée grille Haribo (+ renommage interne facultatif).
-- `src/data/products.ts` — swap de l'import image.
-- `src/assets/resins/haribo-premium.jpg` — nouveau visuel généré.
-- `src/assets/resins/haribo.jpg.asset.json` — supprimé + purge CDN.
-- Table `products` — UPDATE du `image_url` de la ligne `haribo`.
+## Détails techniques
+- Fichier réécrit: `src/assets/resins/haribo-premium.jpg` via `imagegen--edit_image` avec `image_paths: ["/tmp/haribo/f_25.jpg"]`.
+- Modèle: tier `premium` (meilleure fidélité photo + gestion des textures fines).
+- Après génération je vérifie visuellement le rendu avant de conclure.
