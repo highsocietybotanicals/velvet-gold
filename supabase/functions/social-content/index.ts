@@ -492,8 +492,8 @@ serve(async (req) => {
         });
       }
 
-      const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-      if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+      // Utilise la passerelle Lovable AI (LOVABLE_API_KEY déjà chargée en haut)
+
 
       // 3 variantes = 3 scènes différentes en mode "mix", sinon 3 variations d'une même scène
       const jobs = scene === "mix"
