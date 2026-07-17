@@ -13,11 +13,10 @@ const AdminLayout = () => {
   const { user, isAdmin, loading } = useAuth();
 
   useEffect(() => {
-    // TEMP: allow preview for accounting testing
-    if (!loading && (!user || !isAdmin) && !location.pathname.includes("/admin/comptabilite")) {
+    if (!loading && (!user || !isAdmin)) {
       navigate("/");
     }
-  }, [user, isAdmin, loading, navigate, location.pathname]);
+  }, [user, isAdmin, loading, navigate]);
 
   useEffect(() => {
     if (location.pathname === "/admin" || location.pathname === "/admin/") {
