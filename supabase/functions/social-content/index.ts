@@ -107,32 +107,43 @@ INTERDICTIONS ABSOLUES :
 - AUCUNE couleur hors palette (pas de rouge, bleu vif, rose, orange criard)
 - Ne jamais déformer la couleur, la texture ou la forme du produit de référence`;
 
-function buildScenePrompt(sceneType: string, productName: string, productDescription: string, hasReference: boolean, variantHint: string): string {
-  const referenceInstruction = hasReference
-    ? `RÉFÉRENCE PRODUIT : L'image jointe montre le VRAI produit "${productName}". Tu dois reproduire EXACTEMENT sa couleur, sa texture, sa forme, ses détails (trichomes, granulométrie, brillance). C'est le même produit, photographié dans une nouvelle mise en scène.`
-    : `PRODUIT : "${productName}"${productDescription ? ` — ${productDescription}` : ""}. Reste réaliste, pas d'illustration.`;
+const STRICT_PRODUCT_FIDELITY = `MODE RETOUCHE PRODUIT — PRIORITÉ ABSOLUE :
+- L'image jointe est la SOURCE PRODUIT, pas une simple inspiration.
+- Le produit final doit ressembler au produit du site à au moins 95% : même couleur dominante, mêmes nuances, même texture, même densité, même relief, même granulométrie, même brillance, même forme générale.
+- Ne crée PAS une nouvelle fleur/résine. Ne change PAS la variété. Ne modifie PAS la robe, la matière ou la structure.
+- Conserve l'aspect exact du produit ; améliore seulement la lumière, le cadrage, le fond et la présentation.
+- Si une scène risque de modifier le produit, simplifie la scène et garde le produit intact, net, grand et central.
+- Le produit doit occuper 45% à 70% de l'image, en netteté maximale, sans être masqué par les mains, accessoires, fumée, verre, texte ou décor.
+- Interdiction d'ajouter un packaging, une étiquette, un pot, un sachet ou une marque inventée.
+- Interdiction de transformer une résine en fleur, une fleur en résine, ou une texture compacte en miettes inventées.`;
+
+function buildScenePrompt(sceneType: string, productName: string, productDescription: string, productCategory: string, variantHint: string): string {
+  const productType = productCategory === "resine" ? "résine CBD" : "fleur CBD";
+  const referenceInstruction = `PRODUIT RÉEL À CONSERVER : "${productName}" (${productType})${productDescription ? ` — ${productDescription}` : ""}.`;
 
   const scenes: Record<string, string> = {
-    packshot: `Packshot studio ultra haute qualité du produit CBD "${productName}" seul sur fond noir profond, éclairage rim light doré latéral, réflexions dorées subtiles, poussière d'or en suspension. Composition centrée, style joaillerie de luxe. ${variantHint}`,
+    packshot: `Retouche packshot studio du VRAI produit "${productName}" : même produit que la photo source, isolé proprement sur fond noir profond, éclairage rim light doré latéral, reflets discrets. Aucun changement de matière ou de couleur. Composition centrée, macro premium. ${variantHint}`,
 
-    hands: `Photographie éditoriale : ${CHARACTER_DESC} Il présente délicatement le produit CBD "${productName}" dans le creux de sa paume ou entre ses doigts, geste précis et raffiné. Le produit est PARFAITEMENT visible et net au premier plan. Fond flou sombre avec bokeh doré. ${variantHint}`,
+    hands: `Retouche éditoriale du VRAI produit "${productName}" : ${CHARACTER_DESC} Les mains servent seulement de décor autour ou sous le produit, sans l'écraser ni le masquer. Le produit source reste intact, grand, parfaitement net et reconnaissable au premier plan. Fond sombre flou avec bokeh doré. ${variantHint}`,
 
-    rolling: `Photographie éditoriale d'un geste artisanal : ${CHARACTER_DESC} On voit ses mains en train ${productName.toLowerCase().includes("resin") || productName.toLowerCase().includes("hash") ? "d'effriter délicatement la résine sur un plateau de marbre noir veiné d'or, avec une lame fine" : "d'effriter délicatement la fleur CBD sur un plateau de marbre noir veiné d'or, puis de préparer un joint fin avec feuille kraft"}. Le produit "${productName}" est le sujet central, texture ultra visible. Éclairage chaud tungsten venant du haut. ${variantHint}`,
+    rolling: `Retouche geste artisanal du VRAI produit "${productName}" : ${CHARACTER_DESC} Le produit source reste la masse principale intacte et reconnaissable sur un plateau de marbre noir veiné d'or. Ajouter seulement quelques petits fragments cohérents si nécessaire, sans inventer une nouvelle texture. Texture ultra visible, éclairage chaud tungsten. ${variantHint}`,
 
-    lifestyle: `Nature morte lifestyle luxueuse : le produit CBD "${productName}" posé dans un décor haute joaillerie — velours noir profond, marbre veiné or, verre en cristal avec cognac ambré, fauteuil chesterfield en cuir noir en arrière-plan flou. Éclairage clair-obscur théâtral, ambiance salon de gentleman. Le produit reste le sujet principal, parfaitement net et fidèle. ${variantHint}`,
+    lifestyle: `Retouche nature morte lifestyle du VRAI produit "${productName}" : conserver le produit source intact et net, posé sur velours noir ou marbre sombre veiné or. Décor luxe très secondaire en arrière-plan flou, sans dominer le produit. Éclairage clair-obscur élégant. ${variantHint}`,
   };
 
   return `${scenes[sceneType] || scenes.packshot}
 
 ${referenceInstruction}
 
+${STRICT_PRODUCT_FIDELITY}
+
 ${DA_RULES}`;
 }
 
 const VARIANT_HINTS = [
-  "Cadrage serré macro, angle légèrement plongeant.",
-  "Cadrage moyen, angle de face à hauteur du produit, composition asymétrique.",
-  "Cadrage large avec espace négatif, angle contre-plongée dramatique.",
+  "Variation uniquement sur le fond et la lumière : cadrage serré macro, angle légèrement plongeant, produit inchangé.",
+  "Variation uniquement sur le fond et la lumière : cadrage de face, composition asymétrique, produit inchangé.",
+  "Variation uniquement sur le fond et la lumière : léger espace négatif premium, produit inchangé et central.",
 ];
 
 serve(async (req) => {
@@ -412,7 +423,7 @@ serve(async (req) => {
 
       // Generate 3 variants in parallel
       const variantPromises = VARIANT_HINTS.map(async (hint, idx) => {
-        const prompt = buildScenePrompt(scene, productInfo.name, productInfo.description, hasReference, hint);
+        const prompt = buildScenePrompt(scene, productInfo.name, productInfo.description, productInfo.category, hint);
 
         const userContent: any[] = [{ type: "text", text: prompt }];
         if (hasReference && referenceBase64) {
