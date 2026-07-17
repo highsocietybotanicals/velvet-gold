@@ -78,7 +78,7 @@ const AccountingManager = () => {
           .order("issued_at", { ascending: true }),
         supabase
           .from("delivery_mileage")
-          .select("id, order_id, computed_at, status, cost_euros, distance_km_round_trip, rate_per_km, arrival_address")
+          .select("id, order_id, computed_at, status, cost_euros, distance_km_round_trip, rate_per_km, arrival_address, departure_address")
           .gte("computed_at", fromDate.toISOString())
           .lte("computed_at", toDate.toISOString())
           .order("computed_at", { ascending: true }),
