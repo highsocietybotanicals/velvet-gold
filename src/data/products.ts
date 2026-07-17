@@ -11,6 +11,7 @@ import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
 import nuageDeMousseux from "@/assets/resins/nuage-de-mousseux-real.jpg";
 import hariboPremium from "@/assets/resins/haribo-premium.jpg";
 import heisenbergPremium from "@/assets/resins/heisenberg-premium.jpg";
+import poussiereDorPremium from "@/assets/resins/poussiere-dor-premium.jpg";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
@@ -142,6 +143,22 @@ const groupA: Product[] = [
     intentionMatch: ["detente", "sommeil"],
     tasteMatch: ["boise"],
     isForceNoire: true,
+  },
+  {
+    id: "poussiere-dor",
+    name: "Poussière D'or",
+    subtitle: "Résine Pollen Haute Couture",
+    badge: "Édition Signature",
+    description: "Pollen haute couture à la texture mousse aérienne, robe blonde sablée. Arômes doux et boisés, effets équilibrés pour une détente raffinée.",
+    price: 12,
+    priceGroup: "A",
+    cbdPercentage: "30% CBD",
+    image: poussiereDorPremium,
+    terpenes: { boise: 70, fruite: 30, epice: 45, terreux: 75 },
+    mood: "Détente",
+    category: "resine",
+    intentionMatch: ["detente"],
+    tasteMatch: ["boise", "terreux"],
   },
 ];
 

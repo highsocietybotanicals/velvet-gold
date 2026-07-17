@@ -95,6 +95,12 @@ export const FORCE_NOIRE_PRICE_GRID: Record<string, { weight: number; price: num
     { weight: 5, price: 60 },
     { weight: 10, price: 100 },
   ],
+  "poussiere-dor": [
+    { weight: 1, price: 12 },
+    { weight: 2.5, price: 28 },
+    { weight: 5, price: 50 },
+    { weight: 10, price: 75 },
+  ],
 };
 
 // Calcule le prix total d'un produit Force Noire selon sa grille fixe
