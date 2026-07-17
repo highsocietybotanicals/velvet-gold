@@ -2,9 +2,10 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Filter, Grid, List, Search, ShoppingCart, Package, Zap } from "lucide-react";
-import { flowers, resins, forceNoireProducts, ProductCategory } from "@/data/products";
+import { ProductCategory } from "@/data/products";
 import { accessories } from "@/data/accessories";
 import { useCart } from "@/contexts/CartContext";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -14,11 +15,13 @@ type CategoryFilter = "all" | ProductCategory | "accessoire" | "force-noire";
 
 const CataloguePage = () => {
   const { addToCart, addAccessory } = useCart();
+  const { all: allProducts, forceNoire: forceNoireProducts } = useCatalogProducts();
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [showFilters, setShowFilters] = useState(false);
+
 
   const allProducts = useMemo(() => [...flowers, ...resins], []);
 
