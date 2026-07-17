@@ -196,15 +196,22 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.15 }}
-      className={`group product-card bg-card rounded-lg border overflow-hidden relative ${
-        product.isForceNoire 
-          ? "border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]" 
-          : "border-border/50"
+      className={`group product-card rounded-lg border overflow-hidden relative ${
+        product.isNectarDivin
+          ? "bg-black border-primary/50 hover:border-primary hover:shadow-[0_0_30px_rgba(212,175,55,0.35)]"
+          : product.isForceNoire
+          ? "bg-card border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]"
+          : "bg-card border-border/50"
       }`}
     >
-      <Link to={`/produit/${product.id}`}>
+      {product.isNectarDivin && (
+        <div className="absolute inset-0 pointer-events-none z-0 opacity-70">
+          <GoldParticles />
+        </div>
+      )}
+      <Link to={`/produit/${product.id}`} className="relative z-10 block">
         {/* Image container with pochon overlay */}
-        <div className="relative aspect-square overflow-hidden bg-carbon-deep">
+        <div className={`relative aspect-square overflow-hidden ${product.isNectarDivin ? "bg-black" : "bg-carbon-deep"}`}>
           <div className="absolute inset-0 bg-gradient-gold-radial opacity-0 group-hover:opacity-40 transition-opacity duration-500" />
           <img
             src={product.image}
@@ -215,19 +222,27 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
               e.currentTarget.src = '/placeholder.svg';
             }}
           />
-          
+
+          {/* Nectar Divin badge (priorité) */}
+          {product.isNectarDivin && (
+            <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-black/90 to-primary/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-primary/70 shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+              <Crown className="w-3 h-3 text-primary" />
+              <span className="text-xs font-bold text-primary tracking-wider uppercase">Nectar Divin</span>
+            </div>
+          )}
+
           {/* Force Noire badge */}
-          {product.isForceNoire && (
+          {!product.isNectarDivin && product.isForceNoire && (
             <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-red-950/90 to-black/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-800/60">
               <Zap className="w-3 h-3 text-red-400" />
               <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
             </div>
           )}
 
-          {/* Badge produit (Cali Genetics, etc.) - only if NOT Force Noire */}
-          {!product.isForceNoire && (product as any).badge && (
+          {/* Badge produit (Cali Genetics, etc.) - only if NOT Force Noire / Nectar Divin */}
+          {!product.isForceNoire && !product.isNectarDivin && (product as any).badge && (
             <div className={`absolute top-4 left-4 flex items-center gap-2 backdrop-blur-sm px-3 py-1.5 rounded-full border ${
-              (product as any).badge === "Cali Genetics" 
+              (product as any).badge === "Cali Genetics"
                 ? "bg-gradient-to-r from-yellow-500/20 to-primary/20 border-yellow-500/50 text-yellow-400"
                 : "bg-background/90 border-primary/30 text-primary"
             }`}>
@@ -238,7 +253,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
           {/* CBD/molecule badge */}
           <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full">
-            <span className="text-xs font-bold">{product.isForceNoire || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}</span>
+            <span className="text-xs font-bold">{product.isForceNoire || product.isNectarDivin || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}</span>
           </div>
 
           {/* Magnifier overlay on hover */}
