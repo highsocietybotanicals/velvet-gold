@@ -315,19 +315,24 @@ export const generateAccountingPdf = (
 };
 
 export const generateAccountingCsv = (lines: AccountingLine[], from: Date, to: Date) => {
-  const header = "numero;date;type;client;statut;ht;tva;ttc;details\n";
+  const header = "numero;date;type;client;statut;ht;tva;ttc;depart;arrivee;km;taux;details\n";
+  const clean = (s?: string) => (s || "").replace(/[;\n\r]/g, " ");
   const rows = lines
     .map((l) =>
       [
         l.invoiceNumber,
         format(new Date(l.date), "yyyy-MM-dd"),
         typeLabel(l),
-        (l.client || "").replace(/[;\n]/g, " "),
+        clean(l.client),
         statusLabel(l),
         l.ht.toFixed(2).replace(".", ","),
         l.tva.toFixed(2).replace(".", ","),
         l.ttc.toFixed(2).replace(".", ","),
-        (l.details || "").replace(/[;\n]/g, " "),
+        clean(l.departureAddress),
+        clean(l.arrivalAddress),
+        l.distanceKm != null ? l.distanceKm.toFixed(1).replace(".", ",") : "",
+        l.ratePerKm != null ? l.ratePerKm.toFixed(2).replace(".", ",") : "",
+        clean(l.details),
       ].join(";")
     )
     .join("\n");
