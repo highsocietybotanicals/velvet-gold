@@ -36,6 +36,7 @@ export interface Product {
   intentionMatch: string[];
   tasteMatch: string[];
   isForceNoire?: boolean;
+  isNectarDivin?: boolean;
 }
 
 // ============================================
