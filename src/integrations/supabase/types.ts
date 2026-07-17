@@ -635,6 +635,7 @@ export type Database = {
           intention_match: string[]
           is_active: boolean
           is_force_noire: boolean
+          is_nectar_divin: boolean
           mood: string | null
           name: string
           price: number
@@ -656,6 +657,7 @@ export type Database = {
           intention_match?: string[]
           is_active?: boolean
           is_force_noire?: boolean
+          is_nectar_divin?: boolean
           mood?: string | null
           name: string
           price: number
@@ -677,6 +679,7 @@ export type Database = {
           intention_match?: string[]
           is_active?: boolean
           is_force_noire?: boolean
+          is_nectar_divin?: boolean
           mood?: string | null
           name?: string
           price?: number
