@@ -89,6 +89,12 @@ export const FORCE_NOIRE_PRICE_GRID: Record<string, { weight: number; price: num
     { weight: 5, price: 60 },
     { weight: 10, price: 100 },
   ],
+  "heisenberg": [
+    { weight: 1, price: 15 },
+    { weight: 2.5, price: 35 },
+    { weight: 5, price: 60 },
+    { weight: 10, price: 100 },
+  ],
 };
 
 // Calcule le prix total d'un produit Force Noire selon sa grille fixe

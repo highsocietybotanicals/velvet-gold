@@ -10,6 +10,7 @@ import iceOLator from "@/assets/resins/ice-o-lator-real.jpg";
 import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
 import nuageDeMousseux from "@/assets/resins/nuage-de-mousseux-real.jpg";
 import hariboPremium from "@/assets/resins/haribo-premium.jpg";
+import heisenbergPremium from "@/assets/resins/heisenberg-premium.jpg";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
@@ -206,6 +207,23 @@ const nectarDivin: Product[] = [
     category: "resine",
     intentionMatch: ["sommeil", "detente"],
     tasteMatch: ["fruite"],
+    isNectarDivin: true,
+  },
+  {
+    id: "heisenberg",
+    name: "Heisenberg",
+    subtitle: "Résine Nectar Divin",
+    badge: "Nectar Divin",
+    description: "Résine ultra-premium de la gamme Nectar Divin — puissance supérieure à l'Élixir Noir. Cristaux bleutés d'exception, arômes mentholés et frais, effets cérébraux intenses et sédation profonde.",
+    price: 10,
+    priceGroup: "B",
+    cbdPercentage: "70% Nectar Divin",
+    image: heisenbergPremium,
+    terpenes: { boise: 60, fruite: 50, epice: 70, terreux: 65 },
+    mood: "Sommeil royal",
+    category: "resine",
+    intentionMatch: ["sommeil", "detente"],
+    tasteMatch: ["epice", "boise"],
     isNectarDivin: true,
   },
 ];
