@@ -399,6 +399,19 @@ const SocialMediaManager = () => {
                   <Download className="h-3 w-3 mr-1" />Instagram
                 </Button>
               )}
+              <Select
+                value={scenePerPost[post.id] || "packshot"}
+                onValueChange={(v) => setScenePerPost(prev => ({ ...prev, [post.id]: v as SceneType }))}
+              >
+                <SelectTrigger className="h-7 text-xs w-auto min-w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SCENE_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button
                 size="sm"
                 variant="outline"
@@ -407,9 +420,9 @@ const SocialMediaManager = () => {
                 disabled={generatingImage === post.id}
               >
                 {generatingImage === post.id ? (
-                  <><Loader2 className="h-3 w-3 animate-spin mr-1" />Création...</>
+                  <><Loader2 className="h-3 w-3 animate-spin mr-1" />Shooting IA...</>
                 ) : (
-                  <><Paintbrush className="h-3 w-3 mr-1" />Visuel IA</>
+                  <><Paintbrush className="h-3 w-3 mr-1" />Générer 3 visuels</>
                 )}
               </Button>
               {(originalImageUrls[post.id] || post.product_id) && post.image_url?.includes("generated/") && (
