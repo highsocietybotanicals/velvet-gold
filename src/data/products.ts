@@ -9,6 +9,7 @@ import amnesiaOniria from "@/assets/flowers/amnesia-oniria-real.jpg";
 import iceOLator from "@/assets/resins/ice-o-lator-real.jpg";
 import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
 import nuageDeMousseux from "@/assets/resins/nuage-de-mousseux-real.jpg";
+import hariboAsset from "@/assets/resins/haribo.jpg.asset.json";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
@@ -36,6 +37,7 @@ export interface Product {
   intentionMatch: string[];
   tasteMatch: string[];
   isForceNoire?: boolean;
+  isNectarDivin?: boolean;
 }
 
 // ============================================
@@ -184,6 +186,31 @@ const groupB: Product[] = [
 ];
 
 // ============================================
+// NECTAR DIVIN - Gamme ultra premium (Base 10€/g TTC)
+// Puissance supérieure à l'Élixir Noir
+// ============================================
+
+const nectarDivin: Product[] = [
+  {
+    id: "haribo",
+    name: "Haribo",
+    subtitle: "Résine Nectar Divin",
+    badge: "Nectar Divin",
+    description: "Résine ultra-premium de la gamme Nectar Divin — puissance supérieure à l'Élixir Noir. Arômes gourmands de bonbon fruité, effets sédatifs profonds pour un sommeil royal.",
+    price: 10,
+    priceGroup: "B",
+    cbdPercentage: "70% Nectar Divin",
+    image: hariboAsset.url,
+    terpenes: { boise: 55, fruite: 90, epice: 40, terreux: 70 },
+    mood: "Sommeil royal",
+    category: "resine",
+    intentionMatch: ["sommeil", "detente"],
+    tasteMatch: ["fruite"],
+    isNectarDivin: true,
+  },
+];
+
+// ============================================
 // Exports
 // ============================================
 
@@ -195,15 +222,19 @@ export const flowers: Product[] = [
 
 // Résines uniquement
 export const resins: Product[] = [
+  ...nectarDivin.filter(p => p.category === "resine"),
   ...groupA.filter(p => p.category === "resine"),
   ...groupB.filter(p => p.category === "resine"),
 ];
 
 // Tous les produits combinés
-export const allProducts: Product[] = [...groupA, ...groupB];
+export const allProducts: Product[] = [...nectarDivin, ...groupA, ...groupB];
 
 // Produits Force Noire (enrichis avec Élixir Noir)
 export const forceNoireProducts: Product[] = allProducts.filter(p => p.isForceNoire);
+
+// Produits Nectar Divin (gamme ultra-premium)
+export const nectarDivinProducts: Product[] = allProducts.filter(p => p.isNectarDivin);
 
 // Produits vedettes pour la page d'accueil
 export const featuredProducts: Product[] = [

@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Gift, Package, ChevronDown, Zap } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Gift, Package, ChevronDown, Zap, Crown } from "lucide-react";
+import GoldParticles from "@/components/GoldParticles";
 import { allProducts, PriceGroup } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -141,7 +142,13 @@ const ProductPage = () => {
   const similarProducts = getSimilarProducts(product, 4);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen relative ${product.isNectarDivin ? "bg-black" : "bg-background"}`}>
+      {product.isNectarDivin && (
+        <div className="absolute inset-0 pointer-events-none z-0 opacity-60">
+          <GoldParticles />
+        </div>
+      )}
+      <div className="relative z-10">
       <Header />
       
       <main className="pt-24 pb-16">
@@ -164,7 +171,7 @@ const ProductPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="relative aspect-square bg-card rounded-2xl overflow-hidden border border-border">
+              <div className={`relative aspect-square rounded-2xl overflow-hidden border ${product.isNectarDivin ? "bg-black border-primary/40 shadow-[0_0_40px_rgba(212,175,55,0.25)]" : "bg-card border-border"}`}>
                 <img
                   src={product.image}
                   alt={product.name}
@@ -206,8 +213,16 @@ const ProductPage = () => {
                 {product.category === "fleur" ? "Fleur CBD" : "Résine CBD"}
               </span>
 
+              {/* Nectar Divin badge on detail page */}
+              {product.isNectarDivin && (
+                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-black to-primary/30 border border-primary/70 px-4 py-2 rounded-full mb-3 w-fit shadow-[0_0_20px_rgba(212,175,55,0.4)]">
+                  <Crown className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-bold text-primary tracking-widest uppercase">Collection Nectar Divin</span>
+                </div>
+              )}
+
               {/* Force Noire badge on detail page */}
-              {product.isForceNoire && (
+              {!product.isNectarDivin && product.isForceNoire && (
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-red-950 to-black/90 border border-red-800/60 px-4 py-2 rounded-full mb-3 w-fit">
                   <Zap className="w-4 h-4 text-red-400" />
                   <span className="text-sm font-bold text-red-300 tracking-widest uppercase">Collection Force Noire</span>
@@ -244,7 +259,7 @@ const ProductPage = () => {
                   </div>
                 )}
                 <span className="ml-auto px-4 py-1 bg-secondary/50 rounded-full text-sm text-foreground">
-                  {product.isForceNoire || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
+                  {product.isForceNoire || product.isNectarDivin || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
                 </span>
               </div>
 
@@ -473,7 +488,7 @@ const ProductPage = () => {
                           {getPrice(similarProduct.id)?.price ?? similarProduct.price}€/g
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {similarProduct.isForceNoire || similarProduct.cbdPercentage.includes('CBD') ? similarProduct.cbdPercentage : `${similarProduct.cbdPercentage} CBD`}
+                          {similarProduct.isForceNoire || similarProduct.isNectarDivin || similarProduct.cbdPercentage.includes('CBD') ? similarProduct.cbdPercentage : `${similarProduct.cbdPercentage} CBD`}
                         </span>
                       </div>
                     </div>
@@ -486,6 +501,7 @@ const ProductPage = () => {
       </main>
 
       <Footer />
+      </div>
     </div>
   );
 };
