@@ -36,59 +36,49 @@ const WEIGHT_TIERS_B: WeightTier[] = [
   { min: 100, max: Infinity, discount: 0.50 },
 ];
 
-// Force Noire / Élixir Noir fixed price grids (mirrors src/lib/pricing.ts)
-const FORCE_NOIRE_PRICE_GRID: Record<string, { weight: number; price: number }[]> = {
-  "nuage-de-mousseux": [
-    { weight: 1, price: 13 },
-    { weight: 2.5, price: 30 },
-    { weight: 5, price: 55 },
-    { weight: 10, price: 65 },
-  ],
-  "911-og-indoor": [
-    { weight: 1, price: 15 },
-    { weight: 2.5, price: 35 },
-    { weight: 5, price: 65 },
-    { weight: 10, price: 90 },
-  ],
-  "blue-mango-indoor": [
-    { weight: 1, price: 13 },
-    { weight: 2.5, price: 30 },
-    { weight: 5, price: 55 },
-    { weight: 10, price: 80 },
-  ],
+// Force Noire / Nectar Divin dynamic ratios (mirrors src/lib/pricing.ts)
+// finalPrice(tier) = basePrice × weight × ratio
+const FORCE_NOIRE_RATIOS: Record<string, Record<number, number>> = {
+  "nuage-de-mousseux": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.5 },
+  "911-og-indoor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8667, 10: 0.6 },
+  "blue-mango-indoor": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.6154 },
+  "haribo":            { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
+  "heisenberg":        { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
+  "poussiere-dor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8333, 10: 0.625 },
 };
 
-function calculateForceNoirePrice(productId: string, weight: number): number | null {
-  const grid = FORCE_NOIRE_PRICE_GRID[productId];
-  if (!grid || !weight || weight <= 0) return null;
-  const exact = grid.find((g) => g.weight === weight);
-  if (exact) return exact.price;
-  const tier10 = grid[grid.length - 1];
-  const pricePerGram10 = tier10.price / tier10.weight;
-  if (weight < 10) {
-    let lower = grid[0];
-    let upper = grid[grid.length - 1];
-    for (let i = 0; i < grid.length - 1; i++) {
-      if (weight >= grid[i].weight && weight <= grid[i + 1].weight) {
-        lower = grid[i];
-        upper = grid[i + 1];
+function calculateForceNoirePrice(productId: string, weight: number, basePrice: number): number | null {
+  const ratios = FORCE_NOIRE_RATIOS[productId];
+  if (!ratios || !weight || weight <= 0 || !basePrice || basePrice <= 0) return null;
+  const tiers = Object.keys(ratios).map(parseFloat).sort((a, b) => a - b);
+  const priceAt = (w: number) => basePrice * w * ratios[w];
+  if (ratios[weight] !== undefined) return priceAt(weight);
+  const maxTier = tiers[tiers.length - 1];
+  if (weight < maxTier) {
+    let lower = tiers[0];
+    let upper = maxTier;
+    for (let i = 0; i < tiers.length - 1; i++) {
+      if (weight >= tiers[i] && weight <= tiers[i + 1]) {
+        lower = tiers[i];
+        upper = tiers[i + 1];
         break;
       }
     }
-    const ratio = (weight - lower.weight) / (upper.weight - lower.weight);
-    return lower.price + (upper.price - lower.price) * ratio;
+    const ratio = (weight - lower) / (upper - lower);
+    return priceAt(lower) + (priceAt(upper) - priceAt(lower)) * ratio;
   }
+  const pricePerGramMax = priceAt(maxTier) / maxTier;
   let extraDiscount = 0;
   if (weight >= 100) extraDiscount = 0.20;
   else if (weight >= 50) extraDiscount = 0.15;
   else if (weight >= 25) extraDiscount = 0.10;
-  return weight * pricePerGram10 * (1 - extraDiscount);
+  return weight * pricePerGramMax * (1 - extraDiscount);
 }
 
 const ACCESSORY_BULK_THRESHOLD = 10;
 const ACCESSORY_BULK_DISCOUNT = 0.33;
 
-const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor"]);
+const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor", "haribo", "heisenberg"]);
 
 const ACCESSORY_PRICES: Record<string, number> = {
   "pochon-petit": 1.50,
@@ -104,13 +94,14 @@ function getDiscountTier(weight: number, priceGroup: string): WeightTier {
 
 function calculateItemPrice(basePrice: number, weight: number, priceGroup: string, productId?: string): number {
   if (!weight || weight <= 0) return 0;
-  if (productId && FORCE_NOIRE_PRICE_GRID[productId]) {
-    const fn = calculateForceNoirePrice(productId, weight);
+  if (productId && FORCE_NOIRE_RATIOS[productId]) {
+    const fn = calculateForceNoirePrice(productId, weight, basePrice);
     if (fn !== null) return fn;
   }
   const tier = getDiscountTier(weight, priceGroup);
   return basePrice * weight * (1 - tier.discount);
 }
+
 
 function calculateProItemPrice(proPrice: number, weight: number): number {
   if (!weight || weight <= 0) return 0;
