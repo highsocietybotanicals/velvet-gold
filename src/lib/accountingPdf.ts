@@ -193,7 +193,7 @@ export const generateAccountingPdf = (
 
   // Mileage table
   if (mileageLines.length > 0) {
-    if (finalY > 230) {
+    if (finalY > 200) {
       doc.addPage();
       finalY = 20;
     }
@@ -202,20 +202,52 @@ export const generateAccountingPdf = (
     doc.setTextColor(184, 134, 11);
     doc.text("Frais kilométriques (livraisons personnelles)", 12, finalY);
 
+    const mileageBody: any[] = [];
+    const groupedM = new Map<string, AccountingLine[]>();
+    mileageLines.forEach((l) => {
+      const key = format(new Date(l.date), "yyyy-MM");
+      if (!groupedM.has(key)) groupedM.set(key, []);
+      groupedM.get(key)!.push(l);
+    });
+    Array.from(groupedM.keys()).sort().forEach((key) => {
+      const monthLines = groupedM.get(key)!;
+      if (spanMonths > 1) {
+        mileageBody.push([
+          {
+            content: format(new Date(key + "-01"), "MMMM yyyy", { locale: fr }).toUpperCase(),
+            colSpan: 8,
+            styles: { fillColor: [245, 240, 225], textColor: [120, 90, 10], fontStyle: "bold", halign: "left" },
+          },
+        ]);
+      }
+      monthLines.forEach((l) => {
+        mileageBody.push([
+          l.invoiceNumber,
+          format(new Date(l.date), "dd/MM/yyyy"),
+          l.client,
+          l.departureAddress || "15 rue des écoles, 44170 Abbaretz",
+          l.arrivalAddress || "—",
+          { content: (l.distanceKm ?? 0).toFixed(1), styles: { halign: "right" } },
+          { content: (l.ratePerKm ?? 0).toFixed(2).replace(".", ",") + " €", styles: { halign: "right" } },
+          { content: fmt(l.ttc), styles: { halign: "right", fontStyle: "bold" } },
+        ]);
+      });
+    });
+
     autoTable(doc, {
       startY: finalY + 4,
-      head: [["N° Livraison", "Date", "Type", "Client", "Statut", "HT", "TVA", "TTC"]],
-      body: buildBody(mileageLines, spanMonths),
-      headStyles: { fillColor: [120, 90, 10], textColor: [255, 255, 255], fontSize: 9 },
-      styles: { fontSize: 8, cellPadding: 1.4 },
+      head: [["N° Livraison", "Date", "Client", "Départ", "Arrivée", "Km", "€/km", "Total TTC"]],
+      body: mileageBody,
+      headStyles: { fillColor: [120, 90, 10], textColor: [255, 255, 255], fontSize: 8 },
+      styles: { fontSize: 7.5, cellPadding: 1.2, overflow: "linebreak", valign: "middle" },
       columnStyles: {
-        0: { cellWidth: 24 },
-        1: { cellWidth: 20 },
-        2: { cellWidth: 12 },
+        0: { cellWidth: 22 },
+        1: { cellWidth: 18 },
+        2: { cellWidth: 30 },
         3: { cellWidth: 40 },
-        4: { cellWidth: 20 },
-        5: { cellWidth: 20, halign: "right" },
-        6: { cellWidth: 20, halign: "right" },
+        4: { cellWidth: 40 },
+        5: { cellWidth: 12, halign: "right" },
+        6: { cellWidth: 14, halign: "right" },
         7: { cellWidth: 20, halign: "right" },
       },
       margin: { left: 12, right: 12 },
