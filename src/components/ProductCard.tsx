@@ -295,7 +295,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       </Link>
 
       {/* Weight selection - outside Link */}
-      <div className="px-5 pb-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+      <div className="relative z-10 px-5 pb-5 space-y-3" onClick={(e) => e.stopPropagation()}>
         {/* Preset weight buttons */}
         <div className="flex flex-wrap gap-1.5">
           {PRESET_WEIGHTS.map((weight) => (
