@@ -137,12 +137,15 @@ export const useAdminProducts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "db-products"] });
       queryClient.invalidateQueries({ queryKey: ["products-prices"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog", "merged"] });
       toast({
         title: "Produit mis à jour",
         description: "La visibilité du produit a été modifiée.",
       });
     },
+
     onError: (error) => {
       if (import.meta.env.DEV) console.error("Error toggling product:", error);
       toast({
