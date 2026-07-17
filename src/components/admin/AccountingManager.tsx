@@ -215,7 +215,7 @@ const AccountingManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-gold" />
-            Export comptable — factures & TVA
+            Export comptable — factures, TVA & frais km
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
