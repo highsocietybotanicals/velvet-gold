@@ -200,7 +200,7 @@ const nectarDivin: Product[] = [
     price: 10,
     priceGroup: "B",
     cbdPercentage: "70% Nectar Divin",
-    image: hariboAsset.url,
+    image: hariboPremium,
     terpenes: { boise: 55, fruite: 90, epice: 40, terreux: 70 },
     mood: "Sommeil royal",
     category: "resine",
