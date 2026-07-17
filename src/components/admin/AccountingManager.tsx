@@ -18,10 +18,15 @@ import { format, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuart
 import { fr } from "date-fns/locale";
 import { generateAccountingPdf, generateAccountingCsv, summarize, AccountingLine } from "@/lib/accountingPdf";
 
-type TypeFilter = "all" | "site" | "pro";
+type TypeFilter = "all" | "site" | "pro" | "mileage";
 type StatusFilter = "billable" | "paid" | "all";
 
 const statusMeta = (l: AccountingLine) => {
+  if (l.type === "mileage") {
+    if (l.status === "computed") return { label: "Calculé", cls: "bg-emerald-500/15 text-emerald-500 border-emerald-500/40" };
+    if (l.status === "failed") return { label: "Échec", cls: "bg-red-500/15 text-red-500 border-red-500/40" };
+    return { label: l.status || "—", cls: "" };
+  }
   if (l.status === "cancelled") return { label: "Annulée", cls: "bg-red-500/15 text-red-500 border-red-500/40" };
   if (l.type === "site") {
     if (l.paymentStatus === "paid") return { label: "Payée", cls: "bg-emerald-500/15 text-emerald-500 border-emerald-500/40" };
