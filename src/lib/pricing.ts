@@ -261,12 +261,13 @@ export const getGifts = (weight: number): GiftInfo | null => {
 };
 
 export const getDiscountLabel = (weight: number, priceGroup: PriceGroup = "A", productId?: string, basePrice?: number): string => {
-  if (productId && FORCE_NOIRE_PRICE_GRID[productId] && basePrice) {
-    const finalPrice = calculateForceNoirePrice(productId, weight) ?? 0;
+  if (hasForceNoireGrid(productId) && basePrice) {
+    const finalPrice = calculateForceNoirePrice(productId!, weight, basePrice) ?? 0;
     const raw = basePrice * weight;
     const d = raw > 0 ? 1 - finalPrice / raw : 0;
     return d > 0.005 ? `-${Math.round(d * 100)}%` : "0%";
   }
+
   const tier = getDiscountTier(weight, priceGroup);
   return tier.label;
 };
