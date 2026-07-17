@@ -99,14 +99,17 @@ export const useAdminProducts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "db-products"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "pro-prices"] });
       queryClient.invalidateQueries({ queryKey: ["products-prices"] });
       queryClient.invalidateQueries({ queryKey: ["pro-prices"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog", "merged"] });
       toast({
         title: "Prix mis à jour ✅",
         description: "Les modifications ont été enregistrées.",
       });
     },
+
     onError: (error) => {
       if (import.meta.env.DEV) console.error("Error updating price:", error);
       toast({
