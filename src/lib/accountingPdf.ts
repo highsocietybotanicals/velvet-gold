@@ -69,44 +69,7 @@ const statusLabel = (l: AccountingLine) => {
   return l.status || "—";
 };
 
-export const generateAccountingPdf = (
-  lines: AccountingLine[],
-  from: Date,
-  to: Date
-) => {
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const pageWidth = doc.internal.pageSize.getWidth();
-
-  // Header
-  doc.setFillColor(184, 134, 11);
-  doc.rect(0, 0, pageWidth, 20, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("HIGH SOCIETY BOTANICALS", 12, 12);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.text("Récapitulatif comptable", pageWidth - 12, 12, { align: "right" });
-
-  doc.setTextColor(20, 20, 20);
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.text("Journal des factures", 12, 32);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(
-    `Période : ${format(from, "dd/MM/yyyy")} → ${format(to, "dd/MM/yyyy")}`,
-    12,
-    39
-  );
-  doc.text(
-    `Édité le ${format(new Date(), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}`,
-    12,
-    44
-  );
-
-  const spanMonths =
-    (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()) + 1;
+const buildBody = (lines: AccountingLine[], spanMonths: number) => {
   const grouped = new Map<string, AccountingLine[]>();
   lines.forEach((l) => {
     const key = format(new Date(l.date), "yyyy-MM");
@@ -133,7 +96,7 @@ export const generateAccountingPdf = (
       body.push([
         { content: l.invoiceNumber, styles: rowStyle },
         { content: format(new Date(l.date), "dd/MM/yyyy"), styles: rowStyle },
-        { content: l.type === "site" ? "Site" : "Pro", styles: rowStyle },
+        { content: typeLabel(l), styles: rowStyle },
         { content: l.client, styles: rowStyle },
         { content: statusLabel(l), styles: rowStyle },
         { content: fmt(l.ht), styles: { ...rowStyle, halign: "right" } },
@@ -155,11 +118,58 @@ export const generateAccountingPdf = (
       ]);
     }
   });
+  return body;
+};
 
+export const generateAccountingPdf = (
+  lines: AccountingLine[],
+  from: Date,
+  to: Date
+) => {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Header
+  doc.setFillColor(184, 134, 11);
+  doc.rect(0, 0, pageWidth, 20, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("HIGH SOCIETY BOTANICALS", 12, 12);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.text("Récapitulatif comptable", pageWidth - 12, 12, { align: "right" });
+
+  doc.setTextColor(20, 20, 20);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Journal comptable — factures & frais kilométriques", 12, 32);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    `Période : ${format(from, "dd/MM/yyyy")} → ${format(to, "dd/MM/yyyy")}`,
+    12,
+    39
+  );
+  doc.text(
+    `Édité le ${format(new Date(), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}`,
+    12,
+    44
+  );
+
+  const spanMonths =
+    (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()) + 1;
+
+  const invoiceLines = lines.filter((l) => l.type !== "mileage");
+  const mileageLines = lines.filter((l) => l.type === "mileage");
+
+  let startY = 50;
+
+  // Invoice table
   autoTable(doc, {
-    startY: 50,
+    startY,
     head: [["N° Facture", "Date", "Type", "Client", "Statut", "HT", "TVA (20%)", "TTC"]],
-    body,
+    body: buildBody(invoiceLines, spanMonths),
     headStyles: { fillColor: [184, 134, 11], textColor: [255, 255, 255], fontSize: 9 },
     styles: { fontSize: 8, cellPadding: 1.4 },
     columnStyles: {
@@ -175,8 +185,40 @@ export const generateAccountingPdf = (
     margin: { left: 12, right: 12 },
   });
 
-  const s = summarize(lines);
-  const finalY = (doc as any).lastAutoTable.finalY + 8;
+  let finalY = (doc as any).lastAutoTable.finalY + 8;
+
+  // Mileage table
+  if (mileageLines.length > 0) {
+    if (finalY > 230) {
+      doc.addPage();
+      finalY = 20;
+    }
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(184, 134, 11);
+    doc.text("Frais kilométriques (livraisons personnelles)", 12, finalY);
+
+    autoTable(doc, {
+      startY: finalY + 4,
+      head: [["N° Livraison", "Date", "Type", "Client", "Statut", "HT", "TVA", "TTC"]],
+      body: buildBody(mileageLines, spanMonths),
+      headStyles: { fillColor: [120, 90, 10], textColor: [255, 255, 255], fontSize: 9 },
+      styles: { fontSize: 8, cellPadding: 1.4 },
+      columnStyles: {
+        0: { cellWidth: 24 },
+        1: { cellWidth: 20 },
+        2: { cellWidth: 12 },
+        3: { cellWidth: 40 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 20, halign: "right" },
+        6: { cellWidth: 20, halign: "right" },
+        7: { cellWidth: 20, halign: "right" },
+      },
+      margin: { left: 12, right: 12 },
+    });
+    finalY = (doc as any).lastAutoTable.finalY + 8;
+  }
+
   doc.setDrawColor(184, 134, 11);
   doc.setLineWidth(0.5);
   doc.line(12, finalY, pageWidth - 12, finalY);
@@ -184,23 +226,42 @@ export const generateAccountingPdf = (
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(184, 134, 11);
-  doc.text("RÉCAPITULATIF TVA (hors annulées)", 12, finalY + 8);
+  doc.text("RÉCAPITULATIF (hors annulées)", 12, finalY + 8);
 
   doc.setFontSize(10);
   doc.setTextColor(30, 30, 30);
   doc.setFont("helvetica", "normal");
   const rY = finalY + 16;
+  const invoiceSummary = summarize(invoiceLines);
+  const mileageSummary = summarize(mileageLines);
   doc.text(`Nombre de factures :`, 12, rY);
-  doc.text(String(s.count), 80, rY, { align: "right" });
-  doc.text(`Total HT :`, 12, rY + 6);
-  doc.text(fmt(s.totalHT), 80, rY + 6, { align: "right" });
+  doc.text(String(invoiceSummary.count), 80, rY, { align: "right" });
+  doc.text(`Total HT factures :`, 12, rY + 6);
+  doc.text(fmt(invoiceSummary.totalHT), 80, rY + 6, { align: "right" });
   doc.text(`TVA collectée (20%) :`, 12, rY + 12);
-  doc.text(fmt(s.totalTVA), 80, rY + 12, { align: "right" });
+  doc.text(fmt(invoiceSummary.totalTVA), 80, rY + 12, { align: "right" });
   doc.setFont("helvetica", "bold");
   doc.setTextColor(184, 134, 11);
   doc.setFontSize(12);
-  doc.text(`Total TTC :`, 12, rY + 20);
-  doc.text(fmt(s.totalTTC), 80, rY + 20, { align: "right" });
+  doc.text(`Total TTC factures :`, 12, rY + 20);
+  doc.text(fmt(invoiceSummary.totalTTC), 80, rY + 20, { align: "right" });
+
+  if (mileageLines.length > 0) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(30, 30, 30);
+    doc.text(`Nombre de livraisons :`, 110, rY);
+    doc.text(String(mileageSummary.count), 178, rY, { align: "right" });
+    doc.text(`Frais kilométriques HT/TTC :`, 110, rY + 6);
+    doc.text(fmt(mileageSummary.totalHT), 178, rY + 6, { align: "right" });
+    doc.text(`TVA non récupérable :`, 110, rY + 12);
+    doc.text(fmt(mileageSummary.totalTVA), 178, rY + 12, { align: "right" });
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(184, 134, 11);
+    doc.setFontSize(12);
+    doc.text(`Total frais km :`, 110, rY + 20);
+    doc.text(fmt(mileageSummary.totalTTC), 178, rY + 20, { align: "right" });
+  }
 
   const pageHeight = doc.internal.pageSize.getHeight();
   doc.setFontSize(7);
