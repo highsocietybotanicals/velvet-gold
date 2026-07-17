@@ -318,7 +318,7 @@ const SocialMediaManager = () => {
 
       const referenceImage = await imageUrlToBase64(referenceImageUrl);
 
-      const scene = scenePerPost[post.id] || "real";
+      const scene = scenePerPost[post.id] || "mix";
 
       const { data, error } = await supabase.functions.invoke("social-content", {
         body: {
@@ -465,7 +465,7 @@ const SocialMediaManager = () => {
                 </Button>
               )}
               <Select
-                value={scenePerPost[post.id] || "real"}
+                value={scenePerPost[post.id] || "mix"}
                 onValueChange={(v) => setScenePerPost(prev => ({ ...prev, [post.id]: v as SceneType }))}
               >
                 <SelectTrigger className="h-7 text-xs w-auto min-w-[150px]">
