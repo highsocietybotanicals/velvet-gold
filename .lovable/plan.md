@@ -1,79 +1,47 @@
 
-## Objectif
+## Correction Haribo — Prix + Visuel
 
-Créer un nouveau produit **Haribo** — résine, gamme **Nectar Divin** (plus puissante que l'Élixir Noir) — à **10 €/g TTC** (100 € les 10g), avec une carte produit au fond noir et particules dorées, à partir du fichier `HARIBO.mp4`.
+### 1. Grille de prix (retenue : 15/35/60/100)
 
-## 1. Visuel produit
+Ajouter Haribo à la grille fixe par produit dans `src/lib/pricing.ts`. Cette grille prime déjà sur les tiers Groupe B (voir `FORCE_NOIRE_PRICE_GRID` : quand un produit y figure, `calculatePrice` et `getLowestPricePerGram` utilisent la grille au lieu du dégressif).
 
-- Extraire une image fixe nette de `HARIBO.mp4` (frame ~2s, format portrait 464×832) via `ffmpeg`.
-- Uploader l'image via `lovable-assets` → pointeur `src/assets/resins/haribo.jpg.asset.json`.
-- Ne pas laisser le binaire dans le repo.
+Grille Haribo (TTC) :
+```
+1g   →  15 €
+2.5g →  35 €
+5g   →  60 €
+10g  → 100 €
+```
+Au-delà de 10g : base 10 €/g (100 ÷ 10) + dégressif additionnel léger déjà en place dans la fonction (−10 % à 25g, −15 % à 50g, −20 % à 100g).
 
-## 2. Nouvelle gamme "Nectar Divin"
+Renommage minimal : la constante `FORCE_NOIRE_PRICE_GRID` sera renommée `PRODUCT_PRICE_GRID` (plus neutre, car elle sert désormais aussi à Nectar Divin). Toutes les références internes (`calculateForceNoirePrice`, `getLowestPricePerGram`, `calculatePrice`, `calculateItemPrice`, `getDiscountLabel`) sont mises à jour dans le même fichier. La fonction `calculateForceNoirePrice` reste appelée ainsi (comportement identique), pour éviter de toucher d'autres fichiers.
 
-Introduction d'un flag produit distinct de `is_force_noire` pour identifier la gamme ultra-premium.
+Vérification affichage : le "À partir de" utilisera `getLowestPricePerGram` → grille 100g extrapolée = 10 €/g × (1 − 0.20) = **8 €/g** affiché.
 
-- **Migration DB** : ajouter la colonne `is_nectar_divin BOOLEAN DEFAULT FALSE` sur `public.products`.
-- Types Supabase régénérés après migration.
-- Mise à jour de `src/data/products.ts` (interface `Product` + champ optionnel `isNectarDivin`).
+### 2. Visuel produit (retenu : nouvelle photo studio premium)
 
-## 3. Création du produit
+Générer un nouveau rendu **haute joaillerie** cohérent avec Ice O Lator / Golden CBN / Nuage de Mousseux :
 
-Insertion via `supabase--insert` dans `public.products` :
+- Fond noir profond, éclairage dramatique clair-obscur, reflets dorés subtils.
+- Sujet : bloc de résine ambrée-dorée translucide (rappel de la couleur du plan HARIBO), texture cristalline/laquée, mise en scène type nature morte de joaillerie.
+- Cadrage carré (1024×1024), profondeur de champ courte, léger reflet au sol.
+- Aucun texte, aucun logo, aucune marque.
+- Style et palette calés sur les autres résines premium du catalogue.
 
-| Champ | Valeur |
-|---|---|
-| id | `haribo` |
-| name | `Haribo` |
-| category | `resine` |
-| subtitle | `Résine Nectar Divin` |
-| badge | `Nectar Divin` |
-| description | Résine ultra-premium, sommeil royal, arômes gourmands de bonbon fruité, puissance supérieure à l'Élixir Noir. |
-| price | `10` (€/g TTC → 100€ les 10g) |
-| price_group | `B` |
-| cbd_percentage | `70% Nectar Divin` |
-| image_url | URL CDN de la frame extraite |
-| intention_match | `["sommeil","detente"]` |
-| taste_match | `["fruite"]` |
-| terpenes | `{ boise: 55, fruite: 90, epice: 40, terreux: 70 }` |
-| mood | `Sommeil royal` |
-| is_force_noire | `false` |
-| is_nectar_divin | `true` |
-| display_order | `0` (mis en tête) |
-| is_active | `true` |
+Sortie : `src/assets/resins/haribo-premium.jpg` (image standard, pas d'asset CDN — mêmes conventions que les autres résines du catalogue statique).
 
-Aucune entrée dans `pro_prices` (pas de tarif Pro pour l'instant).
+L'ancien pointeur CDN `src/assets/resins/haribo.jpg.asset.json` est supprimé (avec `lovable-assets delete` pour retirer aussi le binaire du CDN) puisqu'inutilisé.
 
-## 4. UI — Style Nectar Divin
+### 3. Synchronisation
 
-Sur les composants qui affichent déjà un traitement "Force Noire" (`ProductCard`, `ProductPage`, `ProductSection`, chip/badge sur catalogue) :
+- `src/data/products.ts` : remplacer `image: hariboAsset.url` par un import du nouveau fichier `haribo-premium.jpg`, retirer l'import du pointeur JSON.
+- `public.products.image_url` en base : mettre à jour vers le chemin du nouvel asset via `supabase--insert` (UPDATE simple).
+- Aucun autre changement (thème Nectar Divin, badge, catégorie, description, catalogue → déjà en place).
 
-- Détection : `product.isNectarDivin`.
-- Traitement visuel : **fond noir profond** + overlay de **particules dorées** (réutilisation du composant existant `GoldParticles`) derrière l'image et sous les infos.
-- Badge doré "Nectar Divin" avec icône (ex. `Sparkles` ou `Crown` de lucide-react) et texte or.
-- Priorité d'affichage : si `isNectarDivin` → thème Nectar Divin ; sinon si `isForceNoire` → thème Force Noire ; sinon standard.
-- Ajout dans les matrices `recommendationMatrix` / `resinRecommendationMatrix` : Haribo remplace la reco résine `sommeil / fruite` (actuellement Ice O Lator).
+### Fichiers touchés
 
-## 5. Sync catalogue
-
-- `useDbProducts` retourne déjà `is_nectar_divin` après régénération des types.
-- Le hook `useProducts` (fusion DB + statique) transmet le flag `isNectarDivin` aux composants.
-- Rien à faire côté panier / pricing (le prix 10€/g est traité par la logique existante Groupe B).
-
-## Fichiers modifiés / créés
-
-- `supabase/migrations/…_add_nectar_divin.sql` — colonne `is_nectar_divin`.
-- `supabase--insert` — INSERT du produit Haribo.
-- `src/assets/resins/haribo.jpg.asset.json` — pointeur CDN.
-- `src/data/products.ts` — interface + éventuel objet statique de secours.
-- `src/hooks/useProducts.ts` — propagation du flag.
-- `src/components/ProductCard.tsx` — thème Nectar Divin (fond noir + GoldParticles + badge).
-- `src/pages/ProductPage.tsx` — même traitement sur la fiche détaillée.
-- `src/components/ProductSection.tsx` — badge/coloration éventuelle.
-
-## Détails techniques
-
-- Extraction frame :  
-  `ffmpeg -ss 2 -i /mnt/user-uploads/HARIBO.mp4 -frames:v 1 -q:v 2 /tmp/haribo.jpg`
-- Format portrait 464×832 — sera affiché dans les cards en `object-cover` comme les autres visuels.
-- `GoldParticles` (déjà existant, 30 particules dorées animées) sera positionné en `absolute inset-0 pointer-events-none` derrière l'image dans la carte Nectar Divin.
+- `src/lib/pricing.ts` — ajout entrée grille Haribo (+ renommage interne facultatif).
+- `src/data/products.ts` — swap de l'import image.
+- `src/assets/resins/haribo-premium.jpg` — nouveau visuel généré.
+- `src/assets/resins/haribo.jpg.asset.json` — supprimé + purge CDN.
+- Table `products` — UPDATE du `image_url` de la ligne `haribo`.
