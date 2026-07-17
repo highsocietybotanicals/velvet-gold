@@ -23,7 +23,7 @@ const CataloguePage = () => {
   const [showFilters, setShowFilters] = useState(false);
 
 
-  const allProducts = useMemo(() => [...flowers, ...resins], []);
+  
 
   const filteredProducts = useMemo(() => {
     if (category === "accessoire") return [];
