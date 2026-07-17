@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -22,6 +24,16 @@ import {
   Paintbrush,
   Undo2,
 } from "lucide-react";
+
+type SceneType = "packshot" | "hands" | "rolling" | "lifestyle";
+
+const SCENE_OPTIONS: { value: SceneType; label: string }[] = [
+  { value: "packshot", label: "📸 Packshot studio" },
+  { value: "hands", label: "🤲 Dans les mains" },
+  { value: "rolling", label: "🌿 Effriter / rouler" },
+  { value: "lifestyle", label: "🥃 Lifestyle luxe" },
+];
+
 
 interface SocialPost {
   id: string;
