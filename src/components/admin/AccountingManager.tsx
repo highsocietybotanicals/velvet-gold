@@ -259,7 +259,7 @@ const AccountingManager = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <Card className="border-border/50"><CardContent className="p-4">
               <p className="text-xs text-muted-foreground">Nb factures (hors annulées)</p>
               <p className="text-2xl font-bold">{totals.count}</p>
@@ -275,6 +275,10 @@ const AccountingManager = () => {
             <Card className="border-gold/40"><CardContent className="p-4">
               <p className="text-xs text-muted-foreground">Total TTC</p>
               <p className="text-2xl font-bold text-gold">{fmtEur(totals.totalTTC)}</p>
+            </CardContent></Card>
+            <Card className="border-red-400/40"><CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Frais km ({mileageLines.length})</p>
+              <p className="text-2xl font-bold text-red-400">{fmtEur(mileageTotals.totalTTC)}</p>
             </CardContent></Card>
           </div>
 
