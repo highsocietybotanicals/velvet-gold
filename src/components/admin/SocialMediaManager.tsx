@@ -44,6 +44,29 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
+const imageUrlToBase64 = async (url: string): Promise<{ base64: string; mime: string }> => {
+  const response = await fetch(url, { credentials: "same-origin" });
+  if (!response.ok) {
+    throw new Error("Impossible de lire la photo réelle du produit depuis le site.");
+  }
+
+  const blob = await response.blob();
+  if (!blob.type.startsWith("image/")) {
+    throw new Error("La photo produit reçue n'est pas une image valide.");
+  }
+
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      resolve({ base64, mime: blob.type });
+    };
+    reader.onerror = () => reject(new Error("Impossible de convertir la photo produit."));
+    reader.readAsDataURL(blob);
+  });
+};
+
 
 interface SocialPost {
   id: string;
@@ -287,6 +310,11 @@ const SocialMediaManager = () => {
       const referenceImageUrl = productImagePath
         ? (productImagePath.startsWith("http") ? productImagePath : `${window.location.origin}${productImagePath}`)
         : null;
+      if (!referenceImageUrl) {
+        throw new Error("Aucune photo réelle trouvée pour ce produit.");
+      }
+
+      const referenceImage = await imageUrlToBase64(referenceImageUrl);
 
       const scene = scenePerPost[post.id] || "real";
 
@@ -298,6 +326,8 @@ const SocialMediaManager = () => {
           products: productsData,
           sceneType: scene,
           referenceImageUrl,
+          referenceImageData: referenceImage.base64,
+          referenceImageMime: referenceImage.mime,
         },
       });
 
