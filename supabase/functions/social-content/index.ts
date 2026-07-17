@@ -495,39 +495,47 @@ serve(async (req) => {
       const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
       if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
-      // Generate 3 variants in parallel via Google Gemini API directly (Nano Banana Pro)
-      const variantPromises = VARIANT_HINTS.map(async (hint, idx) => {
-        const prompt = buildScenePrompt(scene, productInfo.name, productInfo.description, productInfo.category, hint);
+      // 3 variantes = 3 scènes différentes en mode "mix", sinon 3 variations d'une même scène
+      const jobs = scene === "mix"
+        ? MIX_VARIANTS
+        : VARIANT_HINTS.map((hint) => ({ scene, hint }));
 
-        const aiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${GEMINI_API_KEY}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{
-                role: "user",
-                parts: [
-                  { text: prompt },
-                  { inline_data: { mime_type: referenceMime, data: referenceBase64 } },
-                ],
-              }],
-            }),
+      const variantPromises = jobs.map(async (job, idx) => {
+        const prompt = buildScenePrompt(job.scene, productInfo.name, productInfo.description, productInfo.category, job.hint);
+
+        // Passerelle Lovable AI (même service utilisé pour toutes les images du site)
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image-preview",
+            messages: [{
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                { type: "image_url", image_url: { url: `data:${referenceMime};base64,${referenceBase64}` } },
+              ],
+            }],
+            modalities: ["image", "text"],
+          }),
+        });
 
         if (!aiResponse.ok) {
           const errText = await aiResponse.text();
           console.error(`Variant ${idx} error:`, aiResponse.status, errText);
-          throw new Error(`Gemini status ${aiResponse.status}: ${errText}`);
+          throw new Error(`AI status ${aiResponse.status}: ${errText}`);
         }
 
         const aiData = await aiResponse.json();
-        const parts = aiData?.candidates?.[0]?.content?.parts || [];
-        const imgPart = parts.find((p: any) => p.inline_data?.data || p.inlineData?.data);
-        const b64 = imgPart?.inline_data?.data || imgPart?.inlineData?.data;
-        if (!b64) throw new Error("No image returned");
+        const msg = aiData?.choices?.[0]?.message;
+        const imgUrl: string | undefined = msg?.images?.[0]?.image_url?.url
+          || (Array.isArray(msg?.content) ? msg.content.find((c: any) => c?.image_url?.url)?.image_url?.url : undefined);
+        if (!imgUrl) throw new Error("No image returned from AI gateway");
 
+        const b64 = imgUrl.includes(",") ? imgUrl.split(",").pop()! : imgUrl;
         const imageBytes = Uint8Array.from(atob(b64), (c: string) => c.charCodeAt(0));
         const filePath = `generated/${postId}-v${idx}-${Date.now()}.png`;
 
@@ -540,6 +548,7 @@ serve(async (req) => {
         const { data: publicUrlData } = supabase.storage.from("social-media").getPublicUrl(filePath);
         return publicUrlData.publicUrl;
       });
+
 
 
       const results = await Promise.allSettled(variantPromises);
