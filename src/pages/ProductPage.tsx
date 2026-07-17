@@ -142,7 +142,13 @@ const ProductPage = () => {
   const similarProducts = getSimilarProducts(product, 4);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen relative ${product.isNectarDivin ? "bg-black" : "bg-background"}`}>
+      {product.isNectarDivin && (
+        <div className="absolute inset-0 pointer-events-none z-0 opacity-60">
+          <GoldParticles />
+        </div>
+      )}
+      <div className="relative z-10">
       <Header />
       
       <main className="pt-24 pb-16">
@@ -165,7 +171,7 @@ const ProductPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="relative aspect-square bg-card rounded-2xl overflow-hidden border border-border">
+              <div className={`relative aspect-square rounded-2xl overflow-hidden border ${product.isNectarDivin ? "bg-black border-primary/40 shadow-[0_0_40px_rgba(212,175,55,0.25)]" : "bg-card border-border"}`}>
                 <img
                   src={product.image}
                   alt={product.name}
