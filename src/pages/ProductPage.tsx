@@ -213,8 +213,16 @@ const ProductPage = () => {
                 {product.category === "fleur" ? "Fleur CBD" : "Résine CBD"}
               </span>
 
+              {/* Nectar Divin badge on detail page */}
+              {product.isNectarDivin && (
+                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-black to-primary/30 border border-primary/70 px-4 py-2 rounded-full mb-3 w-fit shadow-[0_0_20px_rgba(212,175,55,0.4)]">
+                  <Crown className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-bold text-primary tracking-widest uppercase">Collection Nectar Divin</span>
+                </div>
+              )}
+
               {/* Force Noire badge on detail page */}
-              {product.isForceNoire && (
+              {!product.isNectarDivin && product.isForceNoire && (
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-red-950 to-black/90 border border-red-800/60 px-4 py-2 rounded-full mb-3 w-fit">
                   <Zap className="w-4 h-4 text-red-400" />
                   <span className="text-sm font-bold text-red-300 tracking-widest uppercase">Collection Force Noire</span>
