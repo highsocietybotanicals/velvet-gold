@@ -17,6 +17,10 @@ export interface AccountingLine {
   status: string;
   paymentStatus?: string;
   details?: string;
+  departureAddress?: string;
+  arrivalAddress?: string;
+  distanceKm?: number;
+  ratePerKm?: number;
 }
 
 export interface AccountingSummary {
