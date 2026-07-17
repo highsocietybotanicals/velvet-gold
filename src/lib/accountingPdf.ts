@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-export type AccountingType = "site" | "pro";
+export type AccountingType = "site" | "pro" | "mileage";
 
 export interface AccountingLine {
   id: string;
@@ -16,6 +16,7 @@ export interface AccountingLine {
   ttc: number;
   status: string;
   paymentStatus?: string;
+  details?: string;
 }
 
 export interface AccountingSummary {
