@@ -100,8 +100,17 @@ const ProductsManager = () => {
                       <TableCell className="font-semibold">{Number(p.price).toFixed(2)}€/g</TableCell>
                       <TableCell>{proPrices[p.id] != null ? `${Number(proPrices[p.id]).toFixed(2)}€` : "—"}</TableCell>
                       <TableCell>
-                        {p.is_active ? <Badge className="bg-green-500/20 text-green-500">Actif</Badge> : <Badge variant="outline">Inactif</Badge>}
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={p.is_active}
+                            disabled={isToggling}
+                            onCheckedChange={(v) => toggleProduct(p.id, v)}
+                            aria-label={`Activer ${p.name}`}
+                          />
+                          {p.is_active ? <Badge className="bg-green-500/20 text-green-500">Actif</Badge> : <Badge variant="outline">Inactif</Badge>}
+                        </div>
                       </TableCell>
+
                       <TableCell>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(p)}>
