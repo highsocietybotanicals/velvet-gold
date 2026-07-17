@@ -44,7 +44,19 @@ export const summarize = (lines: AccountingLine[]): AccountingSummary =>
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",") + " €";
 
+const typeLabel = (l: AccountingLine) => {
+  if (l.type === "site") return "Site";
+  if (l.type === "pro") return "Pro";
+  if (l.type === "mileage") return "Frais km";
+  return l.type;
+};
+
 const statusLabel = (l: AccountingLine) => {
+  if (l.type === "mileage") {
+    if (l.status === "computed") return "Calculé";
+    if (l.status === "failed") return "Échec";
+    return l.status || "—";
+  }
   if (l.status === "cancelled") return "Annulée";
   if (l.type === "site") {
     if (l.paymentStatus === "paid") return "Payée";
