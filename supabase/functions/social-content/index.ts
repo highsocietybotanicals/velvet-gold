@@ -146,6 +146,29 @@ const VARIANT_HINTS = [
   "Variation uniquement sur le fond et la lumière : léger espace négatif premium, produit inchangé et central.",
 ];
 
+function normalizeProductKey(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.toLowerCase() === "null" || trimmed.toLowerCase() === "undefined") return null;
+  return trimmed
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/["'“”]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function findCatalogProduct(products: any[], rawProductId: unknown) {
+  const key = normalizeProductKey(rawProductId);
+  if (!key) return null;
+  return products.find((p: any) => {
+    const idKey = normalizeProductKey(p.id);
+    const nameKey = normalizeProductKey(p.name);
+    return idKey === key || nameKey === key || Boolean(nameKey && key.includes(nameKey)) || Boolean(idKey && key.includes(idKey));
+  }) || null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -206,7 +229,7 @@ serve(async (req) => {
                       properties: {
                         position: { type: "integer", description: "Position in series (1-7)" },
                         post_type: { type: "string", enum: ["teasing", "product", "education", "lifestyle", "conseil", "cta"] },
-                        product_id: { type: "string", description: "ID of the product to feature, or null for non-product posts" },
+                        product_id: { type: "string", enum: products.map((p: any) => p.id), description: "Exact product ID from the catalog. Never return the product name. Omit for non-product posts." },
                         caption: { type: "string", description: "The full caption with hashtags" },
                       },
                       required: ["position", "post_type", "caption"],
@@ -253,16 +276,20 @@ serve(async (req) => {
         }
       }
 
-      const postsToInsert = seriesPlan.posts.map((post: any) => ({
-        series_id: seriesId,
-        series_position: post.position,
-        post_type: post.post_type,
-        product_id: post.product_id || null,
-        image_url: post.product_id ? (productImageMap[post.product_id] || null) : null,
-        caption: post.caption,
-        theme: seriesPlan.series_name,
-        status: "draft",
-      }));
+      const postsToInsert = seriesPlan.posts.map((post: any) => {
+        const normalizedProduct = findCatalogProduct(products, post.product_id);
+        const normalizedProductId = normalizedProduct?.id || null;
+        return {
+          series_id: seriesId,
+          series_position: post.position,
+          post_type: post.post_type,
+          product_id: normalizedProductId,
+          image_url: normalizedProductId ? (productImageMap[normalizedProductId] || null) : null,
+          caption: post.caption,
+          theme: seriesPlan.series_name,
+          status: "draft",
+        };
+      });
 
       const { data: insertedPosts, error: insertError } = await supabase
         .from("social_posts")
@@ -356,7 +383,7 @@ serve(async (req) => {
     if (action === "generate-image") {
       if (!postId) throw new Error("postId required");
       const scene = (sceneType as string) || "packshot";
-      const validScenes = ["packshot", "hands", "rolling", "lifestyle"];
+      const validScenes = ["real", "packshot", "hands", "rolling", "lifestyle"];
       if (!validScenes.includes(scene)) throw new Error(`Invalid sceneType: ${scene}`);
 
       const { data: post, error: postError } = await supabase
@@ -392,6 +419,7 @@ serve(async (req) => {
 
       // Fetch reference image and inline as base64. No generic fallback: fidelity requires the real product photo.
       let referenceBase64: string | null = null;
+      let referenceBytes: Uint8Array | null = null;
       let referenceMime = "image/jpeg";
       if (realReferenceUrl) {
         try {
@@ -400,6 +428,7 @@ serve(async (req) => {
             const ct = imgRes.headers.get("content-type") || "image/jpeg";
             referenceMime = ct.split(";")[0].trim();
             const buf = new Uint8Array(await imgRes.arrayBuffer());
+            referenceBytes = buf;
             // Convert to base64 in chunks (avoid stack overflow on large images)
             let bin = "";
             const chunk = 0x8000;
@@ -420,6 +449,30 @@ serve(async (req) => {
       }
 
       const hasReference = true;
+
+      if (scene === "real") {
+        if (!referenceBytes) {
+          return jsonResponse({ error: "Impossible de copier la photo réelle du produit." }, 400);
+        }
+
+        const extension = referenceMime.includes("png") ? "png" : referenceMime.includes("webp") ? "webp" : "jpg";
+        const uploadPromises = [0, 1, 2].map(async (idx) => {
+          const filePath = `real-products/${postId}-real-v${idx}-${Date.now()}.${extension}`;
+          const { error: uploadError } = await supabase.storage
+            .from("social-media")
+            .upload(filePath, referenceBytes!, { contentType: referenceMime, upsert: true });
+
+          if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
+          const { data: publicUrlData } = supabase.storage.from("social-media").getPublicUrl(filePath);
+          return publicUrlData.publicUrl;
+        });
+
+        const variants = await Promise.all(uploadPromises);
+        return new Response(JSON.stringify({ success: true, variants }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
       if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
