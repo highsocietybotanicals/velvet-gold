@@ -25,15 +25,17 @@ import {
   Undo2,
 } from "lucide-react";
 
-type SceneType = "real" | "packshot" | "hands" | "rolling" | "lifestyle";
+type SceneType = "mix" | "real" | "packshot" | "hands" | "rolling" | "lifestyle";
 
 const SCENE_OPTIONS: { value: SceneType; label: string }[] = [
+  { value: "mix", label: "✨ Mix créatif (3 scènes différentes)" },
   { value: "real", label: "✅ Photo réelle du site" },
   { value: "packshot", label: "📸 Packshot studio" },
   { value: "hands", label: "🤲 Dans les mains" },
   { value: "rolling", label: "🌿 Effriter / rouler" },
   { value: "lifestyle", label: "🥃 Lifestyle luxe" },
 ];
+
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof Error) return error.message;
