@@ -25,9 +25,10 @@ import {
   Undo2,
 } from "lucide-react";
 
-type SceneType = "packshot" | "hands" | "rolling" | "lifestyle";
+type SceneType = "real" | "packshot" | "hands" | "rolling" | "lifestyle";
 
 const SCENE_OPTIONS: { value: SceneType; label: string }[] = [
+  { value: "real", label: "✅ Photo réelle du site" },
   { value: "packshot", label: "📸 Packshot studio" },
   { value: "hands", label: "🤲 Dans les mains" },
   { value: "rolling", label: "🌿 Effriter / rouler" },
@@ -278,7 +279,7 @@ const SocialMediaManager = () => {
         ? (productImagePath.startsWith("http") ? productImagePath : `${window.location.origin}${productImagePath}`)
         : null;
 
-      const scene = scenePerPost[post.id] || "packshot";
+      const scene = scenePerPost[post.id] || "real";
 
       const { data, error } = await supabase.functions.invoke("social-content", {
         body: {
@@ -423,7 +424,7 @@ const SocialMediaManager = () => {
                 </Button>
               )}
               <Select
-                value={scenePerPost[post.id] || "packshot"}
+                value={scenePerPost[post.id] || "real"}
                 onValueChange={(v) => setScenePerPost(prev => ({ ...prev, [post.id]: v as SceneType }))}
               >
                 <SelectTrigger className="h-7 text-xs w-auto min-w-[150px]">
@@ -445,7 +446,7 @@ const SocialMediaManager = () => {
                 {generatingImage === post.id ? (
                   <><Loader2 className="h-3 w-3 animate-spin mr-1" />Shooting IA...</>
                 ) : (
-                  <><Paintbrush className="h-3 w-3 mr-1" />Générer 3 visuels</>
+                  <><Paintbrush className="h-3 w-3 mr-1" />Créer visuel</>
                 )}
               </Button>
               {(originalImageUrls[post.id] || post.product_id) && post.image_url?.includes("generated/") && (
@@ -595,7 +596,7 @@ const SocialMediaManager = () => {
               Choisis ton visuel préféré
             </DialogTitle>
             <DialogDescription>
-              L'IA a généré 3 propositions à partir de la vraie photo produit. Clique sur celle que tu veux appliquer au post.
+              Clique sur le visuel à appliquer au post. Le mode recommandé conserve exactement la photo réelle du site.
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
