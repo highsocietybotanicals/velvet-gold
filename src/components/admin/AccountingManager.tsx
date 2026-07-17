@@ -168,17 +168,23 @@ const AccountingManager = () => {
       out = out.filter((l) => {
         if (l.status === "cancelled") return false;
         if (l.type === "site") return l.paymentStatus === "paid";
+        if (l.type === "mileage") return l.status === "computed";
         return l.status !== "cancelled";
       });
     } else if (statusFilter === "paid") {
       out = out.filter((l) => {
         if (l.status === "cancelled") return false;
         if (l.type === "site") return l.paymentStatus === "paid";
+        if (l.type === "mileage") return l.status === "computed";
         return l.status === "paid";
       });
     }
     return out;
   }, [data, typeFilter, statusFilter]);
+
+  const invoiceLines = useMemo(() => lines.filter((l) => l.type !== "mileage"), [lines]);
+  const mileageLines = useMemo(() => lines.filter((l) => l.type === "mileage"), [lines]);
+  const mileageTotals = useMemo(() => summarize(mileageLines), [mileageLines]);
 
   const totals = useMemo(() => summarize(lines), [lines]);
   const fmtEur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
