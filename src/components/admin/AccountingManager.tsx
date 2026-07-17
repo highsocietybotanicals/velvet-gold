@@ -78,7 +78,7 @@ const AccountingManager = () => {
           .order("issued_at", { ascending: true }),
         supabase
           .from("delivery_mileage")
-          .select("id, order_id, computed_at, status, cost_euros, distance_km_round_trip, rate_per_km, arrival_address")
+          .select("id, order_id, computed_at, status, cost_euros, distance_km_round_trip, rate_per_km, arrival_address, departure_address")
           .gte("computed_at", fromDate.toISOString())
           .lte("computed_at", toDate.toISOString())
           .order("computed_at", { ascending: true }),
@@ -102,19 +102,33 @@ const AccountingManager = () => {
       }
 
       const orderNumberById: Record<string, string> = {};
+      const orderClientById: Record<string, string> = {};
       (ordersRes.data || []).forEach((o: any) => {
         orderNumberById[o.id] = o.display_order_number || `HSB-${String(o.order_number).padStart(6, "0")}`;
+        orderClientById[o.id] = o.guest_name || (o.user_id ? userEmails[o.user_id] : "") || o.guest_email || "Client";
       });
 
-      // Fetch order numbers for mileage entries whose order may be outside the date range
+      // Fetch order info for mileage entries whose order may be outside the date range
       const mileageOrderIds = Array.from(new Set((mileageRes.data || []).map((m: any) => m.order_id).filter(Boolean)));
-      if (mileageOrderIds.length > 0) {
+      const missingOrderIds = mileageOrderIds.filter((id) => !orderNumberById[id]);
+      if (missingOrderIds.length > 0) {
         const { data: missingOrders } = await supabase
           .from("orders")
-          .select("id, display_order_number, order_number")
-          .in("id", mileageOrderIds);
+          .select("id, display_order_number, order_number, guest_name, guest_email, user_id")
+          .in("id", missingOrderIds);
+        const missingUserIds = Array.from(
+          new Set((missingOrders || []).map((o: any) => o.user_id).filter((uid: string) => uid && !userEmails[uid]))
+        );
+        if (missingUserIds.length > 0) {
+          const { data: extraProfiles } = await supabase
+            .from("profiles")
+            .select("id, email, full_name")
+            .in("id", missingUserIds);
+          (extraProfiles || []).forEach((p: any) => { userEmails[p.id] = p.full_name || p.email || ""; });
+        }
         (missingOrders || []).forEach((o: any) => {
           orderNumberById[o.id] = o.display_order_number || `HSB-${String(o.order_number).padStart(6, "0")}`;
+          orderClientById[o.id] = o.guest_name || (o.user_id ? userEmails[o.user_id] : "") || o.guest_email || "Client";
         });
       }
 
@@ -154,17 +168,24 @@ const AccountingManager = () => {
       const mileageLines: AccountingLine[] = (mileageRes.data || []).map((m: any) => {
         const cost = Number(m.cost_euros) || 0;
         const orderNum = orderNumberById[m.order_id] || "HSB-??????";
+        const clientName = orderClientById[m.order_id] || "Client";
+        const km = Number(m.distance_km_round_trip) || 0;
+        const rate = Number(m.rate_per_km) || 0;
         return {
           id: `m-${m.id}`,
           invoiceNumber: `KM-${orderNum.replace("HSB-", "")}`,
           date: m.computed_at,
           type: "mileage",
-          client: `Livraison ${orderNum}`,
+          client: `${clientName} — ${orderNum}`,
           ht: cost,
           tva: 0,
           ttc: cost,
           status: m.status,
-          details: `${m.distance_km_round_trip || 0} km × ${m.rate_per_km || 0} €/km`,
+          departureAddress: m.departure_address || "15 rue des écoles, 44170 Abbaretz",
+          arrivalAddress: m.arrival_address || "—",
+          distanceKm: km,
+          ratePerKm: rate,
+          details: `${km} km × ${rate} €/km`,
         };
       });
 
