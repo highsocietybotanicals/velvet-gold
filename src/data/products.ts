@@ -9,7 +9,7 @@ import amnesiaOniria from "@/assets/flowers/amnesia-oniria-real.jpg";
 import iceOLator from "@/assets/resins/ice-o-lator-real.jpg";
 import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
 import nuageDeMousseux from "@/assets/resins/nuage-de-mousseux-real.jpg";
-import hariboAsset from "@/assets/resins/haribo.jpg.asset.json";
+import hariboPremium from "@/assets/resins/haribo-premium.jpg";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
