@@ -35,6 +35,15 @@ const SCENE_OPTIONS: { value: SceneType; label: string }[] = [
   { value: "lifestyle", label: "🥃 Lifestyle luxe" },
 ];
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return fallback;
+};
+
 
 interface SocialPost {
   id: string;
@@ -165,8 +174,8 @@ const SocialMediaManager = () => {
         setExpandedSeries(prev => ({ ...prev, [data.seriesId]: true }));
       }
       fetchPosts();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la génération");
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, "Erreur lors de la génération"));
     } finally {
       setGenerating(false);
     }
@@ -196,8 +205,8 @@ const SocialMediaManager = () => {
 
       toast.success("Publié sur Telegram !");
       fetchPosts();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur publication Telegram");
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, "Erreur publication Telegram"));
     } finally {
       setPublishing(null);
     }
@@ -301,8 +310,8 @@ const SocialMediaManager = () => {
       setVariantsPerPost(prev => ({ ...prev, [post.id]: variants }));
       setPickerOpenFor(post.id);
       toast.success(`${variants.length} variante${variants.length > 1 ? "s" : ""} générée${variants.length > 1 ? "s" : ""} — choisis ta préférée !`);
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la génération du visuel");
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, "Erreur lors de la génération du visuel"));
     } finally {
       setGeneratingImage(null);
     }
@@ -324,8 +333,8 @@ const SocialMediaManager = () => {
         return next;
       });
       fetchPosts();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de l'application du visuel");
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, "Erreur lors de l'application du visuel"));
     } finally {
       setPickingVariant(null);
     }
