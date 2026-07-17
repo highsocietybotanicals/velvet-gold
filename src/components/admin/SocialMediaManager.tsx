@@ -25,15 +25,17 @@ import {
   Undo2,
 } from "lucide-react";
 
-type SceneType = "real" | "packshot" | "hands" | "rolling" | "lifestyle";
+type SceneType = "mix" | "real" | "packshot" | "hands" | "rolling" | "lifestyle";
 
 const SCENE_OPTIONS: { value: SceneType; label: string }[] = [
+  { value: "mix", label: "✨ Mix créatif (3 scènes différentes)" },
   { value: "real", label: "✅ Photo réelle du site" },
   { value: "packshot", label: "📸 Packshot studio" },
   { value: "hands", label: "🤲 Dans les mains" },
   { value: "rolling", label: "🌿 Effriter / rouler" },
   { value: "lifestyle", label: "🥃 Lifestyle luxe" },
 ];
+
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof Error) return error.message;
@@ -316,7 +318,7 @@ const SocialMediaManager = () => {
 
       const referenceImage = await imageUrlToBase64(referenceImageUrl);
 
-      const scene = scenePerPost[post.id] || "real";
+      const scene = scenePerPost[post.id] || "mix";
 
       const { data, error } = await supabase.functions.invoke("social-content", {
         body: {
@@ -463,7 +465,7 @@ const SocialMediaManager = () => {
                 </Button>
               )}
               <Select
-                value={scenePerPost[post.id] || "real"}
+                value={scenePerPost[post.id] || "mix"}
                 onValueChange={(v) => setScenePerPost(prev => ({ ...prev, [post.id]: v as SceneType }))}
               >
                 <SelectTrigger className="h-7 text-xs w-auto min-w-[150px]">
