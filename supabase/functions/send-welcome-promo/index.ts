@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
   try {
     const { email } = await req.json();
 
-    if (!email || /* basic validation */ typeof email !== "string" || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email || typeof email !== "string" || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return new Response(
         JSON.stringify({ error: "Email invalide" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -31,23 +31,65 @@ Deno.serve(async (req) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Idempotency: prevent abusive re-sends to arbitrary addresses
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Per-IP rate limit: max 3 sends per hour, max 20 per day
+    const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim()
+      || req.headers.get("cf-connecting-ip")
+      || "unknown";
+    const nowIso = new Date().toISOString();
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const { count: hourCount } = await adminClient
+      .from("ip_rate_limits")
+      .select("id", { count: "exact", head: true })
+      .eq("bucket", "welcome_promo")
+      .eq("ip", ip)
+      .gte("created_at", hourAgo);
+    const { count: dayCount } = await adminClient
+      .from("ip_rate_limits")
+      .select("id", { count: "exact", head: true })
+      .eq("bucket", "welcome_promo")
+      .eq("ip", ip)
+      .gte("created_at", dayAgo);
+
+    if ((hourCount ?? 0) >= 3 || (dayCount ?? 0) >= 20) {
+      return new Response(
+        JSON.stringify({ error: "Trop de tentatives, réessayez plus tard" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Record attempt immediately (before send) to prevent burst abuse
+    await adminClient.from("ip_rate_limits").insert({
+      bucket: "welcome_promo",
+      ip,
+      created_at: nowIso,
+    });
+
+    // Best-effort cleanup of old entries (>7 days)
+    await adminClient
+      .from("ip_rate_limits")
+      .delete()
+      .lt("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+    // Idempotency: prevent abusive re-sends to arbitrary addresses
     const { data: existing } = await adminClient
       .from("contacts")
       .select("id")
       .eq("email", normalizedEmail)
       .maybeSingle();
     if (existing) {
-      // Silently succeed so we don't leak which emails are subscribed
       return new Response(
         JSON.stringify({ success: true, alreadySent: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
 
     const gmailUser = Deno.env.get("GMAIL_USER");
     const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD");

@@ -187,6 +187,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ip_rate_limits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+          ip: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: number
+          ip: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: number
+          ip?: string
+        }
+        Relationships: []
+      }
       mileage_settings: {
         Row: {
           id: number
