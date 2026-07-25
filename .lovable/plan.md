@@ -1,93 +1,48 @@
-# 🎯 Intégration TikTok — Pack Complet
+# Grille Tarifaire Pro — PDF Tabac
 
-Objectif : connecter le compte TikTok de High Society Botanicals pour publier automatiquement depuis l'admin, suivre les stats et pousser chaque nouveau produit sur TikTok.
+Créer un PDF luxe (Art-Deco, noir/or, identité HSB) à envoyer par email au buraliste, présentant l'offre en préconditionné uniquement avec grille de remise dégressive.
 
-## Étape 0 — Connexion TikTok (à faire ensemble avant le code)
+## Contenu du PDF (4-5 pages A4)
 
-- Utilisation du **connecteur App TikTok** de Lovable (workspace-level, ton compte HSB — pas per-user).
-- Passe par le **gateway Lovable** : pas de gestion manuelle de tokens, refresh OAuth automatique.
-- Prérequis : compte **TikTok Business** (gratuit, conversion en 1 clic depuis TikTok mobile).
-- ⚠️ Modération : garder le langage "botanique / art de vivre" comme sur Google. Aucune mention CBD/cannabis dans les captions auto.
+**Page 1 — Couverture**
+- Logo HSB, "Grille Tarifaire Partenaire" / "Vente Directe — Préconditionné Exclusif"
+- Baseline : CBD moléculaire niche, 100% légal France, indoor premium
 
-## Étape 1 — Publication depuis SocialMediaManager
+**Page 2 — Notre engagement conditionnement**
+- Vente **exclusivement en préconditionné** : garantit conservation et expression des terpènes
+- **Pochons aluminium alimentaire hermétiques** aux couleurs HSB (sublime la vitrine)
+- **Boveda 62%** inclus dans chaque pochon (humidité parfaite)
+- **Cadeau client final inclus** dans chaque pochon 10g : briquet BIC + paquet de feuilles avec carton — 0€ de surcoût pour le partenaire
 
-Extension de `src/components/admin/SocialMediaManager.tsx` :
-- Nouveau bouton **"Publier sur TikTok"** à côté de Telegram, actif après génération du visuel IA.
-- Sélecteur : mode **Photo** (carrousel avec les 3 variantes Packshot/Mains/Lifestyle) ou **Vidéo** (upload d'une vidéo depuis le disque).
-- Champ caption pré-rempli avec le texte IA + hashtags (`#botanique #artdevivre #premium #madeinfrance ...`).
-- Statut de publication (pending → published) affiché en temps réel.
-- Historique persisté dans la table existante `social_posts` (ajout `tiktok_post_id`, `tiktok_status`).
+**Page 3 — Grille de remise dégressive (sur prix final TTC public)**
+| Volume commandé | Remise sur PV TTC | Prix pro HT |
+|---|---|---|
+| Jusqu'à 200 g | **-50%** | base |
+| > 200 g | **-55%** | ↓ |
+| > 600 g | **-60%** | ↓↓ |
+| > 1 kg | **-65%** | ↓↓↓ |
 
-Nouvelle edge function `supabase/functions/tiktok-publish/index.ts` :
-- Appelle `POST /post/publish/video/init/` ou `/post/publish/content/init/` (photos) via gateway.
-- Upload en chunks pour vidéos > 5 Mo.
-- Retourne `publish_id` pour polling du statut.
+(Interprétation : "50% du prix final HT" → le partenaire paie 50% du PV, donc remise 50%. Au-delà 200g : 45% du PV = -55%. Au-delà 600g : 40% = -60%. Au-delà 1kg : 35% = -65%.)
 
-## Étape 2 — Dashboard Stats TikTok
+**Confirmer avec l'utilisateur** (voir question ci-dessous) : "50% du prix final HT" veut dire *le partenaire paie 50% du PV HT* (remise -50%) OU *remise de 50%* déjà (idem) ? Je pars sur l'interprétation "partenaire paie X% du PV HT".
 
-Nouvelle section dans `src/pages/admin/MarketingPage.tsx` : **"Performance TikTok"**.
+**Page 4 — Tarifs par produit (extrait, préconditionné 10g)**
+Pour chaque produit du catalogue actuel (Amnesia Oniria, Platinum OG, Mint Kush, Blue Mango, 911 OG, Ice O Lator, Golden CBN, Nuage de Mousseux, Poussière d'Or, Haribo, Heisenberg) :
+- PV TTC public 10g
+- PV HT 10g
+- Prix pro 10g aux 4 paliers (jusqu'à 200g / >200g / >600g / >1kg)
 
-Composant `src/components/admin/TikTokStatsManager.tsx` :
-- **Header** : avatar, nom, followers, following, likes totaux (via `GET /user/info/`).
-- **Grille de vidéos** : miniatures + vues / likes / commentaires / partages (via `POST /video/list/`).
-- **Graphique** : évolution des vues sur 30 jours (Recharts, cohérent avec `StatsManager`).
-- **Filtre** : période 7 / 30 / 90 jours, tri par vues/likes/date.
-- Cache React Query 5 min (l'API TikTok a un rate limit strict).
+**Page 5 — Modalités & contact**
+- Commande minimum, délais, livraison, paiement
+- Contact : 07 56 91 13 43, highsocietybotanicals.com
 
-Edge function `supabase/functions/tiktok-stats/index.ts` : agrège profil + vidéos + métriques en un seul appel côté client.
+## Style visuel
+- Fond noir velours, typo Gloock / Crimson Pro, filets or, monogrammes Art-Deco
+- Un visuel produit hero (pochon aluminium HSB) sur couverture — génération IA style catalogue précédent
 
-## Étape 3 — Auto-post à la création d'un produit
+## Livrable
+`/mnt/documents/HSB-Grille-Tarifaire-Pro-Preconditionne.pdf` + tag `<presentation-artifact>`.
 
-Dans `src/components/admin/ProductForm.tsx` :
-- Checkbox **"📱 Publier automatiquement sur TikTok à la création"** (activée par défaut pour les nouveaux produits).
-- Optionnel : caption personnalisée (sinon générée par IA via `social-content`).
-
-Flow à la création :
-1. Produit créé en DB.
-2. Appel `social-content` → génère les 3 visuels IA (Packshot/Mains/Lifestyle).
-3. Appel `tiktok-publish` → poste automatiquement en carrousel photo.
-4. Toast admin : "Produit créé + publié sur TikTok ✨".
-
-Le résultat est enregistré dans `social_posts` avec `trigger: 'auto_new_product'` pour l'historique.
-
-## Détails techniques
-
-**Connecteur**
-- `connector_id: tiktok`, gateway-backed → `TIKTOK_API_KEY` + `LOVABLE_API_KEY` injectés.
-- Base URL : `https://connector-gateway.lovable.dev/tiktok/`
-- Headers : `Authorization: Bearer $LOVABLE_API_KEY` + `X-Connection-Api-Key: $TIKTOK_API_KEY`.
-
-**Endpoints utilisés**
-- `GET user/info/?fields=open_id,display_name,avatar_url,follower_count,following_count,likes_count,video_count`
-- `POST video/list/` — liste vidéos + `video/query/` pour stats détaillées
-- `POST post/publish/video/init/` — publier vidéo
-- `POST post/publish/content/init/` — publier photos (carrousel)
-- `POST post/publish/status/fetch/` — polling statut
-
-**DB migration**
-```sql
-ALTER TABLE public.social_posts
-  ADD COLUMN IF NOT EXISTS tiktok_post_id text,
-  ADD COLUMN IF NOT EXISTS tiktok_status text,
-  ADD COLUMN IF NOT EXISTS tiktok_publish_id text,
-  ADD COLUMN IF NOT EXISTS trigger text DEFAULT 'manual';
-```
-
-**Sécurité**
-- Toutes les edge functions vérifient `is_admin(auth.uid())` avant tout appel TikTok.
-- Aucun token TikTok stocké côté client — tout passe par le gateway serveur.
-
-## Ordre d'implémentation
-
-1. Connecter le connecteur TikTok (approbation utilisateur requise).
-2. Migration DB `social_posts`.
-3. Edge functions `tiktok-publish` + `tiktok-stats`.
-4. Bouton "Publier sur TikTok" dans `SocialMediaManager`.
-5. Composant `TikTokStatsManager` + montage dans `MarketingPage`.
-6. Checkbox auto-post dans `ProductForm` + hook `useAdminProducts`.
-7. Tests bout-en-bout : profil, 1 post photo, 1 post vidéo, 1 création produit.
-
-## Ce dont j'aurai besoin de toi
-
-- **Approuver la connexion TikTok** quand la popup s'ouvre (te connecter avec ton compte TikTok Business HSB).
-- Confirmer que le compte est bien en mode **Business** (sinon l'API publication est bloquée).
+## Questions rapides avant génération
+1. Les prix pros affichés doivent-ils être en **HT** (standard B2B) ou **TTC** ?
+2. Le prix public de référence est-il celui du site actuel (grille dégressive weight tiers déjà appliquée au 10g) ou le **prix au gramme × 10** sans remise volume ?
