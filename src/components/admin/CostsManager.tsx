@@ -64,7 +64,7 @@ export default function CostsManager() {
   const { costs, isLoading, updateProductCost, updateConsumable, updateFixed } = useCosts();
   const { data: consumablesList } = useConsumablesList();
   const { tiers, updateTier } = useProPriceTiers();
-  const { products } = useCatalogProducts();
+  const { all: products } = useCatalogProducts();
 
   if (isLoading || !costs) {
     return (

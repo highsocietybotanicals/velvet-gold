@@ -13,7 +13,7 @@ const fmt = (n: number) => `${n.toFixed(2)} €`;
 
 export default function MarginSimulator() {
   const { costs } = useCosts();
-  const { products } = useCatalogProducts();
+  const { all: products } = useCatalogProducts();
 
   const [productId, setProductId] = useState<string>("");
   const [weightG, setWeightG] = useState<number>(10);
