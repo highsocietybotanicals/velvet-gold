@@ -9,6 +9,7 @@ import {
   Truck,
   Calculator,
   Shield,
+  TrendingUp,
 } from "lucide-react";
 import {
   Sidebar,
@@ -27,6 +28,7 @@ const items = [
   { title: "Commandes", url: "/admin/commandes", icon: Package },
   { title: "Produits", url: "/admin/produits", icon: Boxes },
   { title: "Prix", url: "/admin/prix", icon: Euro },
+  { title: "Rentabilité", url: "/admin/rentabilite", icon: TrendingUp },
   { title: "Pro & Facturation", url: "/admin/pro", icon: Users },
   { title: "Marketing", url: "/admin/marketing", icon: Megaphone },
   { title: "Logistique", url: "/admin/logistique", icon: Truck },

@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      consumable_costs: {
+        Row: {
+          key: string
+          label: string
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          label: string
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          label?: string
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           created_at: string
@@ -184,6 +208,33 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      fixed_costs_settings: {
+        Row: {
+          colissimo_domicile: number
+          colissimo_relais: number
+          essence_per_km: number
+          id: number
+          updated_at: string
+          viva_commission_pct: number
+        }
+        Insert: {
+          colissimo_domicile?: number
+          colissimo_relais?: number
+          essence_per_km?: number
+          id?: number
+          updated_at?: string
+          viva_commission_pct?: number
+        }
+        Update: {
+          colissimo_domicile?: number
+          colissimo_relais?: number
+          essence_per_km?: number
+          id?: number
+          updated_at?: string
+          viva_commission_pct?: number
         }
         Relationships: []
       }
@@ -583,6 +634,30 @@ export type Database = {
         }
         Relationships: []
       }
+      pro_price_tiers: {
+        Row: {
+          gamme: string
+          id: string
+          price_per_gram: number
+          tier_max_g: number
+          updated_at: string
+        }
+        Insert: {
+          gamme: string
+          id?: string
+          price_per_gram: number
+          tier_max_g: number
+          updated_at?: string
+        }
+        Update: {
+          gamme?: string
+          id?: string
+          price_per_gram?: number
+          tier_max_g?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pro_prices: {
         Row: {
           created_at: string | null
@@ -604,6 +679,24 @@ export type Database = {
           pro_price?: number
           product_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      product_costs: {
+        Row: {
+          cost_per_gram: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          cost_per_gram?: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          cost_per_gram?: number
+          product_id?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -20,6 +20,7 @@ const AdminOrdersPage = lazy(() => import("@/pages/admin/OrdersPage"));
 const AdminProductsPage = lazy(() => import("@/pages/admin/ProductsPage"));
 const AdminPricesPage = lazy(() => import("@/pages/admin/PricesPage"));
 const AdminProPage = lazy(() => import("@/pages/admin/ProPage"));
+const AdminRentabilitePage = lazy(() => import("@/pages/admin/RentabilitePage"));
 const AdminMarketingPage = lazy(() => import("@/pages/admin/MarketingPage"));
 const AdminLogisticsPage = lazy(() => import("@/pages/admin/LogisticsPage"));
 const AdminAccountingPage = lazy(() => import("@/pages/admin/AccountingPage"));
@@ -61,6 +62,7 @@ const AnimatedRoutes = () => {
             <Route path="produits" element={<AdminProductsPage />} />
             <Route path="prix" element={<AdminPricesPage />} />
             <Route path="pro" element={<AdminProPage />} />
+            <Route path="rentabilite" element={<AdminRentabilitePage />} />
             <Route path="marketing" element={<AdminMarketingPage />} />
             <Route path="logistique" element={<AdminLogisticsPage />} />
             <Route path="comptabilite" element={<AdminAccountingPage />} />
