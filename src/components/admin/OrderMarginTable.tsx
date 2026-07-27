@@ -65,7 +65,12 @@ export default function OrderMarginTable() {
     return orders.map((o) => {
       const km = (mileageMap && mileageMap[o.id]) || 0;
       const breakdown = computeOrderMargin(o as OrderLite, costs, km);
-      return { o, breakdown, km };
+      const itemsWeight = (o.order_items ?? []).reduce(
+        (s, it) => s + (Number(it.weight) || 0) * (Number(it.quantity) || 1),
+        0
+      );
+      const totalWeight = itemsWeight || Number(o.total_flower_weight) || 0;
+      return { o, breakdown, km, totalWeight };
     });
   }, [orders, costs, mileageMap]);
 
