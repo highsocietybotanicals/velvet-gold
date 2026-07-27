@@ -146,11 +146,11 @@ export default function OrderMarginTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map(({ o, breakdown }) => (
+              {rows.map(({ o, breakdown, totalWeight }) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono text-xs">{o.display_order_number ?? o.id.slice(0, 8)}</TableCell>
                   <TableCell className="text-xs">{new Date(o.created_at).toLocaleDateString("fr-FR")}</TableCell>
-                  <TableCell>{o.total_flower_weight}g</TableCell>
+                  <TableCell>{totalWeight}g</TableCell>
                   <TableCell>{fmt(breakdown.revenue)}</TableCell>
                   <TableCell className="text-destructive">- {fmt(breakdown.totalCost)}</TableCell>
                   <TableCell className={breakdown.margin >= 0 ? "text-emerald-500 font-medium" : "text-destructive font-medium"}>
