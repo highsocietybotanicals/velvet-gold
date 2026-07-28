@@ -63,7 +63,7 @@ const AccountingManager = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["accounting", from, to],
     queryFn: async () => {
-      const [ordersRes, invoicesRes, mileageRes] = await Promise.all([
+      const [ordersRes, invoicesRes] = await Promise.all([
         supabase
           .from("orders")
           .select("id, display_order_number, order_number, created_at, total_amount, payment_status, status, guest_name, guest_email, user_id")
@@ -76,15 +76,18 @@ const AccountingManager = () => {
           .gte("issued_at", from)
           .lte("issued_at", to)
           .order("issued_at", { ascending: true }),
-        supabase
-          .from("delivery_mileage")
-          .select("id, order_id, computed_at, status, cost_euros, distance_km_round_trip, rate_per_km, arrival_address, departure_address")
-          .gte("computed_at", fromDate.toISOString())
-          .lte("computed_at", toDate.toISOString())
-          .order("computed_at", { ascending: true }),
       ]);
       if (ordersRes.error) throw ordersRes.error;
       if (invoicesRes.error) throw invoicesRes.error;
+
+      // Fetch mileage tied to orders in the period (not by computed_at, which may be later)
+      const orderIdsInRange = (ordersRes.data || []).map((o: any) => o.id);
+      const mileageRes = orderIdsInRange.length > 0
+        ? await supabase
+            .from("delivery_mileage")
+            .select("id, order_id, computed_at, created_at, status, cost_euros, distance_km_round_trip, rate_per_km, arrival_address, departure_address")
+            .in("order_id", orderIdsInRange)
+        : { data: [], error: null } as any;
       if (mileageRes.error) throw mileageRes.error;
 
       const partnerIds = Array.from(new Set((invoicesRes.data || []).map((i: any) => i.partner_id).filter(Boolean)));
