@@ -63,7 +63,7 @@ const AccountingManager = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["accounting", from, to],
     queryFn: async () => {
-      const [ordersRes, invoicesRes, mileageRes] = await Promise.all([
+      const [ordersRes, invoicesRes] = await Promise.all([
         supabase
           .from("orders")
           .select("id, display_order_number, order_number, created_at, total_amount, payment_status, status, guest_name, guest_email, user_id")
@@ -76,15 +76,18 @@ const AccountingManager = () => {
           .gte("issued_at", from)
           .lte("issued_at", to)
           .order("issued_at", { ascending: true }),
-        supabase
-          .from("delivery_mileage")
-          .select("id, order_id, computed_at, status, cost_euros, distance_km_round_trip, rate_per_km, arrival_address, departure_address")
-          .gte("computed_at", fromDate.toISOString())
-          .lte("computed_at", toDate.toISOString())
-          .order("computed_at", { ascending: true }),
       ]);
       if (ordersRes.error) throw ordersRes.error;
       if (invoicesRes.error) throw invoicesRes.error;
+
+      // Fetch mileage tied to orders in the period (not by computed_at, which may be later)
+      const orderIdsInRange = (ordersRes.data || []).map((o: any) => o.id);
+      const mileageRes = orderIdsInRange.length > 0
+        ? await supabase
+            .from("delivery_mileage")
+            .select("id, order_id, computed_at, created_at, status, cost_euros, distance_km_round_trip, rate_per_km, arrival_address, departure_address")
+            .in("order_id", orderIdsInRange)
+        : { data: [], error: null } as any;
       if (mileageRes.error) throw mileageRes.error;
 
       const partnerIds = Array.from(new Set((invoicesRes.data || []).map((i: any) => i.partner_id).filter(Boolean)));
@@ -109,7 +112,7 @@ const AccountingManager = () => {
       });
 
       // Fetch order info for mileage entries whose order may be outside the date range
-      const mileageOrderIds = Array.from(new Set((mileageRes.data || []).map((m: any) => m.order_id).filter(Boolean)));
+      const mileageOrderIds: string[] = Array.from(new Set(((mileageRes.data || []) as any[]).map((m: any) => m.order_id).filter(Boolean)));
       const missingOrderIds = mileageOrderIds.filter((id) => !orderNumberById[id]);
       if (missingOrderIds.length > 0) {
         const { data: missingOrders } = await supabase
@@ -165,7 +168,7 @@ const AccountingManager = () => {
         };
       });
 
-      const mileageLines: AccountingLine[] = (mileageRes.data || []).map((m: any) => {
+      const mileageLines: AccountingLine[] = ((mileageRes.data || []) as any[]).map((m: any) => {
         const cost = Number(m.cost_euros) || 0;
         const orderNum = orderNumberById[m.order_id] || "HSB-??????";
         const clientName = orderClientById[m.order_id] || "Client";
@@ -174,7 +177,7 @@ const AccountingManager = () => {
         return {
           id: `m-${m.id}`,
           invoiceNumber: `KM-${orderNum.replace("HSB-", "")}`,
-          date: m.computed_at,
+          date: m.computed_at || m.created_at,
           type: "mileage",
           client: `${clientName} — ${orderNum}`,
           ht: cost,
