@@ -4,7 +4,8 @@ import { useCosts } from "@/hooks/useCosts";
 import { computeOrderMargin, type OrderLite } from "@/lib/margin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMemo } from "react";
 
 interface OrderRow {
@@ -150,13 +151,49 @@ export default function OrderMarginTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map(({ o, breakdown, totalWeight }) => (
+              {rows.map(({ o, breakdown, totalWeight, km }) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono text-xs">{o.display_order_number ?? o.id.slice(0, 8)}</TableCell>
                   <TableCell className="text-xs">{new Date(o.created_at).toLocaleDateString("fr-FR")}</TableCell>
                   <TableCell>{totalWeight}g</TableCell>
                   <TableCell>{fmt(breakdown.revenue)}</TableCell>
-                  <TableCell className="text-destructive">- {fmt(breakdown.totalCost)}</TableCell>
+                  <TableCell className="text-destructive">
+                    <div className="flex items-center gap-1.5">
+                      <span>- {fmt(breakdown.totalCost)}</span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button type="button" className="text-muted-foreground hover:text-gold transition-colors" aria-label="Détail des coûts">
+                            <Info className="h-3.5 w-3.5" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 text-xs" align="end">
+                          <div className="space-y-2">
+                            <p className="font-semibold text-sm mb-2">Détail des coûts</p>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Matière (fleurs/résines)</span><span>{fmt(breakdown.costMatter)}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Consommables (pochons, boveda, étiquettes, sachet)</span><span>{fmt(breakdown.costConsumables)}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Cadeaux (briquet + feuilles / 10g)</span><span>{fmt(breakdown.costGifts)}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Expédition ({o.delivery_type || "—"})</span><span>{fmt(breakdown.costShipping)}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Frais km ({km.toFixed(1)} km)</span><span>{fmt(breakdown.costMileage)}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Commission Viva</span><span>{fmt(breakdown.costCommission)}</span></div>
+                            <div className="border-t border-border pt-2 mt-2 flex justify-between font-semibold">
+                              <span>Total coûts</span><span className="text-destructive">{fmt(breakdown.totalCost)}</span>
+                            </div>
+                            {(o.order_items?.length ?? 0) > 0 && (
+                              <div className="border-t border-border pt-2 mt-2">
+                                <p className="text-muted-foreground mb-1">Lignes commande :</p>
+                                {o.order_items.map((it, i) => (
+                                  <div key={i} className="flex justify-between text-[11px]">
+                                    <span className="truncate mr-2">{it.product_id} {it.weight ? `× ${it.weight}g` : it.quantity ? `× ${it.quantity}` : ""}</span>
+                                    <span>{fmt(Number(it.total_price) || 0)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </TableCell>
                   <TableCell className={breakdown.margin >= 0 ? "text-emerald-500 font-medium" : "text-destructive font-medium"}>
                     {fmt(breakdown.margin)}
                   </TableCell>
