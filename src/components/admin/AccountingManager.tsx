@@ -168,7 +168,7 @@ const AccountingManager = () => {
         };
       });
 
-      const mileageLines: AccountingLine[] = (mileageRes.data || []).map((m: any) => {
+      const mileageLines: AccountingLine[] = ((mileageRes.data || []) as any[]).map((m: any) => {
         const cost = Number(m.cost_euros) || 0;
         const orderNum = orderNumberById[m.order_id] || "HSB-??????";
         const clientName = orderClientById[m.order_id] || "Client";
@@ -177,7 +177,7 @@ const AccountingManager = () => {
         return {
           id: `m-${m.id}`,
           invoiceNumber: `KM-${orderNum.replace("HSB-", "")}`,
-          date: m.computed_at,
+          date: m.computed_at || m.created_at,
           type: "mileage",
           client: `${clientName} — ${orderNum}`,
           ht: cost,
