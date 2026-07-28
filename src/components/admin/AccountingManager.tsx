@@ -112,7 +112,7 @@ const AccountingManager = () => {
       });
 
       // Fetch order info for mileage entries whose order may be outside the date range
-      const mileageOrderIds = Array.from(new Set((mileageRes.data || []).map((m: any) => m.order_id).filter(Boolean)));
+      const mileageOrderIds: string[] = Array.from(new Set(((mileageRes.data || []) as any[]).map((m: any) => m.order_id).filter(Boolean)));
       const missingOrderIds = mileageOrderIds.filter((id) => !orderNumberById[id]);
       if (missingOrderIds.length > 0) {
         const { data: missingOrders } = await supabase
