@@ -50,11 +50,15 @@ export default function OrderMarginTable() {
   const { data: mileageMap } = useQuery({
     queryKey: ["mileage-by-order"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any).from("delivery_mileage").select("order_id, distance_km");
+      const { data, error } = await (supabase as any)
+        .from("delivery_mileage")
+        .select("order_id, distance_km_round_trip, distance_km_one_way, cost_euros");
       if (error) throw error;
       const m: Record<string, number> = {};
       (data || []).forEach((r: any) => {
-        m[r.order_id] = Number(r.distance_km) || 0;
+        m[r.order_id] =
+          Number(r.distance_km_round_trip) ||
+          (Number(r.distance_km_one_way) || 0) * 2;
       });
       return m;
     },
