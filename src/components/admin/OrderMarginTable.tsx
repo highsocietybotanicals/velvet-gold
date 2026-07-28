@@ -4,7 +4,8 @@ import { useCosts } from "@/hooks/useCosts";
 import { computeOrderMargin, type OrderLite } from "@/lib/margin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMemo } from "react";
 
 interface OrderRow {
