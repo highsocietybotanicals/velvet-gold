@@ -22,12 +22,15 @@ const App = () => (
           <ScrollToTop />
           <AuthProvider>
             <CartProvider>
-              <Toaster />
-              <Sonner />
-              <CartDrawer />
-              <SommelierChatbot />
-              <AnimatedRoutes />
+              <ProCartProvider>
+                <Toaster />
+                <Sonner />
+                <CartDrawer />
+                <SommelierChatbot />
+                <AnimatedRoutes />
+              </ProCartProvider>
             </CartProvider>
+
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
