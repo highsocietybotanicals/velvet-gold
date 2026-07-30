@@ -31,6 +31,11 @@ const LivraisonRetoursPage = lazy(() => import("@/pages/LivraisonRetoursPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const PaymentSuccessPage = lazy(() => import("@/pages/PaymentSuccessPage"));
 const PaymentFailurePage = lazy(() => import("@/pages/PaymentFailurePage"));
+const ProLandingPage = lazy(() => import("@/pages/pro/ProLandingPage"));
+const ProLayout = lazy(() => import("@/pages/pro/ProLayout"));
+const ProCataloguePage = lazy(() => import("@/pages/pro/ProCataloguePage"));
+const ProCartPage = lazy(() => import("@/pages/pro/ProCartPage"));
+const ProOrdersPage = lazy(() => import("@/pages/pro/ProOrdersPage"));
 
 const LazyFallback = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
