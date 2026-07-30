@@ -44,16 +44,19 @@ const ProLandingPage = () => {
   const hasAccess =
     isAdmin || (isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated);
 
+  useEffect(() => {
+    document.title = "Espace Pro revendeur | High Society Botanicals";
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc)
+      desc.setAttribute(
+        "content",
+        "Grille tarifaire revendeur High Society Botanicals : préconditionnés 1 g à 10 g, pochons alu hermétiques, Boveda 62 %, tarifs dégressifs au volume."
+      );
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Espace Pro revendeur | High Society Botanicals</title>
-        <meta
-          name="description"
-          content="Grille tarifaire revendeur High Society Botanicals : préconditionnés 1 g à 10 g, pochons alu hermétiques, Boveda 62 %, tarifs dégressifs au volume."
-        />
-        <link rel="canonical" href="https://highsocietybotanicals.com/pro" />
-      </Helmet>
+
 
       <section className="max-w-5xl mx-auto px-4 pt-24 pb-12 text-center">
         <p className="text-xs tracking-[0.3em] text-gold uppercase mb-4">Partenaires revendeurs</p>
