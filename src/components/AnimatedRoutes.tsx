@@ -31,6 +31,11 @@ const LivraisonRetoursPage = lazy(() => import("@/pages/LivraisonRetoursPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const PaymentSuccessPage = lazy(() => import("@/pages/PaymentSuccessPage"));
 const PaymentFailurePage = lazy(() => import("@/pages/PaymentFailurePage"));
+const ProLandingPage = lazy(() => import("@/pages/pro/ProLandingPage"));
+const ProLayout = lazy(() => import("@/pages/pro/ProLayout"));
+const ProCataloguePage = lazy(() => import("@/pages/pro/ProCataloguePage"));
+const ProCartPage = lazy(() => import("@/pages/pro/ProCartPage"));
+const ProOrdersPage = lazy(() => import("@/pages/pro/ProOrdersPage"));
 
 const LazyFallback = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
@@ -55,7 +60,14 @@ const AnimatedRoutes = () => {
           <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
           <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
           <Route path="/profil" element={<PageTransition><ProfilePage /></PageTransition>} />
+          <Route path="/pro" element={<PageTransition><ProLandingPage /></PageTransition>} />
+          <Route path="/pro" element={<ProLayout />}>
+            <Route path="catalogue" element={<ProCataloguePage />} />
+            <Route path="panier" element={<ProCartPage />} />
+            <Route path="commandes" element={<ProOrdersPage />} />
+          </Route>
           <Route path="/admin" element={<AdminLayout />}>
+
             <Route index element={<AdminDashboardPage />} />
             <Route path="tableau-de-bord" element={<AdminDashboardPage />} />
             <Route path="commandes" element={<AdminOrdersPage />} />

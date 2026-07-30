@@ -374,7 +374,9 @@ export type Database = {
           guest_name: string | null
           guest_phone: string | null
           id: string
+          order_channel: string
           order_number: number
+          payment_method: string
           payment_status: string
           promo_code: string | null
           promo_discount_amount: number | null
@@ -405,7 +407,9 @@ export type Database = {
           guest_name?: string | null
           guest_phone?: string | null
           id?: string
+          order_channel?: string
           order_number?: number
+          payment_method?: string
           payment_status?: string
           promo_code?: string | null
           promo_discount_amount?: number | null
@@ -436,7 +440,9 @@ export type Database = {
           guest_name?: string | null
           guest_phone?: string | null
           id?: string
+          order_channel?: string
           order_number?: number
+          payment_method?: string
           payment_status?: string
           promo_code?: string | null
           promo_discount_amount?: number | null
@@ -679,6 +685,78 @@ export type Database = {
           pro_price?: number
           product_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pro_quotes: {
+        Row: {
+          admin_notes: string | null
+          company_name: string | null
+          contact_email: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          items: Json
+          notes: string | null
+          status: string
+          total_ht: number
+          total_ttc: number
+          total_weight_g: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          status?: string
+          total_ht?: number
+          total_ttc?: number
+          total_weight_g?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          status?: string
+          total_ht?: number
+          total_ttc?: number
+          total_weight_g?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pro_settings: {
+        Row: {
+          delai_paiement_jours: number
+          franco_port_seuil_ht: number
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          delai_paiement_jours?: number
+          franco_port_seuil_ht?: number
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          delai_paiement_jours?: number
+          franco_port_seuil_ht?: number
+          id?: number
+          updated_at?: string
         }
         Relationships: []
       }

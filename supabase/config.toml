@@ -51,3 +51,6 @@ verify_jwt = false
 
 
 
+
+[functions.create-pro-order]
+verify_jwt = true
