@@ -30,16 +30,17 @@ const ProOrdersPage = () => {
     queryKey: ["pro-orders", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("orders")
         .select(
           "id, display_order_number, created_at, status, payment_status, total_amount, total_flower_weight"
         )
         .eq("user_id", user!.id)
-        .eq("order_channel" as any, "pro")
+        .eq("order_channel", "pro")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as any[];
+
     },
   });
 
