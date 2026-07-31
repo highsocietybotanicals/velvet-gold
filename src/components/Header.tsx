@@ -123,6 +123,10 @@ const Header = () => {
                         <User className="w-4 h-4 mr-2" />
                         Mon Profil
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(isPro && isProValidated ? "/pro/catalogue" : "/pro")}>
+                        <Store className="w-4 h-4 mr-2" />
+                        Espace Pro
+                      </DropdownMenuItem>
                       {isAdmin && (
                         <>
                           <DropdownMenuSeparator />
