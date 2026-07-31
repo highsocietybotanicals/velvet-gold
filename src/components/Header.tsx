@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingCart, User, LogOut, ChevronDown, Shield } from "lucide-react";
+import { Menu, X, ShoppingCart, User, LogOut, ChevronDown, Shield, Store } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,7 @@ const navLinks = [
   { href: "/sommelier", label: "Le Sommelier" },
   { href: "/societe", label: "La Société" },
   { href: "/contact", label: "Contact" },
+  { href: "/pro", label: "Espace Pro" },
 ];
 
 const Header = () => {
@@ -122,6 +123,10 @@ const Header = () => {
                         <User className="w-4 h-4 mr-2" />
                         Mon Profil
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(isPro && isProValidated ? "/pro/catalogue" : "/pro")}>
+                        <Store className="w-4 h-4 mr-2" />
+                        Espace Pro
+                      </DropdownMenuItem>
                       {isAdmin && (
                         <>
                           <DropdownMenuSeparator />
@@ -148,6 +153,15 @@ const Header = () => {
                 )}
               </motion.div>
             )}
+
+            {/* Pro shortcut */}
+            <Link
+              to={isPro && isProValidated ? "/pro/catalogue" : "/pro"}
+              aria-label="Espace Pro"
+              className="p-2 hover:bg-muted rounded-full transition-colors text-primary"
+            >
+              <Store className="w-5 h-5" />
+            </Link>
 
             {/* Admin shortcut (always visible when admin) */}
             {isAdmin && (
@@ -221,6 +235,13 @@ const Header = () => {
                   <User className="w-4 h-4" /> Mon Profil
                 </Link>
               )}
+              <Link
+                to={isPro && isProValidated ? "/pro/catalogue" : "/pro"}
+                onClick={() => setIsMenuOpen(false)}
+                className="text-lg hover:text-primary transition-colors py-2 font-display text-primary flex items-center gap-2"
+              >
+                <Store className="w-4 h-4" /> Espace Pro
+              </Link>
               {isAdmin && (
                 <Link
                   to="/admin"
