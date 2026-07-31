@@ -19,6 +19,7 @@ const navLinks = [
   { href: "/sommelier", label: "Le Sommelier" },
   { href: "/societe", label: "La Société" },
   { href: "/contact", label: "Contact" },
+  { href: "/pro", label: "Espace Pro" },
 ];
 
 const Header = () => {
