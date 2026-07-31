@@ -235,6 +235,13 @@ const Header = () => {
                   <User className="w-4 h-4" /> Mon Profil
                 </Link>
               )}
+              <Link
+                to={isPro && isProValidated ? "/pro/catalogue" : "/pro"}
+                onClick={() => setIsMenuOpen(false)}
+                className="text-lg hover:text-primary transition-colors py-2 font-display text-primary flex items-center gap-2"
+              >
+                <Store className="w-4 h-4" /> Espace Pro
+              </Link>
               {isAdmin && (
                 <Link
                   to="/admin"
