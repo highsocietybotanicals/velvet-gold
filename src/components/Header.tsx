@@ -154,6 +154,15 @@ const Header = () => {
               </motion.div>
             )}
 
+            {/* Pro shortcut */}
+            <Link
+              to={isPro && isProValidated ? "/pro/catalogue" : "/pro"}
+              aria-label="Espace Pro"
+              className="p-2 hover:bg-muted rounded-full transition-colors text-primary"
+            >
+              <Store className="w-5 h-5" />
+            </Link>
+
             {/* Admin shortcut (always visible when admin) */}
             {isAdmin && (
               <Link
