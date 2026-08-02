@@ -31,6 +31,8 @@ const LivraisonRetoursPage = lazy(() => import("@/pages/LivraisonRetoursPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const PaymentSuccessPage = lazy(() => import("@/pages/PaymentSuccessPage"));
 const PaymentFailurePage = lazy(() => import("@/pages/PaymentFailurePage"));
+const OAuthConsentPage = lazy(() => import("@/pages/OAuthConsentPage"));
+
 const ProLandingPage = lazy(() => import("@/pages/pro/ProLandingPage"));
 const ProLayout = lazy(() => import("@/pages/pro/ProLayout"));
 const ProCataloguePage = lazy(() => import("@/pages/pro/ProCataloguePage"));
@@ -85,7 +87,9 @@ const AnimatedRoutes = () => {
           <Route path="/livraison-retours" element={<PageTransition><LivraisonRetoursPage /></PageTransition>} />
           <Route path="/payment-success" element={<PageTransition><PaymentSuccessPage /></PageTransition>} />
           <Route path="/payment-failure" element={<PageTransition><PaymentFailurePage /></PageTransition>} />
+          <Route path="/.lovable/oauth/consent" element={<OAuthConsentPage />} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+
         </Routes>
       </AnimatePresence>
     </Suspense>

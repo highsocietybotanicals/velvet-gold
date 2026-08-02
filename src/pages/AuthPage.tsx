@@ -27,9 +27,15 @@ const AppleIcon = () => (
   </svg>
 );
 
+const safeNext = () => {
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+};
+
 const handleGoogleSignIn = async () => {
   const { error } = await lovable.auth.signInWithOAuth("google", {
-    redirect_uri: window.location.origin,
+    redirect_uri: window.location.origin + (safeNext() ?? "/profil"),
   });
   if (error) {
     console.error("Google sign-in error:", error);
@@ -38,7 +44,7 @@ const handleGoogleSignIn = async () => {
 
 const handleAppleSignIn = async () => {
   const { error } = await lovable.auth.signInWithOAuth("apple", {
-    redirect_uri: window.location.origin,
+    redirect_uri: window.location.origin + (safeNext() ?? "/profil"),
   });
   if (error) {
     console.error("Apple sign-in error:", error);
@@ -62,7 +68,7 @@ const AuthPage = () => {
 
   // Redirect if already logged in
   if (user) {
-    navigate("/profil");
+    navigate(safeNext() ?? "/profil");
     return null;
   }
 
@@ -110,7 +116,7 @@ const AuthPage = () => {
       if (result.error) {
         setError(result.error.message);
       } else {
-        navigate("/profil");
+        navigate(safeNext() ?? "/profil");
       }
     } else {
       const proInfo = accountType === "pro" 
@@ -125,7 +131,7 @@ const AuthPage = () => {
       if (result.error) {
         setError(result.error.message);
       } else {
-        navigate("/profil");
+        navigate(safeNext() ?? "/profil");
       }
     }
 

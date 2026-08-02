@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://pvwwxpcosiqetsflykmp.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "high-society-botanicals",
+      "version": "0.1.0",
+      "title": "High society botanicals"
+    },
+    "tools": [
+      {
+        "name": "list_products",
+        "title": "Lister le catalogue",
+        "description": "Liste les fleurs, résines et accessoires actifs du catalogue High Society Botanicals avec prix au gramme, taux de CBD et gamme.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Filtre optionnel sur la catégorie (ex. fleur, resine, accessoire)."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Nombre maximum de produits (défaut 20)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_account",
+        "title": "Mon compte",
+        "description": "Retourne le profil du client connecté : coordonnées, statut pro, et avancement du programme de fidélité (grammes offerts disponibles).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_orders",
+        "title": "Mes commandes",
+        "description": "Liste les commandes du client connecté (numéro, statut, montant, mode de livraison, date).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Nombre maximum de commandes (défaut 10)."
+            },
+            "status": {
+              "type": "string",
+              "description": "Filtre optionnel sur le statut de commande."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_order_details",
+        "title": "Détail d'une commande",
+        "description": "Retourne le détail d'une commande du client connecté (produits, poids, prix) à partir de son numéro de commande (ex. HSB-123456).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "order_number": {
+              "type": "string",
+              "minLength": 3,
+              "description": "Numéro de commande, ex. HSB-123456."
+            }
+          },
+          "required": [
+            "order_number"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
