@@ -8,9 +8,9 @@ const corsHeaders = {
 
 const PRODUCT_TO_GAMME: Record<string, string> = {
   "amnesia-signature-oniria": "classiques",
-  "platinum-og": "classiques",
-  "mint-kush": "classiques",
-  "blue-mango-indoor": "911_og",
+  "platinum-og": "classiques_premium",
+  "mint-kush": "classiques_premium",
+  "blue-mango-indoor": "blue_mango",
   "ice-o-lator": "classiques",
   "golden-cbn": "classiques",
   "nuage-de-mousseux": "classiques",
