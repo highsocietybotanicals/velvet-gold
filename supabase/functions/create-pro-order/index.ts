@@ -10,7 +10,7 @@ const PRODUCT_TO_GAMME: Record<string, string> = {
   "amnesia-signature-oniria": "classiques",
   "platinum-og": "classiques",
   "mint-kush": "classiques",
-  "blue-mango-indoor": "classiques",
+  "blue-mango-indoor": "911_og",
   "ice-o-lator": "classiques",
   "golden-cbn": "classiques",
   "nuage-de-mousseux": "classiques",
@@ -19,6 +19,7 @@ const PRODUCT_TO_GAMME: Record<string, string> = {
   haribo: "nectar_top",
   heisenberg: "nectar_top",
 };
+
 
 const ALLOWED_FORMATS = new Set([1, 2.5, 5, 10]);
 

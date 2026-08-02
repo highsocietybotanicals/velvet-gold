@@ -3,8 +3,8 @@
 export type ProGamme = "classiques" | "911_og" | "poussiere" | "nectar_top";
 
 export const GAMME_LABEL: Record<ProGamme, string> = {
-  classiques: "Classiques (Amnesia, Platinum OG, Mint Kush, Blue Mango, Ice O Lator, Golden CBN, Nuage de Mousseux)",
-  "911_og": "911 OG",
+  classiques: "Classiques (Amnesia, Platinum OG, Mint Kush, Ice O Lator, Golden CBN, Nuage de Mousseux)",
+  "911_og": "Indoor Master (911 OG, Blue Mango)",
   poussiere: "Poussière d'Or",
   nectar_top: "Haribo & Heisenberg (Nectar Divin)",
 };
@@ -13,7 +13,7 @@ export const PRODUCT_TO_GAMME: Record<string, ProGamme> = {
   "amnesia-signature-oniria": "classiques",
   "platinum-og": "classiques",
   "mint-kush": "classiques",
-  "blue-mango-indoor": "classiques",
+  "blue-mango-indoor": "911_og",
   "ice-o-lator": "classiques",
   "golden-cbn": "classiques",
   "nuage-de-mousseux": "classiques",
@@ -22,6 +22,7 @@ export const PRODUCT_TO_GAMME: Record<string, ProGamme> = {
   "haribo": "nectar_top",
   "heisenberg": "nectar_top",
 };
+
 
 export const getGammeForProduct = (productId: string): ProGamme =>
   PRODUCT_TO_GAMME[productId] ?? "classiques";
