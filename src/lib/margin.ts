@@ -1,19 +1,27 @@
 // Margin & profitability helpers
 
-export type ProGamme = "classiques" | "911_og" | "poussiere" | "nectar_top";
+export type ProGamme =
+  | "classiques"
+  | "classiques_premium"
+  | "911_og"
+  | "blue_mango"
+  | "poussiere"
+  | "nectar_top";
 
 export const GAMME_LABEL: Record<ProGamme, string> = {
-  classiques: "Classiques (Amnesia, Platinum OG, Mint Kush, Ice O Lator, Golden CBN, Nuage de Mousseux)",
-  "911_og": "Indoor Master (911 OG, Blue Mango)",
+  classiques: "Classiques (Amnesia, Ice O Lator, Golden CBN, Nuage de Mousseux)",
+  classiques_premium: "Classiques Premium (Platinum OG, Mint Kush)",
+  "911_og": "Indoor Master — 911 OG",
+  blue_mango: "Indoor Master — Blue Mango",
   poussiere: "Poussière d'Or",
-  nectar_top: "Haribo & Heisenberg (Nectar Divin)",
+  nectar_top: "Nectar Divin (Haribo, Heisenberg)",
 };
 
 export const PRODUCT_TO_GAMME: Record<string, ProGamme> = {
   "amnesia-signature-oniria": "classiques",
-  "platinum-og": "classiques",
-  "mint-kush": "classiques",
-  "blue-mango-indoor": "911_og",
+  "platinum-og": "classiques_premium",
+  "mint-kush": "classiques_premium",
+  "blue-mango-indoor": "blue_mango",
   "ice-o-lator": "classiques",
   "golden-cbn": "classiques",
   "nuage-de-mousseux": "classiques",
@@ -22,6 +30,7 @@ export const PRODUCT_TO_GAMME: Record<string, ProGamme> = {
   "haribo": "nectar_top",
   "heisenberg": "nectar_top",
 };
+
 
 
 export const getGammeForProduct = (productId: string): ProGamme =>
