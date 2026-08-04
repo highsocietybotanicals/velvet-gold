@@ -1,21 +1,21 @@
 import { Link } from "react-router-dom";
 import { useProCart } from "@/contexts/ProCartContext";
 import { useProCartTotals } from "@/hooks/useProCartTotals";
-import { PRO_FORMATS } from "@/lib/proPricing";
+import { PRO_FORMATS, proPricePerGram } from "@/lib/proPricing";
 import ProTierBar from "@/components/pro/ProTierBar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { getGammeForProduct } from "@/lib/margin";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 
 const eur = (n: number) => `${n.toFixed(2)} €`;
 
+
 const ProCataloguePage = () => {
   const { setUnits, getUnits } = useProCart();
   const { totals, products, isLoading } = useProCartTotals();
-  const { priceFor } = useProPriceTiers();
+  const { tiers } = useProPriceTiers();
 
   if (isLoading) {
     return (
@@ -44,10 +44,10 @@ const ProCataloguePage = () => {
 
       <div className="space-y-3">
         {products.map((p) => {
-          const gamme = getGammeForProduct(p.id);
-          const ppg = priceFor(gamme, totals.totalWeightG) ?? 0;
-          const productWeight = PRO_FORMATS.reduce(
-            (s, f) => s + f * getUnits(p.id, f),
+          const basePpg = proPricePerGram(tiers, p.id, totals.totalWeightG, 10);
+          const productSubtotal = PRO_FORMATS.reduce(
+            (s, f) =>
+              s + f * getUnits(p.id, f) * proPricePerGram(tiers, p.id, totals.totalWeightG, f),
             0
           );
 
@@ -64,32 +64,35 @@ const ProCataloguePage = () => {
                   <div className="min-w-0">
                     <p className="font-medium truncate">{p.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      PV public conseillé : {eur(p.price)} /g TTC · Prix pro :{" "}
-                      <span className="text-gold font-medium">{eur(ppg)} /g HT</span>
+                      PV public conseillé : {eur(p.price)} /g TTC · Prix pro dès{" "}
+                      <span className="text-gold font-medium">{eur(basePpg)} /g HT</span>
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  {PRO_FORMATS.map((f) => (
-                    <div key={f} className="w-20">
-                      <label className="text-[11px] text-muted-foreground block mb-1">
-                        {f} g
-                      </label>
-                      <Input
-                        type="number"
-                        min={0}
-                        inputMode="numeric"
-                        value={getUnits(p.id, f) || ""}
-                        placeholder="0"
-                        onChange={(e) => setUnits(p.id, p.name, f, Number(e.target.value))}
-                        className="h-9"
-                      />
-                    </div>
-                  ))}
+                  {PRO_FORMATS.map((f) => {
+                    const ppgF = proPricePerGram(tiers, p.id, totals.totalWeightG, f);
+                    return (
+                      <div key={f} className="w-20">
+                        <label className="text-[11px] text-muted-foreground block mb-1">
+                          {f} g · {eur(ppgF)}/g
+                        </label>
+                        <Input
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          value={getUnits(p.id, f) || ""}
+                          placeholder="0"
+                          onChange={(e) => setUnits(p.id, p.name, f, Number(e.target.value))}
+                          className="h-9"
+                        />
+                      </div>
+                    );
+                  })}
                   <div className="w-24 self-end text-right">
                     <p className="text-[11px] text-muted-foreground">Sous-total</p>
-                    <p className="text-sm font-medium">{eur(productWeight * ppg)}</p>
+                    <p className="text-sm font-medium">{eur(productSubtotal)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -97,6 +100,7 @@ const ProCataloguePage = () => {
           );
         })}
       </div>
+
 
       <div className="sticky bottom-0 bg-background/95 backdrop-blur border-t border-border/40 py-3 flex items-center justify-between gap-4 flex-wrap">
         <div className="text-sm">

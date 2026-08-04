@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useCosts, useConsumablesList } from "@/hooks/useCosts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
-import { GAMME_LABEL, type ProGamme } from "@/lib/margin";
+import { GAMME_LABEL, proTierLabel } from "@/lib/margin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -145,43 +145,38 @@ export default function CostsManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Grille prix pro (€/g par palier volume)</CardTitle>
+          <CardTitle>Grille prix pro (€/g par produit et par palier volume)</CardTitle>
           <p className="text-xs text-muted-foreground">
-            Prix pro HT — s'applique automatiquement aux commandes pro selon le poids total commandé.
+            Prix pro HT du 10 g — s'applique automatiquement aux commandes pro selon le poids total
+            commandé. Les formats 1 g (+1,00 €/g) et 2,5 g (+0,60 €/g) supportent le coût du pochon
+            HSB + Boveda.
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          {(["classiques", "911_og", "poussiere", "nectar_top"] as ProGamme[]).map((g) => {
-            const forGamme = tiers.filter((t) => t.gamme === g);
+          {[...new Set(tiers.map((t) => t.gamme))].map((g) => {
+            const forGamme = tiers
+              .filter((t) => t.gamme === g)
+              .sort((a, b) => Number(a.tier_max_g) - Number(b.tier_max_g));
             return (
               <div key={g}>
-                <Label className="text-gold text-sm">{GAMME_LABEL[g]}</Label>
+                <Label className="text-gold text-sm">{GAMME_LABEL[g] ?? g}</Label>
                 <div className="mt-2">
-                  {forGamme.map((t) => {
-                    const label =
-                      t.tier_max_g >= 999999
-                        ? "> 1 kg"
-                        : t.tier_max_g === 1000
-                        ? "> 600 g et ≤ 1 kg"
-                        : t.tier_max_g === 600
-                        ? "> 200 g et ≤ 600 g"
-                        : `≤ ${t.tier_max_g} g`;
-                    return (
-                      <CostRow
-                        key={t.id}
-                        label={label}
-                        suffix="€/g"
-                        initial={Number(t.price_per_gram)}
-                        onSave={(v) => updateTier.mutateAsync({ id: t.id, price: v })}
-                      />
-                    );
-                  })}
+                  {forGamme.map((t) => (
+                    <CostRow
+                      key={t.id}
+                      label={proTierLabel(Number(t.tier_max_g))}
+                      suffix="€/g"
+                      initial={Number(t.price_per_gram)}
+                      onSave={(v) => updateTier.mutateAsync({ id: t.id, price: v })}
+                    />
+                  ))}
                 </div>
               </div>
             );
           })}
         </CardContent>
       </Card>
+
     </div>
   );
 }

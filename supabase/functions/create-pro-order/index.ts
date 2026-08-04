@@ -6,33 +6,33 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRODUCT_TO_GAMME: Record<string, string> = {
-  "amnesia-signature-oniria": "classiques",
-  "platinum-og": "classiques_premium",
-  "mint-kush": "classiques_premium",
-  "blue-mango-indoor": "blue_mango",
-  "ice-o-lator": "classiques",
-  "golden-cbn": "classiques",
-  "nuage-de-mousseux": "classiques",
-  "911-og-indoor": "911_og",
-  "poussiere-dor": "poussiere",
-  haribo: "nectar_top",
-  heisenberg: "nectar_top",
-};
-
-
+// La grille pro est définie par produit dans pro_price_tiers (gamme = product_id)
 const ALLOWED_FORMATS = new Set([1, 2.5, 5, 10]);
 
-function pricePerGram(tiers: any[], gamme: string, totalWeight: number): number | null {
-  const forGamme = tiers
-    .filter((t) => t.gamme === gamme)
+// Supplément conditionnement (€/g HT) sur les petits formats
+const FORMAT_SURCHARGE: Record<string, number> = { "1": 1.0, "2.5": 0.6, "5": 0, "10": 0 };
+
+function pricePerGram(
+  tiers: any[],
+  productId: string,
+  totalWeight: number,
+  format: number
+): number | null {
+  const forProduct = tiers
+    .filter((t) => t.gamme === productId)
     .sort((a, b) => Number(a.tier_max_g) - Number(b.tier_max_g));
-  if (!forGamme.length) return null;
-  for (const t of forGamme) {
-    if (totalWeight <= Number(t.tier_max_g)) return Number(t.price_per_gram);
+  if (!forProduct.length) return null;
+  let base = Number(forProduct[forProduct.length - 1].price_per_gram);
+  for (const t of forProduct) {
+    if (totalWeight <= Number(t.tier_max_g)) {
+      base = Number(t.price_per_gram);
+      break;
+    }
   }
-  return Number(forGamme[forGamme.length - 1].price_per_gram);
+  const surcharge = FORMAT_SURCHARGE[String(format)] ?? 0;
+  return Math.round((base + surcharge) * 100) / 100;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -146,8 +146,8 @@ Deno.serve(async (req) => {
     const orderItems: any[] = [];
 
     for (const l of safeLines) {
-      const gamme = PRODUCT_TO_GAMME[l.productId] ?? "classiques";
-      const ppg = pricePerGram(tiers || [], gamme, totalWeight);
+      const ppg = pricePerGram(tiers || [], l.productId, totalWeight, l.format);
+
       if (!ppg) {
         return new Response(JSON.stringify({ error: "Grille tarifaire pro indisponible" }), {
           status: 500,

@@ -1,11 +1,40 @@
-import { getGammeForProduct, getProPricePerGram, type PriceTier } from "./margin";
+import {
+  getGammeForProduct,
+  getProPricePerGram,
+  PRO_TIERS,
+  type PriceTier,
+} from "./margin";
 import { calculateItemPrice } from "./pricing";
 import type { PriceGroup } from "@/data/products";
 
 export const PRO_FORMATS = [1, 2.5, 5, 10] as const;
 export type ProFormat = (typeof PRO_FORMATS)[number];
 
+/**
+ * Supplément conditionnement (€/g HT) sur les petits formats : le pochon HSB +
+ * Boveda 62% coûtent le même prix quel que soit le format, ils sont donc
+ * répercutés sur le 1 g et le 2,5 g (offerts à partir du 5 g).
+ */
+export const FORMAT_SURCHARGE: Record<number, number> = {
+  1: 1.0,
+  2.5: 0.6,
+  5: 0,
+  10: 0,
+};
+
+export const proPricePerGram = (
+  tiers: PriceTier[],
+  productId: string,
+  totalWeightG: number,
+  format: number
+): number => {
+  const base = getProPricePerGram(tiers, getGammeForProduct(productId), totalWeightG);
+  if (base === null) return 0;
+  return Math.round((base + (FORMAT_SURCHARGE[format] ?? 0)) * 100) / 100;
+};
+
 export const VAT_RATE = 0.2;
+
 
 export interface ProCartLine {
   productId: string;
@@ -60,8 +89,7 @@ export const computeProCart = (
   const totalWeightG = active.reduce((s, l) => s + l.format * l.units, 0);
 
   const computed: ProComputedLine[] = active.map((l) => {
-    const gamme = getGammeForProduct(l.productId);
-    const ppg = getProPricePerGram(tiers, gamme, totalWeightG) ?? 0;
+    const ppg = proPricePerGram(tiers, l.productId, totalWeightG, l.format);
     const weightG = round2(l.format * l.units);
     const totalHT = round2(weightG * ppg);
 
@@ -87,28 +115,36 @@ export const computeProCart = (
     computed.reduce((s, l) => s + l.retailUnitTTC * l.units, 0)
   );
 
-  // Palier courant / suivant (basé sur la gamme "classiques" pour l'affichage)
-  const classiques = tiers
-    .filter((t) => t.gamme === "classiques")
-    .sort((a, b) => a.tier_max_g - b.tier_max_g);
-
+  // Palier courant / suivant : paliers de volume communs à tous les produits.
   let currentTierMaxG: number | null = null;
   let gramsToNextTier: number | null = null;
   let nextTierSavingPerGram: number | null = null;
 
-  if (classiques.length) {
-    const idx = classiques.findIndex((t) => totalWeightG <= t.tier_max_g);
-    if (idx >= 0) {
-      currentTierMaxG = classiques[idx].tier_max_g;
-      const next = classiques[idx + 1];
-      if (next) {
-        gramsToNextTier = round2(Math.max(0, classiques[idx].tier_max_g - totalWeightG) + 0.01);
-        nextTierSavingPerGram = round2(
-          Number(classiques[idx].price_per_gram) - Number(next.price_per_gram)
-        );
-      }
+  const idx = PRO_TIERS.findIndex((t) => totalWeightG <= t);
+  if (idx >= 0) {
+    currentTierMaxG = PRO_TIERS[idx];
+    const next = PRO_TIERS[idx + 1];
+    if (next !== undefined) {
+      gramsToNextTier = round2(Math.max(0, PRO_TIERS[idx] - totalWeightG) + 0.01);
+      // Économie moyenne €/g au palier suivant, sur les produits du panier
+      const ids = [...new Set(active.map((l) => l.productId))];
+      const deltas = ids
+        .map((id) => {
+          const cur = tiers.find(
+            (t) => t.gamme === getGammeForProduct(id) && Number(t.tier_max_g) === PRO_TIERS[idx]
+          );
+          const nxt = tiers.find(
+            (t) => t.gamme === getGammeForProduct(id) && Number(t.tier_max_g) === next
+          );
+          return cur && nxt ? Number(cur.price_per_gram) - Number(nxt.price_per_gram) : null;
+        })
+        .filter((d): d is number => d !== null);
+      nextTierSavingPerGram = deltas.length
+        ? round2(deltas.reduce((s, d) => s + d, 0) / deltas.length)
+        : null;
     }
   }
+
 
   return {
     lines: computed,
@@ -126,6 +162,7 @@ export const computeProCart = (
 
 export const tierLabel = (maxG: number | null): string => {
   if (maxG === null) return "—";
-  if (maxG >= 100000) return "+ de 1 kg";
+  if (maxG >= 100000) return "+ de 500 g";
   return `jusqu'à ${maxG} g`;
+
 };
