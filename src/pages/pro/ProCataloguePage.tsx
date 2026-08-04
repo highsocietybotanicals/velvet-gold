@@ -15,7 +15,7 @@ const eur = (n: number) => `${n.toFixed(2)} €`;
 const ProCataloguePage = () => {
   const { setUnits, getUnits } = useProCart();
   const { totals, products, isLoading } = useProCartTotals();
-  const { priceFor } = useProPriceTiers();
+  const { tiers } = useProPriceTiers();
 
   if (isLoading) {
     return (
