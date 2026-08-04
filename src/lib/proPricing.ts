@@ -1,11 +1,40 @@
-import { getGammeForProduct, getProPricePerGram, type PriceTier } from "./margin";
+import {
+  getGammeForProduct,
+  getProPricePerGram,
+  PRO_TIERS,
+  type PriceTier,
+} from "./margin";
 import { calculateItemPrice } from "./pricing";
 import type { PriceGroup } from "@/data/products";
 
 export const PRO_FORMATS = [1, 2.5, 5, 10] as const;
 export type ProFormat = (typeof PRO_FORMATS)[number];
 
+/**
+ * Supplément conditionnement (€/g HT) sur les petits formats : le pochon HSB +
+ * Boveda 62% coûtent le même prix quel que soit le format, ils sont donc
+ * répercutés sur le 1 g et le 2,5 g (offerts à partir du 5 g).
+ */
+export const FORMAT_SURCHARGE: Record<number, number> = {
+  1: 1.0,
+  2.5: 0.6,
+  5: 0,
+  10: 0,
+};
+
+export const proPricePerGram = (
+  tiers: PriceTier[],
+  productId: string,
+  totalWeightG: number,
+  format: number
+): number => {
+  const base = getProPricePerGram(tiers, getGammeForProduct(productId), totalWeightG);
+  if (base === null) return 0;
+  return Math.round((base + (FORMAT_SURCHARGE[format] ?? 0)) * 100) / 100;
+};
+
 export const VAT_RATE = 0.2;
+
 
 export interface ProCartLine {
   productId: string;
