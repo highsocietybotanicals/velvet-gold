@@ -146,8 +146,8 @@ Deno.serve(async (req) => {
     const orderItems: any[] = [];
 
     for (const l of safeLines) {
-      const gamme = PRODUCT_TO_GAMME[l.productId] ?? "classiques";
-      const ppg = pricePerGram(tiers || [], gamme, totalWeight);
+      const ppg = pricePerGram(tiers || [], l.productId, totalWeight, l.format);
+
       if (!ppg) {
         return new Response(JSON.stringify({ error: "Grille tarifaire pro indisponible" }), {
           status: 500,
