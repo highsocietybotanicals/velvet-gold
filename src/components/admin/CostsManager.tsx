@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useCosts, useConsumablesList } from "@/hooks/useCosts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
-import { GAMME_LABEL, type ProGamme } from "@/lib/margin";
+import { GAMME_LABEL, proTierLabel } from "@/lib/margin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
