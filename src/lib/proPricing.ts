@@ -162,6 +162,7 @@ export const computeProCart = (
 
 export const tierLabel = (maxG: number | null): string => {
   if (maxG === null) return "—";
-  if (maxG >= 100000) return "+ de 1 kg";
+  if (maxG >= 100000) return "+ de 500 g";
   return `jusqu'à ${maxG} g`;
+
 };
