@@ -89,8 +89,7 @@ export const computeProCart = (
   const totalWeightG = active.reduce((s, l) => s + l.format * l.units, 0);
 
   const computed: ProComputedLine[] = active.map((l) => {
-    const gamme = getGammeForProduct(l.productId);
-    const ppg = getProPricePerGram(tiers, gamme, totalWeightG) ?? 0;
+    const ppg = proPricePerGram(tiers, l.productId, totalWeightG, l.format);
     const weightG = round2(l.format * l.units);
     const totalHT = round2(weightG * ppg);
 
@@ -116,28 +115,36 @@ export const computeProCart = (
     computed.reduce((s, l) => s + l.retailUnitTTC * l.units, 0)
   );
 
-  // Palier courant / suivant (basé sur la gamme "classiques" pour l'affichage)
-  const classiques = tiers
-    .filter((t) => t.gamme === "classiques")
-    .sort((a, b) => a.tier_max_g - b.tier_max_g);
-
+  // Palier courant / suivant : paliers de volume communs à tous les produits.
   let currentTierMaxG: number | null = null;
   let gramsToNextTier: number | null = null;
   let nextTierSavingPerGram: number | null = null;
 
-  if (classiques.length) {
-    const idx = classiques.findIndex((t) => totalWeightG <= t.tier_max_g);
-    if (idx >= 0) {
-      currentTierMaxG = classiques[idx].tier_max_g;
-      const next = classiques[idx + 1];
-      if (next) {
-        gramsToNextTier = round2(Math.max(0, classiques[idx].tier_max_g - totalWeightG) + 0.01);
-        nextTierSavingPerGram = round2(
-          Number(classiques[idx].price_per_gram) - Number(next.price_per_gram)
-        );
-      }
+  const idx = PRO_TIERS.findIndex((t) => totalWeightG <= t);
+  if (idx >= 0) {
+    currentTierMaxG = PRO_TIERS[idx];
+    const next = PRO_TIERS[idx + 1];
+    if (next !== undefined) {
+      gramsToNextTier = round2(Math.max(0, PRO_TIERS[idx] - totalWeightG) + 0.01);
+      // Économie moyenne €/g au palier suivant, sur les produits du panier
+      const ids = [...new Set(active.map((l) => l.productId))];
+      const deltas = ids
+        .map((id) => {
+          const cur = tiers.find(
+            (t) => t.gamme === getGammeForProduct(id) && Number(t.tier_max_g) === PRO_TIERS[idx]
+          );
+          const nxt = tiers.find(
+            (t) => t.gamme === getGammeForProduct(id) && Number(t.tier_max_g) === next
+          );
+          return cur && nxt ? Number(cur.price_per_gram) - Number(nxt.price_per_gram) : null;
+        })
+        .filter((d): d is number => d !== null);
+      nextTierSavingPerGram = deltas.length
+        ? round2(deltas.reduce((s, d) => s + d, 0) / deltas.length)
+        : null;
     }
   }
+
 
   return {
     lines: computed,
