@@ -1,40 +1,36 @@
 // Margin & profitability helpers
 
-export type ProGamme =
-  | "classiques"
-  | "classiques_premium"
-  | "911_og"
-  | "blue_mango"
-  | "poussiere"
-  | "nectar_top";
+/**
+ * La grille pro est désormais définie PAR PRODUIT (un prix €/g par produit et
+ * par palier de volume), comme dans le book tarifaire envoyé aux partenaires.
+ * `ProGamme` correspond donc à l'identifiant du produit.
+ */
+export type ProGamme = string;
 
-export const GAMME_LABEL: Record<ProGamme, string> = {
-  classiques: "Classiques (Amnesia, Ice O Lator, Golden CBN, Nuage de Mousseux)",
-  classiques_premium: "Classiques Premium (Platinum OG, Mint Kush)",
-  "911_og": "Indoor Master — 911 OG",
-  blue_mango: "Indoor Master — Blue Mango",
-  poussiere: "Poussière d'Or",
-  nectar_top: "Nectar Divin (Haribo, Heisenberg)",
+/** Paliers de volume (borne haute en grammes) de la grille pro */
+export const PRO_TIERS = [50, 100, 250, 500, 999999] as const;
+
+export const proTierLabel = (maxG: number): string => {
+  if (maxG >= 999999) return "+ de 500 g";
+  return `jusqu'à ${maxG} g`;
 };
 
-export const PRODUCT_TO_GAMME: Record<string, ProGamme> = {
-  "amnesia-signature-oniria": "classiques",
-  "platinum-og": "classiques_premium",
-  "mint-kush": "classiques_premium",
-  "blue-mango-indoor": "blue_mango",
-  "ice-o-lator": "classiques",
-  "golden-cbn": "classiques",
-  "nuage-de-mousseux": "classiques",
-  "911-og-indoor": "911_og",
-  "poussiere-dor": "poussiere",
-  "haribo": "nectar_top",
-  "heisenberg": "nectar_top",
+export const GAMME_LABEL: Record<string, string> = {
+  "poussiere-dor": "Poussière d'Or",
+  "amnesia-signature-oniria": "Amnesia « Signature Oniria »",
+  "ice-o-lator": "Ice O Lator",
+  "golden-cbn": "Golden CBN",
+  "mint-kush": "Mint Kush",
+  "platinum-og": "Platinum OG",
+  "nuage-de-mousseux": "Nuage de Mousseux (Go Fast)",
+  "911-og-indoor": "911 OG « Indoor Master »",
+  "blue-mango-indoor": "Blue Mango « Indoor Master »",
+  haribo: "Haribo — Nectar Divin",
+  heisenberg: "Heisenberg — Nectar Divin",
 };
 
+export const getGammeForProduct = (productId: string): ProGamme => productId;
 
-
-export const getGammeForProduct = (productId: string): ProGamme =>
-  PRODUCT_TO_GAMME[productId] ?? "classiques";
 
 export interface PriceTier {
   gamme: string;
