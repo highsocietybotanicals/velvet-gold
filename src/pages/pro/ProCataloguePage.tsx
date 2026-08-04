@@ -1,16 +1,16 @@
 import { Link } from "react-router-dom";
 import { useProCart } from "@/contexts/ProCartContext";
 import { useProCartTotals } from "@/hooks/useProCartTotals";
-import { PRO_FORMATS } from "@/lib/proPricing";
+import { PRO_FORMATS, proPricePerGram } from "@/lib/proPricing";
 import ProTierBar from "@/components/pro/ProTierBar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { getGammeForProduct } from "@/lib/margin";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 
 const eur = (n: number) => `${n.toFixed(2)} €`;
+
 
 const ProCataloguePage = () => {
   const { setUnits, getUnits } = useProCart();
