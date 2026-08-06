@@ -30,9 +30,12 @@ const ProCataloguePage = () => {
       <div>
         <h1 className="text-2xl font-bold gold-text">Catalogue professionnel</h1>
         <p className="text-sm text-muted-foreground">
-          Prix affichés <strong>HT</strong>, par gramme, appliqués à l'ensemble de la commande selon
-          le volume total. Saisis le nombre de pochons par format.
+          Prix affichés <strong>HT</strong>, par gramme. Remise dégressive automatique sur
+          l'ensemble de la commande : <strong>-5 %</strong> dès 100 g, <strong>-10 %</strong> dès
+          250 g, <strong>-15 %</strong> dès 500 g, <strong>-20 %</strong> dès 1 kg. Saisis le nombre
+          de pochons par format.
         </p>
+
       </div>
 
       <ProTierBar
