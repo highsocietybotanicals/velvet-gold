@@ -127,7 +127,7 @@ export const computeProCart = (
     currentTierMaxG = PRO_TIERS[idx];
     const next = PRO_TIERS[idx + 1];
     if (next !== undefined) {
-      gramsToNextTier = round2(Math.max(0, PRO_TIERS[idx] - totalWeightG) + 0.01);
+      gramsToNextTier = round2(Math.max(0, PRO_TIERS[idx] + 1 - totalWeightG));
       // Économie moyenne €/g au palier suivant, sur les produits du panier
       const ids = [...new Set(active.map((l) => l.productId))];
       const deltas = ids
