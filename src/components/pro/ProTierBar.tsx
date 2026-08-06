@@ -15,8 +15,9 @@ const ProTierBar = ({
   gramsToNextTier,
   nextTierSavingPerGram,
 }: Props) => {
-  const target = currentTierMaxG && currentTierMaxG < 100000 ? currentTierMaxG : null;
+  const target = currentTierMaxG && currentTierMaxG < 100000 ? currentTierMaxG + 1 : null;
   const pct = target ? Math.min(100, (totalWeightG / target) * 100) : 100;
+
 
   return (
     <div className="rounded-lg border border-gold/30 bg-card/60 p-4 space-y-2">
