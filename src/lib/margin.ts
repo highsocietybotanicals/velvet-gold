@@ -7,13 +7,37 @@
  */
 export type ProGamme = string;
 
-/** Paliers de volume (borne haute en grammes) de la grille pro */
-export const PRO_TIERS = [50, 100, 250, 500, 999999] as const;
+/**
+ * Paliers de volume (borne haute en grammes) de la grille pro.
+ * La dégressivité est un pourcentage uniforme appliqué au prix de base :
+ * -5 % dès 100 g, -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg.
+ */
+export const PRO_TIERS = [99, 249, 499, 999, 999999] as const;
+
+/** Remise associée à chaque palier (borne haute en g -> % de remise) */
+export const TIER_DISCOUNT: Record<number, number> = {
+  99: 0,
+  249: 5,
+  499: 10,
+  999: 15,
+  999999: 20,
+};
 
 export const proTierLabel = (maxG: number): string => {
-  if (maxG >= 999999) return "+ de 500 g";
-  return `jusqu'à ${maxG} g`;
+  switch (maxG) {
+    case 99:
+      return "moins de 100 g — tarif de base";
+    case 249:
+      return "dès 100 g — remise 5 %";
+    case 499:
+      return "dès 250 g — remise 10 %";
+    case 999:
+      return "dès 500 g — remise 15 %";
+    default:
+      return "dès 1 kg — remise 20 %";
+  }
 };
+
 
 export const GAMME_LABEL: Record<string, string> = {
   "poussiere-dor": "Poussière d'Or",
