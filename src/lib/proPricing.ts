@@ -2,8 +2,10 @@ import {
   getGammeForProduct,
   getProPricePerGram,
   PRO_TIERS,
+  proTierLabel,
   type PriceTier,
 } from "./margin";
+
 import { calculateItemPrice } from "./pricing";
 import type { PriceGroup } from "@/data/products";
 
