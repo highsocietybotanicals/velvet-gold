@@ -2,8 +2,10 @@ import {
   getGammeForProduct,
   getProPricePerGram,
   PRO_TIERS,
+  proTierLabel,
   type PriceTier,
 } from "./margin";
+
 import { calculateItemPrice } from "./pricing";
 import type { PriceGroup } from "@/data/products";
 
@@ -125,7 +127,7 @@ export const computeProCart = (
     currentTierMaxG = PRO_TIERS[idx];
     const next = PRO_TIERS[idx + 1];
     if (next !== undefined) {
-      gramsToNextTier = round2(Math.max(0, PRO_TIERS[idx] - totalWeightG) + 0.01);
+      gramsToNextTier = round2(Math.max(0, PRO_TIERS[idx] + 1 - totalWeightG));
       // Économie moyenne €/g au palier suivant, sur les produits du panier
       const ids = [...new Set(active.map((l) => l.productId))];
       const deltas = ids
@@ -162,7 +164,6 @@ export const computeProCart = (
 
 export const tierLabel = (maxG: number | null): string => {
   if (maxG === null) return "—";
-  if (maxG >= 100000) return "+ de 500 g";
-  return `jusqu'à ${maxG} g`;
-
+  return proTierLabel(maxG);
 };
+
