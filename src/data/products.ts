@@ -5,6 +5,8 @@ import nineOneOne from "@/assets/flowers/911-og-real.jpg";
 import mintKush from "@/assets/flowers/mint-kush-real.jpg";
 import platinumOG from "@/assets/flowers/platinum-og-real.jpg";
 import amnesiaOniria from "@/assets/flowers/amnesia-oniria-real.jpg";
+import mangoXIce from "@/assets/flowers/mango-x-ice-real.jpg";
+
 // Résines Premium
 import iceOLator from "@/assets/resins/ice-o-lator-real.jpg";
 import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
