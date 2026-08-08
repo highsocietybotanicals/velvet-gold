@@ -242,7 +242,9 @@ const nectarDivin: Product[] = [
     intentionMatch: ["sommeil", "detente"],
     tasteMatch: ["epice", "boise"],
     isNectarDivin: true,
+  },
   {
+
     id: "mango-x-ice",
     name: "Mango X Ice",
     subtitle: "Fleur Nectar Divin",
