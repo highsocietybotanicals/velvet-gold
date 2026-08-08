@@ -242,8 +242,25 @@ const nectarDivin: Product[] = [
     intentionMatch: ["sommeil", "detente"],
     tasteMatch: ["epice", "boise"],
     isNectarDivin: true,
+  {
+    id: "mango-x-ice",
+    name: "Mango X Ice",
+    subtitle: "Fleur Nectar Divin",
+    badge: "Nectar Divin",
+    description: "Fleur ultra-premium de la gamme Nectar Divin — puissance supérieure à l'Élixir Noir. Bud dense givré de trichomes, arômes exotiques de mangue mûre relevés d'une fraîcheur glacée, effets enveloppants d'une rare intensité.",
+    price: 10,
+    priceGroup: "B",
+    cbdPercentage: "70% Nectar Divin",
+    image: mangoXIce,
+    terpenes: { boise: 45, fruite: 95, epice: 35, terreux: 55 },
+    mood: "Évasion glacée",
+    category: "fleur",
+    intentionMatch: ["detente", "creativite"],
+    tasteMatch: ["fruite"],
+    isNectarDivin: true,
   },
 ];
+
 
 // ============================================
 // Exports
