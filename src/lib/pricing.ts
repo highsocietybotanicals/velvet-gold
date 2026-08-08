@@ -72,6 +72,7 @@ export const FORCE_NOIRE_RATIOS: Record<string, Record<number, number>> = {
   "blue-mango-indoor": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.6154 },
   "haribo":            { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "heisenberg":        { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
+  "mango-x-ice":       { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "poussiere-dor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8333, 10: 0.625 },
 };
 

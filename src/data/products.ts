@@ -5,6 +5,8 @@ import nineOneOne from "@/assets/flowers/911-og-real.jpg";
 import mintKush from "@/assets/flowers/mint-kush-real.jpg";
 import platinumOG from "@/assets/flowers/platinum-og-real.jpg";
 import amnesiaOniria from "@/assets/flowers/amnesia-oniria-real.jpg";
+import mangoXIce from "@/assets/flowers/mango-x-ice-real.jpg";
+
 // Résines Premium
 import iceOLator from "@/assets/resins/ice-o-lator-real.jpg";
 import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
@@ -243,7 +245,26 @@ const nectarDivin: Product[] = [
     tasteMatch: ["epice", "boise"],
     isNectarDivin: true,
   },
+  {
+
+    id: "mango-x-ice",
+    name: "Mango X Ice",
+    subtitle: "Fleur Nectar Divin",
+    badge: "Nectar Divin",
+    description: "Fleur ultra-premium de la gamme Nectar Divin — puissance supérieure à l'Élixir Noir. Bud dense givré de trichomes, arômes exotiques de mangue mûre relevés d'une fraîcheur glacée, effets enveloppants d'une rare intensité.",
+    price: 15,
+    priceGroup: "B",
+    cbdPercentage: "70% Nectar Divin",
+    image: mangoXIce,
+    terpenes: { boise: 45, fruite: 95, epice: 35, terreux: 55 },
+    mood: "Évasion glacée",
+    category: "fleur",
+    intentionMatch: ["detente", "creativite"],
+    tasteMatch: ["fruite"],
+    isNectarDivin: true,
+  },
 ];
+
 
 // ============================================
 // Exports

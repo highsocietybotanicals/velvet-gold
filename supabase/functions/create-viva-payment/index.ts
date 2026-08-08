@@ -44,6 +44,7 @@ const FORCE_NOIRE_RATIOS: Record<string, Record<number, number>> = {
   "blue-mango-indoor": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.6154 },
   "haribo":            { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "heisenberg":        { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
+  "mango-x-ice":       { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "poussiere-dor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8333, 10: 0.625 },
 };
 
@@ -78,7 +79,7 @@ function calculateForceNoirePrice(productId: string, weight: number, basePrice: 
 const ACCESSORY_BULK_THRESHOLD = 10;
 const ACCESSORY_BULK_DISCOUNT = 0.33;
 
-const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor", "haribo", "heisenberg"]);
+const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor", "haribo", "heisenberg", "mango-x-ice"]);
 
 const ACCESSORY_PRICES: Record<string, number> = {
   "pochon-petit": 1.50,
