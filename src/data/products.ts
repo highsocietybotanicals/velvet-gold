@@ -248,6 +248,23 @@ const nectarDivin: Product[] = [
     tasteMatch: ["fruite"],
     isNectarDivin: true,
   },
+  {
+    id: "poussiere-dor",
+    name: "Poussière D'or",
+    subtitle: "Résine Nectar Divin",
+    badge: "Nectar Divin",
+    description: "Pollen haute couture de la gamme Nectar Divin — texture mousse aérienne, robe blonde sablée. Arômes doux et boisés, effets équilibrés pour une détente raffinée d'exception.",
+    price: 12,
+    priceGroup: "A",
+    cbdPercentage: "70% Nectar Divin",
+    image: poussiereDorPremium,
+    terpenes: { boise: 70, fruite: 30, epice: 45, terreux: 75 },
+    mood: "Détente",
+    category: "resine",
+    intentionMatch: ["detente"],
+    tasteMatch: ["boise", "terreux"],
+    isNectarDivin: true,
+  },
 ];
 
 
