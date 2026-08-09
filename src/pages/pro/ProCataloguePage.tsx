@@ -30,11 +30,12 @@ const ProCataloguePage = () => {
       <div>
         <h1 className="text-2xl font-bold gold-text">Catalogue professionnel</h1>
         <p className="text-sm text-muted-foreground">
-          Prix affichés <strong>HT</strong>, par gramme, positionnés à <strong>50 % du prix
-          public HT</strong> (hors TVA, ta marge reste entière). Remise dégressive automatique sur
-          l'ensemble de la commande : <strong>-5 %</strong> dès 100 g, <strong>-10 %</strong> dès
-          250 g, <strong>-15 %</strong> dès 500 g, <strong>-20 %</strong> dès 1 kg. Saisis le nombre
-          de pochons par format.
+          Tous les prix sont <strong>HT</strong> (hors TVA 20 %), par gramme, positionnés à
+          exactement <strong>50 % du prix public HT</strong> — identiques quel que soit le format,
+          pochon aluminium, Boveda 62 % et étiquette inclus sans supplément. Remise dégressive
+          automatique sur l'ensemble de la commande : <strong>-5 %</strong> dès 100 g,{" "}
+          <strong>-10 %</strong> dès 250 g, <strong>-15 %</strong> dès 500 g, <strong>-20 %</strong>{" "}
+          dès 1 kg. Saisis le nombre de pochons par format.
         </p>
 
       </div>
@@ -44,6 +45,9 @@ const ProCataloguePage = () => {
         currentTierMaxG={totals.currentTierMaxG}
         gramsToNextTier={totals.gramsToNextTier}
         nextTierSavingPerGram={totals.nextTierSavingPerGram}
+        retailTotalTTC={totals.retailTotalTTC}
+        totalHT={totals.totalHT}
+        resellerMarginTotal={totals.resellerMarginTotal}
       />
 
       <div className="space-y-3">
