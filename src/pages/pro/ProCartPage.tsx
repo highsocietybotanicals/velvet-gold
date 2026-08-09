@@ -122,6 +122,9 @@ const ProCartPage = () => {
         currentTierMaxG={totals.currentTierMaxG}
         gramsToNextTier={totals.gramsToNextTier}
         nextTierSavingPerGram={totals.nextTierSavingPerGram}
+        retailTotalTTC={totals.retailTotalTTC}
+        totalHT={totals.totalHT}
+        resellerMarginTotal={totals.resellerMarginTotal}
       />
 
       <Card>

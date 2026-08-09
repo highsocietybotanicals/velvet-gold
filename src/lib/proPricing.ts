@@ -13,13 +13,13 @@ export const PRO_FORMATS = [1, 2.5, 5, 10] as const;
 export type ProFormat = (typeof PRO_FORMATS)[number];
 
 /**
- * Supplément conditionnement (€/g HT) sur les petits formats : le pochon HSB +
- * Boveda 62% coûtent le même prix quel que soit le format, ils sont donc
- * répercutés sur le 1 g et le 2,5 g (offerts à partir du 5 g).
+ * Aucun supplément conditionnement : le pochon HSB, le Boveda 62 % et
+ * l'étiquette restent à la charge de HSB. Le prix pro HT est donc identique
+ * quel que soit le format (exactement 50 % du prix public HT, puis dégressif).
  */
 export const FORMAT_SURCHARGE: Record<number, number> = {
-  1: 1.0,
-  2.5: 0.6,
+  1: 0,
+  2.5: 0,
   5: 0,
   10: 0,
 };
