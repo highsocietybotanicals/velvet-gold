@@ -146,23 +146,8 @@ const groupA: Product[] = [
     tasteMatch: ["boise"],
     isForceNoire: true,
   },
-  {
-    id: "poussiere-dor",
-    name: "Poussière D'or",
-    subtitle: "Résine Pollen Haute Couture",
-    badge: "Édition Signature",
-    description: "Pollen haute couture à la texture mousse aérienne, robe blonde sablée. Arômes doux et boisés, effets équilibrés pour une détente raffinée.",
-    price: 12,
-    priceGroup: "A",
-    cbdPercentage: "30% CBD",
-    image: poussiereDorPremium,
-    terpenes: { boise: 70, fruite: 30, epice: 45, terreux: 75 },
-    mood: "Détente",
-    category: "resine",
-    intentionMatch: ["detente"],
-    tasteMatch: ["boise", "terreux"],
-  },
 ];
+
 
 // ============================================
 // GROUPE B - Ultra Premium (Base 14€/g)
@@ -261,6 +246,23 @@ const nectarDivin: Product[] = [
     category: "fleur",
     intentionMatch: ["detente", "creativite"],
     tasteMatch: ["fruite"],
+    isNectarDivin: true,
+  },
+  {
+    id: "poussiere-dor",
+    name: "Poussière D'or",
+    subtitle: "Résine Nectar Divin",
+    badge: "Nectar Divin",
+    description: "Pollen haute couture de la gamme Nectar Divin — texture mousse aérienne, robe blonde sablée. Arômes doux et boisés, effets équilibrés pour une détente raffinée d'exception.",
+    price: 12,
+    priceGroup: "A",
+    cbdPercentage: "70% Nectar Divin",
+    image: poussiereDorPremium,
+    terpenes: { boise: 70, fruite: 30, epice: 45, terreux: 75 },
+    mood: "Détente",
+    category: "resine",
+    intentionMatch: ["detente"],
+    tasteMatch: ["boise", "terreux"],
     isNectarDivin: true,
   },
 ];
