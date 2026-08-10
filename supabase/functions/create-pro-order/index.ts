@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const method = paymentMethod === "transfer" ? "transfer" : "online";
+    const method = paymentMethod === "physical" ? "physical" : "transfer";
 
     // Vérifier le statut pro validé
     const { data: profile } = await supabaseAdmin
