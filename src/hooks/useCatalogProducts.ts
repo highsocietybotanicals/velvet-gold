@@ -77,6 +77,7 @@ export const useCatalogProducts = () => {
   const resins = useMemo(() => merged.filter((p) => p.category === "resine"), [merged]);
   const forceNoire = useMemo(() => merged.filter((p) => p.isForceNoire), [merged]);
   const nectarDivin = useMemo(() => merged.filter((p) => p.isNectarDivin), [merged]);
+  const exotique = useMemo(() => merged.filter((p) => p.isExotique), [merged]);
 
-  return { all: merged, flowers, resins, forceNoire, nectarDivin, isLoading };
+  return { all: merged, flowers, resins, forceNoire, nectarDivin, exotique, isLoading };
 };
