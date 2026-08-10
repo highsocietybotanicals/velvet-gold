@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Leaf, Sparkles, ShoppingCart, Zap, Crown } from "lucide-react";
+import { Leaf, Sparkles, ShoppingCart, Zap, Crown, Gem } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
@@ -197,7 +197,9 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.15 }}
       className={`group product-card rounded-lg border overflow-hidden relative ${
-        product.isNectarDivin
+        product.isExotique
+          ? "bg-card border-purple-600/50 hover:border-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.4)]"
+          : product.isNectarDivin
           ? "bg-black border-primary/50 hover:border-primary hover:shadow-[0_0_30px_rgba(212,175,55,0.35)]"
           : product.isForceNoire
           ? "bg-card border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]"
@@ -207,6 +209,13 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       {product.isNectarDivin && (
         <div className="absolute inset-0 pointer-events-none z-0 opacity-70">
           <GoldParticles />
+        </div>
+      )}
+      {product.isExotique && (
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <div className="absolute -inset-1 bg-gradient-to-tr from-purple-900/10 via-purple-500/5 to-fuchsia-600/10 animate-pulse" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400/40 to-transparent" />
         </div>
       )}
       <Link to={`/produit/${product.id}`} className="relative z-10 block">
@@ -223,6 +232,14 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             }}
           />
 
+          {/* Exotique badge (priorité absolue) */}
+          {product.isExotique && (
+            <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-purple-950/90 to-purple-700/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-purple-500/70 shadow-[0_0_18px_rgba(168,85,247,0.5)]">
+              <Gem className="w-3 h-3 text-purple-300" />
+              <span className="text-xs font-bold text-purple-200 tracking-wider uppercase">Exotique</span>
+            </div>
+          )}
+
           {/* Nectar Divin badge (priorité) */}
           {product.isNectarDivin && (
             <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-black/90 to-primary/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-primary/70 shadow-[0_0_15px_rgba(212,175,55,0.4)]">
@@ -232,7 +249,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           )}
 
           {/* Force Noire badge */}
-          {!product.isNectarDivin && product.isForceNoire && (
+          {!product.isNectarDivin && !product.isExotique && product.isForceNoire && (
             <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-red-950/90 to-black/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-800/60">
               <Zap className="w-3 h-3 text-red-400" />
               <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
@@ -240,7 +257,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           )}
 
           {/* Badge produit (Cali Genetics, etc.) - only if NOT Force Noire / Nectar Divin */}
-          {!product.isForceNoire && !product.isNectarDivin && (product as any).badge && (
+          {!product.isForceNoire && !product.isNectarDivin && !product.isExotique && (product as any).badge && (
             <div className={`absolute top-4 left-4 flex items-center gap-2 backdrop-blur-sm px-3 py-1.5 rounded-full border ${
               (product as any).badge === "Cali Genetics"
                 ? "bg-gradient-to-r from-yellow-500/20 to-primary/20 border-yellow-500/50 text-yellow-400"
@@ -253,7 +270,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
           {/* CBD/molecule badge */}
           <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full">
-            <span className="text-xs font-bold">{product.isForceNoire || product.isNectarDivin || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}</span>
+            <span className="text-xs font-bold">{product.isForceNoire || product.isNectarDivin || product.isExotique || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}</span>
           </div>
 
           {/* Magnifier overlay on hover */}

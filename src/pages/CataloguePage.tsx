@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Filter, Grid, List, Search, ShoppingCart, Package, Zap } from "lucide-react";
+import { Filter, Grid, List, Search, ShoppingCart, Package, Zap, Gem } from "lucide-react";
 import { ProductCategory } from "@/data/products";
 import { accessories } from "@/data/accessories";
 import { useCart } from "@/contexts/CartContext";
@@ -11,11 +11,11 @@ import Footer from "@/components/Footer";
 
 type ViewMode = "grid" | "list";
 type SortOption = "name" | "price-asc" | "price-desc" | "cbd";
-type CategoryFilter = "all" | ProductCategory | "accessoire" | "force-noire";
+type CategoryFilter = "all" | ProductCategory | "accessoire" | "force-noire" | "exotique";
 
 const CataloguePage = () => {
   const { addToCart, addAccessory } = useCart();
-  const { all: allProducts, forceNoire: forceNoireProducts } = useCatalogProducts();
+  const { all: allProducts, forceNoire: forceNoireProducts, exotique: exotiqueProducts } = useCatalogProducts();
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +29,17 @@ const CataloguePage = () => {
     if (category === "accessoire") return [];
     if (category === "force-noire") {
       let products = [...forceNoireProducts];
+      if (searchQuery) {
+        products = products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      return products;
+    }
+    if (category === "exotique") {
+      let products = [...exotiqueProducts];
       if (searchQuery) {
         products = products.filter(
           (p) =>
@@ -149,6 +160,7 @@ const CataloguePage = () => {
                 { key: "fleur", label: "Fleurs" },
                 { key: "resine", label: "Résines" },
                 { key: "force-noire", label: "⚡ Force Noire" },
+                { key: "exotique", label: "💎 Exotique" },
                 // { key: "accessoire", label: "Accessoires" }, // Masqué - rupture de stock
               ].map((cat) => (
                 <button
@@ -260,8 +272,8 @@ const CataloguePage = () => {
                   transition={{ delay: index * 0.03 }}
                   className={
                     viewMode === "grid"
-                      ? `product-card group bg-card border rounded-xl overflow-hidden ${product.isForceNoire ? "border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]" : "border-border"}`
-                      : `product-card group bg-card border rounded-xl overflow-hidden flex ${product.isForceNoire ? "border-red-900/50 hover:border-red-800/80" : "border-border"}`
+                      ? `product-card group bg-card border rounded-xl overflow-hidden ${product.isExotique ? "border-purple-600/50 hover:border-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.4)]" : product.isForceNoire ? "border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]" : "border-border"}`
+                      : `product-card group bg-card border rounded-xl overflow-hidden flex ${product.isExotique ? "border-purple-600/50 hover:border-purple-500" : product.isForceNoire ? "border-red-900/50 hover:border-red-800/80" : "border-border"}`
                   }
                 >
                   <Link
@@ -282,8 +294,16 @@ const CataloguePage = () => {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       
+                      {/* Exotique badge */}
+                      {product.isExotique && (
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-gradient-to-r from-purple-950/90 to-purple-700/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-purple-500/70 shadow-[0_0_18px_rgba(168,85,247,0.5)]">
+                          <Gem className="w-3 h-3 text-purple-300" />
+                          <span className="text-xs font-bold text-purple-200 tracking-wider uppercase">Exotique</span>
+                        </div>
+                      )}
+
                       {/* Force Noire badge */}
-                      {product.isForceNoire && (
+                      {!product.isExotique && product.isForceNoire && (
                         <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-gradient-to-r from-red-950/90 to-black/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-800/60">
                           <Zap className="w-3 h-3 text-red-400" />
                           <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
@@ -304,7 +324,7 @@ const CataloguePage = () => {
                       </div>
                       <div className={viewMode === "list" ? "text-right" : "flex justify-between items-center mt-4"}>
                         <span className="text-sm text-muted-foreground">
-                          {product.isForceNoire || product.isNectarDivin || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
+                          {product.isForceNoire || product.isNectarDivin || product.isExotique || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
                         </span>
                         <span className="text-lg font-display text-primary">
                           {product.price}€<span className="text-xs text-muted-foreground">/g</span>
