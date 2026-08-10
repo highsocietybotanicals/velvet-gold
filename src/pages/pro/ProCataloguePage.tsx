@@ -83,12 +83,16 @@ const ProCataloguePage = () => {
 
                 <div className="flex flex-wrap gap-3">
                   {PRO_FORMATS.map((f) => {
-                    const ppgF = proPricePerGram(tiers, p.id, totals.totalWeightG, f);
+                    const ppgF = proPricePerGram(tiers, p.id, totals.totalWeightG, f, info);
+                    const retailF = calculateItemPrice(p.price, f, p.priceGroup, p.id).finalPrice;
+                    const coefF = ppgF > 0 ? retailF / f / ppgF : 0;
                     return (
                       <div key={f} className="w-20">
                         <label className="text-[11px] text-muted-foreground block mb-1">
                           {f} g · {eur(ppgF)}/g
+                          <span className="block text-gold">x{coefF.toFixed(2)}</span>
                         </label>
+
                         <Input
                           type="number"
                           min={0}
