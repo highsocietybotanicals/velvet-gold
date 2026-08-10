@@ -52,12 +52,15 @@ const ProCataloguePage = () => {
 
       <div className="space-y-3">
         {products.map((p) => {
-          const basePpg = proPricePerGram(tiers, p.id, totals.totalWeightG, 10);
+          const info = { price: p.price, priceGroup: p.priceGroup };
+          const basePpg = proPricePerGram(tiers, p.id, totals.totalWeightG, 10, info);
           const productSubtotal = PRO_FORMATS.reduce(
             (s, f) =>
-              s + f * getUnits(p.id, f) * proPricePerGram(tiers, p.id, totals.totalWeightG, f),
+              s +
+              f * getUnits(p.id, f) * proPricePerGram(tiers, p.id, totals.totalWeightG, f, info),
             0
           );
+
 
           return (
             <Card key={p.id} className="bg-card/60 border-border/50">
