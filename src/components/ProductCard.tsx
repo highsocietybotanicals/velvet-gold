@@ -211,6 +211,13 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           <GoldParticles />
         </div>
       )}
+      {product.isExotique && (
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <div className="absolute -inset-1 bg-gradient-to-tr from-purple-900/10 via-purple-500/5 to-fuchsia-600/10 animate-pulse" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400/40 to-transparent" />
+        </div>
+      )}
       <Link to={`/produit/${product.id}`} className="relative z-10 block">
         {/* Image container with pochon overlay */}
         <div className={`relative aspect-square overflow-hidden ${product.isNectarDivin ? "bg-black" : "bg-carbon-deep"}`}>
