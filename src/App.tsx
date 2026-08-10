@@ -11,6 +11,7 @@ import AnimatedRoutes from "./components/AnimatedRoutes";
 import CartDrawer from "./components/CartDrawer";
 import SommelierChatbot from "./components/SommelierChatbot";
 import ErrorBoundary from "./components/ErrorBoundary";
+import AbandonedPaymentGuard from "./components/AbandonedPaymentGuard";
 
 const queryClient = new QueryClient();
 
