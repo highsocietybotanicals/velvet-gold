@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { useProCart } from "@/contexts/ProCartContext";
 import { useProCartTotals } from "@/hooks/useProCartTotals";
-import { PRO_FORMATS, proPricePerGram } from "@/lib/proPricing";
+import { PRO_FORMATS, proPricePerGram, MIN_RESELLER_COEF } from "@/lib/proPricing";
+import { calculateItemPrice } from "@/lib/pricing";
+
 import ProTierBar from "@/components/pro/ProTierBar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
