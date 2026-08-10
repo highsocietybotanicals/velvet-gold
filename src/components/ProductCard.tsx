@@ -250,7 +250,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           )}
 
           {/* Badge produit (Cali Genetics, etc.) - only if NOT Force Noire / Nectar Divin */}
-          {!product.isForceNoire && !product.isNectarDivin && (product as any).badge && (
+          {!product.isForceNoire && !product.isNectarDivin && !product.isExotique && (product as any).badge && (
             <div className={`absolute top-4 left-4 flex items-center gap-2 backdrop-blur-sm px-3 py-1.5 rounded-full border ${
               (product as any).badge === "Cali Genetics"
                 ? "bg-gradient-to-r from-yellow-500/20 to-primary/20 border-yellow-500/50 text-yellow-400"
