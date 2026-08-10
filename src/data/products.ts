@@ -42,6 +42,7 @@ export interface Product {
   tasteMatch: string[];
   isForceNoire?: boolean;
   isNectarDivin?: boolean;
+  isExotique?: boolean;
 }
 
 // ============================================
