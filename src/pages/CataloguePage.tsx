@@ -283,8 +283,16 @@ const CataloguePage = () => {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       
+                      {/* Exotique badge */}
+                      {product.isExotique && (
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-gradient-to-r from-purple-950/90 to-purple-700/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-purple-500/70 shadow-[0_0_18px_rgba(168,85,247,0.5)]">
+                          <Gem className="w-3 h-3 text-purple-300" />
+                          <span className="text-xs font-bold text-purple-200 tracking-wider uppercase">Exotique</span>
+                        </div>
+                      )}
+
                       {/* Force Noire badge */}
-                      {product.isForceNoire && (
+                      {!product.isExotique && product.isForceNoire && (
                         <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-gradient-to-r from-red-950/90 to-black/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-800/60">
                           <Zap className="w-3 h-3 text-red-400" />
                           <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
