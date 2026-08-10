@@ -54,3 +54,6 @@ verify_jwt = false
 
 [functions.create-pro-order]
 verify_jwt = true
+
+[functions.abandon-order]
+verify_jwt = false

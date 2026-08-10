@@ -31,7 +31,7 @@ const ProCartPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState<"online" | "transfer" | "quote">("online");
+  const [mode, setMode] = useState<"transfer" | "physical" | "quote">("transfer");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -75,14 +75,12 @@ const ProCartPage = () => {
 
       clearProCart();
 
-      if (mode === "online" && (data as any)?.checkoutUrl) {
-        window.location.href = (data as any).checkoutUrl;
-        return;
-      }
-
       toast({
         title: "Commande enregistrée",
-        description: `Facture à ${delai} jours — règlement par virement.`,
+        description:
+          mode === "transfer"
+            ? `Facture à ${delai} jours — règlement par virement.`
+            : "Règlement sur place — le paiement sera validé par HSB à la remise.",
       });
       navigate("/pro/commandes");
     } catch (err: any) {
@@ -212,15 +210,15 @@ const ProCartPage = () => {
           <CardContent className="space-y-4">
             <RadioGroup value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
               <div className="flex items-start gap-2">
-                <RadioGroupItem value="online" id="m-online" className="mt-1" />
-                <Label htmlFor="m-online" className="font-normal">
-                  Payer en ligne (carte bancaire sécurisée)
-                </Label>
-              </div>
-              <div className="flex items-start gap-2">
                 <RadioGroupItem value="transfer" id="m-transfer" className="mt-1" />
                 <Label htmlFor="m-transfer" className="font-normal">
                   Virement — facture à {delai} jours
+                </Label>
+              </div>
+              <div className="flex items-start gap-2">
+                <RadioGroupItem value="physical" id="m-physical" className="mt-1" />
+                <Label htmlFor="m-physical" className="font-normal">
+                  Paiement physique (espèces, TPE ou chèque à la remise) — validé par HSB
                 </Label>
               </div>
               <div className="flex items-start gap-2">
@@ -240,11 +238,9 @@ const ProCartPage = () => {
 
             <Button className="w-full" onClick={submit} disabled={submitting}>
               {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {mode === "online"
-                ? `Payer ${eur(totals.totalTTC)}`
-                : mode === "transfer"
-                ? "Valider la commande"
-                : "Envoyer la demande de devis"}
+              {mode === "quote"
+                ? "Envoyer la demande de devis"
+                : `Valider la commande — ${eur(totals.totalTTC)} TTC`}
             </Button>
           </CardContent>
         </Card>

@@ -23,6 +23,15 @@ const quoteStatusLabel: Record<string, string> = {
   refused: "Refusée",
 };
 
+const orderStatusLabel: Record<string, string> = {
+  pending: "Enregistrée",
+  preparing: "En préparation",
+  shipped: "Expédiée",
+  in_delivery: "En livraison",
+  delivered: "Livrée",
+  cancelled: "Annulée",
+};
+
 const ProOrdersPage = () => {
   const { user } = useAuth();
 
@@ -33,7 +42,7 @@ const ProOrdersPage = () => {
       const { data, error } = await (supabase as any)
         .from("orders")
         .select(
-          "id, display_order_number, created_at, status, payment_status, total_amount, total_flower_weight"
+          "id, display_order_number, created_at, status, payment_status, payment_method, total_amount, total_flower_weight"
         )
         .eq("user_id", user!.id)
         .eq("order_channel", "pro")
@@ -92,11 +101,17 @@ const ProOrdersPage = () => {
                     <TableCell>{dt(o.created_at)}</TableCell>
                     <TableCell>{o.total_flower_weight} g</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{o.status}</Badge>
+                      <Badge variant="secondary">
+                        {orderStatusLabel[o.status] ?? o.status}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={o.payment_status === "paid" ? "default" : "outline"}>
-                        {o.payment_status === "paid" ? "Payée" : "En attente"}
+                        {o.payment_status === "paid"
+                          ? "Payée"
+                          : o.payment_method === "physical"
+                          ? "Paiement sur place — à valider par HSB"
+                          : "Virement — en attente de validation HSB"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{eur(o.total_amount)}</TableCell>
