@@ -275,7 +275,9 @@ const MileageManager = () => {
     if (s === "computed") return <Badge className="bg-green-500/20 text-green-500">Calculé</Badge>;
     if (s === "manual") return <Badge className="bg-blue-500/20 text-blue-500">Manuel</Badge>;
     if (s === "failed") return <Badge variant="destructive">Échec</Badge>;
+    if (s === "pending") return <Badge className="bg-amber-500/20 text-amber-500">À saisir</Badge>;
     return <Badge variant="outline">{s}</Badge>;
+
   };
 
   return (
