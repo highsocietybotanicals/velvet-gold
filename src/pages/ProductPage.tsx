@@ -235,7 +235,7 @@ const ProductPage = () => {
               )}
 
               {/* Force Noire badge on detail page */}
-              {!product.isNectarDivin && product.isForceNoire && (
+              {!product.isNectarDivin && !product.isExotique && product.isForceNoire && (
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-red-950 to-black/90 border border-red-800/60 px-4 py-2 rounded-full mb-3 w-fit">
                   <Zap className="w-4 h-4 text-red-400" />
                   <span className="text-sm font-bold text-red-300 tracking-widest uppercase">Collection Force Noire</span>
