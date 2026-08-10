@@ -242,7 +242,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           )}
 
           {/* Force Noire badge */}
-          {!product.isNectarDivin && product.isForceNoire && (
+          {!product.isNectarDivin && !product.isExotique && product.isForceNoire && (
             <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-red-950/90 to-black/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-800/60">
               <Zap className="w-3 h-3 text-red-400" />
               <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
