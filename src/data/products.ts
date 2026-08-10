@@ -289,8 +289,8 @@ export const resins: Product[] = [
 // Tous les produits combinés
 export const allProducts: Product[] = [...nectarDivin, ...groupA, ...groupB];
 
-// Produits Force Noire (enrichis avec Élixir Noir)
-export const forceNoireProducts: Product[] = allProducts.filter(p => p.isForceNoire);
+// Produits Force Noire (gamme haute puissance : Élixir Noir + Nectar Divin + Exotique)
+export const forceNoireProducts: Product[] = allProducts.filter(p => p.isForceNoire || p.isNectarDivin || p.isExotique);
 
 // Produits Nectar Divin (gamme ultra-premium)
 export const nectarDivinProducts: Product[] = allProducts.filter(p => p.isNectarDivin);
