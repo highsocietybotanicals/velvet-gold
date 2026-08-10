@@ -71,11 +71,13 @@ Deno.serve(async (req) => {
     );
 
     if (!(await isAuthorized(req, supabase))) {
+      console.error("compute-mileage: unauthorized request (auth header present:", !!req.headers.get("Authorization"), ")");
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const { orderId } = await req.json();
     if (!orderId) {
