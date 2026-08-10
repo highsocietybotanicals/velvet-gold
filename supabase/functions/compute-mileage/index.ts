@@ -10,10 +10,42 @@ const DEPARTURE = "15 rue des écoles, 44170 Abbaretz, France";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
 
 async function isAuthorized(req: Request, serviceClient: any): Promise<boolean> {
-  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
-  if (!token) return false;
-  if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return true;
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+  // Accepted server-side secret keys
+  const accepted = new Set<string>();
+  const addAll = (val?: string | null) => {
+    if (!val) return;
+    for (const k of val.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean)) accepted.add(k);
+  };
+  addAll(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+  addAll(Deno.env.get("SUPABASE_SECRET_KEYS"));
+  if (accepted.has(token)) return true;
+
   try {
+    const anonKey =
+      Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+    if (anonKey) {
+      const authClient = createClient(Deno.env.get("SUPABASE_URL")!, anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data } = await authClient.auth.getClaims(token);
+      const claims: any = data?.claims;
+      if (claims?.role === "service_role") return true;
+      const userId = claims?.sub;
+      if (userId) {
+        const { data: role } = await serviceClient
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .maybeSingle();
+        if (role) return true;
+      }
+    }
+
     const { data: { user } } = await serviceClient.auth.getUser(token);
     if (!user) return false;
     const { data: role } = await serviceClient
@@ -28,6 +60,7 @@ async function isAuthorized(req: Request, serviceClient: any): Promise<boolean> 
   }
 }
 
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -38,11 +71,13 @@ Deno.serve(async (req) => {
     );
 
     if (!(await isAuthorized(req, supabase))) {
+      console.error("compute-mileage: unauthorized request (auth header present:", !!req.headers.get("Authorization"), ")");
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const { orderId } = await req.json();
     if (!orderId) {

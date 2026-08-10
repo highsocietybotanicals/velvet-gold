@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.trigger_compute_mileage() FROM PUBLIC, anon, authenticated;
