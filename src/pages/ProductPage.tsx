@@ -435,6 +435,22 @@ const ProductPage = () => {
                 </div>
               )}
 
+              {/* Exotique section */}
+              {product.isExotique && (
+                <div className="bg-gradient-to-br from-purple-950/30 to-card border border-purple-700/40 rounded-2xl p-6 mt-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Gem className="w-5 h-5 text-purple-400" />
+                    <h3 className="font-display text-lg text-purple-300">Exotique</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Ce produit appartient à notre collection exclusive <span className="text-purple-300 font-medium">Exotique</span> —
+                    des variétés d'exception aux arômes rares et envoûtants, cultivées avec une
+                    exigence absolue. Une expérience sensorielle inédite, réservée aux palais les
+                    plus aventuriers.
+                  </p>
+                </div>
+              )}
+
               {/* Terpene Radar */}
               <div className="bg-card border border-border rounded-2xl p-6 mt-6">
                 <h3 className="font-display text-lg text-foreground mb-4 text-center">
