@@ -197,7 +197,9 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.15 }}
       className={`group product-card rounded-lg border overflow-hidden relative ${
-        product.isNectarDivin
+        product.isExotique
+          ? "bg-card border-purple-600/50 hover:border-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.4)]"
+          : product.isNectarDivin
           ? "bg-black border-primary/50 hover:border-primary hover:shadow-[0_0_30px_rgba(212,175,55,0.35)]"
           : product.isForceNoire
           ? "bg-card border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]"
