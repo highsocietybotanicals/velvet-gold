@@ -330,87 +330,155 @@ const AccountingManager = () => {
         </CardContent>
       </Card>
 
-      <Card className="border-border/40">
+      <Card className="border-border/40 overflow-hidden">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-gold" /></div>
           ) : lines.length === 0 ? (
             <p className="text-center py-12 text-muted-foreground">Aucune facture sur cette période</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>N° Facture</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">HT</TableHead>
-                    <TableHead className="text-right">TVA</TableHead>
-                    <TableHead className="text-right">TTC</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rowsWithGroups.map((r, idx) => {
-                    if (r.kind === "header") {
-                      return (
-                        <TableRow key={`h-${idx}`} className="bg-muted/40">
-                          <TableCell colSpan={8} className="font-semibold uppercase text-primary text-xs tracking-wider">
-                            {format(new Date(r.month + "-01"), "MMMM yyyy", { locale: fr })}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    }
-                    if (r.kind === "subtotal") {
-                      return (
-                        <TableRow key={`s-${idx}`} className="bg-muted/20 italic">
-                          <TableCell colSpan={5} className="text-right">
-                            Sous-total {format(new Date(r.month + "-01"), "MMMM yyyy", { locale: fr })} ({r.summary.count})
-                          </TableCell>
-                          <TableCell className="text-right">{fmtEur(r.summary.totalHT)}</TableCell>
-                          <TableCell className="text-right">{fmtEur(r.summary.totalTVA)}</TableCell>
-                          <TableCell className="text-right font-bold">{fmtEur(r.summary.totalTTC)}</TableCell>
-                        </TableRow>
-                      );
-                    }
-                    const l: AccountingLine = r.line;
-                    const meta = statusMeta(l);
-                    const cancelled = l.status === "cancelled";
+            <>
+              {/* ---------- Mobile : cartes lisibles ---------- */}
+              <div className="md:hidden divide-y divide-border/50">
+                {rowsWithGroups.map((r, idx) => {
+                  if (r.kind === "header") {
                     return (
-                      <TableRow key={l.id} className={cancelled ? "opacity-60 line-through" : ""}>
-                    <TableCell className="font-mono text-xs">{l.invoiceNumber}</TableCell>
-                    <TableCell>{format(new Date(l.date), "dd/MM/yyyy")}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={l.type === "pro" ? "border-primary/50 text-primary" : l.type === "mileage" ? "border-red-400/50 text-red-400" : ""}>
-                        {l.type === "site" ? "Site" : l.type === "pro" ? "Pro" : "Frais km"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate" title={l.details || l.client}>
-                      {l.client}
-                      {l.details ? <span className="block text-[10px] text-muted-foreground">{l.details}</span> : null}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={meta.cls}>{meta.label}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{fmtEur(l.ht)}</TableCell>
-                    <TableCell className="text-right">{fmtEur(l.tva)}</TableCell>
-                    <TableCell className={`text-right font-semibold ${l.type === "mileage" ? "text-red-400" : "text-gold"}`}>{fmtEur(l.ttc)}</TableCell>
-                  </TableRow>
+                      <div key={`mh-${idx}`} className="bg-muted/60 px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary">
+                        {format(new Date(r.month + "-01"), "MMMM yyyy", { locale: fr })}
+                      </div>
                     );
-                  })}
-                  <TableRow className={`border-t-2 ${typeFilter === "mileage" ? "border-red-400 bg-red-400/10" : "border-gold bg-gold/10"}`}>
-                    <TableCell colSpan={5} className="font-bold text-right">TOTAL hors annulées ({tableTotals.count})</TableCell>
-                    <TableCell className="text-right font-bold">{fmtEur(tableTotals.totalHT)}</TableCell>
-                    <TableCell className="text-right font-bold text-primary">{fmtEur(tableTotals.totalTVA)}</TableCell>
-                    <TableCell className={`text-right font-bold text-lg ${typeFilter === "mileage" ? "text-red-400" : "text-gold"}`}>{fmtEur(tableTotals.totalTTC)}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
+                  }
+                  if (r.kind === "subtotal") {
+                    return (
+                      <div key={`ms-${idx}`} className="flex items-center justify-between bg-muted/25 px-4 py-2 text-sm">
+                        <span className="text-muted-foreground">Sous-total ({r.summary.count})</span>
+                        <span className="font-bold tabular-nums text-gold">{fmtEur(r.summary.totalTTC)}</span>
+                      </div>
+                    );
+                  }
+                  const l: AccountingLine = r.line;
+                  const meta = statusMeta(l);
+                  const cancelled = l.status === "cancelled";
+                  return (
+                    <div key={l.id} className={`px-4 py-3 space-y-1.5 ${cancelled ? "opacity-50" : ""}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-muted-foreground">{l.invoiceNumber}</span>
+                        <span className="text-xs text-muted-foreground">{format(new Date(l.date), "dd/MM/yyyy")}</span>
+                      </div>
+                      <p className={`text-sm font-medium leading-snug ${cancelled ? "line-through" : ""}`}>{l.client}</p>
+                      {l.details ? <p className="text-xs text-muted-foreground">{l.details}</p> : null}
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <Badge variant="outline" className={l.type === "pro" ? "border-primary/50 text-primary" : l.type === "mileage" ? "border-destructive/50 text-destructive" : ""}>
+                          {l.type === "site" ? "Site" : l.type === "pro" ? "Pro" : "Frais km"}
+                        </Badge>
+                        <Badge variant="outline" className={meta.cls}>{meta.label}</Badge>
+                      </div>
+                      <div className="flex items-baseline justify-between pt-1 text-sm">
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          HT {fmtEur(l.ht)} · TVA {fmtEur(l.tva)}
+                        </span>
+                        <span className={`text-base font-bold tabular-nums ${l.type === "mileage" ? "text-destructive" : "text-gold"}`}>
+                          {fmtEur(l.ttc)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className={`flex items-center justify-between px-4 py-4 ${typeFilter === "mileage" ? "bg-destructive/10" : "bg-gold/10"}`}>
+                  <span className="text-sm font-bold">TOTAL ({tableTotals.count})</span>
+                  <div className="text-right">
+                    <p className={`text-lg font-bold tabular-nums ${typeFilter === "mileage" ? "text-destructive" : "text-gold"}`}>{fmtEur(tableTotals.totalTTC)}</p>
+                    <p className="text-[11px] text-muted-foreground tabular-nums">HT {fmtEur(tableTotals.totalHT)} · TVA {fmtEur(tableTotals.totalTVA)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ---------- Desktop : tableau ---------- */}
+              <div className="hidden md:block max-h-[70vh] overflow-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_hsl(var(--border))]">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="w-[140px]">N° Facture</TableHead>
+                      <TableHead className="w-[100px]">Date</TableHead>
+                      <TableHead className="w-[100px]">Type</TableHead>
+                      <TableHead>Client / Détail</TableHead>
+                      <TableHead className="w-[120px]">Statut</TableHead>
+                      <TableHead className="w-[110px] text-right">HT</TableHead>
+                      <TableHead className="w-[110px] text-right">TVA</TableHead>
+                      <TableHead className="w-[130px] text-right">TTC</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rowsWithGroups.map((r, idx) => {
+                      if (r.kind === "header") {
+                        return (
+                          <TableRow key={`h-${idx}`} className="bg-muted/60 hover:bg-muted/60 border-t-2 border-border">
+                            <TableCell colSpan={8} className="py-2 font-bold uppercase text-primary text-xs tracking-widest">
+                              {format(new Date(r.month + "-01"), "MMMM yyyy", { locale: fr })}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+                      if (r.kind === "subtotal") {
+                        return (
+                          <TableRow key={`s-${idx}`} className="bg-muted/25 hover:bg-muted/25">
+                            <TableCell colSpan={5} className="text-right text-xs uppercase tracking-wider text-muted-foreground">
+                              Sous-total {format(new Date(r.month + "-01"), "MMMM yyyy", { locale: fr })} · {r.summary.count} ligne(s)
+                            </TableCell>
+                            <TableCell className="text-right font-semibold tabular-nums">{fmtEur(r.summary.totalHT)}</TableCell>
+                            <TableCell className="text-right font-semibold tabular-nums text-primary">{fmtEur(r.summary.totalTVA)}</TableCell>
+                            <TableCell className="text-right font-bold tabular-nums text-gold">{fmtEur(r.summary.totalTTC)}</TableCell>
+                          </TableRow>
+                        );
+                      }
+                      const l: AccountingLine = r.line;
+                      const meta = statusMeta(l);
+                      const cancelled = l.status === "cancelled";
+                      return (
+                        <TableRow
+                          key={l.id}
+                          className={`odd:bg-muted/10 hover:bg-muted/40 ${cancelled ? "opacity-50" : ""}`}
+                        >
+                          <TableCell className={`font-mono text-xs ${cancelled ? "line-through" : ""}`}>{l.invoiceNumber}</TableCell>
+                          <TableCell className="text-sm tabular-nums whitespace-nowrap">{format(new Date(l.date), "dd/MM/yyyy")}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={l.type === "pro" ? "border-primary/50 text-primary" : l.type === "mileage" ? "border-destructive/50 text-destructive" : ""}>
+                              {l.type === "site" ? "Site" : l.type === "pro" ? "Pro" : "Frais km"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="max-w-[280px]">
+                            <span className={`block truncate text-sm font-medium ${cancelled ? "line-through" : ""}`} title={l.client}>
+                              {l.client}
+                            </span>
+                            {l.details ? (
+                              <span className="block truncate text-xs text-muted-foreground" title={l.details}>{l.details}</span>
+                            ) : null}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={meta.cls}>{meta.label}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-sm tabular-nums">{fmtEur(l.ht)}</TableCell>
+                          <TableCell className="text-right text-sm tabular-nums text-muted-foreground">{fmtEur(l.tva)}</TableCell>
+                          <TableCell className={`text-right font-semibold tabular-nums ${l.type === "mileage" ? "text-destructive" : "text-gold"}`}>{fmtEur(l.ttc)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    <TableRow className={`border-t-2 hover:bg-transparent ${typeFilter === "mileage" ? "border-destructive bg-destructive/10" : "border-gold bg-gold/10"}`}>
+                      <TableCell colSpan={5} className="font-bold text-right uppercase text-xs tracking-widest">
+                        Total hors annulées · {tableTotals.count} ligne(s)
+                      </TableCell>
+                      <TableCell className="text-right font-bold tabular-nums">{fmtEur(tableTotals.totalHT)}</TableCell>
+                      <TableCell className="text-right font-bold tabular-nums text-primary">{fmtEur(tableTotals.totalTVA)}</TableCell>
+                      <TableCell className={`text-right font-bold text-lg tabular-nums ${typeFilter === "mileage" ? "text-destructive" : "text-gold"}`}>{fmtEur(tableTotals.totalTTC)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
+
     </motion.section>
   );
 };
