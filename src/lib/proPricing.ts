@@ -114,7 +114,6 @@ export const computeProCart = (
     const weightG = round2(l.format * l.units);
     const totalHT = round2(weightG * ppg);
 
-    const info = productInfo[l.productId];
     const retailUnitTTC = info
       ? round2(calculateItemPrice(info.price, l.format, info.priceGroup, l.productId).finalPrice)
       : 0;
