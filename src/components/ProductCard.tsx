@@ -263,7 +263,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
           {/* CBD/molecule badge */}
           <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full">
-            <span className="text-xs font-bold">{product.isForceNoire || product.isNectarDivin || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}</span>
+            <span className="text-xs font-bold">{product.isForceNoire || product.isNectarDivin || product.isExotique || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}</span>
           </div>
 
           {/* Magnifier overlay on hover */}
