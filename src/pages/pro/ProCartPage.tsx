@@ -31,7 +31,7 @@ const ProCartPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState<"online" | "transfer" | "quote">("online");
+  const [mode, setMode] = useState<"transfer" | "physical" | "quote">("transfer");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -75,14 +75,12 @@ const ProCartPage = () => {
 
       clearProCart();
 
-      if (mode === "online" && (data as any)?.checkoutUrl) {
-        window.location.href = (data as any).checkoutUrl;
-        return;
-      }
-
       toast({
         title: "Commande enregistrée",
-        description: `Facture à ${delai} jours — règlement par virement.`,
+        description:
+          mode === "transfer"
+            ? `Facture à ${delai} jours — règlement par virement.`
+            : "Règlement sur place — le paiement sera validé par HSB à la remise.",
       });
       navigate("/pro/commandes");
     } catch (err: any) {

@@ -21,6 +21,7 @@ const App = () => (
       <TooltipProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <AbandonedPaymentGuard />
           <AuthProvider>
             <CartProvider>
               <ProCartProvider>
