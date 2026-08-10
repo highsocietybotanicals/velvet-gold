@@ -108,7 +108,9 @@ export const computeProCart = (
   const totalWeightG = active.reduce((s, l) => s + l.format * l.units, 0);
 
   const computed: ProComputedLine[] = active.map((l) => {
-    const ppg = proPricePerGram(tiers, l.productId, totalWeightG, l.format);
+    const info = productInfo[l.productId];
+    const ppg = proPricePerGram(tiers, l.productId, totalWeightG, l.format, info);
+
     const weightG = round2(l.format * l.units);
     const totalHT = round2(weightG * ppg);
 
