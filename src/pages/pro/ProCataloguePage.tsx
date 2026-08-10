@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { useProCart } from "@/contexts/ProCartContext";
 import { useProCartTotals } from "@/hooks/useProCartTotals";
-import { PRO_FORMATS, proPricePerGram } from "@/lib/proPricing";
+import { PRO_FORMATS, proPricePerGram, MIN_RESELLER_COEF } from "@/lib/proPricing";
+import { calculateItemPrice } from "@/lib/pricing";
+
 import ProTierBar from "@/components/pro/ProTierBar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,7 +37,11 @@ const ProCataloguePage = () => {
           pochon aluminium, Boveda 62 % et étiquette inclus sans supplément. Remise dégressive
           automatique sur l'ensemble de la commande : <strong>-5 %</strong> dès 100 g,{" "}
           <strong>-10 %</strong> dès 250 g, <strong>-15 %</strong> dès 500 g, <strong>-20 %</strong>{" "}
-          dès 1 kg. Saisis le nombre de pochons par format.
+          dès 1 kg. Sur chaque format (1 g, 2,5 g, 5 g, 10 g), le prix est plafonné pour te garantir
+          un coefficient de rentabilité minimum de{" "}
+          <strong>x{MIN_RESELLER_COEF}</strong> face au prix public conseillé. Saisis le nombre de
+          pochons par format.
+
         </p>
 
       </div>
@@ -52,12 +58,15 @@ const ProCataloguePage = () => {
 
       <div className="space-y-3">
         {products.map((p) => {
-          const basePpg = proPricePerGram(tiers, p.id, totals.totalWeightG, 10);
+          const info = { price: p.price, priceGroup: p.priceGroup };
+          const basePpg = proPricePerGram(tiers, p.id, totals.totalWeightG, 10, info);
           const productSubtotal = PRO_FORMATS.reduce(
             (s, f) =>
-              s + f * getUnits(p.id, f) * proPricePerGram(tiers, p.id, totals.totalWeightG, f),
+              s +
+              f * getUnits(p.id, f) * proPricePerGram(tiers, p.id, totals.totalWeightG, f, info),
             0
           );
+
 
           return (
             <Card key={p.id} className="bg-card/60 border-border/50">
@@ -80,12 +89,16 @@ const ProCataloguePage = () => {
 
                 <div className="flex flex-wrap gap-3">
                   {PRO_FORMATS.map((f) => {
-                    const ppgF = proPricePerGram(tiers, p.id, totals.totalWeightG, f);
+                    const ppgF = proPricePerGram(tiers, p.id, totals.totalWeightG, f, info);
+                    const retailF = calculateItemPrice(p.price, f, p.priceGroup, p.id).finalPrice;
+                    const coefF = ppgF > 0 ? retailF / f / ppgF : 0;
                     return (
                       <div key={f} className="w-20">
                         <label className="text-[11px] text-muted-foreground block mb-1">
                           {f} g · {eur(ppgF)}/g
+                          <span className="block text-gold">x{coefF.toFixed(2)}</span>
                         </label>
+
                         <Input
                           type="number"
                           min={0}
