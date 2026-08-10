@@ -198,14 +198,55 @@ const OrdersSection = () => {
     }
   };
 
+  const isAbandoned = (o: AdminOrder) =>
+    o.payment_status !== "paid" && (o.payment_method ?? "online") === "online";
+
+  const activeOrders = allOrders.filter((o) => !isAbandoned(o));
+  const abandonedOrders = allOrders.filter(isAbandoned);
+
+  const purgeAbandoned = () => {
+    abandonedOrders.forEach((o) => deleteOrder(o.id));
+  };
+
+  const renderTable = (list: AdminOrder[]) => (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>N°</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead>Articles</TableHead>
+            <TableHead>Total</TableHead>
+            <TableHead>Livraison</TableHead>
+            <TableHead>Paiement</TableHead>
+            <TableHead>Statut</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {list.map((order) => (
+            <OrderRow
+              key={order.id}
+              order={order}
+              onStatusChange={(status) => updateOrderStatus(order.id, status)}
+              onPaymentStatusChange={(ps) => updatePaymentStatus(order.id, ps)}
+              onDelete={() => deleteOrder(order.id)}
+              isUpdating={isUpdatingOrder}
+              isDeleting={isDeletingOrder}
+            />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   return (
     <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <Card className="border-gold/20">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-gold" />
-            Toutes les commandes
-            <Badge variant="secondary" className="ml-2">{allOrders.length}</Badge>
+            Commandes
           </CardTitle>
           <Button variant="outline" size="sm" onClick={handleTrackingSync} disabled={trackingSyncing}
             className="border-primary/30 text-primary hover:bg-primary/10">
@@ -214,39 +255,62 @@ const OrdersSection = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          {allOrders.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">Aucune commande</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>N°</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Articles</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Livraison</TableHead>
-                    <TableHead>Paiement</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allOrders.map((order) => (
-                    <OrderRow
-                      key={order.id}
-                      order={order}
-                      onStatusChange={(status) => updateOrderStatus(order.id, status)}
-                      onPaymentStatusChange={(ps) => updatePaymentStatus(order.id, ps)}
-                      onDelete={() => deleteOrder(order.id)}
-                      isUpdating={isUpdatingOrder}
-                      isDeleting={isDeletingOrder}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <Tabs defaultValue="active">
+            <TabsList className="mb-4">
+              <TabsTrigger value="active" className="gap-2">
+                Commandes
+                <Badge variant="secondary">{activeOrders.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="abandoned" className="gap-2">
+                Paniers abandonnés
+                <Badge variant="secondary">{abandonedOrders.length}</Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active">
+              {activeOrders.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">Aucune commande</p>
+              ) : (
+                renderTable(activeOrders)
+              )}
+            </TabsContent>
+
+            <TabsContent value="abandoned">
+              <p className="text-xs text-muted-foreground mb-3">
+                Tentatives de paiement carte non finalisées — aucun montant débité. Ces lignes ne
+                sont pas des commandes réelles et sont purgées automatiquement après 48 h.
+              </p>
+              {abandonedOrders.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">Aucun panier abandonné</p>
+              ) : (
+                <>
+                  <div className="mb-3">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm"
+                          className="border-destructive/40 text-destructive hover:bg-destructive/10 gap-1">
+                          <Trash2 className="h-4 w-4" />
+                          Purger ({abandonedOrders.length})
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Supprimer tous les paniers abandonnés ?</AlertDialogTitle>
+                          <AlertDialogDescription>Action irréversible.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction onClick={purgeAbandoned}
+                            className="bg-destructive hover:bg-destructive/90">Purger</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                  {renderTable(abandonedOrders)}
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </motion.section>
