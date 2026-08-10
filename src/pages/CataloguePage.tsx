@@ -11,7 +11,7 @@ import Footer from "@/components/Footer";
 
 type ViewMode = "grid" | "list";
 type SortOption = "name" | "price-asc" | "price-desc" | "cbd";
-type CategoryFilter = "all" | ProductCategory | "accessoire" | "force-noire";
+type CategoryFilter = "all" | ProductCategory | "accessoire" | "force-noire" | "exotique";
 
 const CataloguePage = () => {
   const { addToCart, addAccessory } = useCart();
