@@ -145,10 +145,10 @@ const MileageManager = () => {
 
   const backfill = async () => {
     setBackfilling(true);
-    // Find paid personal orders without mileage entry
+    // All paid personal orders
     const { data: orders, error } = await (supabase as any)
       .from("orders")
-      .select("id")
+      .select("id, delivery_address")
       .eq("delivery_type", "personal")
       .eq("payment_status", "paid");
     if (error) {
@@ -156,27 +156,40 @@ const MileageManager = () => {
       setBackfilling(false);
       return;
     }
+    // Existing fiches: keep only those already computed or manually filled
     const { data: existing } = await (supabase as any)
       .from("delivery_mileage")
-      .select("order_id");
-    const existingIds = new Set((existing || []).map((r: any) => r.order_id));
-    const todo = (orders || []).filter((o: any) => !existingIds.has(o.id));
+      .select("order_id, status");
+    const doneIds = new Set(
+      (existing || [])
+        .filter((r: any) => r.status === "computed" || r.status === "manual")
+        .map((r: any) => r.order_id)
+    );
+
+    const candidates = (orders || []).filter((o: any) => !doneIds.has(o.id));
+    const noAddress = candidates.filter((o: any) => !o.delivery_address);
+    const todo = candidates.filter((o: any) => !!o.delivery_address);
+
     let ok = 0;
     let fail = 0;
     for (const o of todo) {
-      const { error: e } = await supabase.functions.invoke("compute-mileage", {
+      const { data, error: e } = await supabase.functions.invoke("compute-mileage", {
         body: { orderId: o.id },
       });
-      if (e) fail++;
+      if (e || (data as any)?.status === "failed") fail++;
       else ok++;
     }
     setBackfilling(false);
     toast({
       title: "Rétro-calcul terminé",
-      description: `${ok} OK · ${fail} échec · ${todo.length === 0 ? "rien à faire" : ""}`,
+      description:
+        candidates.length === 0
+          ? "Tout est déjà à jour"
+          : `${ok} calculée(s) · ${fail} échec(s) · ${noAddress.length} sans adresse (à saisir à la main)`,
     });
     loadRows();
   };
+
 
   const startEdit = (row: MileageRow) => {
     setEditingId(row.id);
@@ -262,7 +275,9 @@ const MileageManager = () => {
     if (s === "computed") return <Badge className="bg-green-500/20 text-green-500">Calculé</Badge>;
     if (s === "manual") return <Badge className="bg-blue-500/20 text-blue-500">Manuel</Badge>;
     if (s === "failed") return <Badge variant="destructive">Échec</Badge>;
+    if (s === "pending") return <Badge className="bg-amber-500/20 text-amber-500">À saisir</Badge>;
     return <Badge variant="outline">{s}</Badge>;
+
   };
 
   return (
