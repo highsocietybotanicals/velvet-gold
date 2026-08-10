@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Leaf, Sparkles, ShoppingCart, Zap, Crown } from "lucide-react";
+import { Leaf, Sparkles, ShoppingCart, Zap, Crown, Gem } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
