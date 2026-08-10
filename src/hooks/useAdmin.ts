@@ -46,6 +46,8 @@ export interface AdminOrder {
   relay_point_name: string | null;
   relay_point_address: string | null;
   created_at: string;
+  order_channel?: string;
+  payment_method?: string;
   user_email?: string;
   promo_code?: string;
   promo_discount_percent?: number;
