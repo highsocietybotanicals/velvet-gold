@@ -61,6 +61,7 @@ export const useCatalogProducts = () => {
           description: o.description ?? p.description,
           cbdPercentage: o.cbd_percentage ?? p.cbdPercentage,
           isForceNoire: o.is_force_noire ?? p.isForceNoire,
+          isExotique: p.isExotique,
         } as Product;
       })
       .filter((p): p is Product => !!p)
