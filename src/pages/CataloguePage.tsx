@@ -15,7 +15,7 @@ type CategoryFilter = "all" | ProductCategory | "accessoire" | "force-noire" | "
 
 const CataloguePage = () => {
   const { addToCart, addAccessory } = useCart();
-  const { all: allProducts, forceNoire: forceNoireProducts } = useCatalogProducts();
+  const { all: allProducts, forceNoire: forceNoireProducts, exotique: exotiqueProducts } = useCatalogProducts();
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
