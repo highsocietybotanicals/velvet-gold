@@ -242,7 +242,6 @@ const ProCartPage = () => {
                 ? "Envoyer la demande de devis"
                 : `Valider la commande — ${eur(totals.totalTTC)} TTC`}
             </Button>
-            </Button>
           </CardContent>
         </Card>
       </div>
