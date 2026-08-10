@@ -92,11 +92,17 @@ const ProOrdersPage = () => {
                     <TableCell>{dt(o.created_at)}</TableCell>
                     <TableCell>{o.total_flower_weight} g</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{o.status}</Badge>
+                      <Badge variant="secondary">
+                        {orderStatusLabel[o.status] ?? o.status}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={o.payment_status === "paid" ? "default" : "outline"}>
-                        {o.payment_status === "paid" ? "Payée" : "En attente"}
+                        {o.payment_status === "paid"
+                          ? "Payée"
+                          : o.payment_method === "physical"
+                          ? "Paiement sur place — à valider par HSB"
+                          : "Virement — en attente de validation HSB"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{eur(o.total_amount)}</TableCell>
