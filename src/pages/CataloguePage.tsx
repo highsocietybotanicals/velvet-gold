@@ -149,6 +149,7 @@ const CataloguePage = () => {
                 { key: "fleur", label: "Fleurs" },
                 { key: "resine", label: "Résines" },
                 { key: "force-noire", label: "⚡ Force Noire" },
+                { key: "exotique", label: "💎 Exotique" },
                 // { key: "accessoire", label: "Accessoires" }, // Masqué - rupture de stock
               ].map((cat) => (
                 <button
