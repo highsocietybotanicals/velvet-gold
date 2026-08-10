@@ -96,7 +96,21 @@ const OrderRow = ({
           ))}
         </div>
       </TableCell>
-      <TableCell className="font-semibold text-gold">{order.total_amount.toFixed(2)}€</TableCell>
+      <TableCell className="font-semibold text-gold">
+        {order.total_amount.toFixed(2)}€
+        <div className="mt-1 flex flex-wrap gap-1">
+          {order.order_channel === "pro" && (
+            <Badge variant="outline" className="text-[10px] border-gold/40 text-gold">PRO</Badge>
+          )}
+          <Badge variant="secondary" className="text-[10px]">
+            {order.payment_method === "transfer"
+              ? "Virement"
+              : order.payment_method === "physical"
+              ? "Paiement physique"
+              : "Carte en ligne"}
+          </Badge>
+        </div>
+      </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="capitalize text-xs">
