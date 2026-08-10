@@ -225,6 +225,14 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             }}
           />
 
+          {/* Exotique badge (priorité absolue) */}
+          {product.isExotique && (
+            <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-purple-950/90 to-purple-700/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-purple-500/70 shadow-[0_0_18px_rgba(168,85,247,0.5)]">
+              <Gem className="w-3 h-3 text-purple-300" />
+              <span className="text-xs font-bold text-purple-200 tracking-wider uppercase">Exotique</span>
+            </div>
+          )}
+
           {/* Nectar Divin badge (priorité) */}
           {product.isNectarDivin && (
             <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-black/90 to-primary/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-primary/70 shadow-[0_0_15px_rgba(212,175,55,0.4)]">
