@@ -37,7 +37,11 @@ const ProCataloguePage = () => {
           pochon aluminium, Boveda 62 % et étiquette inclus sans supplément. Remise dégressive
           automatique sur l'ensemble de la commande : <strong>-5 %</strong> dès 100 g,{" "}
           <strong>-10 %</strong> dès 250 g, <strong>-15 %</strong> dès 500 g, <strong>-20 %</strong>{" "}
-          dès 1 kg. Saisis le nombre de pochons par format.
+          dès 1 kg. Sur chaque format (1 g, 2,5 g, 5 g, 10 g), le prix est plafonné pour te garantir
+          un coefficient de rentabilité minimum de{" "}
+          <strong>x{MIN_RESELLER_COEF}</strong> face au prix public conseillé. Saisis le nombre de
+          pochons par format.
+
         </p>
 
       </div>
