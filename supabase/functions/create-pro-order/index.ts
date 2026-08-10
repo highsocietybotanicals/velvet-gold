@@ -227,63 +227,13 @@ Deno.serve(async (req) => {
         });
     }
 
-    if (method === "transfer") {
-      return new Response(
-        JSON.stringify({ orderId: order.id, orderNumber: order.display_order_number }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Paiement en ligne Viva Wallet
-    const merchantId = Deno.env.get("VIVA_MERCHANT_ID");
-    const apiKey = Deno.env.get("VIVA_API_KEY");
-    const credentials = btoa(`${merchantId}:${apiKey}`);
-
-    const vivaResponse = await fetch("https://www.vivapayments.com/api/orders", {
-      method: "POST",
-      headers: { Authorization: `Basic ${credentials}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: Math.round(totalTTC * 100),
-        customerTrns: `Commande pro ${order.display_order_number || "#" + order.order_number}`,
-        merchantTrns: order.id,
-        fullName: profile?.company_name || profile?.full_name || "",
-        email: profile?.email || "",
-      }),
-    });
-
-    const vivaText = await vivaResponse.text();
-    let vivaData: any;
-    try {
-      vivaData = JSON.parse(vivaText);
-    } catch {
-      console.error("Viva parse error");
-      return new Response(JSON.stringify({ error: "Erreur du service de paiement" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (!vivaResponse.ok || vivaData.ErrorCode !== 0) {
-      console.error("Viva error:", vivaData?.ErrorCode);
-      return new Response(JSON.stringify({ error: "Échec de la création du paiement" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const orderCodeMatch = vivaText.match(/"OrderCode"\s*:\s*(\d+)/);
-    const orderCode = orderCodeMatch ? orderCodeMatch[1] : String(vivaData.OrderCode);
-
-    await supabaseAdmin
-      .from("orders")
-      .update({ viva_order_code: String(orderCode) })
-      .eq("id", order.id);
-
+    // Aucun paiement en ligne pour les pros : virement ou paiement physique,
+    // validés manuellement dans l'administration.
     return new Response(
       JSON.stringify({
         orderId: order.id,
-        orderCode,
-        checkoutUrl: `https://www.vivapayments.com/web/checkout?ref=${orderCode}&color=D4AF37&paymentMethod=0`,
+        orderNumber: order.display_order_number,
+        paymentMethod: method,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
