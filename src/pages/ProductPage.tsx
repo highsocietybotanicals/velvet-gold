@@ -176,7 +176,7 @@ const ProductPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className={`relative aspect-square rounded-2xl overflow-hidden border ${product.isNectarDivin ? "bg-black border-primary/40 shadow-[0_0_40px_rgba(212,175,55,0.25)]" : "bg-card border-border"}`}>
+              <div className={`relative aspect-square rounded-2xl overflow-hidden border ${product.isNectarDivin ? "bg-black border-primary/40 shadow-[0_0_40px_rgba(212,175,55,0.25)]" : product.isExotique ? "bg-card border-purple-500/50 shadow-[0_0_35px_rgba(168,85,247,0.3)]" : "bg-card border-border"}`}>
                 <img
                   src={product.image}
                   alt={product.name}
