@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Filter, Grid, List, Search, ShoppingCart, Package, Zap } from "lucide-react";
+import { Filter, Grid, List, Search, ShoppingCart, Package, Zap, Gem } from "lucide-react";
 import { ProductCategory } from "@/data/products";
 import { accessories } from "@/data/accessories";
 import { useCart } from "@/contexts/CartContext";
