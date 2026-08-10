@@ -142,10 +142,15 @@ const ProductPage = () => {
   const similarProducts = getSimilarProducts(product, 4);
 
   return (
-    <div className={`min-h-screen relative ${product.isNectarDivin ? "bg-black" : "bg-background"}`}>
+    <div className={`min-h-screen relative ${product.isNectarDivin ? "bg-black" : product.isExotique ? "bg-gradient-to-b from-purple-950/30 to-background" : "bg-background"}`}>
       {product.isNectarDivin && (
         <div className="absolute inset-0 pointer-events-none z-0 opacity-60">
           <GoldParticles />
+        </div>
+      )}
+      {product.isExotique && (
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <div className="absolute -inset-1 bg-gradient-to-tr from-purple-900/10 via-purple-500/5 to-fuchsia-600/10 animate-pulse" />
         </div>
       )}
       <div className="relative z-10">
