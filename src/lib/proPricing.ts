@@ -24,18 +24,35 @@ export const FORMAT_SURCHARGE: Record<number, number> = {
   10: 0,
 };
 
+/** Coefficient de rentabilité minimum garanti au revendeur (PV public TTC / achat HT) */
+export const MIN_RESELLER_COEF = 2;
+
 export const proPricePerGram = (
   tiers: PriceTier[],
   productId: string,
   totalWeightG: number,
-  format: number
+  format: number,
+  info?: ProductPriceInfo
 ): number => {
   const base = getProPricePerGram(tiers, getGammeForProduct(productId), totalWeightG);
   if (base === null) return 0;
-  return Math.round((base + (FORMAT_SURCHARGE[format] ?? 0)) * 100) / 100;
+  let ppg = base + (FORMAT_SURCHARGE[format] ?? 0);
+
+  // Garantie : sur chaque format, le pro doit pouvoir faire au moins x2
+  // (prix public TTC conseillé du format / prix d'achat HT au gramme).
+  if (info && format > 0) {
+    const retailTTC = calculateItemPrice(info.price, format, info.priceGroup, productId).finalPrice;
+    if (retailTTC > 0) {
+      const cap = retailTTC / format / MIN_RESELLER_COEF;
+      if (cap < ppg) ppg = cap;
+    }
+  }
+
+  return Math.round(ppg * 100) / 100;
 };
 
 export const VAT_RATE = 0.2;
+
 
 
 export interface ProCartLine {
