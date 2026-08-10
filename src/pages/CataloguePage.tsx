@@ -261,8 +261,8 @@ const CataloguePage = () => {
                   transition={{ delay: index * 0.03 }}
                   className={
                     viewMode === "grid"
-                      ? `product-card group bg-card border rounded-xl overflow-hidden ${product.isForceNoire ? "border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]" : "border-border"}`
-                      : `product-card group bg-card border rounded-xl overflow-hidden flex ${product.isForceNoire ? "border-red-900/50 hover:border-red-800/80" : "border-border"}`
+                      ? `product-card group bg-card border rounded-xl overflow-hidden ${product.isExotique ? "border-purple-600/50 hover:border-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.4)]" : product.isForceNoire ? "border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]" : "border-border"}`
+                      : `product-card group bg-card border rounded-xl overflow-hidden flex ${product.isExotique ? "border-purple-600/50 hover:border-purple-500" : product.isForceNoire ? "border-red-900/50 hover:border-red-800/80" : "border-border"}`
                   }
                 >
                   <Link
