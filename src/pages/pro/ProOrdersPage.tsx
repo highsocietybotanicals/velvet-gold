@@ -23,6 +23,15 @@ const quoteStatusLabel: Record<string, string> = {
   refused: "Refusée",
 };
 
+const orderStatusLabel: Record<string, string> = {
+  pending: "Enregistrée",
+  preparing: "En préparation",
+  shipped: "Expédiée",
+  in_delivery: "En livraison",
+  delivered: "Livrée",
+  cancelled: "Annulée",
+};
+
 const ProOrdersPage = () => {
   const { user } = useAuth();
 
@@ -33,7 +42,7 @@ const ProOrdersPage = () => {
       const { data, error } = await (supabase as any)
         .from("orders")
         .select(
-          "id, display_order_number, created_at, status, payment_status, total_amount, total_flower_weight"
+          "id, display_order_number, created_at, status, payment_status, payment_method, total_amount, total_flower_weight"
         )
         .eq("user_id", user!.id)
         .eq("order_channel", "pro")
