@@ -107,7 +107,7 @@ const OrderRow = ({
             {order.payment_method === "transfer"
               ? "Virement"
               : order.payment_method === "physical"
-              ? "Paiement physique"
+              ? "TPE"
               : "Carte en ligne"}
           </Badge>
         </div>

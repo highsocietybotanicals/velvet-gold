@@ -80,7 +80,7 @@ const ProCartPage = () => {
         description:
           mode === "transfer"
             ? `Facture à ${delai} jours — règlement par virement.`
-            : "Règlement sur place — le paiement sera validé par HSB à la remise.",
+            : "Règlement par TPE à la remise — le paiement sera validé par HSB.",
       });
       navigate("/pro/commandes");
     } catch (err: any) {
@@ -218,7 +218,7 @@ const ProCartPage = () => {
               <div className="flex items-start gap-2">
                 <RadioGroupItem value="physical" id="m-physical" className="mt-1" />
                 <Label htmlFor="m-physical" className="font-normal">
-                  Paiement physique (espèces, TPE ou chèque à la remise) — validé par HSB
+                  Paiement par TPE à la remise (carte bancaire sur place) — validé par HSB
                 </Label>
               </div>
               <div className="flex items-start gap-2">

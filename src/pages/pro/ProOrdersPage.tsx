@@ -110,7 +110,7 @@ const ProOrdersPage = () => {
                         {o.payment_status === "paid"
                           ? "Payée"
                           : o.payment_method === "physical"
-                          ? "Paiement sur place — à valider par HSB"
+                          ? "TPE à la remise — à valider par HSB"
                           : "Virement — en attente de validation HSB"}
                       </Badge>
                     </TableCell>
