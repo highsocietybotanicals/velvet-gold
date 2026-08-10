@@ -38,6 +38,17 @@ const CataloguePage = () => {
       }
       return products;
     }
+    if (category === "exotique") {
+      let products = [...exotiqueProducts];
+      if (searchQuery) {
+        products = products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      return products;
+    }
 
     let products = allProducts;
 
