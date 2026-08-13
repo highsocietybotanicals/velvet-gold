@@ -38,6 +38,8 @@ const ManualOrderCreator = () => {
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  const [settlement, setSettlement] = useState<"physical" | "transfer" | "paid">("physical");
+
   const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1 }]);
   const [sampleLines, setSampleLines] = useState<SampleLine[]>([]);
   const [includeGifts, setIncludeGifts] = useState(true);
@@ -383,8 +385,10 @@ const ManualOrderCreator = () => {
           delivery_type: "personal",
           total_amount: totalAmount,
           total_flower_weight: totalFlowerWeight,
-          payment_status: "unpaid",
+          payment_status: settlement === "paid" ? "paid" : "unpaid",
+          payment_method: settlement === "transfer" ? "transfer" : "physical",
           status: "preparing",
+
           guest_name: customerName.trim(),
           guest_email: customerEmail.trim() || null,
           guest_phone: customerPhone.trim() || null,
@@ -588,10 +592,26 @@ const ManualOrderCreator = () => {
               <Input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="06 ..." />
             </div>
           </div>
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Adresse (optionnel)</label>
-            <Input value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} placeholder="Adresse complète du client" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <label className="text-sm text-muted-foreground mb-1 block">Adresse (optionnel)</label>
+              <Input value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} placeholder="Adresse complète du client" />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Règlement</label>
+              <Select value={settlement} onValueChange={(v: any) => setSettlement(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="physical">Physique (espèces / TPE)</SelectItem>
+                  <SelectItem value="transfer">Virement</SelectItem>
+                  <SelectItem value="paid">Déjà payé</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
 
           {/* Order lines */}
           <div className="space-y-3">
