@@ -48,6 +48,8 @@ export interface AdminOrder {
   created_at: string;
   order_channel?: string;
   payment_method?: string;
+  viva_order_code?: string | null;
+
   user_email?: string;
   promo_code?: string;
   promo_discount_percent?: number;

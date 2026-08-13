@@ -200,7 +200,10 @@ const OrdersSection = () => {
   };
 
   const isAbandoned = (o: AdminOrder) =>
-    o.payment_status !== "paid" && (o.payment_method ?? "online") === "online";
+    o.payment_status !== "paid" &&
+    (o.payment_method ?? "online") === "online" &&
+    !!o.viva_order_code;
+
 
   const activeOrders = allOrders.filter((o) => !isAbandoned(o));
   const abandonedOrders = allOrders.filter(isAbandoned);
