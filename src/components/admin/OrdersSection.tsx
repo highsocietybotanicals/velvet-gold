@@ -110,6 +110,10 @@ const OrderRow = ({
               ? "TPE"
               : "Carte en ligne"}
           </Badge>
+          {!order.viva_order_code && order.order_channel !== "pro" && (
+            <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">Manuelle</Badge>
+          )}
+
         </div>
       </TableCell>
       <TableCell>
