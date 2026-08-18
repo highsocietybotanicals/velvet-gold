@@ -273,24 +273,32 @@ const nectarDivin: Product[] = [
 // Exports
 // ============================================
 
-// Fleurs uniquement (pour échantillons)
-export const flowers: Product[] = [
-  ...groupA.filter(p => p.category === "fleur"),
-  ...groupB.filter(p => p.category === "fleur"),
+// Tri : gamme Exotique toujours en tête
+const exotiqueFirst = (list: Product[]): Product[] => [
+  ...list.filter((p) => p.isExotique),
+  ...list.filter((p) => !p.isExotique),
 ];
 
+// Fleurs uniquement (pour échantillons)
+export const flowers: Product[] = exotiqueFirst([
+  ...nectarDivin.filter(p => p.category === "fleur"),
+  ...groupA.filter(p => p.category === "fleur"),
+  ...groupB.filter(p => p.category === "fleur"),
+]);
+
 // Résines uniquement
-export const resins: Product[] = [
+export const resins: Product[] = exotiqueFirst([
   ...nectarDivin.filter(p => p.category === "resine"),
   ...groupA.filter(p => p.category === "resine"),
   ...groupB.filter(p => p.category === "resine"),
-];
+]);
 
 // Tous les produits combinés
-export const allProducts: Product[] = [...nectarDivin, ...groupA, ...groupB];
+export const allProducts: Product[] = exotiqueFirst([...nectarDivin, ...groupA, ...groupB]);
 
 // Produits Force Noire (gamme haute puissance : Élixir Noir + Nectar Divin + Exotique)
 export const forceNoireProducts: Product[] = allProducts.filter(p => p.isForceNoire || p.isNectarDivin || p.isExotique);
+
 
 // Produits Nectar Divin (gamme ultra-premium)
 export const nectarDivinProducts: Product[] = allProducts.filter(p => p.isNectarDivin);
