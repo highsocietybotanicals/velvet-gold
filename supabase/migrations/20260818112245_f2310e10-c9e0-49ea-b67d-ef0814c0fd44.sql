@@ -1,0 +1,2 @@
+UPDATE public.products SET badge='Élixir Noir 50%', cbd_percentage='50% Élixir Noir', description=replace(replace(description,'30% d''Élixir Noir','50% d''Élixir Noir'),'30%','50%') WHERE id='blue-mango-indoor';
+UPDATE public.products SET badge='Exotique', cbd_percentage='70% Exotique', display_order=-10, description='Fleur ultra-premium de la gamme Exotique — puissance supérieure à l''Élixir Noir. Bud dense givré de trichomes, arômes exotiques de mangue mûre relevés d''une fraîcheur glacée, effets enveloppants d''une rare intensité.' WHERE id='mango-x-ice';

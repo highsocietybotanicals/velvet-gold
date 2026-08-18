@@ -66,6 +66,8 @@ export const useCatalogProducts = () => {
       })
       .filter((p): p is Product => !!p)
       .sort((a, b) => {
+        // La gamme Exotique passe toujours en premier
+        if (!!a.isExotique !== !!b.isExotique) return a.isExotique ? -1 : 1;
         const ao = overrides[a.id]?.display_order ?? 0;
         const bo = overrides[b.id]?.display_order ?? 0;
         if (ao !== bo) return ao - bo;
