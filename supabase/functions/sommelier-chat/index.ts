@@ -17,7 +17,7 @@ FLEURS :
 - Platinum OG (12€/g) : Indica, 22% CBD, notes pin/citron/bois. Relaxation profonde. Profil : boisé dominant.
 - Mint Kush (12€/g) : Indica, 20% CBD, menthe fraîche & épices douces. Fraîcheur. Profil : floral/épicé.
 - 911 OG "Indoor Master" (14€/g) : Indoor Premium, 50% Élixir Noir, puissance pure. Collection Force Noire. Profil : boisé/terreux.
-- Blue Mango "Indoor Master" (14€/g) : Indoor, 30% Élixir Noir, mangue & notes tropicales. Collection Force Noire. Profil : fruité dominant.
+- Blue Mango "Indoor Master" (14€/g) : Indoor, 50% Élixir Noir, mangue & notes tropicales. Collection Force Noire. Profil : fruité dominant.
 
 RÉSINES :
 - Ice O Lator (12€/g) : 60% CBD, extraction eau glacée. Pureté. Profil : fruité.
