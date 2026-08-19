@@ -96,11 +96,16 @@ const ProCataloguePage = () => {
                     // Le buraliste revend au MÊME prix public que le site : son
                     // encaissement réel est HT (TVA reversée), d'où le coef HT/HT.
                     const coefF = ppgF > 0 ? retailF / 1.2 / f / ppgF : 0;
+                    // Gain HT par pochon : prix public HT du format - achat HT du pochon
+                    const gainF = retailF / 1.2 - ppgF * f;
                     return (
-                      <div key={f} className="w-20">
+                      <div key={f} className="w-24">
                         <label className="text-[11px] text-muted-foreground block mb-1">
                           {f} g · {eur(ppgF)}/g
                           <span className="block text-gold">x{coefF.toFixed(2)}</span>
+                          <span className="block text-emerald-400">
+                            +{gainF.toFixed(2)} €/pochon
+                          </span>
                         </label>
 
                         <Input
