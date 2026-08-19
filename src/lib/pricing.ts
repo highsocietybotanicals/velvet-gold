@@ -224,6 +224,40 @@ export const calculateItemPrice = (basePrice: number, weight: number, priceGroup
   };
 };
 
+// Prix d'une ligne en tenant compte du POIDS CUMULÉ de sa catégorie.
+// Le palier (remise) est déterminé par cumulativeWeight, puis le €/g obtenu
+// est appliqué au poids réel de la ligne.
+export const calculateCumulativeItemPrice = (
+  basePrice: number,
+  weight: number,
+  cumulativeWeight: number,
+  priceGroup: PriceGroup = "A",
+  productId?: string
+) => {
+  if (!weight || weight <= 0 || isNaN(weight)) {
+    return { rawPrice: 0, finalPrice: 0, discount: 0 };
+  }
+  const cumul = Math.max(cumulativeWeight || 0, weight);
+
+  if (hasForceNoireGrid(productId)) {
+    const cumulTotal = calculateForceNoirePrice(productId!, cumul, basePrice) ?? 0;
+    const perGram = cumul > 0 ? cumulTotal / cumul : 0;
+    const finalPrice = perGram * weight;
+    const rawPrice = basePrice * weight;
+    const discount = rawPrice > 0 ? 1 - finalPrice / rawPrice : 0;
+    return { rawPrice, finalPrice, discount };
+  }
+
+  const tier = getDiscountTier(cumul, priceGroup);
+  const rawPrice = basePrice * weight;
+  return {
+    rawPrice,
+    finalPrice: rawPrice * (1 - tier.discount),
+    discount: tier.discount,
+  };
+};
+
+
 // Calculate accessory price with bulk discount
 export const calculateAccessoryPrice = (unitPrice: number, quantity: number): AccessoryPriceInfo => {
   if (!quantity || quantity <= 0 || isNaN(quantity)) {

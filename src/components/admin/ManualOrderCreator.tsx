@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
 import { accessories } from "@/data/accessories";
 import { useProducts } from "@/hooks/useProducts";
-import { calculateItemPrice } from "@/lib/pricing";
+import { calculateCumulativeItemPrice } from "@/lib/pricing";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -204,15 +204,26 @@ const ManualOrderCreator = () => {
   const getAccessory = (productId: string) => accessories.find(a => a.id === productId);
   const isAccessory = (productId: string) => !!getAccessory(productId);
 
-  /** Tarif automatique (grille dégressive du site, ou prix unitaire accessoire) */
+  /** Poids cumulé par groupe de prix (fleurs + résines, hors accessoires) */
+  const groupWeights = lines.reduce<Record<string, number>>((acc, l) => {
+    if (!l.productId || l.weight <= 0) return acc;
+    if (isAccessory(l.productId)) return acc;
+    const g = getProductGroup(l.productId);
+    acc[g] = (acc[g] || 0) + l.weight;
+    return acc;
+  }, {});
+
+  /** Tarif automatique (grille dégressive cumulée par groupe, ou prix unitaire accessoire) */
   const autoLineTotal = (line: OrderLine) => {
     if (!line.productId || line.weight <= 0) return 0;
     const acc = getAccessory(line.productId);
     if (acc) return acc.price * line.weight;
     const base = getProductPrice(line.productId);
     const group = getProductGroup(line.productId);
-    return calculateItemPrice(base, line.weight, group, line.productId).finalPrice;
+    const cumul = groupWeights[group] || line.weight;
+    return calculateCumulativeItemPrice(base, line.weight, cumul, group, line.productId).finalPrice;
   };
+
 
   const calculateLineTotal = (line: OrderLine) => {
     if (!line.productId || line.weight <= 0) return 0;
@@ -244,9 +255,10 @@ const ManualOrderCreator = () => {
   const subtotal = lines.reduce((sum, l) => sum + calculateLineTotal(l), 0);
   const discountAmount = promoDiscount ? subtotal * (promoDiscount / 100) : 0;
   const totalAmount = subtotal - discountAmount;
+  // Poids cumulé fleurs + résines (base des cadeaux et échantillons)
   const totalFlowerWeight = lines.reduce((sum, l) => {
     const product = allProducts.find(p => p.id === l.productId);
-    if (!product || product.category !== "fleur") return sum;
+    if (!product || (product.category !== "fleur" && product.category !== "resine")) return sum;
     return sum + l.weight;
   }, 0);
 
@@ -738,8 +750,10 @@ const ManualOrderCreator = () => {
                   <span className="text-[11px] text-muted-foreground">
                     {forced ? (
                       <>Prix forcé · tarif auto {auto.toFixed(2)}€ ({total - auto >= 0 ? "+" : ""}{(total - auto).toFixed(2)}€)</>
-                    ) : (
+                    ) : acc ? (
                       <>Tarif automatique</>
+                    ) : (
+                      <>Tarif auto · palier {(groupWeights[getProductGroup(line.productId)] || line.weight).toFixed(1)}g cumulés</>
                     )}
                   </span>
                 </div>
