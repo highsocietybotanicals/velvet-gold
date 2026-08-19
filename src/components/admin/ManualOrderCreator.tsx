@@ -255,9 +255,10 @@ const ManualOrderCreator = () => {
   const subtotal = lines.reduce((sum, l) => sum + calculateLineTotal(l), 0);
   const discountAmount = promoDiscount ? subtotal * (promoDiscount / 100) : 0;
   const totalAmount = subtotal - discountAmount;
+  // Poids cumulé fleurs + résines (base des cadeaux et échantillons)
   const totalFlowerWeight = lines.reduce((sum, l) => {
     const product = allProducts.find(p => p.id === l.productId);
-    if (!product || product.category !== "fleur") return sum;
+    if (!product || (product.category !== "fleur" && product.category !== "resine")) return sum;
     return sum + l.weight;
   }, 0);
 
