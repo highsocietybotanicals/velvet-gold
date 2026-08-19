@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
 import { accessories } from "@/data/accessories";
 import { useProducts } from "@/hooks/useProducts";
-import { calculateItemPrice } from "@/lib/pricing";
+import { calculateCumulativeItemPrice } from "@/lib/pricing";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
