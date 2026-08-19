@@ -39,7 +39,9 @@ const ProCataloguePage = () => {
           <strong>-10 %</strong> dès 250 g, <strong>-15 %</strong> dès 500 g, <strong>-20 %</strong>{" "}
           dès 1 kg. Sur chaque format (1 g, 2,5 g, 5 g, 10 g), le prix est plafonné pour te garantir
           un coefficient de rentabilité minimum de{" "}
-          <strong>x{MIN_RESELLER_COEF}</strong> face au prix public conseillé. Saisis le nombre de
+          <strong>x{MIN_RESELLER_COEF}</strong> en revendant aux <strong>mêmes prix que le
+          site</strong> — coefficient calculé <strong>HT/HT</strong>, TVA collectée déjà
+          déduite. Saisis le nombre de
           pochons par format.
 
         </p>
@@ -52,6 +54,7 @@ const ProCataloguePage = () => {
         gramsToNextTier={totals.gramsToNextTier}
         nextTierSavingPerGram={totals.nextTierSavingPerGram}
         retailTotalTTC={totals.retailTotalTTC}
+        retailTotalHT={totals.retailTotalHT}
         totalHT={totals.totalHT}
         resellerMarginTotal={totals.resellerMarginTotal}
       />
@@ -91,7 +94,9 @@ const ProCataloguePage = () => {
                   {PRO_FORMATS.map((f) => {
                     const ppgF = proPricePerGram(tiers, p.id, totals.totalWeightG, f, info);
                     const retailF = calculateItemPrice(p.price, f, p.priceGroup, p.id).finalPrice;
-                    const coefF = ppgF > 0 ? retailF / f / ppgF : 0;
+                    // Le buraliste revend au MÊME prix public que le site : son
+                    // encaissement réel est HT (TVA reversée), d'où le coef HT/HT.
+                    const coefF = ppgF > 0 ? retailF / 1.2 / f / ppgF : 0;
                     return (
                       <div key={f} className="w-20">
                         <label className="text-[11px] text-muted-foreground block mb-1">

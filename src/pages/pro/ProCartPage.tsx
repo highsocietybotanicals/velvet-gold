@@ -121,6 +121,7 @@ const ProCartPage = () => {
         gramsToNextTier={totals.gramsToNextTier}
         nextTierSavingPerGram={totals.nextTierSavingPerGram}
         retailTotalTTC={totals.retailTotalTTC}
+        retailTotalHT={totals.retailTotalHT}
         totalHT={totals.totalHT}
         resellerMarginTotal={totals.resellerMarginTotal}
       />
@@ -192,7 +193,9 @@ const ProCartPage = () => {
             </div>
             <div className="pt-3 text-xs text-muted-foreground space-y-1">
               <p>
-                Valeur de revente conseillée : {eur(totals.retailTotalTTC)} TTC — marge estimée{" "}
+                Valeur de revente conseillée (prix identiques au site) :{" "}
+                {eur(totals.retailTotalTTC)} TTC, soit {eur(totals.retailTotalHT)} HT après TVA
+                reversée — marge estimée{" "}
                 <span className="text-gold">{eur(totals.resellerMarginTotal)}</span>.
               </p>
               <p>
