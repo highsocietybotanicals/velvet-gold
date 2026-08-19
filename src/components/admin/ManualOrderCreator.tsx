@@ -200,9 +200,15 @@ const ManualOrderCreator = () => {
     return staticP?.priceGroup || "A";
   };
 
-  /** Tarif automatique (grille dégressive du site) pour la ligne */
+  /** Accessoire (briquet, feuilles, pochons) : facturé à l'unité */
+  const getAccessory = (productId: string) => accessories.find(a => a.id === productId);
+  const isAccessory = (productId: string) => !!getAccessory(productId);
+
+  /** Tarif automatique (grille dégressive du site, ou prix unitaire accessoire) */
   const autoLineTotal = (line: OrderLine) => {
     if (!line.productId || line.weight <= 0) return 0;
+    const acc = getAccessory(line.productId);
+    if (acc) return acc.price * line.weight;
     const base = getProductPrice(line.productId);
     const group = getProductGroup(line.productId);
     return calculateItemPrice(base, line.weight, group, line.productId).finalPrice;
