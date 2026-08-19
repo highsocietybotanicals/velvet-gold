@@ -103,7 +103,7 @@ const ProCataloguePage = () => {
                         <label className="text-[11px] text-muted-foreground block mb-1">
                           {f} g · {eur(ppgF)}/g
                           <span className="block text-gold">x{coefF.toFixed(2)}</span>
-                          <span className="block text-emerald-400">
+                          <span className="block text-gold-light">
                             +{gainF.toFixed(2)} €/pochon
                           </span>
                         </label>
