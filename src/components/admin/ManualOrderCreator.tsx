@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag, Gift, Users, Check, ChevronsUpDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
+import { accessories } from "@/data/accessories";
 import { useProducts } from "@/hooks/useProducts";
 import { calculateItemPrice } from "@/lib/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +17,9 @@ import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
