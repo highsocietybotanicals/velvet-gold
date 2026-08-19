@@ -9,9 +9,11 @@ interface Props {
   nextTierSavingPerGram: number | null;
   /** Valeur de revente conseillée (TTC) du panier */
   retailTotalTTC?: number;
+  /** Valeur de revente HT (TVA reversée déduite) */
+  retailTotalHT?: number;
   /** Total d'achat pro HT du panier */
   totalHT?: number;
-  /** Marge revendeur estimée (retail TTC - achat HT) */
+  /** Marge revendeur estimée (retail HT - achat HT) */
   resellerMarginTotal?: number;
 }
 
@@ -23,6 +25,7 @@ const ProTierBar = ({
   gramsToNextTier,
   nextTierSavingPerGram,
   retailTotalTTC = 0,
+  retailTotalHT = 0,
   totalHT = 0,
   resellerMarginTotal = 0,
 }: Props) => {
@@ -30,8 +33,8 @@ const ProTierBar = ({
   const pct = target ? Math.min(100, (totalWeightG / target) * 100) : 100;
 
   const hasData = totalHT > 0;
-  const coef = hasData && totalHT > 0 ? retailTotalTTC / totalHT : 0;
-  const marginPct = retailTotalTTC > 0 ? (resellerMarginTotal / retailTotalTTC) * 100 : 0;
+  const coef = hasData && totalHT > 0 ? retailTotalHT / totalHT : 0;
+  const marginPct = retailTotalHT > 0 ? (resellerMarginTotal / retailTotalHT) * 100 : 0;
 
   return (
     <div className="rounded-lg border border-gold/30 bg-card/60 p-4 grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
@@ -62,6 +65,10 @@ const ProTierBar = ({
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Prix public TTC</span>
             <span>{hasData ? eur(retailTotalTTC) : "—"}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Encaissé HT (TVA déduite)</span>
+            <span>{hasData ? eur(retailTotalHT) : "—"}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Ton achat HT</span>
