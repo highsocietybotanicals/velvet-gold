@@ -42,7 +42,7 @@ const ManualOrderCreator = () => {
   const [customerAddress, setCustomerAddress] = useState("");
   const [settlement, setSettlement] = useState<"physical" | "transfer" | "paid">("physical");
 
-  const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1 }]);
+  const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1, priceOverride: null }]);
   const [sampleLines, setSampleLines] = useState<SampleLine[]>([]);
   const [includeGifts, setIncludeGifts] = useState(true);
   const [promoCode, setPromoCode] = useState("");
@@ -507,7 +507,7 @@ const ManualOrderCreator = () => {
       setCustomerEmail("");
       setCustomerPhone("");
       setCustomerAddress("");
-      setLines([{ productId: "", weight: 1 }]);
+      setLines([{ productId: "", weight: 1, priceOverride: null }]);
       setSampleLines([]);
       clearPromo();
     } catch (error) {
