@@ -24,6 +24,8 @@ import {
 interface OrderLine {
   productId: string;
   weight: number;
+  /** Prix TTC forcé pour la ligne (null = tarif automatique) */
+  priceOverride: number | null;
 }
 
 interface SampleLine {
@@ -40,7 +42,7 @@ const ManualOrderCreator = () => {
   const [customerAddress, setCustomerAddress] = useState("");
   const [settlement, setSettlement] = useState<"physical" | "transfer" | "paid">("physical");
 
-  const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1 }]);
+  const [lines, setLines] = useState<OrderLine[]>([{ productId: "", weight: 1, priceOverride: null }]);
   const [sampleLines, setSampleLines] = useState<SampleLine[]>([]);
   const [includeGifts, setIncludeGifts] = useState(true);
   const [promoCode, setPromoCode] = useState("");
@@ -177,10 +179,10 @@ const ManualOrderCreator = () => {
     setPromoError("");
   };
 
-  const addLine = () => setLines([...lines, { productId: "", weight: 1 }]);
+  const addLine = () => setLines([...lines, { productId: "", weight: 1, priceOverride: null }]);
   const removeLine = (idx: number) => setLines(lines.filter((_, i) => i !== idx));
 
-  const updateLine = (idx: number, field: keyof OrderLine, value: string | number) => {
+  const updateLine = (idx: number, field: keyof OrderLine, value: string | number | null) => {
     setLines(lines.map((l, i) => i === idx ? { ...l, [field]: value } : l));
   };
 
@@ -195,12 +197,40 @@ const ManualOrderCreator = () => {
     return staticP?.priceGroup || "A";
   };
 
-  const calculateLineTotal = (line: OrderLine) => {
+  /** Tarif automatique (grille dégressive du site) pour la ligne */
+  const autoLineTotal = (line: OrderLine) => {
     if (!line.productId || line.weight <= 0) return 0;
     const base = getProductPrice(line.productId);
     const group = getProductGroup(line.productId);
     return calculateItemPrice(base, line.weight, group, line.productId).finalPrice;
   };
+
+  const calculateLineTotal = (line: OrderLine) => {
+    if (!line.productId || line.weight <= 0) return 0;
+    if (line.priceOverride != null && line.priceOverride >= 0) return line.priceOverride;
+    return autoLineTotal(line);
+  };
+
+  const linePricePerGram = (line: OrderLine) =>
+    line.weight > 0 ? calculateLineTotal(line) / line.weight : 0;
+
+  /** Changement de produit : on repart sur le tarif automatique */
+  const changeLineProduct = (idx: number, productId: string) => {
+    setLines(lines.map((l, i) => i === idx ? { ...l, productId, priceOverride: null } : l));
+  };
+
+  /** Changement de poids : si prix forcé, on conserve le €/g saisi */
+  const changeLineWeight = (idx: number, weight: number) => {
+    setLines(lines.map((l, i) => {
+      if (i !== idx) return l;
+      if (l.priceOverride != null && l.weight > 0) {
+        const perGram = l.priceOverride / l.weight;
+        return { ...l, weight, priceOverride: Number((perGram * weight).toFixed(2)) };
+      }
+      return { ...l, weight };
+    }));
+  };
+
 
   const subtotal = lines.reduce((sum, l) => sum + calculateLineTotal(l), 0);
   const discountAmount = promoDiscount ? subtotal * (promoDiscount / 100) : 0;
@@ -420,7 +450,8 @@ const ManualOrderCreator = () => {
           product_name: product.name,
           product_type: product.category,
           weight: l.weight,
-          unit_price: getProductPrice(l.productId),
+          // Prix au gramme réellement pratiqué (prix forcé inclus)
+          unit_price: l.weight > 0 ? Number((lineTotal / l.weight).toFixed(4)) : 0,
           total_price: lineTotal,
         };
       });
@@ -477,7 +508,7 @@ const ManualOrderCreator = () => {
       setCustomerEmail("");
       setCustomerPhone("");
       setCustomerAddress("");
-      setLines([{ productId: "", weight: 1 }]);
+      setLines([{ productId: "", weight: 1, priceOverride: null }]);
       setSampleLines([]);
       clearPromo();
     } catch (error) {
@@ -616,10 +647,14 @@ const ManualOrderCreator = () => {
           {/* Order lines */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">Produits</label>
-            {lines.map((line, idx) => (
-              <div key={idx} className="flex items-center gap-3">
-                <Select value={line.productId} onValueChange={v => updateLine(idx, "productId", v)}>
-                  <SelectTrigger className="flex-1">
+            {lines.map((line, idx) => {
+              const auto = autoLineTotal(line);
+              const total = calculateLineTotal(line);
+              const forced = line.priceOverride != null;
+              return (
+              <div key={idx} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 p-2">
+                <Select value={line.productId} onValueChange={v => changeLineProduct(idx, v)}>
+                  <SelectTrigger className="flex-1 min-w-[180px]">
                     <SelectValue placeholder="Choisir un produit" />
                   </SelectTrigger>
                   <SelectContent>
@@ -636,21 +671,59 @@ const ManualOrderCreator = () => {
                     min="0.5"
                     step="0.5"
                     value={line.weight}
-                    onChange={e => updateLine(idx, "weight", parseFloat(e.target.value) || 0)}
+                    onChange={e => changeLineWeight(idx, parseFloat(e.target.value) || 0)}
                     className="w-20 h-9 text-sm"
+                    aria-label="Grammage"
                   />
                   <span className="text-sm text-muted-foreground">g</span>
                 </div>
-                <span className="text-sm font-medium text-primary w-20 text-right">
-                  {calculateLineTotal(line).toFixed(2)}€
-                </span>
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={total ? Number(total.toFixed(2)) : 0}
+                    onChange={e => {
+                      const v = e.target.value;
+                      updateLine(idx, "priceOverride", v === "" ? null : parseFloat(v) || 0);
+                    }}
+                    className="w-24 h-9 text-sm"
+                    aria-label="Prix TTC de la ligne"
+                  />
+                  <span className="text-sm text-muted-foreground">€ TTC</span>
+                </div>
+                <div className="flex flex-col leading-tight min-w-[130px]">
+                  <span className="text-sm font-medium text-primary">
+                    {linePricePerGram(line).toFixed(2)} €/g
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {forced ? (
+                      <>Prix forcé · tarif auto {auto.toFixed(2)}€ ({total - auto >= 0 ? "+" : ""}{(total - auto).toFixed(2)}€)</>
+                    ) : (
+                      <>Tarif automatique</>
+                    )}
+                  </span>
+                </div>
+                {forced && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => updateLine(idx, "priceOverride", null)}
+                    className="h-8 px-2 text-xs"
+                    title="Revenir au tarif automatique"
+                  >
+                    ↺
+                  </Button>
+                )}
+
                 {lines.length > 1 && (
                   <Button variant="ghost" size="sm" onClick={() => removeLine(idx)} className="text-destructive">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
               </div>
-            ))}
+              );
+            })}
             <Button variant="outline" size="sm" onClick={addLine} className="gap-1">
               <Plus className="h-4 w-4" /> Ajouter un produit
             </Button>
