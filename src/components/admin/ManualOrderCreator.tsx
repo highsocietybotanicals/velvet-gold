@@ -673,6 +673,8 @@ const ManualOrderCreator = () => {
               const auto = autoLineTotal(line);
               const total = calculateLineTotal(line);
               const forced = line.priceOverride != null;
+              const acc = getAccessory(line.productId);
+              const isFree = !!line.productId && line.weight > 0 && total === 0;
               return (
               <div key={idx} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 p-2">
                 <Select value={line.productId} onValueChange={v => changeLineProduct(idx, v)}>
@@ -680,24 +682,39 @@ const ManualOrderCreator = () => {
                     <SelectValue placeholder="Choisir un produit" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allProducts.map(p => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name} ({p.category === "fleur" ? "Fleur" : "Résine"})
-                      </SelectItem>
-                    ))}
+                    <SelectGroup>
+                      <SelectLabel>Fleurs</SelectLabel>
+                      {allProducts.filter(p => p.category === "fleur").map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Résines</SelectLabel>
+                      {allProducts.filter(p => p.category === "resine").map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Accessoires</SelectLabel>
+                      {accessories.map(a => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name} — {a.price.toFixed(2)} €
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
                 <div className="flex items-center gap-1">
                   <Input
                     type="number"
-                    min="0.5"
-                    step="0.5"
+                    min={acc ? "1" : "0.5"}
+                    step={acc ? "1" : "0.5"}
                     value={line.weight}
                     onChange={e => changeLineWeight(idx, parseFloat(e.target.value) || 0)}
                     className="w-20 h-9 text-sm"
-                    aria-label="Grammage"
+                    aria-label={acc ? "Quantité" : "Grammage"}
                   />
-                  <span className="text-sm text-muted-foreground">g</span>
+                  <span className="text-sm text-muted-foreground">{acc ? "u." : "g"}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Input
@@ -716,7 +733,7 @@ const ManualOrderCreator = () => {
                 </div>
                 <div className="flex flex-col leading-tight min-w-[130px]">
                   <span className="text-sm font-medium text-primary">
-                    {linePricePerGram(line).toFixed(2)} €/g
+                    {isFree ? "Offert" : `${linePricePerGram(line).toFixed(2)} €/${acc ? "u." : "g"}`}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
                     {forced ? (
