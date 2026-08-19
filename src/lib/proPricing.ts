@@ -9,6 +9,8 @@ import {
 import { calculateItemPrice } from "./pricing";
 import type { PriceGroup } from "@/data/products";
 
+export const VAT_RATE = 0.2;
+
 export const PRO_FORMATS = [1, 2.5, 5, 10] as const;
 export type ProFormat = (typeof PRO_FORMATS)[number];
 
@@ -24,7 +26,12 @@ export const FORMAT_SURCHARGE: Record<number, number> = {
   10: 0,
 };
 
-/** Coefficient de rentabilité minimum garanti au revendeur (PV public TTC / achat HT) */
+/**
+ * Coefficient de rentabilité minimum garanti au revendeur, calculé HT/HT :
+ * le buraliste revend au MÊME prix public que le site (TTC), il reverse la TVA,
+ * donc son chiffre réel est le prix public HT (TTC / 1,2). On garantit
+ * prix public HT / prix d'achat HT >= MIN_RESELLER_COEF.
+ */
 export const MIN_RESELLER_COEF = 2;
 
 export const proPricePerGram = (
@@ -43,17 +50,15 @@ export const proPricePerGram = (
   if (info && format > 0) {
     const retailTTC = calculateItemPrice(info.price, format, info.priceGroup, productId).finalPrice;
     if (retailTTC > 0) {
-      const cap = retailTTC / format / MIN_RESELLER_COEF;
+      // Prix public HT réellement encaissé par le revendeur (il revend au prix du site)
+      const retailHT = retailTTC / (1 + VAT_RATE);
+      const cap = retailHT / format / MIN_RESELLER_COEF;
       if (cap < ppg) ppg = cap;
     }
   }
 
   return Math.round(ppg * 100) / 100;
 };
-
-export const VAT_RATE = 0.2;
-
-
 
 export interface ProCartLine {
   productId: string;
@@ -68,7 +73,9 @@ export interface ProComputedLine extends ProCartLine {
   totalHT: number;
   /** Prix de vente public conseillé TTC pour ce format (à l'unité) */
   retailUnitTTC: number;
-  /** Marge revendeur estimée sur la ligne (PV public TTC - achat HT) */
+  /** Prix de vente public HT (hors TVA reversée) pour ce format (à l'unité) */
+  retailUnitHT: number;
+  /** Marge revendeur estimée sur la ligne (PV public HT - achat HT) */
   resellerMargin: number;
 }
 
@@ -85,6 +92,8 @@ export interface ProCartTotals {
   /** Économie €/g moyenne au palier suivant */
   nextTierSavingPerGram: number | null;
   retailTotalTTC: number;
+  /** Valeur de revente HT (TVA reversée déduite) */
+  retailTotalHT: number;
   resellerMarginTotal: number;
 }
 
@@ -117,7 +126,8 @@ export const computeProCart = (
     const retailUnitTTC = info
       ? round2(calculateItemPrice(info.price, l.format, info.priceGroup, l.productId).finalPrice)
       : 0;
-    const retailTotal = round2(retailUnitTTC * l.units);
+    const retailUnitHT = round2(retailUnitTTC / (1 + VAT_RATE));
+    const retailTotalHT = round2(retailUnitHT * l.units);
 
     return {
       ...l,
@@ -125,7 +135,8 @@ export const computeProCart = (
       pricePerGram: ppg,
       totalHT,
       retailUnitTTC,
-      resellerMargin: round2(retailTotal - totalHT),
+      retailUnitHT,
+      resellerMargin: round2(retailTotalHT - totalHT),
     };
   });
 
@@ -133,6 +144,9 @@ export const computeProCart = (
   const totalVAT = round2(totalHT * VAT_RATE);
   const retailTotalTTC = round2(
     computed.reduce((s, l) => s + l.retailUnitTTC * l.units, 0)
+  );
+  const retailTotalHT = round2(
+    computed.reduce((s, l) => s + l.retailUnitHT * l.units, 0)
   );
 
   // Palier courant / suivant : paliers de volume communs à tous les produits.
@@ -176,7 +190,8 @@ export const computeProCart = (
     gramsToNextTier,
     nextTierSavingPerGram,
     retailTotalTTC,
-    resellerMarginTotal: round2(retailTotalTTC - totalHT),
+    retailTotalHT,
+    resellerMarginTotal: round2(retailTotalHT - totalHT),
   };
 };
 
