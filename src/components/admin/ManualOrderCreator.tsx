@@ -450,7 +450,8 @@ const ManualOrderCreator = () => {
           product_name: product.name,
           product_type: product.category,
           weight: l.weight,
-          unit_price: getProductPrice(l.productId),
+          // Prix au gramme réellement pratiqué (prix forcé inclus)
+          unit_price: l.weight > 0 ? Number((lineTotal / l.weight).toFixed(4)) : 0,
           total_price: lineTotal,
         };
       });
