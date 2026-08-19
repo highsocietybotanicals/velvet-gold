@@ -451,8 +451,21 @@ const ManualOrderCreator = () => {
         unit_price: number;
         total_price: number;
       }> = validLines.map(l => {
-        const product = allProducts.find(p => p.id === l.productId)!;
         const lineTotal = calculateLineTotal(l);
+        const acc = getAccessory(l.productId);
+        if (acc) {
+          return {
+            order_id: order.id,
+            product_id: l.productId,
+            product_name: lineTotal === 0 ? `${acc.name} (Offert)` : acc.name,
+            product_type: "accessory",
+            weight: null,
+            quantity: l.weight,
+            unit_price: l.weight > 0 ? Number((lineTotal / l.weight).toFixed(4)) : 0,
+            total_price: lineTotal,
+          };
+        }
+        const product = allProducts.find(p => p.id === l.productId)!;
         return {
           order_id: order.id,
           product_id: l.productId,
