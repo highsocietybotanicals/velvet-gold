@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useProCart } from "@/contexts/ProCartContext";
 import { useProCartTotals } from "@/hooks/useProCartTotals";
-import { PRO_FORMATS, proPricePerGram, MIN_RESELLER_COEF } from "@/lib/proPricing";
+import { PRO_FORMATS, proPricePerGram } from "@/lib/proPricing";
 import { calculateItemPrice } from "@/lib/pricing";
 
 import ProTierBar from "@/components/pro/ProTierBar";
@@ -37,12 +37,11 @@ const ProCataloguePage = () => {
           pochon aluminium, Boveda 62 % et étiquette inclus sans supplément. Remise dégressive
           automatique sur l'ensemble de la commande : <strong>-5 %</strong> dès 100 g,{" "}
           <strong>-10 %</strong> dès 250 g, <strong>-15 %</strong> dès 500 g, <strong>-20 %</strong>{" "}
-          dès 1 kg. Sur chaque format (1 g, 2,5 g, 5 g, 10 g), le prix est plafonné pour te garantir
-          un coefficient de rentabilité minimum de{" "}
-          <strong>x{MIN_RESELLER_COEF}</strong> en revendant aux <strong>mêmes prix que le
-          site</strong> — coefficient calculé <strong>HT/HT</strong>, TVA collectée déjà
-          déduite. Saisis le nombre de
-          pochons par format.
+          dès 1 kg. Le prix est plafonné pour te garantir un coefficient de rentabilité minimum de{" "}
+          <strong>x2</strong> sur les formats 1 g, 2,5 g et 5 g, et <strong>x1,7</strong> sur le
+          10 g, en revendant aux <strong>mêmes prix que le site</strong> — coefficient calculé{" "}
+          <strong>HT/HT</strong>, TVA collectée déjà déduite. Le gain HT par pochon est indiqué sous
+          chaque format. Saisis le nombre de pochons par format.
 
         </p>
 
@@ -97,11 +96,16 @@ const ProCataloguePage = () => {
                     // Le buraliste revend au MÊME prix public que le site : son
                     // encaissement réel est HT (TVA reversée), d'où le coef HT/HT.
                     const coefF = ppgF > 0 ? retailF / 1.2 / f / ppgF : 0;
+                    // Gain HT par pochon : prix public HT du format - achat HT du pochon
+                    const gainF = retailF / 1.2 - ppgF * f;
                     return (
-                      <div key={f} className="w-20">
+                      <div key={f} className="w-24">
                         <label className="text-[11px] text-muted-foreground block mb-1">
                           {f} g · {eur(ppgF)}/g
                           <span className="block text-gold">x{coefF.toFixed(2)}</span>
+                          <span className="block text-gold-light">
+                            +{gainF.toFixed(2)} €/pochon
+                          </span>
                         </label>
 
                         <Input

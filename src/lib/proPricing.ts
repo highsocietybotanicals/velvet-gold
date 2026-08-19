@@ -30,9 +30,24 @@ export const FORMAT_SURCHARGE: Record<number, number> = {
  * Coefficient de rentabilité minimum garanti au revendeur, calculé HT/HT :
  * le buraliste revend au MÊME prix public que le site (TTC), il reverse la TVA,
  * donc son chiffre réel est le prix public HT (TTC / 1,2). On garantit
- * prix public HT / prix d'achat HT >= MIN_RESELLER_COEF.
+ * prix public HT / prix d'achat HT >= coefficient minimum du format.
  */
 export const MIN_RESELLER_COEF = 2;
+
+/**
+ * Plancher de rentabilité par format : sur le 10 g, la marge revendeur est
+ * volontairement réduite (x1,7) pour préserver la rentabilité HSB sur les gros
+ * conditionnements.
+ */
+export const MIN_RESELLER_COEF_BY_FORMAT: Record<number, number> = {
+  1: 2,
+  2.5: 2,
+  5: 2,
+  10: 1.7,
+};
+
+export const minResellerCoef = (format: number): number =>
+  MIN_RESELLER_COEF_BY_FORMAT[format] ?? MIN_RESELLER_COEF;
 
 export const proPricePerGram = (
   tiers: PriceTier[],
@@ -45,14 +60,14 @@ export const proPricePerGram = (
   if (base === null) return 0;
   let ppg = base + (FORMAT_SURCHARGE[format] ?? 0);
 
-  // Garantie : sur chaque format, le pro doit pouvoir faire au moins x2
-  // (prix public TTC conseillé du format / prix d'achat HT au gramme).
+  // Garantie : sur chaque format, le pro doit pouvoir faire au moins le
+  // coefficient minimum du format (HT/HT).
   if (info && format > 0) {
     const retailTTC = calculateItemPrice(info.price, format, info.priceGroup, productId).finalPrice;
     if (retailTTC > 0) {
       // Prix public HT réellement encaissé par le revendeur (il revend au prix du site)
       const retailHT = retailTTC / (1 + VAT_RATE);
-      const cap = retailHT / format / MIN_RESELLER_COEF;
+      const cap = retailHT / format / minResellerCoef(format);
       if (cap < ppg) ppg = cap;
     }
   }
