@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Plus, Trash2, Loader2, CreditCard, UserPlus, FileText, Tag, Gift, Users, Check, ChevronsUpDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
+import { accessories } from "@/data/accessories";
 import { useProducts } from "@/hooks/useProducts";
 import { calculateItemPrice } from "@/lib/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +17,9 @@ import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -197,9 +200,15 @@ const ManualOrderCreator = () => {
     return staticP?.priceGroup || "A";
   };
 
-  /** Tarif automatique (grille dégressive du site) pour la ligne */
+  /** Accessoire (briquet, feuilles, pochons) : facturé à l'unité */
+  const getAccessory = (productId: string) => accessories.find(a => a.id === productId);
+  const isAccessory = (productId: string) => !!getAccessory(productId);
+
+  /** Tarif automatique (grille dégressive du site, ou prix unitaire accessoire) */
   const autoLineTotal = (line: OrderLine) => {
     if (!line.productId || line.weight <= 0) return 0;
+    const acc = getAccessory(line.productId);
+    if (acc) return acc.price * line.weight;
     const base = getProductPrice(line.productId);
     const group = getProductGroup(line.productId);
     return calculateItemPrice(base, line.weight, group, line.productId).finalPrice;
@@ -442,8 +451,21 @@ const ManualOrderCreator = () => {
         unit_price: number;
         total_price: number;
       }> = validLines.map(l => {
-        const product = allProducts.find(p => p.id === l.productId)!;
         const lineTotal = calculateLineTotal(l);
+        const acc = getAccessory(l.productId);
+        if (acc) {
+          return {
+            order_id: order.id,
+            product_id: l.productId,
+            product_name: lineTotal === 0 ? `${acc.name} (Offert)` : acc.name,
+            product_type: "accessory",
+            weight: null,
+            quantity: l.weight,
+            unit_price: l.weight > 0 ? Number((lineTotal / l.weight).toFixed(4)) : 0,
+            total_price: lineTotal,
+          };
+        }
+        const product = allProducts.find(p => p.id === l.productId)!;
         return {
           order_id: order.id,
           product_id: l.productId,
@@ -651,6 +673,8 @@ const ManualOrderCreator = () => {
               const auto = autoLineTotal(line);
               const total = calculateLineTotal(line);
               const forced = line.priceOverride != null;
+              const acc = getAccessory(line.productId);
+              const isFree = !!line.productId && line.weight > 0 && total === 0;
               return (
               <div key={idx} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 p-2">
                 <Select value={line.productId} onValueChange={v => changeLineProduct(idx, v)}>
@@ -658,24 +682,39 @@ const ManualOrderCreator = () => {
                     <SelectValue placeholder="Choisir un produit" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allProducts.map(p => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name} ({p.category === "fleur" ? "Fleur" : "Résine"})
-                      </SelectItem>
-                    ))}
+                    <SelectGroup>
+                      <SelectLabel>Fleurs</SelectLabel>
+                      {allProducts.filter(p => p.category === "fleur").map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Résines</SelectLabel>
+                      {allProducts.filter(p => p.category === "resine").map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Accessoires</SelectLabel>
+                      {accessories.map(a => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name} — {a.price.toFixed(2)} €
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
                 <div className="flex items-center gap-1">
                   <Input
                     type="number"
-                    min="0.5"
-                    step="0.5"
+                    min={acc ? "1" : "0.5"}
+                    step={acc ? "1" : "0.5"}
                     value={line.weight}
                     onChange={e => changeLineWeight(idx, parseFloat(e.target.value) || 0)}
                     className="w-20 h-9 text-sm"
-                    aria-label="Grammage"
+                    aria-label={acc ? "Quantité" : "Grammage"}
                   />
-                  <span className="text-sm text-muted-foreground">g</span>
+                  <span className="text-sm text-muted-foreground">{acc ? "u." : "g"}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Input
@@ -694,7 +733,7 @@ const ManualOrderCreator = () => {
                 </div>
                 <div className="flex flex-col leading-tight min-w-[130px]">
                   <span className="text-sm font-medium text-primary">
-                    {linePricePerGram(line).toFixed(2)} €/g
+                    {isFree ? "Offert" : `${linePricePerGram(line).toFixed(2)} €/${acc ? "u." : "g"}`}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
                     {forced ? (
