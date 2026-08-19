@@ -9,6 +9,7 @@ import labelIceOLator from "@/assets/labels/ice-o-lator-label.png";
 import labelAmnesia from "@/assets/labels/amnesia-label.png";
 import labelMintKush from "@/assets/labels/mint-kush-label.png";
 import labelPlatinumOg from "@/assets/labels/platinum-og-label.png";
+import labelMangoXIce from "@/assets/labels/mango-x-ice-label.png";
 
 const LABEL_MAP: Record<string, string> = {
   "911-og-indoor": label911og,
@@ -19,6 +20,7 @@ const LABEL_MAP: Record<string, string> = {
   "amnesia-signature-oniria": labelAmnesia,
   "mint-kush": labelMintKush,
   "platinum-og": labelPlatinumOg,
+  "mango-x-ice": labelMangoXIce,
 };
 
 export const SUPPORTED_LABEL_IDS = Object.keys(LABEL_MAP);
