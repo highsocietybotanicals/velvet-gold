@@ -177,10 +177,10 @@ const ManualOrderCreator = () => {
     setPromoError("");
   };
 
-  const addLine = () => setLines([...lines, { productId: "", weight: 1 }]);
+  const addLine = () => setLines([...lines, { productId: "", weight: 1, priceOverride: null }]);
   const removeLine = (idx: number) => setLines(lines.filter((_, i) => i !== idx));
 
-  const updateLine = (idx: number, field: keyof OrderLine, value: string | number) => {
+  const updateLine = (idx: number, field: keyof OrderLine, value: string | number | null) => {
     setLines(lines.map((l, i) => i === idx ? { ...l, [field]: value } : l));
   };
 
@@ -195,12 +195,40 @@ const ManualOrderCreator = () => {
     return staticP?.priceGroup || "A";
   };
 
-  const calculateLineTotal = (line: OrderLine) => {
+  /** Tarif automatique (grille dégressive du site) pour la ligne */
+  const autoLineTotal = (line: OrderLine) => {
     if (!line.productId || line.weight <= 0) return 0;
     const base = getProductPrice(line.productId);
     const group = getProductGroup(line.productId);
     return calculateItemPrice(base, line.weight, group, line.productId).finalPrice;
   };
+
+  const calculateLineTotal = (line: OrderLine) => {
+    if (!line.productId || line.weight <= 0) return 0;
+    if (line.priceOverride != null && line.priceOverride >= 0) return line.priceOverride;
+    return autoLineTotal(line);
+  };
+
+  const linePricePerGram = (line: OrderLine) =>
+    line.weight > 0 ? calculateLineTotal(line) / line.weight : 0;
+
+  /** Changement de produit : on repart sur le tarif automatique */
+  const changeLineProduct = (idx: number, productId: string) => {
+    setLines(lines.map((l, i) => i === idx ? { ...l, productId, priceOverride: null } : l));
+  };
+
+  /** Changement de poids : si prix forcé, on conserve le €/g saisi */
+  const changeLineWeight = (idx: number, weight: number) => {
+    setLines(lines.map((l, i) => {
+      if (i !== idx) return l;
+      if (l.priceOverride != null && l.weight > 0) {
+        const perGram = l.priceOverride / l.weight;
+        return { ...l, weight, priceOverride: Number((perGram * weight).toFixed(2)) };
+      }
+      return { ...l, weight };
+    }));
+  };
+
 
   const subtotal = lines.reduce((sum, l) => sum + calculateLineTotal(l), 0);
   const discountAmount = promoDiscount ? subtotal * (promoDiscount / 100) : 0;
