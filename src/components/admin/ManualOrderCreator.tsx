@@ -647,10 +647,14 @@ const ManualOrderCreator = () => {
           {/* Order lines */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">Produits</label>
-            {lines.map((line, idx) => (
-              <div key={idx} className="flex items-center gap-3">
-                <Select value={line.productId} onValueChange={v => updateLine(idx, "productId", v)}>
-                  <SelectTrigger className="flex-1">
+            {lines.map((line, idx) => {
+              const auto = autoLineTotal(line);
+              const total = calculateLineTotal(line);
+              const forced = line.priceOverride != null;
+              return (
+              <div key={idx} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 p-2">
+                <Select value={line.productId} onValueChange={v => changeLineProduct(idx, v)}>
+                  <SelectTrigger className="flex-1 min-w-[180px]">
                     <SelectValue placeholder="Choisir un produit" />
                   </SelectTrigger>
                   <SelectContent>
@@ -667,14 +671,51 @@ const ManualOrderCreator = () => {
                     min="0.5"
                     step="0.5"
                     value={line.weight}
-                    onChange={e => updateLine(idx, "weight", parseFloat(e.target.value) || 0)}
+                    onChange={e => changeLineWeight(idx, parseFloat(e.target.value) || 0)}
                     className="w-20 h-9 text-sm"
+                    aria-label="Grammage"
                   />
                   <span className="text-sm text-muted-foreground">g</span>
                 </div>
-                <span className="text-sm font-medium text-primary w-20 text-right">
-                  {calculateLineTotal(line).toFixed(2)}€
-                </span>
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={total ? Number(total.toFixed(2)) : 0}
+                    onChange={e => {
+                      const v = e.target.value;
+                      updateLine(idx, "priceOverride", v === "" ? null : parseFloat(v) || 0);
+                    }}
+                    className="w-24 h-9 text-sm"
+                    aria-label="Prix TTC de la ligne"
+                  />
+                  <span className="text-sm text-muted-foreground">€ TTC</span>
+                </div>
+                <div className="flex flex-col leading-tight min-w-[130px]">
+                  <span className="text-sm font-medium text-primary">
+                    {linePricePerGram(line).toFixed(2)} €/g
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {forced ? (
+                      <>Prix forcé · tarif auto {auto.toFixed(2)}€ ({total - auto >= 0 ? "+" : ""}{(total - auto).toFixed(2)}€)</>
+                    ) : (
+                      <>Tarif automatique</>
+                    )}
+                  </span>
+                </div>
+                {forced && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => updateLine(idx, "priceOverride", null)}
+                    className="h-8 px-2 text-xs"
+                    title="Revenir au tarif automatique"
+                  >
+                    ↺
+                  </Button>
+                )}
+
                 {lines.length > 1 && (
                   <Button variant="ghost" size="sm" onClick={() => removeLine(idx)} className="text-destructive">
                     <Trash2 className="h-4 w-4" />
