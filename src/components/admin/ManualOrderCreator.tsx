@@ -24,6 +24,8 @@ import {
 interface OrderLine {
   productId: string;
   weight: number;
+  /** Prix TTC forcé pour la ligne (null = tarif automatique) */
+  priceOverride: number | null;
 }
 
 interface SampleLine {
