@@ -750,8 +750,10 @@ const ManualOrderCreator = () => {
                   <span className="text-[11px] text-muted-foreground">
                     {forced ? (
                       <>Prix forcé · tarif auto {auto.toFixed(2)}€ ({total - auto >= 0 ? "+" : ""}{(total - auto).toFixed(2)}€)</>
-                    ) : (
+                    ) : acc ? (
                       <>Tarif automatique</>
+                    ) : (
+                      <>Tarif auto · palier {(groupWeights[getProductGroup(line.productId)] || line.weight).toFixed(1)}g cumulés</>
                     )}
                   </span>
                 </div>
