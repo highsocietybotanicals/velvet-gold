@@ -266,6 +266,55 @@ const CommercialFacturationPage = () => {
           <CardTitle className="text-base">Lignes de facture (prix HT au gramme)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="rounded-lg border border-border/50 p-3 space-y-3">
+            <Label className="text-xs">Ajouter depuis le catalogue</Label>
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
+              <Select value={pickedProduct} onValueChange={setPickedProduct}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir une variété" />
+                </SelectTrigger>
+                <SelectContent>
+                  {catalog.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                      {p.isExotique
+                        ? " — Exotique"
+                        : p.isNectarDivin
+                          ? " — Nectar Divin"
+                          : p.isForceNoire
+                            ? " — Force Noire"
+                            : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex flex-wrap gap-2">
+                {PRO_FORMATS.map((f) => (
+                  <Button
+                    key={f}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!product}
+                    onClick={() => addFromCatalog(f)}
+                    className="flex-col h-auto py-1.5 px-3"
+                  >
+                    <span className="text-sm">{f} g</span>
+                    {product && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {eur(ppgFor(f))} /g
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Le prix HT/g est repris automatiquement de la grille pro (dégressif selon le poids
+              total de la facture) — il reste modifiable ligne par ligne.
+            </p>
+          </div>
+
           {lines.map((l, i) => (
             <div key={i} className="grid gap-2 sm:grid-cols-12 items-end">
               <div className="sm:col-span-5">
