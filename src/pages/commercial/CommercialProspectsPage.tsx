@@ -154,7 +154,7 @@ const CommercialProspectsPage = () => {
         ))}
       </div>
 
-      {open && rep && (
+      {open && canCreate && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Ajouter un prospect</CardTitle>
