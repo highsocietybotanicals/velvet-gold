@@ -25,6 +25,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const emptyForm = {
   business_name: "",
+  legal_name: "",
+  siret: "",
+  vat_number: "",
   contact_name: "",
   city: "",
   postal_code: "",
@@ -35,6 +38,7 @@ const emptyForm = {
   next_followup: "",
   notes: "",
 };
+
 
 const statusColor: Record<string, string> = {
   a_visiter: "bg-muted text-muted-foreground",

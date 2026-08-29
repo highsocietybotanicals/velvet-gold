@@ -154,6 +154,11 @@ Deno.serve(async (req) => {
         city: city || null,
         postal_code: /^\d{5}$/.test(postalCode) ? postalCode : null,
         address_line1: address || null,
+        siret,
+        vat_number: vatNumber,
+        is_pro_validated: true,
+        is_vat_validated: !!vatNumber,
+
       })
       .eq("id", userId);
 
