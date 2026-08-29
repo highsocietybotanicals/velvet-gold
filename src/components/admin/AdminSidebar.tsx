@@ -35,6 +35,7 @@ const items = [
   { title: "Logistique", url: "/admin/logistique", icon: Truck },
   { title: "Comptabilité", url: "/admin/comptabilite", icon: Calculator },
   { title: "Commerciaux", url: "/admin/commerciaux", icon: Briefcase },
+  { title: "Espace Commercial", url: "/commercial", icon: Briefcase },
 ];
 
 export function AdminSidebar() {
