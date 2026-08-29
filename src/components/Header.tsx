@@ -127,7 +127,7 @@ const Header = () => {
                         <Store className="w-4 h-4 mr-2" />
                         Espace Pro
                       </DropdownMenuItem>
-                      {isCommercial && (
+                      {(isCommercial || isAdmin) && (
                         <DropdownMenuItem onClick={() => navigate("/commercial")}>
                           <Briefcase className="w-4 h-4 mr-2" />
                           Espace Commercial
@@ -170,7 +170,7 @@ const Header = () => {
             </Link>
 
             {/* Commercial shortcut */}
-            {isCommercial && (
+            {(isCommercial || isAdmin) && (
               <Link
                 to="/commercial"
                 aria-label="Espace Commercial"
@@ -259,7 +259,7 @@ const Header = () => {
               >
                 <Store className="w-4 h-4" /> Espace Pro
               </Link>
-              {isCommercial && (
+              {(isCommercial || isAdmin) && (
                 <Link
                   to="/commercial"
                   onClick={() => setIsMenuOpen(false)}
