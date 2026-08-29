@@ -1014,6 +1014,170 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_commissions: {
+        Row: {
+          client_label: string
+          commission_amount: number
+          commission_percent: number
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          paid_at: string | null
+          period_month: string
+          rep_id: string
+          revenue_ht: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_label: string
+          commission_amount?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          period_month?: string
+          rep_id: string
+          revenue_ht?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_label?: string
+          commission_amount?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          period_month?: string
+          rep_id?: string
+          revenue_ht?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_commissions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_rep_id_fkey"
+            columns: ["rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_prospects: {
+        Row: {
+          address: string | null
+          business_name: string
+          city: string | null
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          next_followup: string | null
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          rep_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          business_name: string
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          next_followup?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          rep_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          business_name?: string
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          next_followup?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          rep_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_prospects_rep_id_fkey"
+            columns: ["rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_reps: {
+        Row: {
+          commission_percent: number
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+          zone: string | null
+        }
+        Insert: {
+          commission_percent?: number
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+          zone?: string | null
+        }
+        Update: {
+          commission_percent?: number
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+          zone?: string | null
+        }
+        Relationships: []
+      }
       social_posts: {
         Row: {
           caption: string | null
@@ -1127,6 +1291,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_commercial: { Args: never; Returns: boolean }
       is_pro: { Args: never; Returns: boolean }
       move_to_dlq: {
         Args: {
