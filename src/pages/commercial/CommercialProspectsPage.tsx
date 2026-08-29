@@ -86,16 +86,29 @@ const CommercialProspectsPage = () => {
       setEmailError("Un email valide est obligatoire : il sert à créer l'accès pro du buraliste.");
       return;
     }
+    const siret = form.siret.replace(/\D/g, "");
+    if (siret && !/^\d{14}$/.test(siret)) {
+      setEmailError("Le SIRET doit contenir exactement 14 chiffres.");
+      return;
+    }
+    const vat = form.vat_number.toUpperCase().replace(/\s/g, "");
+    if (vat && !/^[A-Z]{2}[A-Z0-9]{2,12}$/.test(vat)) {
+      setEmailError("Le n° de TVA doit être au format FR12345678901.");
+      return;
+    }
     setEmailError("");
     await createProspect.mutateAsync({
       ...form,
       email,
+      siret,
+      vat_number: vat,
       next_followup: form.next_followup || null,
       rep_id: targetRepId,
     } as any);
     setForm(emptyForm);
     setOpen(false);
   };
+
 
   return (
     <div className="space-y-6">
