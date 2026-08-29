@@ -315,6 +315,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isPro,
         isProValidated,
         isAdmin,
+        isCommercial,
         loading,
         signUp,
         signIn,
