@@ -16,7 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyRep, useAllReps, useProspects } from "@/hooks/useCommercial";
-import { VAT_RATE } from "@/lib/proPricing";
+import { VAT_RATE, PRO_FORMATS, proPricePerGram } from "@/lib/proPricing";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
+import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 
 interface Line {
   designation: string;
