@@ -35,6 +35,7 @@ interface AuthContextType {
   isPro: boolean;
   isProValidated: boolean;
   isAdmin: boolean;
+  isCommercial: boolean;
   loading: boolean;
   signUp: (
     email: string, 
@@ -58,6 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isPro, setIsPro] = useState(false);
   const [isProValidated, setIsProValidated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCommercial, setIsCommercial] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -107,12 +109,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const checkCommercialStatus = async (_userId: string) => {
+    try {
+      const { data, error } = await supabase.rpc("is_commercial" as any);
+      if (error) throw error;
+      setIsCommercial(data || false);
+    } catch (error) {
+      if (import.meta.env.DEV) console.error("Error checking commercial status:", error);
+      setIsCommercial(false);
+    }
+  };
+
   const refreshProfile = async () => {
     if (user?.id) {
       await Promise.all([
         fetchProfile(user.id), 
         checkProStatus(user.id),
-        checkAdminStatus(user.id)
+        checkAdminStatus(user.id),
+        checkCommercialStatus(user.id)
       ]);
     }
   };
@@ -130,12 +144,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             fetchProfile(session.user.id);
             checkProStatus(session.user.id);
             checkAdminStatus(session.user.id);
+            checkCommercialStatus(session.user.id);
           }, 0);
         } else {
           setProfile(null);
           setIsPro(false);
           setIsProValidated(false);
           setIsAdmin(false);
+          setIsCommercial(false);
         }
         setLoading(false);
       }
@@ -149,6 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         fetchProfile(session.user.id);
         checkProStatus(session.user.id);
         checkAdminStatus(session.user.id);
+        checkCommercialStatus(session.user.id);
       }
       setLoading(false);
     });
@@ -232,6 +249,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsPro(false);
     setIsProValidated(false);
     setIsAdmin(false);
+    setIsCommercial(false);
     toast({
       title: "Déconnexion",
       description: "À bientôt !",
