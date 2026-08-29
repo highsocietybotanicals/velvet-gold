@@ -57,3 +57,6 @@ verify_jwt = true
 
 [functions.abandon-order]
 verify_jwt = false
+
+[functions.create-pro-account]
+verify_jwt = true
