@@ -52,7 +52,6 @@ const CommercialProspectsPage = () => {
   const [selectedRepId, setSelectedRepId] = useState<string>("");
 
   // Le commercial voit ses prospects ; l'admin voit tout (ou filtre sur un commercial)
-  const effectiveRepId = rep?.id ?? (isAdmin ? selectedRepId || undefined : undefined);
   const { prospects, isLoading, createProspect, updateProspect, deleteProspect } = useProspects(
     isAdmin && !rep ? selectedRepId || undefined : rep?.id
   );
