@@ -194,6 +194,43 @@ const CommercialProspectsPage = () => {
               />
             </div>
             <div>
+              <Label>Raison sociale (facturation)</Label>
+              <Input
+                value={form.legal_name}
+                onChange={(e) => setForm({ ...form, legal_name: e.target.value })}
+                placeholder="SARL Le Centre"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Utilisée sur le compte pro et les factures. Vide = l'enseigne.
+              </p>
+            </div>
+            <div>
+              <Label>SIRET (14 chiffres)</Label>
+              <Input
+                value={form.siret}
+                onChange={(e) => setForm({ ...form, siret: e.target.value })}
+                placeholder="12345678901234"
+                inputMode="numeric"
+              />
+            </div>
+            <div>
+              <Label>N° TVA intracommunautaire</Label>
+              <Input
+                value={form.vat_number}
+                onChange={(e) => setForm({ ...form, vat_number: e.target.value })}
+                placeholder="FR12345678901"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Adresse</Label>
+              <Input
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                placeholder="12 rue de la République"
+              />
+            </div>
+
+            <div>
               <Label>Contact</Label>
               <Input
                 value={form.contact_name}
