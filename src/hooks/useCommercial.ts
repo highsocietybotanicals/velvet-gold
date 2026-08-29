@@ -115,17 +115,54 @@ export const useProspects = (repId?: string) => {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["sales-prospects"] });
 
   const createProspect = useMutation({
-    mutationFn: async (payload: Partial<Prospect> & { rep_id: string; business_name: string }) => {
+    mutationFn: async (
+      payload: Partial<Prospect> & { rep_id: string; business_name: string; email: string }
+    ) => {
       const { error } = await db.from("sales_prospects").insert(payload);
       if (error) throw error;
+
+      // Création automatique du compte pro + envoi des identifiants par email
+      const { data, error: fnError } = await supabase.functions.invoke("create-pro-account", {
+        body: {
+          email: payload.email,
+          company_name: payload.business_name,
+          full_name: payload.contact_name ?? "",
+          phone: payload.phone ?? "",
+          city: payload.city ?? "",
+          postal_code: payload.postal_code ?? "",
+          address: payload.address ?? "",
+        },
+      });
+      if (fnError) return { accountError: fnError.message as string };
+      return data as { alreadyExists?: boolean; created?: boolean; emailSent?: boolean };
     },
-    onSuccess: () => {
+    onSuccess: (res: any) => {
       invalidate();
-      toast({ title: "Prospect ajouté" });
+      if (res?.accountError) {
+        toast({
+          title: "Prospect ajouté",
+          description: `Compte pro non créé : ${res.accountError}`,
+          variant: "destructive",
+        });
+      } else if (res?.alreadyExists) {
+        toast({ title: "Prospect ajouté", description: "Un compte existe déjà pour cet email." });
+      } else if (res?.emailSent === false) {
+        toast({
+          title: "Prospect ajouté",
+          description: "Compte pro créé, mais l'email d'identifiants n'a pas pu être envoyé.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Prospect ajouté",
+          description: "Compte pro créé, identifiants envoyés par email.",
+        });
+      }
     },
     onError: (e: Error) =>
       toast({ title: "Erreur", description: e.message, variant: "destructive" }),
   });
+
 
   const updateProspect = useMutation({
     mutationFn: async ({ id, ...patch }: Partial<Prospect> & { id: string }) => {
