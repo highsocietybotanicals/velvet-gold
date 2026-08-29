@@ -44,6 +44,8 @@ const CommercialCataloguePage = lazy(() => import("@/pages/commercial/Commercial
 const CommercialProspectsPage = lazy(() => import("@/pages/commercial/CommercialProspectsPage"));
 const CommercialCommissionsPage = lazy(() => import("@/pages/commercial/CommercialCommissionsPage"));
 const CommercialDocumentsPage = lazy(() => import("@/pages/commercial/CommercialDocumentsPage"));
+const CommercialFacturationPage = lazy(() => import("@/pages/commercial/CommercialFacturationPage"));
+
 
 const LazyFallback = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
@@ -78,6 +80,8 @@ const AnimatedRoutes = () => {
             <Route index element={<CommercialCataloguePage />} />
             <Route path="catalogue" element={<CommercialCataloguePage />} />
             <Route path="prospects" element={<CommercialProspectsPage />} />
+            <Route path="facturation" element={<CommercialFacturationPage />} />
+
             <Route path="commissions" element={<CommercialCommissionsPage />} />
             <Route path="documents" element={<CommercialDocumentsPage />} />
           </Route>

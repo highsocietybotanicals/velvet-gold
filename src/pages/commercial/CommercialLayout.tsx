@@ -1,5 +1,14 @@
 import { Outlet, NavLink, Navigate, Link } from "react-router-dom";
-import { Loader2, ShieldAlert, BookOpen, Users, Percent, FileDown, Briefcase } from "lucide-react";
+import {
+  Loader2,
+  ShieldAlert,
+  BookOpen,
+  Users,
+  Percent,
+  FileDown,
+  Briefcase,
+  ReceiptEuro,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyRep } from "@/hooks/useCommercial";
 import { Button } from "@/components/ui/button";
@@ -9,9 +18,11 @@ import { cn } from "@/lib/utils";
 const links = [
   { to: "/commercial/catalogue", label: "Catalogue & argumentaire", icon: BookOpen },
   { to: "/commercial/prospects", label: "Mes prospects", icon: Users },
+  { to: "/commercial/facturation", label: "Facturation", icon: ReceiptEuro },
   { to: "/commercial/commissions", label: "Mes commissions", icon: Percent },
   { to: "/commercial/documents", label: "Documents", icon: FileDown },
 ];
+
 
 const CommercialLayout = () => {
   const { user, isAdmin, isCommercial, loading } = useAuth();

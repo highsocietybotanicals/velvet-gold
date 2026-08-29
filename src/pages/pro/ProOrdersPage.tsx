@@ -11,10 +11,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const eur = (n: number) => `${Number(n || 0).toFixed(2)} €`;
 const dt = (d?: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "—");
+
 
 const quoteStatusLabel: Record<string, string> = {
   pending: "En attente",
@@ -34,6 +38,31 @@ const orderStatusLabel: Record<string, string> = {
 
 const ProOrdersPage = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [loadingInvoice, setLoadingInvoice] = useState<string | null>(null);
+
+  const openInvoice = async (orderId: string) => {
+    setLoadingInvoice(orderId);
+    try {
+      const { data, error } = await supabase.functions.invoke("get-pro-invoice", {
+        body: { orderId },
+      });
+      if (error) throw new Error(error.message);
+      const url = (data as any)?.url;
+      if (!url) throw new Error((data as any)?.error ?? "Facture indisponible");
+      window.open(url, "_blank", "noopener");
+    } catch (e) {
+      toast({
+        title: "Facture indisponible",
+        description: (e as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingInvoice(null);
+    }
+  };
+
+
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ["pro-orders", user?.id],
@@ -92,6 +121,7 @@ const ProOrdersPage = () => {
                   <TableHead>Statut</TableHead>
                   <TableHead>Paiement</TableHead>
                   <TableHead className="text-right">Montant TTC</TableHead>
+                  <TableHead className="text-right">Facture</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -111,10 +141,26 @@ const ProOrdersPage = () => {
                           ? "Payée"
                           : o.payment_method === "physical"
                           ? "TPE à la remise — à valider par HSB"
-                          : "Virement — en attente de validation HSB"}
+                          : `Virement — libellé ${o.display_order_number}`}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{eur(o.total_amount)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openInvoice(o.id)}
+                        disabled={loadingInvoice === o.id}
+                      >
+                        {loadingInvoice === o.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <FileText className="h-4 w-4" />
+                        )}
+                        <span className="ml-2 hidden sm:inline">PDF</span>
+                      </Button>
+                    </TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
