@@ -25,6 +25,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const emptyForm = {
   business_name: "",
+  legal_name: "",
+  siret: "",
+  vat_number: "",
   contact_name: "",
   city: "",
   postal_code: "",
@@ -35,6 +38,7 @@ const emptyForm = {
   next_followup: "",
   notes: "",
 };
+
 
 const statusColor: Record<string, string> = {
   a_visiter: "bg-muted text-muted-foreground",
@@ -82,16 +86,29 @@ const CommercialProspectsPage = () => {
       setEmailError("Un email valide est obligatoire : il sert à créer l'accès pro du buraliste.");
       return;
     }
+    const siret = form.siret.replace(/\D/g, "");
+    if (siret && !/^\d{14}$/.test(siret)) {
+      setEmailError("Le SIRET doit contenir exactement 14 chiffres.");
+      return;
+    }
+    const vat = form.vat_number.toUpperCase().replace(/\s/g, "");
+    if (vat && !/^[A-Z]{2}[A-Z0-9]{2,12}$/.test(vat)) {
+      setEmailError("Le n° de TVA doit être au format FR12345678901.");
+      return;
+    }
     setEmailError("");
     await createProspect.mutateAsync({
       ...form,
       email,
+      siret,
+      vat_number: vat,
       next_followup: form.next_followup || null,
       rep_id: targetRepId,
     } as any);
     setForm(emptyForm);
     setOpen(false);
   };
+
 
   return (
     <div className="space-y-6">
@@ -176,6 +193,43 @@ const CommercialProspectsPage = () => {
                 placeholder="Tabac Presse du Centre"
               />
             </div>
+            <div>
+              <Label>Raison sociale (facturation)</Label>
+              <Input
+                value={form.legal_name}
+                onChange={(e) => setForm({ ...form, legal_name: e.target.value })}
+                placeholder="SARL Le Centre"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Utilisée sur le compte pro et les factures. Vide = l'enseigne.
+              </p>
+            </div>
+            <div>
+              <Label>SIRET (14 chiffres)</Label>
+              <Input
+                value={form.siret}
+                onChange={(e) => setForm({ ...form, siret: e.target.value })}
+                placeholder="12345678901234"
+                inputMode="numeric"
+              />
+            </div>
+            <div>
+              <Label>N° TVA intracommunautaire</Label>
+              <Input
+                value={form.vat_number}
+                onChange={(e) => setForm({ ...form, vat_number: e.target.value })}
+                placeholder="FR12345678901"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Adresse</Label>
+              <Input
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                placeholder="12 rue de la République"
+              />
+            </div>
+
             <div>
               <Label>Contact</Label>
               <Input

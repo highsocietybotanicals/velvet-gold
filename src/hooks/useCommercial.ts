@@ -116,23 +116,35 @@ export const useProspects = (repId?: string) => {
 
   const createProspect = useMutation({
     mutationFn: async (
-      payload: Partial<Prospect> & { rep_id: string; business_name: string; email: string }
+      payload: Partial<Prospect> & {
+        rep_id: string;
+        business_name: string;
+        email: string;
+        siret?: string;
+        vat_number?: string;
+        legal_name?: string;
+      }
     ) => {
-      const { error } = await db.from("sales_prospects").insert(payload);
+      // siret / tva / raison sociale servent au compte pro, pas à la fiche prospect
+      const { siret, vat_number, legal_name, ...prospectRow } = payload;
+      const { error } = await db.from("sales_prospects").insert(prospectRow);
       if (error) throw error;
 
       // Création automatique du compte pro + envoi des identifiants par email
       const { data, error: fnError } = await supabase.functions.invoke("create-pro-account", {
         body: {
           email: payload.email,
-          company_name: payload.business_name,
+          company_name: legal_name?.trim() || payload.business_name,
           full_name: payload.contact_name ?? "",
           phone: payload.phone ?? "",
           city: payload.city ?? "",
           postal_code: payload.postal_code ?? "",
           address: payload.address ?? "",
+          siret: siret ?? "",
+          vat_number: vat_number ?? "",
         },
       });
+
       if (fnError) return { accountError: fnError.message as string };
       return data as { alreadyExists?: boolean; created?: boolean; emailSent?: boolean };
     },
