@@ -37,6 +37,9 @@ const CommercialFacturationPage = () => {
   const { data: rep } = useMyRep();
   const { data: allReps = [] } = useAllReps(isAdmin);
   const { prospects } = useProspects(rep?.id);
+  const { all: catalog } = useCatalogProducts();
+  const { tiers } = useProPriceTiers();
+  const [pickedProduct, setPickedProduct] = useState<string>("");
 
   const [repId, setRepId] = useState<string>("");
   const [email, setEmail] = useState("");
