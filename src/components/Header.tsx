@@ -259,6 +259,15 @@ const Header = () => {
               >
                 <Store className="w-4 h-4" /> Espace Pro
               </Link>
+              {isCommercial && (
+                <Link
+                  to="/commercial"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-lg hover:text-primary transition-colors py-2 font-display text-primary flex items-center gap-2"
+                >
+                  <Briefcase className="w-4 h-4" /> Espace Commercial
+                </Link>
+              )}
               {isAdmin && (
                 <Link
                   to="/admin"
