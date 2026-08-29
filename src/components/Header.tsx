@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingCart, User, LogOut, ChevronDown, Shield, Store } from "lucide-react";
+import { Menu, X, ShoppingCart, User, LogOut, ChevronDown, Shield, Store, Briefcase } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,7 +25,7 @@ const navLinks = [
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
-  const { user, isPro, isProValidated, isAdmin, signOut, loading } = useAuth();
+  const { user, isPro, isProValidated, isAdmin, isCommercial, signOut, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -127,6 +127,12 @@ const Header = () => {
                         <Store className="w-4 h-4 mr-2" />
                         Espace Pro
                       </DropdownMenuItem>
+                      {isCommercial && (
+                        <DropdownMenuItem onClick={() => navigate("/commercial")}>
+                          <Briefcase className="w-4 h-4 mr-2" />
+                          Espace Commercial
+                        </DropdownMenuItem>
+                      )}
                       {isAdmin && (
                         <>
                           <DropdownMenuSeparator />
@@ -162,6 +168,17 @@ const Header = () => {
             >
               <Store className="w-5 h-5" />
             </Link>
+
+            {/* Commercial shortcut */}
+            {isCommercial && (
+              <Link
+                to="/commercial"
+                aria-label="Espace Commercial"
+                className="p-2 hover:bg-muted rounded-full transition-colors text-primary"
+              >
+                <Briefcase className="w-5 h-5" />
+              </Link>
+            )}
 
             {/* Admin shortcut (always visible when admin) */}
             {isAdmin && (
@@ -242,6 +259,15 @@ const Header = () => {
               >
                 <Store className="w-4 h-4" /> Espace Pro
               </Link>
+              {isCommercial && (
+                <Link
+                  to="/commercial"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-lg hover:text-primary transition-colors py-2 font-display text-primary flex items-center gap-2"
+                >
+                  <Briefcase className="w-4 h-4" /> Espace Commercial
+                </Link>
+              )}
               {isAdmin && (
                 <Link
                   to="/admin"

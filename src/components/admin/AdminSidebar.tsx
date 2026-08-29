@@ -10,6 +10,7 @@ import {
   Calculator,
   Shield,
   TrendingUp,
+  Briefcase,
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +34,7 @@ const items = [
   { title: "Marketing", url: "/admin/marketing", icon: Megaphone },
   { title: "Logistique", url: "/admin/logistique", icon: Truck },
   { title: "Comptabilité", url: "/admin/comptabilite", icon: Calculator },
+  { title: "Commerciaux", url: "/admin/commerciaux", icon: Briefcase },
 ];
 
 export function AdminSidebar() {

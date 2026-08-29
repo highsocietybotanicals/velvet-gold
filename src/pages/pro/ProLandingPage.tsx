@@ -29,7 +29,7 @@ const arguments_ = [
   },
   {
     icon: FlaskConical,
-    title: "CBD moléculaire de niche",
+    title: "CBD haut de gamme",
     text: "Sélection indoor haut de gamme : des produits qui fidélisent une clientèle exigeante.",
   },
   {
