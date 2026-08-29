@@ -70,12 +70,48 @@ const CommercialFacturationPage = () => {
       ht += g * (Number(l.unit_price_ht) || 0);
     });
     ht = Math.round(ht * 100) / 100;
-    const tva = Math.round(ht * (VAT_RATE / 100) * 100) / 100;
+    const tva = Math.round(ht * VAT_RATE * 100) / 100;
     return { ht, tva, ttc: Math.round((ht + tva) * 100) / 100, grams: Math.round(grams * 100) / 100 };
   }, [lines]);
 
   const setLine = (i: number, patch: Partial<Line>) =>
     setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
+
+  const product = catalog.find((p) => p.id === pickedProduct);
+
+  /** Prix pro HT/g pour un format, au palier du poids déjà saisi sur la facture */
+  const ppgFor = (format: number) =>
+    product
+      ? proPricePerGram(tiers, product.id, totals.grams + format, format, {
+          price: product.price,
+          priceGroup: product.priceGroup,
+        })
+      : 0;
+
+  const addFromCatalog = (format: number) => {
+    if (!product) return;
+    const ppg = ppgFor(format);
+    setLines((ls) => {
+      const idx = ls.findIndex(
+        (l) => l.designation === product.name && Number(l.format_g) === format
+      );
+      if (idx >= 0) {
+        return ls.map((l, i) =>
+          i === idx ? { ...l, quantity: String((Number(l.quantity) || 0) + 1) } : l
+        );
+      }
+      const next = [
+        ...ls.filter((l) => l.designation.trim() || Number(l.unit_price_ht) > 0),
+        {
+          designation: product.name,
+          format_g: String(format),
+          quantity: "1",
+          unit_price_ht: ppg.toFixed(2),
+        },
+      ];
+      return next;
+    });
+  };
 
   const submit = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
