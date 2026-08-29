@@ -15,11 +15,13 @@ import {
 import { Loader2, Plus, Trash2, Phone, Mail, MapPin } from "lucide-react";
 import {
   useMyRep,
+  useAllReps,
   useProspects,
   PROSPECT_STATUSES,
   prospectStatusLabel,
   ProspectStatus,
 } from "@/hooks/useCommercial";
+import { useAuth } from "@/contexts/AuthContext";
 
 const emptyForm = {
   business_name: "",
