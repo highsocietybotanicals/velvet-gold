@@ -110,6 +110,12 @@ Deno.serve(async (req) => {
     const city = typeof body.city === "string" ? body.city.slice(0, 200) : "";
     const postalCode = typeof body.postal_code === "string" ? body.postal_code.slice(0, 10) : "";
     const address = typeof body.address === "string" ? body.address.slice(0, 500) : "";
+    const siretRaw = typeof body.siret === "string" ? body.siret.replace(/\D/g, "") : "";
+    const siret = /^\d{14}$/.test(siretRaw) ? siretRaw : null;
+    const vatRaw =
+      typeof body.vat_number === "string" ? body.vat_number.toUpperCase().replace(/\s/g, "") : "";
+    const vatNumber = /^[A-Z]{2}[A-Z0-9]{2,12}$/.test(vatRaw) ? vatRaw : null;
+
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
