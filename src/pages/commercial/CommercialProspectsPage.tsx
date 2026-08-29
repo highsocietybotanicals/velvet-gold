@@ -15,11 +15,13 @@ import {
 import { Loader2, Plus, Trash2, Phone, Mail, MapPin } from "lucide-react";
 import {
   useMyRep,
+  useAllReps,
   useProspects,
   PROSPECT_STATUSES,
   prospectStatusLabel,
   ProspectStatus,
 } from "@/hooks/useCommercial";
+import { useAuth } from "@/contexts/AuthContext";
 
 const emptyForm = {
   business_name: "",
@@ -44,13 +46,22 @@ const statusColor: Record<string, string> = {
 };
 
 const CommercialProspectsPage = () => {
+  const { isAdmin } = useAuth();
   const { data: rep } = useMyRep();
+  const { data: allReps = [] } = useAllReps(isAdmin);
+  const [selectedRepId, setSelectedRepId] = useState<string>("");
+
+  // Le commercial voit ses prospects ; l'admin voit tout (ou filtre sur un commercial)
   const { prospects, isLoading, createProspect, updateProspect, deleteProspect } = useProspects(
-    rep?.id
+    isAdmin && !rep ? selectedRepId || undefined : rep?.id
   );
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [filter, setFilter] = useState<string>("all");
+
+  // Commercial cible pour la création : sa propre fiche, sinon celle choisie par l'admin
+  const targetRepId = rep?.id ?? selectedRepId;
+  const canCreate = !!targetRepId;
 
   const filtered = useMemo(
     () => (filter === "all" ? prospects : prospects.filter((p) => p.status === filter)),
@@ -64,11 +75,11 @@ const CommercialProspectsPage = () => {
   }, [prospects]);
 
   const submit = async () => {
-    if (!rep?.id || !form.business_name.trim()) return;
+    if (!targetRepId || !form.business_name.trim()) return;
     await createProspect.mutateAsync({
       ...form,
       next_followup: form.next_followup || null,
-      rep_id: rep.id,
+      rep_id: targetRepId,
     } as any);
     setForm(emptyForm);
     setOpen(false);
@@ -78,17 +89,45 @@ const CommercialProspectsPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold gold-text">Mes prospects</h1>
+          <h1 className="text-2xl font-semibold gold-text">
+            {rep ? "Mes prospects" : "Prospects"}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Suivi de ton démarchage terrain : bureaux de tabac, CBD shops, épiceries fines.
+            Suivi du démarchage terrain : bureaux de tabac, CBD shops, épiceries fines.
           </p>
         </div>
-        <Button onClick={() => setOpen((v) => !v)} disabled={!rep}>
+        <Button onClick={() => setOpen((v) => !v)} disabled={!canCreate}>
           <Plus className="h-4 w-4 mr-2" /> Nouveau prospect
         </Button>
       </div>
 
-      {!rep && (
+      {!rep && isAdmin && (
+        <Card>
+          <CardContent className="pt-6 space-y-2">
+            <Label>Commercial concerné</Label>
+            {allReps.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Aucun commercial enregistré : crée-le d'abord dans Admin → Commerciaux.
+              </p>
+            ) : (
+              <Select value={selectedRepId} onValueChange={setSelectedRepId}>
+                <SelectTrigger className="max-w-sm">
+                  <SelectValue placeholder="Choisir un commercial" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allReps.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {!rep && !isAdmin && (
         <Card>
           <CardContent className="pt-6 text-sm text-muted-foreground">
             Aucune fiche commerciale n'est rattachée à ton compte : un administrateur doit la créer
@@ -115,7 +154,7 @@ const CommercialProspectsPage = () => {
         ))}
       </div>
 
-      {open && rep && (
+      {open && canCreate && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Ajouter un prospect</CardTitle>

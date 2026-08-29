@@ -85,6 +85,18 @@ export const useMyRep = () => {
   });
 };
 
+/** Tous les commerciaux (visible uniquement par les admins via RLS) */
+export const useAllReps = (enabled = true) =>
+  useQuery({
+    queryKey: ["sales-reps"],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await db.from("sales_reps").select("*").order("full_name");
+      if (error) throw error;
+      return (data ?? []) as SalesRep[];
+    },
+  });
+
 export const useProspects = (repId?: string) => {
   const qc = useQueryClient();
   const { toast } = useToast();
