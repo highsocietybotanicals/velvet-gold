@@ -60,3 +60,9 @@ verify_jwt = false
 
 [functions.create-pro-account]
 verify_jwt = true
+
+[functions.commercial-invoice]
+verify_jwt = true
+
+[functions.get-pro-invoice]
+verify_jwt = true
