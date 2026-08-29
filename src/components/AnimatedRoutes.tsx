@@ -24,6 +24,7 @@ const AdminRentabilitePage = lazy(() => import("@/pages/admin/RentabilitePage"))
 const AdminMarketingPage = lazy(() => import("@/pages/admin/MarketingPage"));
 const AdminLogisticsPage = lazy(() => import("@/pages/admin/LogisticsPage"));
 const AdminAccountingPage = lazy(() => import("@/pages/admin/AccountingPage"));
+const AdminCommerciauxPage = lazy(() => import("@/pages/admin/CommerciauxPage"));
 const MentionsLegalesPage = lazy(() => import("@/pages/MentionsLegalesPage"));
 const ConfidentialitePage = lazy(() => import("@/pages/ConfidentialitePage"));
 const CGVPage = lazy(() => import("@/pages/CGVPage"));
@@ -38,6 +39,11 @@ const ProLayout = lazy(() => import("@/pages/pro/ProLayout"));
 const ProCataloguePage = lazy(() => import("@/pages/pro/ProCataloguePage"));
 const ProCartPage = lazy(() => import("@/pages/pro/ProCartPage"));
 const ProOrdersPage = lazy(() => import("@/pages/pro/ProOrdersPage"));
+const CommercialLayout = lazy(() => import("@/pages/commercial/CommercialLayout"));
+const CommercialCataloguePage = lazy(() => import("@/pages/commercial/CommercialCataloguePage"));
+const CommercialProspectsPage = lazy(() => import("@/pages/commercial/CommercialProspectsPage"));
+const CommercialCommissionsPage = lazy(() => import("@/pages/commercial/CommercialCommissionsPage"));
+const CommercialDocumentsPage = lazy(() => import("@/pages/commercial/CommercialDocumentsPage"));
 
 const LazyFallback = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
@@ -68,6 +74,13 @@ const AnimatedRoutes = () => {
             <Route path="panier" element={<ProCartPage />} />
             <Route path="commandes" element={<ProOrdersPage />} />
           </Route>
+          <Route path="/commercial" element={<CommercialLayout />}>
+            <Route index element={<CommercialCataloguePage />} />
+            <Route path="catalogue" element={<CommercialCataloguePage />} />
+            <Route path="prospects" element={<CommercialProspectsPage />} />
+            <Route path="commissions" element={<CommercialCommissionsPage />} />
+            <Route path="documents" element={<CommercialDocumentsPage />} />
+          </Route>
           <Route path="/admin" element={<AdminLayout />}>
 
             <Route index element={<AdminDashboardPage />} />
@@ -80,6 +93,7 @@ const AnimatedRoutes = () => {
             <Route path="marketing" element={<AdminMarketingPage />} />
             <Route path="logistique" element={<AdminLogisticsPage />} />
             <Route path="comptabilite" element={<AdminAccountingPage />} />
+            <Route path="commerciaux" element={<AdminCommerciauxPage />} />
           </Route>
           <Route path="/mentions-legales" element={<PageTransition><MentionsLegalesPage /></PageTransition>} />
           <Route path="/confidentialite" element={<PageTransition><ConfidentialitePage /></PageTransition>} />
