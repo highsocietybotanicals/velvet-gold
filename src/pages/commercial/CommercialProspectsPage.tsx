@@ -58,6 +58,7 @@ const CommercialProspectsPage = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [filter, setFilter] = useState<string>("all");
+  const [emailError, setEmailError] = useState("");
 
   // Commercial cible pour la création : sa propre fiche, sinon celle choisie par l'admin
   const targetRepId = rep?.id ?? selectedRepId;
@@ -76,8 +77,15 @@ const CommercialProspectsPage = () => {
 
   const submit = async () => {
     if (!targetRepId || !form.business_name.trim()) return;
+    const email = form.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Un email valide est obligatoire : il sert à créer l'accès pro du buraliste.");
+      return;
+    }
+    setEmailError("");
     await createProspect.mutateAsync({
       ...form,
+      email,
       next_followup: form.next_followup || null,
       rep_id: targetRepId,
     } as any);
@@ -191,8 +199,19 @@ const CommercialProspectsPage = () => {
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div>
-              <Label>Email</Label>
-              <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="contact@tabac-du-centre.fr"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Obligatoire : un compte pro est créé automatiquement et les identifiants sont
+                envoyés à cette adresse.
+              </p>
+              {emailError && <p className="text-xs text-destructive mt-1">{emailError}</p>}
             </div>
             <div>
               <Label>Statut</Label>
