@@ -16,7 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyRep, useAllReps, useProspects } from "@/hooks/useCommercial";
-import { VAT_RATE } from "@/lib/proPricing";
+import { VAT_RATE, PRO_FORMATS, proPricePerGram } from "@/lib/proPricing";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
+import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 
 interface Line {
   designation: string;
@@ -35,6 +37,9 @@ const CommercialFacturationPage = () => {
   const { data: rep } = useMyRep();
   const { data: allReps = [] } = useAllReps(isAdmin);
   const { prospects } = useProspects(rep?.id);
+  const { all: catalog } = useCatalogProducts();
+  const { tiers } = useProPriceTiers();
+  const [pickedProduct, setPickedProduct] = useState<string>("");
 
   const [repId, setRepId] = useState<string>("");
   const [email, setEmail] = useState("");
@@ -65,12 +70,48 @@ const CommercialFacturationPage = () => {
       ht += g * (Number(l.unit_price_ht) || 0);
     });
     ht = Math.round(ht * 100) / 100;
-    const tva = Math.round(ht * (VAT_RATE / 100) * 100) / 100;
+    const tva = Math.round(ht * VAT_RATE * 100) / 100;
     return { ht, tva, ttc: Math.round((ht + tva) * 100) / 100, grams: Math.round(grams * 100) / 100 };
   }, [lines]);
 
   const setLine = (i: number, patch: Partial<Line>) =>
     setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
+
+  const product = catalog.find((p) => p.id === pickedProduct);
+
+  /** Prix pro HT/g pour un format, au palier du poids déjà saisi sur la facture */
+  const ppgFor = (format: number) =>
+    product
+      ? proPricePerGram(tiers, product.id, totals.grams + format, format, {
+          price: product.price,
+          priceGroup: product.priceGroup,
+        })
+      : 0;
+
+  const addFromCatalog = (format: number) => {
+    if (!product) return;
+    const ppg = ppgFor(format);
+    setLines((ls) => {
+      const idx = ls.findIndex(
+        (l) => l.designation === product.name && Number(l.format_g) === format
+      );
+      if (idx >= 0) {
+        return ls.map((l, i) =>
+          i === idx ? { ...l, quantity: String((Number(l.quantity) || 0) + 1) } : l
+        );
+      }
+      const next = [
+        ...ls.filter((l) => l.designation.trim() || Number(l.unit_price_ht) > 0),
+        {
+          designation: product.name,
+          format_g: String(format),
+          quantity: "1",
+          unit_price_ht: ppg.toFixed(2),
+        },
+      ];
+      return next;
+    });
+  };
 
   const submit = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -225,6 +266,55 @@ const CommercialFacturationPage = () => {
           <CardTitle className="text-base">Lignes de facture (prix HT au gramme)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="rounded-lg border border-border/50 p-3 space-y-3">
+            <Label className="text-xs">Ajouter depuis le catalogue</Label>
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
+              <Select value={pickedProduct} onValueChange={setPickedProduct}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir une variété" />
+                </SelectTrigger>
+                <SelectContent>
+                  {catalog.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                      {p.isExotique
+                        ? " — Exotique"
+                        : p.isNectarDivin
+                          ? " — Nectar Divin"
+                          : p.isForceNoire
+                            ? " — Force Noire"
+                            : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex flex-wrap gap-2">
+                {PRO_FORMATS.map((f) => (
+                  <Button
+                    key={f}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!product}
+                    onClick={() => addFromCatalog(f)}
+                    className="flex-col h-auto py-1.5 px-3"
+                  >
+                    <span className="text-sm">{f} g</span>
+                    {product && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {eur(ppgFor(f))} /g
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Le prix HT/g est repris automatiquement de la grille pro (dégressif selon le poids
+              total de la facture) — il reste modifiable ligne par ligne.
+            </p>
+          </div>
+
           {lines.map((l, i) => (
             <div key={i} className="grid gap-2 sm:grid-cols-12 items-end">
               <div className="sm:col-span-5">
