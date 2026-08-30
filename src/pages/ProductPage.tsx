@@ -52,8 +52,9 @@ const ProductPage = () => {
   const { isPro, isProValidated, profile } = useAuth();
   const { getPrice } = useProducts();
   const { getProPrice } = useProPrices();
-  
-  const product = allProducts.find((p) => p.id === id);
+  const { all: catalogProducts } = useCatalogProducts();
+
+  const product = catalogProducts.find((p) => p.id === id) ?? allProducts.find((p) => p.id === id);
   const [selectedWeight, setSelectedWeight] = useState<number>(1);
   const [customWeight, setCustomWeight] = useState<string>("1");
 
