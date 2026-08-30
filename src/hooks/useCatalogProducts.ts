@@ -11,6 +11,7 @@ interface DbOverride {
   id: string;
   price: number;
   is_active: boolean;
+  is_out_of_stock: boolean | null;
   price_group: "A" | "B";
   is_force_noire: boolean | null;
   cbd_percentage: string | null;
