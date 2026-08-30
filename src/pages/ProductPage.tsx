@@ -289,6 +289,20 @@ const ProductPage = () => {
               </div>
 
               {/* Weight Selection */}
+              {product.isOutOfStock ? (
+                <div className="border border-primary/50 rounded-xl p-8 mb-6 text-center bg-black/60 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
+                  <span className="block text-xs uppercase tracking-[0.35em] text-primary/70 mb-2">
+                    Rupture de stock
+                  </span>
+                  <p className="font-display text-2xl text-primary italic mb-2">
+                    Victime de son succès
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Cette variété d'exception est momentanément épuisée. Réapprovisionnement en cours —
+                    elle sera bientôt de retour dans la collection.
+                  </p>
+                </div>
+              ) : (
               <div className="bg-card border border-border rounded-xl p-5 mb-6 space-y-4">
                 <h4 className="text-sm font-medium text-foreground uppercase tracking-wider">
                   Choisissez votre grammage
@@ -403,6 +417,7 @@ const ProductPage = () => {
               </div>
 
               {/* Add to cart button */}
+              {!product.isOutOfStock && (
               <button
                 onClick={handleAddToCart}
                 className="w-full btn-luxury flex items-center justify-center gap-3 py-4"
@@ -410,6 +425,7 @@ const ProductPage = () => {
                 <ShoppingCart className="w-5 h-5" />
                 Ajouter au panier ({selectedWeight}g)
               </button>
+              )}
 
               {/* Link to accessories */}
               <Link
