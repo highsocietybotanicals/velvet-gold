@@ -2,17 +2,19 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
-import { flowers, resins, forceNoireProducts, type Product } from "@/data/products";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
+import { type Product } from "@/data/products";
 
 type CategoryFilter = "all" | "fleur" | "resine" | "force-noire";
 
 const ProductSection = () => {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
+  const { flowers, resins, forceNoire: forceNoireProducts } = useCatalogProducts();
 
   const getFilteredProducts = (): Product[] => {
     if (activeCategory === "fleur") return flowers.slice(0, 8);
     if (activeCategory === "resine") return resins.slice(0, 8);
-    if (activeCategory === "force-noire") return forceNoireProducts;
+    if (activeCategory === "force-noire") return forceNoireProducts.slice(0, 8);
     return [...flowers.slice(0, 4), ...resins.slice(0, 4)];
   };
 
