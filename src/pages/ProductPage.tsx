@@ -7,6 +7,7 @@ import { allProducts, PriceGroup } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPrices } from "@/hooks/useProPrices";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
