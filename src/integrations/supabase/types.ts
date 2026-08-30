@@ -828,6 +828,7 @@ export type Database = {
           is_active: boolean
           is_force_noire: boolean
           is_nectar_divin: boolean
+          is_out_of_stock: boolean
           mood: string | null
           name: string
           price: number
@@ -850,6 +851,7 @@ export type Database = {
           is_active?: boolean
           is_force_noire?: boolean
           is_nectar_divin?: boolean
+          is_out_of_stock?: boolean
           mood?: string | null
           name: string
           price: number
@@ -872,6 +874,7 @@ export type Database = {
           is_active?: boolean
           is_force_noire?: boolean
           is_nectar_divin?: boolean
+          is_out_of_stock?: boolean
           mood?: string | null
           name?: string
           price?: number

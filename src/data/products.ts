@@ -43,6 +43,7 @@ export interface Product {
   isForceNoire?: boolean;
   isNectarDivin?: boolean;
   isExotique?: boolean;
+  isOutOfStock?: boolean;
 }
 
 // ============================================
