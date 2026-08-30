@@ -361,7 +361,7 @@ const CataloguePage = () => {
                           : "m-4 flex-shrink-0"
                       } p-3 bg-primary text-primary-foreground rounded-full transition-all hover:glow-gold`}
                     >
-                      <ShoppingCart className="w-5 w-5" />
+                      <ShoppingCart className="w-5 h-5" />
                     </button>
                   )}
                 </motion.div>
