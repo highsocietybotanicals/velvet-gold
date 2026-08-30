@@ -47,13 +47,29 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await userClient.rpc("is_admin");
     if (order.user_id !== user.id && !isAdmin) return json({ error: "Forbidden" }, 403);
 
-    const path = `pro/${order.display_order_number}.pdf`;
-    const { data: signed, error } = await admin.storage
-      .from("invoices")
-      .createSignedUrl(path, 300);
-    if (error || !signed?.signedUrl) return json({ error: "Facture indisponible" }, 404);
+    // Candidate storage paths: commercial invoices are stored under the order
+    // number, admin pro invoices under their own invoice number (pdf_path).
+    const candidates: string[] = [`pro/${order.display_order_number}.pdf`];
 
-    return json({ url: signed.signedUrl });
+    const { data: proInvoice } = await admin
+      .from("pro_invoices")
+      .select("pdf_path")
+      .eq("invoice_number", order.display_order_number)
+      .maybeSingle();
+    if (proInvoice?.pdf_path) candidates.push(proInvoice.pdf_path);
+
+    for (const path of candidates) {
+      const { data: signed } = await admin.storage
+        .from("invoices")
+        .createSignedUrl(path, 300);
+      if (signed?.signedUrl) return json({ url: signed.signedUrl });
+    }
+
+    return json(
+      { error: "Facture pas encore disponible pour cette commande", code: "not_generated" },
+      404,
+    );
+
   } catch (e) {
     console.error("get-pro-invoice error:", (e as Error).message);
     return json({ error: "Erreur serveur" }, 500);
