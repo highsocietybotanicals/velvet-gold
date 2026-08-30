@@ -34,7 +34,7 @@ export const useCatalogProducts = () => {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, price, is_active, price_group, is_force_noire, cbd_percentage, subtitle, badge, description, display_order"
+          "id, price, is_active, is_out_of_stock, price_group, is_force_noire, cbd_percentage, subtitle, badge, description, display_order"
         );
       if (error) throw error;
       const map: Record<string, DbOverride> = {};
@@ -63,6 +63,7 @@ export const useCatalogProducts = () => {
           cbdPercentage: o.cbd_percentage ?? p.cbdPercentage,
           isForceNoire: o.is_force_noire ?? p.isForceNoire,
           isExotique: p.isExotique,
+          isOutOfStock: o.is_out_of_stock ?? false,
         } as Product;
       })
       .filter((p): p is Product => !!p)
