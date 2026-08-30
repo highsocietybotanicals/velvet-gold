@@ -232,6 +232,23 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             }}
           />
 
+          {/* Rupture de stock — "Victime de son succès" */}
+          {product.isOutOfStock && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-[2px]">
+              <div className="border border-primary/60 bg-black/80 px-6 py-4 rounded-sm shadow-[0_0_30px_rgba(212,175,55,0.35)] text-center mx-4">
+                <span className="block text-[10px] uppercase tracking-[0.3em] text-primary/80 mb-1">
+                  Rupture de stock
+                </span>
+                <span className="font-display text-lg text-primary italic">
+                  Victime de son succès
+                </span>
+                <span className="block text-[10px] text-muted-foreground mt-1 tracking-wider">
+                  Bientôt de retour
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Exotique badge (priorité absolue) */}
           {product.isExotique && (
             <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-gradient-to-r from-purple-950/90 to-purple-700/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-purple-500/70 shadow-[0_0_18px_rgba(168,85,247,0.5)]">
