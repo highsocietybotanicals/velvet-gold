@@ -417,6 +417,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         </div>
 
       </div>
+      )}
     </motion.div>
   );
 };
