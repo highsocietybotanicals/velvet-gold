@@ -47,10 +47,20 @@ const ProOrdersPage = () => {
       const { data, error } = await supabase.functions.invoke("get-pro-invoice", {
         body: { orderId },
       });
-      if (error) throw new Error(error.message);
       const url = (data as any)?.url;
-      if (!url) throw new Error((data as any)?.error ?? "Facture indisponible");
-      window.open(url, "_blank", "noopener");
+      if (url) {
+        window.open(url, "_blank", "noopener");
+        return;
+      }
+      const notGenerated =
+        (data as any)?.code === "not_generated" || !!error;
+      toast({
+        title: notGenerated ? "Facture en préparation" : "Facture indisponible",
+        description: notGenerated
+          ? "La facture de cette commande n'a pas encore été émise. Elle sera disponible ici dès son envoi."
+          : ((data as any)?.error ?? error?.message ?? "Erreur inconnue"),
+        variant: notGenerated ? "default" : "destructive",
+      });
     } catch (e) {
       toast({
         title: "Facture indisponible",
@@ -61,6 +71,7 @@ const ProOrdersPage = () => {
       setLoadingInvoice(null);
     }
   };
+
 
 
 
