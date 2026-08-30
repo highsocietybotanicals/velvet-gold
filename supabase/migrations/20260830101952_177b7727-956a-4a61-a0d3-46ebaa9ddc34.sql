@@ -1,0 +1,2 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_out_of_stock boolean NOT NULL DEFAULT false;
+UPDATE public.products SET is_out_of_stock = true WHERE id IN ('haribo','heisenberg','911-og-indoor');
