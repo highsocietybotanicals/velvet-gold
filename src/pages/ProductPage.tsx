@@ -415,6 +415,7 @@ const ProductPage = () => {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Add to cart button */}
               {!product.isOutOfStock && (
