@@ -329,6 +329,16 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       </Link>
 
       {/* Weight selection - outside Link */}
+      {product.isOutOfStock ? (
+        <div className="relative z-10 px-5 pb-5" onClick={(e) => e.stopPropagation()}>
+          <div className="border border-primary/30 rounded-md bg-primary/5 px-4 py-3 text-center">
+            <p className="font-display text-sm text-primary italic">Victime de son succès</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Cette variété est momentanément épuisée — réapprovisionnement en cours.
+            </p>
+          </div>
+        </div>
+      ) : (
       <div className="relative z-10 px-5 pb-5 space-y-3" onClick={(e) => e.stopPropagation()}>
         {/* Preset weight buttons */}
         <div className="flex flex-wrap gap-1.5">
