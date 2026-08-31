@@ -82,10 +82,19 @@ const CommercialCataloguePage = () => {
           <Card key={p.id} className="overflow-hidden">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="text-base">{p.name}</CardTitle>
-                  <p className="text-xs text-muted-foreground">{p.subtitle}</p>
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={p.image}
+                    alt={`Photo de la variété ${p.name}`}
+                    loading="lazy"
+                    className="h-16 w-16 rounded-md object-cover border border-gold/20 shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <CardTitle className="text-base truncate">{p.name}</CardTitle>
+                    <p className="text-xs text-muted-foreground truncate">{p.subtitle}</p>
+                  </div>
                 </div>
+
                 <div className="flex flex-col items-end gap-1">
                   {p.isExotique && (
                     <Badge className="bg-purple-600/20 text-purple-300 border border-purple-500/50">
