@@ -52,7 +52,7 @@ const CommercialCommissionsPage = () => {
         <h1 className="text-2xl font-semibold gold-text">Mes commissions</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {rep
-            ? "Ton taux dépend du chiffre d'affaires HT généré sur le mois : plus tu vends, plus le taux monte — et il s'applique à tout le CA du mois."
+            ? "Barème progressif par tranche : 10 % jusqu'à 5 000 € HT, 12 % de 5 000 à 10 000 €, 15 % au-delà. Chaque tranche ne s'applique qu'à la part de CA qu'elle couvre."
             : "Aucune fiche commerciale rattachée à ce compte."}
         </p>
       </div>
@@ -154,7 +154,7 @@ const CommercialCommissionsPage = () => {
                   <tr className="border-b border-border/50">
                     <th className="text-left py-2">Mois</th>
                     <th className="text-right py-2">CA HT</th>
-                    <th className="text-right py-2">Palier</th>
+                    <th className="text-right py-2">Taux moyen</th>
                     <th className="text-right py-2">Base</th>
                     <th className="text-right py-2">Bonus</th>
                     <th className="text-right py-2">Total dû</th>

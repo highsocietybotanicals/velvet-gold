@@ -286,7 +286,29 @@ export interface MonthlyCommission {
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
-/** Agrégation mois par mois avec palier appliqué à tout le CA du mois */
+/**
+ * Commission calculée par barème progressif par tranche :
+ * chaque palier ne s'applique qu'à la part de CA comprise entre
+ * son seuil et le seuil du palier suivant.
+ */
+export const computeProgressiveCommission = (
+  tiers: CommissionTier[],
+  revenueHT: number
+): number => {
+  const sorted = [...tiers].sort((a, b) => a.min_revenue_ht - b.min_revenue_ht);
+  let total = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const floor = sorted[i].min_revenue_ht;
+    if (revenueHT <= floor) break;
+    const ceiling =
+      i + 1 < sorted.length ? sorted[i + 1].min_revenue_ht : Infinity;
+    const taxable = Math.min(revenueHT, ceiling) - floor;
+    if (taxable > 0) total += (taxable * sorted[i].commission_percent) / 100;
+  }
+  return r2(total);
+};
+
+/** Agrégation mois par mois avec barème progressif par tranche */
 export const aggregateMonthly = (
   commissions: Commission[],
   tiers: CommissionTier[]
@@ -302,13 +324,14 @@ export const aggregateMonthly = (
     .map(([month, list]) => {
       const revenueHT = r2(list.reduce((s, c) => s + Number(c.revenue_ht), 0));
       const baseCommission = r2(list.reduce((s, c) => s + Number(c.commission_amount), 0));
-      const tier = resolveTier(tiers, revenueHT);
-      const tierCommission = r2((revenueHT * tier.commission_percent) / 100);
+      const tierCommission = computeProgressiveCommission(tiers, revenueHT);
+      const effectivePercent =
+        revenueHT > 0 ? r2((tierCommission / revenueHT) * 100) : 0;
       return {
         month,
         revenueHT,
         baseCommission,
-        tierPercent: tier.commission_percent,
+        tierPercent: effectivePercent,
         tierCommission,
         bonus: r2(Math.max(0, tierCommission - baseCommission)),
         allPaid: list.length > 0 && list.every((c) => c.status === "paid"),
