@@ -232,6 +232,7 @@ const CommercialCataloguePage = () => {
                       <th className="text-right py-1">PV public TTC</th>
                       <th className="text-right py-1">Gain HT</th>
                       <th className="text-right py-1">Coef.</th>
+                      <th className="text-right py-1">Code-barres</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -245,6 +246,7 @@ const CommercialCataloguePage = () => {
                       const retailHT = retailTTC / (1 + VAT_RATE);
                       const gain = retailHT - proHT;
                       const coef = proHT > 0 ? retailHT / proHT : 0;
+                      const ean = barcodes[p.id]?.[wKey(f)];
                       return (
                         <tr key={f} className="border-b border-border/30 last:border-0">
                           <td className="py-1.5">{f} g</td>
@@ -257,6 +259,25 @@ const CommercialCataloguePage = () => {
                               {" "}
                               (min x{minResellerCoef(f)})
                             </span>
+                          </td>
+                          <td className="py-1.5 text-right whitespace-nowrap">
+                            {ean ? (
+                              <button
+                                type="button"
+                                onClick={() => copyEan(ean)}
+                                className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground hover:text-gold"
+                                aria-label={`Copier le code-barres ${ean}`}
+                              >
+                                {ean}
+                                {copied === ean ? (
+                                  <Check className="h-3 w-3 text-emerald-400" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </td>
                         </tr>
                       );
