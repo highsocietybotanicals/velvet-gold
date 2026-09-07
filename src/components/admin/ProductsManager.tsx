@@ -11,8 +11,11 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff, FlaskConical, Upload, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff, FlaskConical, Upload, X, Barcode } from "lucide-react";
 import { useLabReports, useLabReportAdmin, useOpenLabReport } from "@/hooks/useLabReports";
+import { useEnsureBarcodes } from "@/hooks/useBarcodes";
+import { generateBarcodeSheet } from "@/lib/barcodeSheetPdf";
+import { PRO_FORMATS } from "@/lib/proPricing";
 import { Switch } from "@/components/ui/switch";
 import { useDbProducts, DbProduct } from "@/hooks/useDbProducts";
 import { useAdminProducts } from "@/hooks/useProducts";
