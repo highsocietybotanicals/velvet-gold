@@ -29,6 +29,7 @@ const ProductsManager = () => {
   const { data: labReports } = useLabReports();
   const { upload, remove, rename, busyId } = useLabReportAdmin();
   const { open: openLab, openingId } = useOpenLabReport();
+  const { barcodes } = useEnsureBarcodes(products.map((p) => p.id));
 
   const [editing, setEditing] = useState<DbProduct | null>(null);
   const [open, setOpen] = useState(false);
