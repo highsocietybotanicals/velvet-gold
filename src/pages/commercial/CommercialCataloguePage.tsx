@@ -6,7 +6,9 @@ import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { PRO_FORMATS, VAT_RATE, proPricePerGram, minResellerCoef } from "@/lib/proPricing";
 import { calculateItemPrice } from "@/lib/pricing";
-import { Sparkles, Zap, ShieldCheck, Leaf, FlaskConical } from "lucide-react";
+import { Sparkles, Zap, ShieldCheck, Leaf, FlaskConical, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useLabReportPaths, useOpenLabReport } from "@/hooks/useLabReports";
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
@@ -21,6 +23,8 @@ const ARGUMENTS_CLES = [
 const CommercialCataloguePage = () => {
   const { flowers, resins } = useCatalogProducts();
   const { tiers } = useProPriceTiers();
+  const { data: labPaths } = useLabReportPaths();
+  const { open: openLab, openingId } = useOpenLabReport();
   const [search, setSearch] = useState("");
 
   const products = useMemo(() => {
@@ -106,6 +110,24 @@ const CommercialCataloguePage = () => {
                     <Badge className="bg-red-900/40 text-red-300 border border-red-700/50">
                       <Zap className="h-3 w-3 mr-1" /> Force Noire
                     </Badge>
+                  )}
+                  {labPaths?.[p.id] ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-1 h-7 gap-1.5 border-gold/40 text-gold hover:bg-gold/10"
+                      disabled={openingId === p.id}
+                      onClick={() => openLab(p.id, labPaths[p.id])}
+                    >
+                      {openingId === p.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <FlaskConical className="h-3.5 w-3.5" />
+                      )}
+                      Analyse labo
+                    </Button>
+                  ) : (
+                    <span className="mt-1 text-[11px] text-muted-foreground">Analyse à venir</span>
                   )}
                 </div>
               </div>
