@@ -6,10 +6,13 @@ import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { PRO_FORMATS, VAT_RATE, proPricePerGram, minResellerCoef } from "@/lib/proPricing";
 import { calculateItemPrice } from "@/lib/pricing";
-import { Sparkles, Zap, ShieldCheck, Leaf, FlaskConical, Loader2 } from "lucide-react";
+import { Sparkles, Zap, ShieldCheck, Leaf, FlaskConical, Loader2, Barcode, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLabReports, useOpenLabReport } from "@/hooks/useLabReports";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useEnsureBarcodes, wKey } from "@/hooks/useBarcodes";
+import { generateBarcodeSheet } from "@/lib/barcodeSheetPdf";
+import { useToast } from "@/hooks/use-toast";
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
@@ -26,13 +29,41 @@ const CommercialCataloguePage = () => {
   const { tiers } = useProPriceTiers();
   const { data: labReports } = useLabReports();
   const { open: openLab, openingId } = useOpenLabReport();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
+  const [copied, setCopied] = useState<string | null>(null);
 
   const products = useMemo(() => {
     const all = [...flowers, ...resins];
     const q = search.trim().toLowerCase();
     return q ? all.filter((p) => p.name.toLowerCase().includes(q)) : all;
   }, [flowers, resins, search]);
+
+  const allProducts = useMemo(() => [...flowers, ...resins], [flowers, resins]);
+  const { barcodes } = useEnsureBarcodes(allProducts.map((p) => p.id));
+
+  const copyEan = async (ean: string) => {
+    try {
+      await navigator.clipboard.writeText(ean);
+      setCopied(ean);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      toast({ title: "Copie impossible", description: ean });
+    }
+  };
+
+  const printSheet = (list: typeof allProducts, fileName?: string) =>
+    generateBarcodeSheet({
+      products: list.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        priceGroup: p.priceGroup,
+      })),
+      barcodes,
+      formats: [...PRO_FORMATS],
+      fileName,
+    });
 
   return (
     <div className="space-y-6">
