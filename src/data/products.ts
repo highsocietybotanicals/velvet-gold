@@ -14,6 +14,7 @@ import nuageDeMousseux from "@/assets/resins/nuage-de-mousseux-real.jpg";
 import hariboPremium from "@/assets/resins/haribo-premium.jpg";
 import heisenbergPremium from "@/assets/resins/heisenberg-premium.jpg";
 import poussiereDorPremium from "@/assets/resins/poussiere-dor-premium.jpg";
+import piatellaImg from "@/assets/resins/piatella.jpg";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
@@ -266,6 +267,23 @@ const nectarDivin: Product[] = [
     intentionMatch: ["detente"],
     tasteMatch: ["boise", "terreux"],
     isNectarDivin: true,
+  },
+  {
+    id: "piatella",
+    name: "Piatella",
+    subtitle: "Résine Exotique",
+    badge: "Exotique",
+    description: "Résine ultra-premium de la gamme Exotique — texture fondante d'une rare intensité, arômes gourmands et puissants, effet enveloppant d'exception.",
+    price: 14,
+    priceGroup: "B",
+    cbdPercentage: "70% Exotique",
+    image: piatellaImg,
+    terpenes: { boise: 50, fruite: 85, epice: 45, terreux: 60 },
+    mood: "Évasion gourmande",
+    category: "resine",
+    intentionMatch: ["detente", "sommeil"],
+    tasteMatch: ["fruite"],
+    isExotique: true,
   },
 ];
 

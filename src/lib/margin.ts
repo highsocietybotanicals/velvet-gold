@@ -52,6 +52,7 @@ export const GAMME_LABEL: Record<string, string> = {
   haribo: "Haribo — Nectar Divin",
   heisenberg: "Heisenberg — Nectar Divin",
   "mango-x-ice": "Mango X Ice — Nectar Divin",
+  "piatella": "Piatella — Exotique",
 };
 
 export const getGammeForProduct = (productId: string): ProGamme => productId;
