@@ -44,6 +44,8 @@ const SalesRepsManager = () => {
 
   const { prospects } = useProspects();
   const { commissions } = useCommissions();
+  const { tiers } = useCommissionTiers();
+  const { payouts, markPaid } = useBonusPayouts();
 
   const createRep = useMutation({
     mutationFn: async () => {
