@@ -154,7 +154,7 @@ const CommercialCommissionsPage = () => {
                   <tr className="border-b border-border/50">
                     <th className="text-left py-2">Mois</th>
                     <th className="text-right py-2">CA HT</th>
-                    <th className="text-right py-2">Palier</th>
+                    <th className="text-right py-2">Taux moyen</th>
                     <th className="text-right py-2">Base</th>
                     <th className="text-right py-2">Bonus</th>
                     <th className="text-right py-2">Total dû</th>
