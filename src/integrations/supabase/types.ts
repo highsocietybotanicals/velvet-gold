@@ -778,6 +778,38 @@ export type Database = {
         }
         Relationships: []
       }
+      product_lab_reports: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          product_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          product_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          product_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_lab_reports_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           author_name: string

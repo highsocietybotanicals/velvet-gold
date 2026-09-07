@@ -12,7 +12,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff, FlaskConical, Upload, X } from "lucide-react";
-import { useLabReportPaths, useLabReportAdmin, useOpenLabReport } from "@/hooks/useLabReports";
+import { useLabReports, useLabReportAdmin, useOpenLabReport } from "@/hooks/useLabReports";
 import { Switch } from "@/components/ui/switch";
 import { useDbProducts, DbProduct } from "@/hooks/useDbProducts";
 import { useAdminProducts } from "@/hooks/useProducts";
@@ -23,8 +23,8 @@ const ProductsManager = () => {
   const { products, isLoading, deleteProduct } = useDbProducts();
   const { proPrices, toggleProduct, isToggling } = useAdminProducts();
   const { toast } = useToast();
-  const { data: labPaths } = useLabReportPaths();
-  const { upload, remove, busyId } = useLabReportAdmin();
+  const { data: labReports } = useLabReports();
+  const { upload, remove, rename, busyId } = useLabReportAdmin();
   const { open: openLab, openingId } = useOpenLabReport();
 
   const [editing, setEditing] = useState<DbProduct | null>(null);
@@ -117,45 +117,66 @@ const ProductsManager = () => {
                       </TableCell>
 
                       <TableCell>
-                        {busyId === p.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-gold" />
-                        ) : labPaths?.[p.id] ? (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 gap-1.5"
-                              disabled={openingId === p.id}
-                              onClick={() => openLab(p.id, labPaths[p.id])}
-                            >
-                              <FlaskConical className="w-3.5 h-3.5" />PDF
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-destructive"
-                              aria-label={`Supprimer l'analyse de ${p.name}`}
-                              onClick={() => remove(p.id, labPaths[p.id])}
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer text-muted-foreground hover:text-gold">
-                            <Upload className="w-3.5 h-3.5" />
-                            Déposer
-                            <input
-                              type="file"
-                              accept="application/pdf"
-                              className="hidden"
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) upload(p.id, f);
-                                e.target.value = "";
-                              }}
-                            />
-                          </label>
-                        )}
+                        <div className="space-y-1 min-w-[190px]">
+                          {(labReports?.[p.id] ?? []).map((r) => (
+                            <div key={r.id} className="flex items-center gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 gap-1.5 max-w-[150px]"
+                                disabled={openingId === r.id}
+                                onClick={() => openLab(r.id, r.storage_path)}
+                              >
+                                {openingId === r.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <FlaskConical className="w-3.5 h-3.5 shrink-0" />
+                                )}
+                                <span className="truncate">{r.label}</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                aria-label={`Renommer l'analyse ${r.label}`}
+                                onClick={() => {
+                                  const v = window.prompt("Nom du document", r.label);
+                                  if (v && v.trim() && v !== r.label) rename(r.id, v.trim());
+                                }}
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-destructive"
+                                aria-label={`Supprimer l'analyse ${r.label}`}
+                                onClick={() => remove(r)}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                          {busyId === p.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                          ) : (
+                            <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer text-muted-foreground hover:text-gold">
+                              <Upload className="w-3.5 h-3.5" />
+                              Ajouter un PDF
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  const files = Array.from(e.target.files ?? []);
+                                  if (files.length) upload(p.id, files);
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
                       </TableCell>
 
                       <TableCell>
