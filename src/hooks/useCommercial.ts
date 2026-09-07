@@ -220,3 +220,157 @@ export const useCommissions = (repId?: string) => {
 
   return { commissions: query.data ?? [], isLoading: query.isLoading };
 };
+
+// ------------------------------------------------ paliers & bonus de CA
+
+export interface CommissionTier {
+  id?: string;
+  min_revenue_ht: number;
+  commission_percent: number;
+}
+
+/** Paliers par défaut si la table n'est pas lisible */
+export const DEFAULT_TIERS: CommissionTier[] = [
+  { min_revenue_ht: 0, commission_percent: 10 },
+  { min_revenue_ht: 5000, commission_percent: 12 },
+  { min_revenue_ht: 10000, commission_percent: 15 },
+];
+
+export const useCommissionTiers = () => {
+  const query = useQuery({
+    queryKey: ["sales-commission-tiers"],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("sales_commission_tiers")
+        .select("id, min_revenue_ht, commission_percent")
+        .order("min_revenue_ht");
+      if (error) throw error;
+      const rows = (data ?? []).map((t: any) => ({
+        id: t.id,
+        min_revenue_ht: Number(t.min_revenue_ht),
+        commission_percent: Number(t.commission_percent),
+      })) as CommissionTier[];
+      return rows.length ? rows : DEFAULT_TIERS;
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  return { tiers: query.data ?? DEFAULT_TIERS, isLoading: query.isLoading };
+};
+
+/** Palier atteint pour un CA HT mensuel donné */
+export const resolveTier = (tiers: CommissionTier[], revenueHT: number): CommissionTier => {
+  const sorted = [...tiers].sort((a, b) => a.min_revenue_ht - b.min_revenue_ht);
+  let current = sorted[0] ?? DEFAULT_TIERS[0];
+  sorted.forEach((t) => {
+    if (revenueHT >= t.min_revenue_ht) current = t;
+  });
+  return current;
+};
+
+/** Prochain palier (null si déjà au maximum) */
+export const nextTier = (tiers: CommissionTier[], revenueHT: number): CommissionTier | null => {
+  const sorted = [...tiers].sort((a, b) => a.min_revenue_ht - b.min_revenue_ht);
+  return sorted.find((t) => t.min_revenue_ht > revenueHT) ?? null;
+};
+
+export interface MonthlyCommission {
+  month: string;
+  revenueHT: number;
+  baseCommission: number;
+  tierPercent: number;
+  tierCommission: number;
+  bonus: number;
+  allPaid: boolean;
+}
+
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Agrégation mois par mois avec palier appliqué à tout le CA du mois */
+export const aggregateMonthly = (
+  commissions: Commission[],
+  tiers: CommissionTier[]
+): MonthlyCommission[] => {
+  const byMonth = new Map<string, Commission[]>();
+  commissions.forEach((c) => {
+    const key = String(c.period_month).slice(0, 7);
+    byMonth.set(key, [...(byMonth.get(key) ?? []), c]);
+  });
+
+  return [...byMonth.entries()]
+    .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+    .map(([month, list]) => {
+      const revenueHT = r2(list.reduce((s, c) => s + Number(c.revenue_ht), 0));
+      const baseCommission = r2(list.reduce((s, c) => s + Number(c.commission_amount), 0));
+      const tier = resolveTier(tiers, revenueHT);
+      const tierCommission = r2((revenueHT * tier.commission_percent) / 100);
+      return {
+        month,
+        revenueHT,
+        baseCommission,
+        tierPercent: tier.commission_percent,
+        tierCommission,
+        bonus: r2(Math.max(0, tierCommission - baseCommission)),
+        allPaid: list.length > 0 && list.every((c) => c.status === "paid"),
+      };
+    });
+};
+
+export interface BonusPayout {
+  id: string;
+  rep_id: string;
+  period_month: string;
+  revenue_ht: number;
+  tier_percent: number;
+  bonus_amount: number;
+  status: string;
+  paid_at: string | null;
+}
+
+export const useBonusPayouts = (repId?: string) => {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+
+  const query = useQuery({
+    queryKey: ["sales-bonus-payouts", repId ?? "all"],
+    queryFn: async () => {
+      let q = db
+        .from("sales_bonus_payouts")
+        .select("*")
+        .order("period_month", { ascending: false });
+      if (repId) q = q.eq("rep_id", repId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as BonusPayout[];
+    },
+  });
+
+  const markPaid = useMutation({
+    mutationFn: async (row: {
+      rep_id: string;
+      period_month: string;
+      revenue_ht: number;
+      tier_percent: number;
+      bonus_amount: number;
+    }) => {
+      const { error } = await db.from("sales_bonus_payouts").upsert(
+        {
+          ...row,
+          period_month: `${row.period_month}-01`,
+          status: "paid",
+          paid_at: new Date().toISOString(),
+        },
+        { onConflict: "rep_id,period_month" }
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sales-bonus-payouts"] });
+      toast({ title: "Bonus marqué comme versé" });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+  });
+
+  return { payouts: query.data ?? [], isLoading: query.isLoading, markPaid };
+};
