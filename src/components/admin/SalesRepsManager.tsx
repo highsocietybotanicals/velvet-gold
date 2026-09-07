@@ -8,7 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, UserPlus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useProspects, useCommissions, prospectStatusLabel } from "@/hooks/useCommercial";
+import {
+  useProspects,
+  useCommissions,
+  prospectStatusLabel,
+  useCommissionTiers,
+  useBonusPayouts,
+  aggregateMonthly,
+} from "@/hooks/useCommercial";
 
 const db = supabase as any;
 
