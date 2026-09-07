@@ -24,7 +24,7 @@ const ARGUMENTS_CLES = [
 const CommercialCataloguePage = () => {
   const { flowers, resins } = useCatalogProducts();
   const { tiers } = useProPriceTiers();
-  const { data: labPaths } = useLabReportPaths();
+  const { data: labReports } = useLabReports();
   const { open: openLab, openingId } = useOpenLabReport();
   const [search, setSearch] = useState("");
 
@@ -112,15 +112,17 @@ const CommercialCataloguePage = () => {
                       <Zap className="h-3 w-3 mr-1" /> Force Noire
                     </Badge>
                   )}
-                  {labPaths?.[p.id] ? (
+                  {(labReports?.[p.id]?.length ?? 0) === 0 ? (
+                    <span className="mt-1 text-[11px] text-muted-foreground">Analyse à venir</span>
+                  ) : labReports![p.id].length === 1 ? (
                     <Button
                       size="sm"
                       variant="outline"
                       className="mt-1 h-7 gap-1.5 border-gold/40 text-gold hover:bg-gold/10"
-                      disabled={openingId === p.id}
-                      onClick={() => openLab(p.id, labPaths[p.id])}
+                      disabled={openingId === labReports![p.id][0].id}
+                      onClick={() => openLab(labReports![p.id][0].id, labReports![p.id][0].storage_path)}
                     >
-                      {openingId === p.id ? (
+                      {openingId === labReports![p.id][0].id ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
                         <FlaskConical className="h-3.5 w-3.5" />
@@ -128,7 +130,37 @@ const CommercialCataloguePage = () => {
                       Analyse labo
                     </Button>
                   ) : (
-                    <span className="mt-1 text-[11px] text-muted-foreground">Analyse à venir</span>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 h-7 gap-1.5 border-gold/40 text-gold hover:bg-gold/10"
+                        >
+                          <FlaskConical className="h-3.5 w-3.5" />
+                          Analyses labo ({labReports![p.id].length})
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="max-w-[260px]">
+                        {labReports![p.id].map((r) => (
+                          <DropdownMenuItem
+                            key={r.id}
+                            onClick={() => openLab(r.id, r.storage_path)}
+                            className="gap-2"
+                          >
+                            {openingId === r.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                            ) : (
+                              <FlaskConical className="h-3.5 w-3.5 shrink-0" />
+                            )}
+                            <span className="truncate">{r.label}</span>
+                            <span className="ml-auto text-[10px] text-muted-foreground shrink-0">
+                              {new Date(r.created_at).toLocaleDateString("fr-FR")}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
               </div>
