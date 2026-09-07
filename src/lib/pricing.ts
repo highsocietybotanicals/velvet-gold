@@ -74,6 +74,7 @@ export const FORCE_NOIRE_RATIOS: Record<string, Record<number, number>> = {
   "heisenberg":        { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "mango-x-ice":       { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "poussiere-dor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8333, 10: 0.625 },
+  "piatella":          { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
 };
 
 export const hasForceNoireGrid = (productId?: string): boolean =>

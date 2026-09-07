@@ -14,6 +14,7 @@ import nuageDeMousseux from "@/assets/resins/nuage-de-mousseux-real.jpg";
 import hariboPremium from "@/assets/resins/haribo-premium.jpg";
 import heisenbergPremium from "@/assets/resins/heisenberg-premium.jpg";
 import poussiereDorPremium from "@/assets/resins/poussiere-dor-premium.jpg";
+import piatellaImg from "@/assets/resins/piatella.jpg";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
