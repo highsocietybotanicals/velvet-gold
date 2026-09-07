@@ -760,6 +760,41 @@ export type Database = {
         }
         Relationships: []
       }
+      product_barcodes: {
+        Row: {
+          created_at: string
+          ean13: string
+          id: string
+          product_id: string
+          updated_at: string
+          weight_grams: number
+        }
+        Insert: {
+          created_at?: string
+          ean13: string
+          id?: string
+          product_id: string
+          updated_at?: string
+          weight_grams: number
+        }
+        Update: {
+          created_at?: string
+          ean13?: string
+          id?: string
+          product_id?: string
+          updated_at?: string
+          weight_grams?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_barcodes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_costs: {
         Row: {
           cost_per_gram: number
@@ -849,6 +884,7 @@ export type Database = {
       products: {
         Row: {
           badge: string | null
+          barcode_seq: number | null
           category: string
           cbd_percentage: string | null
           created_at: string
@@ -873,6 +909,7 @@ export type Database = {
         }
         Insert: {
           badge?: string | null
+          barcode_seq?: number | null
           category: string
           cbd_percentage?: string | null
           created_at?: string
@@ -897,6 +934,7 @@ export type Database = {
         }
         Update: {
           badge?: string | null
+          barcode_seq?: number | null
           category?: string
           cbd_percentage?: string | null
           created_at?: string
@@ -1049,6 +1087,77 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_uses?: number | null
+        }
+        Relationships: []
+      }
+      sales_bonus_payouts: {
+        Row: {
+          bonus_amount: number
+          created_at: string
+          id: string
+          paid_at: string | null
+          period_month: string
+          rep_id: string
+          revenue_ht: number
+          status: string
+          tier_percent: number
+          updated_at: string
+        }
+        Insert: {
+          bonus_amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          period_month: string
+          rep_id: string
+          revenue_ht?: number
+          status?: string
+          tier_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          bonus_amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          period_month?: string
+          rep_id?: string
+          revenue_ht?: number
+          status?: string
+          tier_percent?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_bonus_payouts_rep_id_fkey"
+            columns: ["rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_commission_tiers: {
+        Row: {
+          commission_percent: number
+          created_at: string
+          id: string
+          min_revenue_ht: number
+          updated_at: string
+        }
+        Insert: {
+          commission_percent: number
+          created_at?: string
+          id?: string
+          min_revenue_ht: number
+          updated_at?: string
+        }
+        Update: {
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          min_revenue_ht?: number
+          updated_at?: string
         }
         Relationships: []
       }
