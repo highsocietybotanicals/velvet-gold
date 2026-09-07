@@ -42,6 +42,11 @@ const CommercialCataloguePage = () => {
   const allProducts = useMemo(() => [...flowers, ...resins], [flowers, resins]);
   const { barcodes } = useEnsureBarcodes(allProducts.map((p) => p.id));
 
+  const reportsFor = (id: string) => {
+    const r = labReports?.[id];
+    return Array.isArray(r) ? r : [];
+  };
+
   const copyEan = async (ean: string) => {
     try {
       await navigator.clipboard.writeText(ean);
