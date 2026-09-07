@@ -8,7 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, UserPlus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useProspects, useCommissions, prospectStatusLabel } from "@/hooks/useCommercial";
+import {
+  useProspects,
+  useCommissions,
+  prospectStatusLabel,
+  useCommissionTiers,
+  useBonusPayouts,
+  aggregateMonthly,
+} from "@/hooks/useCommercial";
 
 const db = supabase as any;
 
@@ -37,6 +44,8 @@ const SalesRepsManager = () => {
 
   const { prospects } = useProspects();
   const { commissions } = useCommissions();
+  const { tiers } = useCommissionTiers();
+  const { payouts, markPaid } = useBonusPayouts();
 
   const createRep = useMutation({
     mutationFn: async () => {
@@ -165,6 +174,17 @@ const SalesRepsManager = () => {
             const due = myCommissions
               .filter((c) => c.status !== "paid")
               .reduce((s, c) => s + Number(c.commission_amount), 0);
+            const months = aggregateMonthly(myCommissions, tiers).filter((m) => m.bonus > 0);
+            const bonusPaid = (month: string) =>
+              payouts.some(
+                (p) =>
+                  p.rep_id === rep.id &&
+                  String(p.period_month).slice(0, 7) === month &&
+                  p.status === "paid"
+              );
+            const bonusDue = months
+              .filter((m) => !bonusPaid(m.month))
+              .reduce((s, m) => s + m.bonus, 0);
             return (
               <Card key={rep.id}>
                 <CardContent className="pt-5 space-y-2">
@@ -189,8 +209,58 @@ const SalesRepsManager = () => {
                     <Badge variant="secondary">
                       {myProspects.filter((p) => p.status === "signe").length} signés
                     </Badge>
-                    <Badge className="bg-amber-500/15 text-amber-300">À verser {euro(due)}</Badge>
+                    <Badge className="bg-amber-500/15 text-amber-300">
+                      À verser {euro(due + bonusDue)}
+                    </Badge>
+                    {bonusDue > 0 && (
+                      <Badge className="bg-gold/15 text-gold">
+                        dont bonus paliers {euro(bonusDue)}
+                      </Badge>
+                    )}
                   </div>
+
+                  {months.length > 0 && (
+                    <div className="space-y-1 pt-1">
+                      <p className="text-xs font-medium">Bonus de palier</p>
+                      {months.map((m) => (
+                        <div
+                          key={m.month}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="capitalize text-muted-foreground">
+                            {new Date(`${m.month}-01T00:00:00`).toLocaleDateString("fr-FR", {
+                              month: "long",
+                              year: "numeric",
+                            })}{" "}
+                            · {euro(m.revenueHT)} HT · {m.tierPercent} %
+                          </span>
+                          {bonusPaid(m.month) ? (
+                            <Badge className="bg-emerald-500/15 text-emerald-300">
+                              Bonus versé {euro(m.bonus)}
+                            </Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 text-[11px] border-gold/40 text-gold hover:bg-gold/10"
+                              onClick={() =>
+                                markPaid.mutate({
+                                  rep_id: rep.id,
+                                  period_month: m.month,
+                                  revenue_ht: m.revenueHT,
+                                  tier_percent: m.tierPercent,
+                                  bonus_amount: m.bonus,
+                                })
+                              }
+                            >
+                              Verser {euro(m.bonus)}
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {myProspects.slice(0, 4).map((p) => (
                     <p key={p.id} className="text-xs text-muted-foreground">
                       · {p.business_name} — {prospectStatusLabel(p.status)}

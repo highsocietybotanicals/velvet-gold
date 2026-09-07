@@ -11,8 +11,11 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff, FlaskConical, Upload, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff, FlaskConical, Upload, X, Barcode } from "lucide-react";
 import { useLabReports, useLabReportAdmin, useOpenLabReport } from "@/hooks/useLabReports";
+import { useEnsureBarcodes } from "@/hooks/useBarcodes";
+import { generateBarcodeSheet } from "@/lib/barcodeSheetPdf";
+import { PRO_FORMATS } from "@/lib/proPricing";
 import { Switch } from "@/components/ui/switch";
 import { useDbProducts, DbProduct } from "@/hooks/useDbProducts";
 import { useAdminProducts } from "@/hooks/useProducts";
@@ -26,6 +29,7 @@ const ProductsManager = () => {
   const { data: labReports } = useLabReports();
   const { upload, remove, rename, busyId } = useLabReportAdmin();
   const { open: openLab, openingId } = useOpenLabReport();
+  const { barcodes } = useEnsureBarcodes(products.map((p) => p.id));
 
   const [editing, setEditing] = useState<DbProduct | null>(null);
   const [open, setOpen] = useState(false);
@@ -41,6 +45,20 @@ const ProductsManager = () => {
     }
   };
 
+  const printBarcodeSheet = () =>
+    generateBarcodeSheet({
+      products: products
+        .filter((p) => p.is_active)
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          priceGroup: (p.price_group as any) ?? "A",
+        })),
+      barcodes,
+      formats: [...PRO_FORMATS],
+    });
+
   return (
     <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <Card className="border-gold/20">
@@ -50,9 +68,18 @@ const ProductsManager = () => {
             Catalogue produits
             <Badge variant="secondary" className="ml-2">{products.length}</Badge>
           </CardTitle>
-          <Button onClick={handleNew} className="gap-2">
-            <Plus className="w-4 h-4" />Nouveau produit
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={printBarcodeSheet}
+              className="gap-2 border-gold/40 text-gold hover:bg-gold/10"
+            >
+              <Barcode className="w-4 h-4" />Planche codes-barres
+            </Button>
+            <Button onClick={handleNew} className="gap-2">
+              <Plus className="w-4 h-4" />Nouveau produit
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (

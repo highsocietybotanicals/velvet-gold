@@ -6,10 +6,13 @@ import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { PRO_FORMATS, VAT_RATE, proPricePerGram, minResellerCoef } from "@/lib/proPricing";
 import { calculateItemPrice } from "@/lib/pricing";
-import { Sparkles, Zap, ShieldCheck, Leaf, FlaskConical, Loader2 } from "lucide-react";
+import { Sparkles, Zap, ShieldCheck, Leaf, FlaskConical, Loader2, Barcode, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLabReports, useOpenLabReport } from "@/hooks/useLabReports";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useEnsureBarcodes, wKey } from "@/hooks/useBarcodes";
+import { generateBarcodeSheet } from "@/lib/barcodeSheetPdf";
+import { useToast } from "@/hooks/use-toast";
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
@@ -26,7 +29,9 @@ const CommercialCataloguePage = () => {
   const { tiers } = useProPriceTiers();
   const { data: labReports } = useLabReports();
   const { open: openLab, openingId } = useOpenLabReport();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
+  const [copied, setCopied] = useState<string | null>(null);
 
   const products = useMemo(() => {
     const all = [...flowers, ...resins];
@@ -34,14 +39,55 @@ const CommercialCataloguePage = () => {
     return q ? all.filter((p) => p.name.toLowerCase().includes(q)) : all;
   }, [flowers, resins, search]);
 
+  const allProducts = useMemo(() => [...flowers, ...resins], [flowers, resins]);
+  const { barcodes } = useEnsureBarcodes(allProducts.map((p) => p.id));
+
+  const reportsFor = (id: string) => {
+    const r = labReports?.[id];
+    return Array.isArray(r) ? r : [];
+  };
+
+  const copyEan = async (ean: string) => {
+    try {
+      await navigator.clipboard.writeText(ean);
+      setCopied(ean);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      toast({ title: "Copie impossible", description: ean });
+    }
+  };
+
+  const printSheet = (list: typeof allProducts, fileName?: string) =>
+    generateBarcodeSheet({
+      products: list.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        priceGroup: p.priceGroup,
+      })),
+      barcodes,
+      formats: [...PRO_FORMATS],
+      fileName,
+    });
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold gold-text">Catalogue & argumentaire</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Tout ce qu'il faut pour convaincre un buraliste : prix pro HT par format, prix public
-          conseillé et marge réelle du revendeur.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold gold-text">Catalogue & argumentaire</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Tout ce qu'il faut pour convaincre un buraliste : prix pro HT par format, prix public
+            conseillé, marge réelle du revendeur et code-barres prêt pour la caisse.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          className="gap-2 border-gold/40 text-gold hover:bg-gold/10"
+          onClick={() => printSheet(products)}
+        >
+          <Barcode className="h-4 w-4" />
+          Planche codes-barres
+        </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -112,17 +158,19 @@ const CommercialCataloguePage = () => {
                       <Zap className="h-3 w-3 mr-1" /> Force Noire
                     </Badge>
                   )}
-                  {(labReports?.[p.id]?.length ?? 0) === 0 ? (
+                  {reportsFor(p.id).length === 0 ? (
                     <span className="mt-1 text-[11px] text-muted-foreground">Analyse à venir</span>
-                  ) : labReports![p.id].length === 1 ? (
+                  ) : reportsFor(p.id).length === 1 ? (
                     <Button
                       size="sm"
                       variant="outline"
                       className="mt-1 h-7 gap-1.5 border-gold/40 text-gold hover:bg-gold/10"
-                      disabled={openingId === labReports![p.id][0].id}
-                      onClick={() => openLab(labReports![p.id][0].id, labReports![p.id][0].storage_path)}
+                      disabled={openingId === reportsFor(p.id)[0].id}
+                      onClick={() =>
+                        openLab(reportsFor(p.id)[0].id, reportsFor(p.id)[0].storage_path)
+                      }
                     >
-                      {openingId === labReports![p.id][0].id ? (
+                      {openingId === reportsFor(p.id)[0].id ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
                         <FlaskConical className="h-3.5 w-3.5" />
@@ -138,11 +186,11 @@ const CommercialCataloguePage = () => {
                           className="mt-1 h-7 gap-1.5 border-gold/40 text-gold hover:bg-gold/10"
                         >
                           <FlaskConical className="h-3.5 w-3.5" />
-                          Analyses labo ({labReports![p.id].length})
+                          Analyses labo ({reportsFor(p.id).length})
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="max-w-[260px]">
-                        {labReports![p.id].map((r) => (
+                        {reportsFor(p.id).map((r) => (
                           <DropdownMenuItem
                             key={r.id}
                             onClick={() => openLab(r.id, r.storage_path)}
@@ -162,6 +210,14 @@ const CommercialCataloguePage = () => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 gap-1.5 text-[11px] text-muted-foreground"
+                    onClick={() => printSheet([p], `codes-barres-${p.id}.pdf`)}
+                  >
+                    <Barcode className="h-3.5 w-3.5" /> Codes-barres
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -176,6 +232,7 @@ const CommercialCataloguePage = () => {
                       <th className="text-right py-1">PV public TTC</th>
                       <th className="text-right py-1">Gain HT</th>
                       <th className="text-right py-1">Coef.</th>
+                      <th className="text-right py-1">Code-barres</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -189,6 +246,7 @@ const CommercialCataloguePage = () => {
                       const retailHT = retailTTC / (1 + VAT_RATE);
                       const gain = retailHT - proHT;
                       const coef = proHT > 0 ? retailHT / proHT : 0;
+                      const ean = barcodes[p.id]?.[wKey(f)];
                       return (
                         <tr key={f} className="border-b border-border/30 last:border-0">
                           <td className="py-1.5">{f} g</td>
@@ -201,6 +259,25 @@ const CommercialCataloguePage = () => {
                               {" "}
                               (min x{minResellerCoef(f)})
                             </span>
+                          </td>
+                          <td className="py-1.5 text-right whitespace-nowrap">
+                            {ean ? (
+                              <button
+                                type="button"
+                                onClick={() => copyEan(ean)}
+                                className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground hover:text-gold"
+                                aria-label={`Copier le code-barres ${ean}`}
+                              >
+                                {ean}
+                                {copied === ean ? (
+                                  <Check className="h-3 w-3 text-emerald-400" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </td>
                         </tr>
                       );

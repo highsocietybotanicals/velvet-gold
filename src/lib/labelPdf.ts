@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { renderEan13DataUrl } from "./barcode";
 
 // Import label images
 import label911og from "@/assets/labels/911-og-label.png";
@@ -47,9 +48,16 @@ interface LabelParams {
   productName: string;
   weight: number; // grams
   productId: string;
+  /** Code-barres EAN-13 interne (optionnel) */
+  ean13?: string | null;
 }
 
-export async function generateProductLabel({ productName, weight, productId }: LabelParams) {
+export async function generateProductLabel({
+  productName,
+  weight,
+  productId,
+  ean13,
+}: LabelParams) {
   const labelUrl = LABEL_MAP[productId];
   if (!labelUrl) throw new Error(`No label image for product: ${productId}`);
 
@@ -59,15 +67,29 @@ export async function generateProductLabel({ productName, weight, productId }: L
   const doc = new jsPDF({ unit: "mm", format: [100, 150], orientation: "portrait" });
   const W = 100;
 
-  // Full image covering most of the page
-  doc.addImage(labelB64, "JPEG", 0, 0, W, 138);
+  const hasBarcode = !!ean13;
+  const imgH = hasBarcode ? 118 : 138;
 
-  // Weight at the bottom
+  // Full image covering most of the page
+  doc.addImage(labelB64, "JPEG", 0, 0, W, imgH);
+
+  // Weight below the artwork
   const weightText = `${weight}g`;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(28);
+  doc.setFontSize(hasBarcode ? 22 : 28);
   doc.setTextColor(30, 30, 30);
-  doc.text(weightText, W / 2, 146, { align: "center" });
+  doc.text(weightText, W / 2, hasBarcode ? imgH + 8 : 146, { align: "center" });
+
+  if (hasBarcode) {
+    const barcodeImg = renderEan13DataUrl(ean13!, {
+      moduleWidth: 3,
+      barHeight: 100,
+      showText: true,
+    });
+    if (barcodeImg) {
+      doc.addImage(barcodeImg, "PNG", 15, imgH + 11, 70, 19);
+    }
+  }
 
   doc.save(`etiquette-${productId}-${weight}g.pdf`);
 }

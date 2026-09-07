@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { generateProductLabel, SUPPORTED_LABEL_IDS } from "@/lib/labelPdf";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useBarcodes, wKey } from "@/hooks/useBarcodes";
 
 interface MolecularLabelProps {
   productId: string;
@@ -12,13 +13,19 @@ interface MolecularLabelProps {
 
 export function MolecularLabel({ productId, productName, weight }: MolecularLabelProps) {
   const [loading, setLoading] = useState(false);
+  const { data: barcodes } = useBarcodes();
 
   if (!SUPPORTED_LABEL_IDS.includes(productId) || !weight) return null;
 
   const handleClick = async () => {
     setLoading(true);
     try {
-      await generateProductLabel({ productName, weight, productId });
+      await generateProductLabel({
+        productName,
+        weight,
+        productId,
+        ean13: barcodes?.[productId]?.[wKey(weight)] ?? null,
+      });
     } catch (e) {
       console.error(e);
       toast.error("Erreur lors de la génération de l'étiquette");
