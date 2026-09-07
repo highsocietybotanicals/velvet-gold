@@ -117,6 +117,48 @@ const ProductsManager = () => {
                       </TableCell>
 
                       <TableCell>
+                        {busyId === p.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                        ) : labPaths?.[p.id] ? (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1.5"
+                              disabled={openingId === p.id}
+                              onClick={() => openLab(p.id, labPaths[p.id])}
+                            >
+                              <FlaskConical className="w-3.5 h-3.5" />PDF
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-destructive"
+                              aria-label={`Supprimer l'analyse de ${p.name}`}
+                              onClick={() => remove(p.id, labPaths[p.id])}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer text-muted-foreground hover:text-gold">
+                            <Upload className="w-3.5 h-3.5" />
+                            Déposer
+                            <input
+                              type="file"
+                              accept="application/pdf"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) upload(p.id, f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(p)}>
                             <Pencil className="w-4 h-4" />
