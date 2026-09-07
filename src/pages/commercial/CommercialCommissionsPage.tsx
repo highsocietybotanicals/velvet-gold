@@ -1,28 +1,50 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
-import { useMyRep, useCommissions } from "@/hooks/useCommercial";
+import { Progress } from "@/components/ui/progress";
+import { Loader2, TrendingUp } from "lucide-react";
+import {
+  useMyRep,
+  useCommissions,
+  useCommissionTiers,
+  aggregateMonthly,
+  resolveTier,
+  nextTier,
+} from "@/hooks/useCommercial";
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
 
 const monthLabel = (d: string) =>
-  new Date(d).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  new Date(`${d.slice(0, 7)}-01T00:00:00`).toLocaleDateString("fr-FR", {
+    month: "long",
+    year: "numeric",
+  });
 
 const CommercialCommissionsPage = () => {
   const { data: rep } = useMyRep();
   const { commissions, isLoading } = useCommissions(rep?.id);
+  const { tiers } = useCommissionTiers();
+
+  const months = useMemo(() => aggregateMonthly(commissions, tiers), [commissions, tiers]);
+
+  const currentKey = new Date().toISOString().slice(0, 7);
+  const currentMonth = months.find((m) => m.month === currentKey);
+  const currentRevenue = currentMonth?.revenueHT ?? 0;
+  const currentTier = resolveTier(tiers, currentRevenue);
+  const upcoming = nextTier(tiers, currentRevenue);
 
   const totals = useMemo(() => {
     const paid = commissions.filter((c) => c.status === "paid");
-    const pending = commissions.filter((c) => c.status !== "paid");
     return {
       revenue: commissions.reduce((s, c) => s + Number(c.revenue_ht), 0),
       paid: paid.reduce((s, c) => s + Number(c.commission_amount), 0),
-      pending: pending.reduce((s, c) => s + Number(c.commission_amount), 0),
+      pending: commissions
+        .filter((c) => c.status !== "paid")
+        .reduce((s, c) => s + Number(c.commission_amount), 0),
+      bonus: months.reduce((s, m) => s + m.bonus, 0),
     };
-  }, [commissions]);
+  }, [commissions, months]);
 
   return (
     <div className="space-y-6">
@@ -30,12 +52,64 @@ const CommercialCommissionsPage = () => {
         <h1 className="text-2xl font-semibold gold-text">Mes commissions</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {rep
-            ? `${Number(rep.commission_percent)} % du chiffre d'affaires HT généré par tes partenaires.`
+            ? "Ton taux dépend du chiffre d'affaires HT généré sur le mois : plus tu vends, plus le taux monte — et il s'applique à tout le CA du mois."
             : "Aucune fiche commerciale rattachée à ce compte."}
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <Card className="border-gold/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-gold" /> Paliers de rémunération
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {[...tiers]
+              .sort((a, b) => a.min_revenue_ht - b.min_revenue_ht)
+              .map((t) => (
+                <Badge
+                  key={t.min_revenue_ht}
+                  className={
+                    t.commission_percent === currentTier.commission_percent
+                      ? "bg-gold/20 text-gold border border-gold/50"
+                      : "bg-muted text-muted-foreground"
+                  }
+                >
+                  {t.min_revenue_ht === 0
+                    ? `Jusqu'à ${euro(
+                        nextTier(tiers, 0)?.min_revenue_ht ?? 0
+                      )} : ${t.commission_percent} %`
+                    : `Dès ${euro(t.min_revenue_ht)} : ${t.commission_percent} %`}
+                </Badge>
+              ))}
+          </div>
+
+          <div>
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+              <span className="capitalize">
+                {monthLabel(currentKey)} · {euro(currentRevenue)} HT · taux actuel{" "}
+                <strong className="text-gold">{currentTier.commission_percent} %</strong>
+              </span>
+              {upcoming && (
+                <span>
+                  encore {euro(upcoming.min_revenue_ht - currentRevenue)} pour{" "}
+                  {upcoming.commission_percent} %
+                </span>
+              )}
+            </div>
+            <Progress
+              value={
+                upcoming
+                  ? Math.min(100, (currentRevenue / upcoming.min_revenue_ht) * 100)
+                  : 100
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-3 sm:grid-cols-4">
         <Card>
           <CardContent className="pt-5">
             <p className="text-xs text-muted-foreground">CA HT apporté</p>
@@ -50,6 +124,12 @@ const CommercialCommissionsPage = () => {
         </Card>
         <Card>
           <CardContent className="pt-5">
+            <p className="text-xs text-muted-foreground">Bonus de palier</p>
+            <p className="text-xl font-semibold text-gold">{euro(totals.bonus)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
             <p className="text-xs text-muted-foreground">Commissions versées</p>
             <p className="text-xl font-semibold text-emerald-400">{euro(totals.paid)}</p>
           </CardContent>
@@ -58,15 +138,55 @@ const CommercialCommissionsPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Détail</CardTitle>
+          <CardTitle className="text-base">Récapitulatif mois par mois</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-gold" />
-          ) : commissions.length === 0 ? (
+          ) : months.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Aucune commission enregistrée pour le moment.
             </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-xs text-muted-foreground">
+                  <tr className="border-b border-border/50">
+                    <th className="text-left py-2">Mois</th>
+                    <th className="text-right py-2">CA HT</th>
+                    <th className="text-right py-2">Palier</th>
+                    <th className="text-right py-2">Base</th>
+                    <th className="text-right py-2">Bonus</th>
+                    <th className="text-right py-2">Total dû</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {months.map((m) => (
+                    <tr key={m.month} className="border-b border-border/30 last:border-0">
+                      <td className="py-2 capitalize">{monthLabel(m.month)}</td>
+                      <td className="py-2 text-right">{euro(m.revenueHT)}</td>
+                      <td className="py-2 text-right text-gold">{m.tierPercent} %</td>
+                      <td className="py-2 text-right">{euro(m.baseCommission)}</td>
+                      <td className="py-2 text-right text-gold">
+                        {m.bonus > 0 ? `+${euro(m.bonus)}` : "—"}
+                      </td>
+                      <td className="py-2 text-right font-medium">{euro(m.tierCommission)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Détail par client</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {commissions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucune ligne pour le moment.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
