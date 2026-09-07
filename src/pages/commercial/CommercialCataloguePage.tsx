@@ -111,6 +111,24 @@ const CommercialCataloguePage = () => {
                       <Zap className="h-3 w-3 mr-1" /> Force Noire
                     </Badge>
                   )}
+                  {labPaths?.[p.id] ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-1 h-7 gap-1.5 border-gold/40 text-gold hover:bg-gold/10"
+                      disabled={openingId === p.id}
+                      onClick={() => openLab(p.id, labPaths[p.id])}
+                    >
+                      {openingId === p.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <FlaskConical className="h-3.5 w-3.5" />
+                      )}
+                      Analyse labo
+                    </Button>
+                  ) : (
+                    <span className="mt-1 text-[11px] text-muted-foreground">Analyse à venir</span>
+                  )}
                 </div>
               </div>
             </CardHeader>
