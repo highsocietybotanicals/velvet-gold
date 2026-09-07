@@ -67,12 +67,22 @@ const CommercialCataloguePage = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold gold-text">Catalogue & argumentaire</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Tout ce qu'il faut pour convaincre un buraliste : prix pro HT par format, prix public
-          conseillé et marge réelle du revendeur.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold gold-text">Catalogue & argumentaire</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Tout ce qu'il faut pour convaincre un buraliste : prix pro HT par format, prix public
+            conseillé, marge réelle du revendeur et code-barres prêt pour la caisse.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          className="gap-2 border-gold/40 text-gold hover:bg-gold/10"
+          onClick={() => printSheet(products)}
+        >
+          <Barcode className="h-4 w-4" />
+          Planche codes-barres
+        </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
