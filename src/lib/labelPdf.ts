@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { renderEan13DataUrl } from "./barcode";
 
 // Import label images
 import label911og from "@/assets/labels/911-og-label.png";
