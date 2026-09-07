@@ -6,7 +6,9 @@ import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { PRO_FORMATS, VAT_RATE, proPricePerGram, minResellerCoef } from "@/lib/proPricing";
 import { calculateItemPrice } from "@/lib/pricing";
-import { Sparkles, Zap, ShieldCheck, Leaf, FlaskConical } from "lucide-react";
+import { Sparkles, Zap, ShieldCheck, Leaf, FlaskConical, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useLabReportPaths, useOpenLabReport } from "@/hooks/useLabReports";
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
@@ -21,6 +23,8 @@ const ARGUMENTS_CLES = [
 const CommercialCataloguePage = () => {
   const { flowers, resins } = useCatalogProducts();
   const { tiers } = useProPriceTiers();
+  const { data: labPaths } = useLabReportPaths();
+  const { open: openLab, openingId } = useOpenLabReport();
   const [search, setSearch] = useState("");
 
   const products = useMemo(() => {
