@@ -268,6 +268,23 @@ const nectarDivin: Product[] = [
     tasteMatch: ["boise", "terreux"],
     isNectarDivin: true,
   },
+  {
+    id: "piatella",
+    name: "Piatella",
+    subtitle: "Résine Exotique",
+    badge: "Exotique",
+    description: "Résine ultra-premium de la gamme Exotique — texture fondante d'une rare intensité, arômes gourmands et puissants, effet enveloppant d'exception.",
+    price: 14,
+    priceGroup: "B",
+    cbdPercentage: "70% Exotique",
+    image: piatellaImg,
+    terpenes: { boise: 50, fruite: 85, epice: 45, terreux: 60 },
+    mood: "Évasion gourmande",
+    category: "resine",
+    intentionMatch: ["detente", "sommeil"],
+    tasteMatch: ["fruite"],
+    isExotique: true,
+  },
 ];
 
 
