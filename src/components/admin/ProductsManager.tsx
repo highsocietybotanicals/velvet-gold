@@ -11,7 +11,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff, FlaskConical, Upload, X } from "lucide-react";
+import { useLabReportPaths, useLabReportAdmin, useOpenLabReport } from "@/hooks/useLabReports";
 import { Switch } from "@/components/ui/switch";
 import { useDbProducts, DbProduct } from "@/hooks/useDbProducts";
 import { useAdminProducts } from "@/hooks/useProducts";
@@ -22,6 +23,9 @@ const ProductsManager = () => {
   const { products, isLoading, deleteProduct } = useDbProducts();
   const { proPrices, toggleProduct, isToggling } = useAdminProducts();
   const { toast } = useToast();
+  const { data: labPaths } = useLabReportPaths();
+  const { upload, remove, busyId } = useLabReportAdmin();
+  const { open: openLab, openingId } = useOpenLabReport();
 
   const [editing, setEditing] = useState<DbProduct | null>(null);
   const [open, setOpen] = useState(false);
