@@ -153,17 +153,19 @@ const CommercialCataloguePage = () => {
                       <Zap className="h-3 w-3 mr-1" /> Force Noire
                     </Badge>
                   )}
-                  {(labReports?.[p.id]?.length ?? 0) === 0 ? (
+                  {reportsFor(p.id).length === 0 ? (
                     <span className="mt-1 text-[11px] text-muted-foreground">Analyse à venir</span>
-                  ) : labReports![p.id].length === 1 ? (
+                  ) : reportsFor(p.id).length === 1 ? (
                     <Button
                       size="sm"
                       variant="outline"
                       className="mt-1 h-7 gap-1.5 border-gold/40 text-gold hover:bg-gold/10"
-                      disabled={openingId === labReports![p.id][0].id}
-                      onClick={() => openLab(labReports![p.id][0].id, labReports![p.id][0].storage_path)}
+                      disabled={openingId === reportsFor(p.id)[0].id}
+                      onClick={() =>
+                        openLab(reportsFor(p.id)[0].id, reportsFor(p.id)[0].storage_path)
+                      }
                     >
-                      {openingId === labReports![p.id][0].id ? (
+                      {openingId === reportsFor(p.id)[0].id ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
                         <FlaskConical className="h-3.5 w-3.5" />
@@ -179,11 +181,11 @@ const CommercialCataloguePage = () => {
                           className="mt-1 h-7 gap-1.5 border-gold/40 text-gold hover:bg-gold/10"
                         >
                           <FlaskConical className="h-3.5 w-3.5" />
-                          Analyses labo ({labReports![p.id].length})
+                          Analyses labo ({reportsFor(p.id).length})
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="max-w-[260px]">
-                        {labReports![p.id].map((r) => (
+                        {reportsFor(p.id).map((r) => (
                           <DropdownMenuItem
                             key={r.id}
                             onClick={() => openLab(r.id, r.storage_path)}
@@ -203,6 +205,14 @@ const CommercialCataloguePage = () => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 gap-1.5 text-[11px] text-muted-foreground"
+                    onClick={() => printSheet([p], `codes-barres-${p.id}.pdf`)}
+                  >
+                    <Barcode className="h-3.5 w-3.5" /> Codes-barres
+                  </Button>
                 </div>
               </div>
             </CardHeader>
