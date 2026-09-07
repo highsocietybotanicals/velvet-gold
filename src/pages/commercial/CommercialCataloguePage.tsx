@@ -8,7 +8,8 @@ import { PRO_FORMATS, VAT_RATE, proPricePerGram, minResellerCoef } from "@/lib/p
 import { calculateItemPrice } from "@/lib/pricing";
 import { Sparkles, Zap, ShieldCheck, Leaf, FlaskConical, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLabReportPaths, useOpenLabReport } from "@/hooks/useLabReports";
+import { useLabReports, useOpenLabReport } from "@/hooks/useLabReports";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });

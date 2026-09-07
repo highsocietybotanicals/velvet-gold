@@ -24,7 +24,7 @@ const ProductsManager = () => {
   const { proPrices, toggleProduct, isToggling } = useAdminProducts();
   const { toast } = useToast();
   const { data: labReports } = useLabReports();
-  const { upload, remove, busyId } = useLabReportAdmin();
+  const { upload, remove, rename, busyId } = useLabReportAdmin();
   const { open: openLab, openingId } = useOpenLabReport();
 
   const [editing, setEditing] = useState<DbProduct | null>(null);
