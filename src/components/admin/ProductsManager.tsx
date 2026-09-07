@@ -71,6 +71,7 @@ const ProductsManager = () => {
                     <TableHead>Prix TTC</TableHead>
                     <TableHead>Prix Pro HT</TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead>Analyse labo</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
