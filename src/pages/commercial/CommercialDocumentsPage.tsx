@@ -6,6 +6,11 @@ import { useToast } from "@/hooks/use-toast";
 
 const DOCS = [
   {
+    name: "Guide commercial — marque, gamme, légalité, pitch",
+    desc: "11 chapitres : notre histoire, la sélection, le packaging, les analyses laboratoire (GC-MS / GC-FID), l'offre revendeur, le déroulé de visite, les objections et votre rémunération.",
+    href: "/documents/HSB-Guide-Commercial.pdf",
+  },
+  {
     name: "Grille tarifaire pro — préconditionné",
     desc: "Prix HT par format (1 g / 2,5 g / 5 g / 10 g) et dégressivité volume.",
     href: "/documents/HSB-Grille-Tarifaire-Pro-Preconditionne.pdf",
