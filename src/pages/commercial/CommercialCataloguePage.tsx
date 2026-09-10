@@ -141,7 +141,14 @@ const CommercialCataloguePage = () => {
                     className="h-16 w-16 rounded-md object-cover border border-gold/20 shrink-0"
                   />
                   <div className="min-w-0">
-                    <CardTitle className="text-base truncate">{p.name}</CardTitle>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <CardTitle className="text-base truncate">{p.name}</CardTitle>
+                      {p.molecule && (
+                        <span className="shrink-0 rounded-full border border-gold/50 bg-background/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold">
+                          {p.molecule}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{p.subtitle}</p>
                   </div>
                 </div>

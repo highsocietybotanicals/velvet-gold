@@ -287,9 +287,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
           {/* Badge molécule */}
           {product.molecule && (
-            <div className="absolute top-14 left-4 flex items-center gap-1.5 bg-background/85 backdrop-blur-sm px-3 py-1 rounded-full border border-primary/50">
-              <Sparkles className="w-3 h-3 text-primary" />
-              <span className="text-xs font-bold text-primary tracking-wider uppercase">{product.molecule}</span>
+            <div className="absolute top-14 left-4 flex items-center gap-1.5 bg-black/85 backdrop-blur-sm px-3 py-1 rounded-sm border border-primary/60">
+              <span className="text-[11px] font-bold text-primary tracking-[0.2em] uppercase">{product.molecule}</span>
             </div>
           )}
 
