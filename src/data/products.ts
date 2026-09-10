@@ -194,44 +194,43 @@ const groupB: Product[] = [
 ];
 
 // ============================================
-// NECTAR DIVIN - Gamme ultra premium (Base 10€/g TTC)
-// Puissance supérieure à l'Élixir Noir
+// HAUTE PUISSANCE - Force Noire & Exotique
 // ============================================
 
-const nectarDivin: Product[] = [
+const topRange: Product[] = [
   {
     id: "haribo",
     name: "Haribo",
-    subtitle: "Résine Nectar Divin",
-    badge: "Nectar Divin",
-    description: "Résine ultra-premium de la gamme Nectar Divin — puissance supérieure à l'Élixir Noir. Arômes gourmands de bonbon fruité, effets sédatifs profonds pour un sommeil royal.",
+    subtitle: "Résine Force Noire",
+    badge: "Force Noire",
+    description: "Résine ultra-premium de la gamme Force Noire — Élixir Noir haute concentration. Arômes gourmands de bonbon fruité, effets sédatifs profonds pour un sommeil royal.",
     price: 10,
     priceGroup: "B",
-    cbdPercentage: "70% Nectar Divin",
+    cbdPercentage: "70% Élixir Noir",
     image: hariboPremium,
     terpenes: { boise: 55, fruite: 90, epice: 40, terreux: 70 },
     mood: "Sommeil royal",
     category: "resine",
     intentionMatch: ["sommeil", "detente"],
     tasteMatch: ["fruite"],
-    isNectarDivin: true,
+    isForceNoire: true,
   },
   {
     id: "heisenberg",
     name: "Heisenberg",
-    subtitle: "Résine Nectar Divin",
-    badge: "Nectar Divin",
-    description: "Résine ultra-premium de la gamme Nectar Divin — puissance supérieure à l'Élixir Noir. Cristaux bleutés d'exception, arômes mentholés et frais, effets cérébraux intenses et sédation profonde.",
+    subtitle: "Résine Force Noire",
+    badge: "Force Noire",
+    description: "Résine ultra-premium de la gamme Force Noire — Élixir Noir haute concentration. Cristaux bleutés d'exception, arômes mentholés et frais, effets cérébraux intenses et sédation profonde.",
     price: 10,
     priceGroup: "B",
-    cbdPercentage: "70% Nectar Divin",
+    cbdPercentage: "70% Élixir Noir",
     image: heisenbergPremium,
     terpenes: { boise: 60, fruite: 50, epice: 70, terreux: 65 },
     mood: "Sommeil royal",
     category: "resine",
     intentionMatch: ["sommeil", "detente"],
     tasteMatch: ["epice", "boise"],
-    isNectarDivin: true,
+    isForceNoire: true,
   },
   {
 
@@ -254,19 +253,19 @@ const nectarDivin: Product[] = [
   {
     id: "poussiere-dor",
     name: "Poussière D'or",
-    subtitle: "Résine Nectar Divin",
-    badge: "Nectar Divin",
-    description: "Pollen haute couture de la gamme Nectar Divin — texture mousse aérienne, robe blonde sablée. Arômes doux et boisés, effets équilibrés pour une détente raffinée d'exception.",
+    subtitle: "Résine Force Noire",
+    badge: "Force Noire",
+    description: "Pollen haute couture de la gamme Force Noire — texture mousse aérienne, robe blonde sablée. Arômes doux et boisés, effets équilibrés pour une détente raffinée d'exception.",
     price: 12,
     priceGroup: "A",
-    cbdPercentage: "70% Nectar Divin",
+    cbdPercentage: "70% Élixir Noir",
     image: poussiereDorPremium,
     terpenes: { boise: 70, fruite: 30, epice: 45, terreux: 75 },
     mood: "Détente",
     category: "resine",
     intentionMatch: ["detente"],
     tasteMatch: ["boise", "terreux"],
-    isNectarDivin: true,
+    isForceNoire: true,
   },
   {
     id: "piatella",
