@@ -424,7 +424,7 @@ Deno.serve(async (req) => {
 <h1 style="color:#d4af37;font-size:22px;margin:0 0 16px;text-align:center;">Votre facture ${orderNumber}</h1>
 <p style="color:#c0b89a;font-size:15px;line-height:1.6;margin:0 0 22px;">
 Bonjour${profile.full_name ? ` ${profile.full_name}` : ""},<br><br>
-Voici votre facture professionnelle en pièce jointe. Elle est également disponible dans votre espace pro,
+Voici votre facture professionnelle. Elle est disponible via le bouton ci-dessous et dans votre espace pro,
 rubrique « Mes commandes ».
 </p>
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
