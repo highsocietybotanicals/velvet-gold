@@ -279,11 +279,9 @@ const CommercialFacturationPage = () => {
                       {p.name}
                       {p.isExotique
                         ? " — Exotique"
-                        : p.isNectarDivin
-                          ? " — Nectar Divin"
-                          : p.isForceNoire
-                            ? " — Force Noire"
-                            : ""}
+                        : p.isForceNoire
+                          ? " — Force Noire"
+                          : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
