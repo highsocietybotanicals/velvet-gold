@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 
 const ProLayout = () => {
-  const { user, isPro, isProValidated, isAdmin, profile, loading } = useAuth();
+  const { user, isPro, isProValidated, isAdmin, isCommercial, profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -20,7 +20,7 @@ const ProLayout = () => {
   if (!user) return <Navigate to="/auth" replace />;
 
   const hasAccess =
-    isAdmin || (isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated);
+    isAdmin || isCommercial || (isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated);
 
   if (!hasAccess) {
     return (

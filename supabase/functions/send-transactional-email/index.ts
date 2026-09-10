@@ -56,6 +56,14 @@ Deno.serve(async (req) => {
     )
   }
 
+  const authorization = req.headers.get('Authorization') ?? ''
+  if (authorization !== `Bearer ${supabaseServiceKey}`) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
   // Parse request body
   let templateName: string
   let recipientEmail: string
