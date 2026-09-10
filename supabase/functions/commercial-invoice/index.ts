@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.2";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { sendRawEmail } from "../_shared/transactional-email-templates/send-raw-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -406,21 +406,15 @@ Deno.serve(async (req) => {
       .from("invoices")
       .upload(filePath, pdfBytes, { contentType: "application/pdf", upsert: true });
     if (upErr) console.error("commercial-invoice upload error:", upErr);
+    const { data: signedInvoice } = await admin.storage
+      .from("invoices")
+      .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+    const invoiceDownloadUrl = signedInvoice?.signedUrl ?? "https://highsocietybotanicals.com/pro/commandes";
 
     // ---------- Email ----------
     let emailSent = true;
+    let emailStatus: "sent" | "suppressed" | "failed" = "sent";
     try {
-      const gmailUser = Deno.env.get("GMAIL_USER")!;
-      const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD")!;
-      const client = new SMTPClient({
-        connection: {
-          hostname: "smtp.gmail.com",
-          port: 465,
-          tls: true,
-          auth: { username: gmailUser, password: gmailPassword },
-        },
-      });
-
       const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;"><tr><td align="center">
@@ -430,7 +424,7 @@ Deno.serve(async (req) => {
 <h1 style="color:#d4af37;font-size:22px;margin:0 0 16px;text-align:center;">Votre facture ${orderNumber}</h1>
 <p style="color:#c0b89a;font-size:15px;line-height:1.6;margin:0 0 22px;">
 Bonjour${profile.full_name ? ` ${profile.full_name}` : ""},<br><br>
-Voici votre facture professionnelle en pièce jointe. Elle est également disponible dans votre espace pro,
+Voici votre facture professionnelle. Elle est disponible via le bouton ci-dessous et dans votre espace pro,
 rubrique « Mes commandes ».
 </p>
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
@@ -443,44 +437,42 @@ rubrique « Mes commandes ».
 <p style="color:#f5f0e1;font-size:14px;margin:0;">${iban.replace(/(.{4})/g, "$1 ").trim()}${bic ? ` — BIC ${bic}` : ""}</p>
 </td></tr></table>
 <p style="text-align:center;margin:0 0 22px;">
-<a href="https://highsocietybotanicals.com/pro/commandes" style="display:inline-block;background:#d4af37;color:#0a0a0a;text-decoration:none;padding:13px 32px;border-radius:8px;font-weight:bold;font-size:15px;">Voir dans mon espace pro</a>
+<a href="${invoiceDownloadUrl}" style="display:inline-block;background:#d4af37;color:#0a0a0a;text-decoration:none;padding:13px 32px;border-radius:8px;font-weight:bold;font-size:15px;">Télécharger ma facture</a>
 </p>
 <p style="color:#666;font-size:12px;line-height:1.6;margin:0;">Échéance : ${due}. Merci d'indiquer le numéro ${orderNumber} en libellé de votre virement pour que le règlement soit rattaché automatiquement.</p>
 <p style="color:#666;font-size:12px;margin:22px 0 0;text-align:center;">High Society Botanicals — Abbaretz (44170)</p>
 </td></tr></table></td></tr></table></body></html>`;
 
-      await client.send({
-        from: `High Society Botanicals <${gmailUser}>`,
+      const sendResult = await sendRawEmail({
         to: email,
         subject: `Facture ${orderNumber} — High Society Botanicals`,
-        content: `Votre facture ${orderNumber} : ${totalTTC.toFixed(2)} EUR TTC (${totalHT.toFixed(2)} EUR HT).
+        text: `Votre facture ${orderNumber} : ${totalTTC.toFixed(2)} EUR TTC (${totalHT.toFixed(2)} EUR HT).
 Règlement par virement — libellé obligatoire : ${orderNumber}
 IBAN : ${iban}${bic ? ` / BIC : ${bic}` : ""}
 Échéance : ${due}
+Télécharger la facture : ${invoiceDownloadUrl}
 
 Facture également disponible dans votre espace pro : https://highsocietybotanicals.com/pro/commandes`,
         html,
-        attachments: [
-          {
-            encoding: "base64",
-            filename: `${orderNumber}.pdf`,
-            content: pdfBase64,
-            contentType: "application/pdf",
-          },
-        ],
-      } as any);
-      await client.close();
+        label: "pro_invoice_commercial",
+        idempotencyKey: `pro-invoice-${order.id}`,
+        replyTo: "contacts@highsocietybotanicals.com",
+      });
+      emailSent = sendResult.sent;
+      emailStatus = sendResult.sent ? "sent" : "suppressed";
     } catch (e) {
       emailSent = false;
+      emailStatus = "failed";
       console.error("commercial-invoice email failed:", (e as Error).message);
     }
 
-    await admin.from("email_send_log").insert({
+    const { error: emailLogError } = await admin.from("email_send_log").insert({
       template_name: "pro_invoice_commercial",
       recipient_email: email,
-      status: emailSent ? "sent" : "failed",
+      status: emailStatus,
       metadata: { order_id: order.id, order_number: orderNumber },
     });
+    if (emailLogError) console.error("commercial-invoice email log failed", { code: emailLogError.code, message: emailLogError.message });
 
     return json({
       success: true,

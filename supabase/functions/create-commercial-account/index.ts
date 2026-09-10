@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { sendTemplateEmail } from '../_shared/transactional-email-templates/send-email.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -107,27 +108,16 @@ Deno.serve(async (req) => {
 
     let emailSent = false
     try {
-      const response = await fetch(`${url}/functions/v1/send-transactional-email`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${serviceKey}`,
-          apikey: serviceKey,
-          'Content-Type': 'application/json',
+      const result = await sendTemplateEmail('commercial-access', email, {
+        idempotencyKey: `commercial-access-${userId}`,
+        templateData: {
+          fullName,
+          email,
+          password,
+          loginUrl: 'https://highsocietybotanicals.com/auth',
         },
-        body: JSON.stringify({
-          templateName: 'commercial-access',
-          recipientEmail: email,
-          idempotencyKey: `commercial-access-${userId}`,
-          templateData: {
-            fullName,
-            email,
-            password,
-            loginUrl: 'https://highsocietybotanicals.com/auth',
-          },
-        }),
       })
-      emailSent = response.ok
-      if (!response.ok) console.error('Commercial access email failed', { status: response.status })
+      emailSent = result.sent
     } catch (emailError) {
       console.error('Commercial access email failed', (emailError as Error).message)
     }
