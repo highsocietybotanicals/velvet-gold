@@ -285,6 +285,14 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             </div>
           )}
 
+          {/* Badge molécule */}
+          {product.molecule && (
+            <div className="absolute top-14 left-4 flex items-center gap-1.5 bg-background/85 backdrop-blur-sm px-3 py-1 rounded-full border border-primary/50">
+              <Sparkles className="w-3 h-3 text-primary" />
+              <span className="text-xs font-bold text-primary tracking-wider uppercase">{product.molecule}</span>
+            </div>
+          )}
+
           {/* CBD/molecule badge */}
           <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full">
             <span className="text-xs font-bold">{product.isForceNoire || product.isNectarDivin || product.isExotique || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}</span>

@@ -38,6 +38,8 @@ export interface Product {
   image: string;
   terpenes: TerpeneProfile;
   mood: string;
+  /** Nom commercial de la molécule présente (affiché en badge) */
+  molecule?: string;
   category: ProductCategory;
   intentionMatch: string[];
   tasteMatch: string[];
