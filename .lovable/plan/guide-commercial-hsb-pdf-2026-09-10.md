@@ -13,7 +13,7 @@ Un PDF A4 complet, à remettre à Philippe (et aux futurs commerciaux), qui expl
 7. **L'offre revendeur** — Marge organisée à x2 HT pour le commerçant, ristournes par volume (100 g / 250 g / 500 g / 1 kg), feuilles slim et briquet offerts par 10 g pour remercier les clients fidèles.
 8. **Le pitch de vente** — Déroulé d'une visite : accroche en 30 secondes, questions à poser, ordre de présentation des produits, moment où sortir les analyses et la grille tarifaire, conclusion et prise de commande.
 9. **Objections & réponses** — "C'est trop cher", "j'ai déjà un fournisseur", "ça ne tourne pas", "c'est légal ?", "et les contrôles ?" — une réponse courte et une preuve pour chacune.
-10. **Rémunération du commercial** — Barème progressif par tranche : 10 % jusqu'à 5 000 € HT/mois, 12 % de 5 000 à 10 000 €, 15 % au-delà. Commissions sur les réassorts aussi.
+10. **Rémunération du commercial** — Barème progressif par tranche : 10 % jusqu'à 5 000 € HT/mois, 12 % de 5 000 à 10 000 €, 15 % au-delà. Commissions sur les réassorts aussi 10% aussi et 50 euros par nouveau client b2b trouver .
 11. **Aide-mémoire** — Ce qu'il emporte en visite, les documents disponibles, le contact HSB.
 
 Ton : sobre, haut de gamme, phrases courtes, aucune promesse d'effet.
