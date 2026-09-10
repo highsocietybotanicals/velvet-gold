@@ -413,6 +413,7 @@ Deno.serve(async (req) => {
 
     // ---------- Email ----------
     let emailSent = true;
+    let emailStatus: "sent" | "suppressed" | "failed" = "sent";
     try {
       const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,sans-serif;">
@@ -458,15 +459,17 @@ Facture également disponible dans votre espace pro : https://highsocietybotanic
         replyTo: "contacts@highsocietybotanicals.com",
       });
       emailSent = sendResult.sent;
+      emailStatus = sendResult.sent ? "sent" : "suppressed";
     } catch (e) {
       emailSent = false;
+      emailStatus = "failed";
       console.error("commercial-invoice email failed:", (e as Error).message);
     }
 
     const { error: emailLogError } = await admin.from("email_send_log").insert({
       template_name: "pro_invoice_commercial",
       recipient_email: email,
-      status: emailSent ? "sent" : "failed",
+      status: emailStatus,
       metadata: { order_id: order.id, order_number: orderNumber },
     });
     if (emailLogError) console.error("commercial-invoice email log failed", { code: emailLogError.code, message: emailLogError.message });
