@@ -152,8 +152,7 @@ const CommercialCataloguePage = () => {
                       Exotique
                     </Badge>
                   )}
-                  {p.isNectarDivin && <Badge variant="secondary">Nectar Divin</Badge>}
-                  {p.isForceNoire && !p.isNectarDivin && !p.isExotique && (
+                  {p.isForceNoire && !p.isExotique && (
                     <Badge className="bg-red-900/40 text-red-300 border border-red-700/50">
                       <Zap className="h-3 w-3 mr-1" /> Force Noire
                     </Badge>
