@@ -47,7 +47,7 @@ async function requireServiceRoleOrAdmin(req: Request, serviceClient: any): Prom
   return null;
 }
 
-const STATUS_LABELS: Record<string, { label: string; emoji: string; message: string; color: string }> = {
+const STATUS_LABELS: Record<string, { label: string; emoji: string; message: string; color: string; withTracking?: boolean }> = {
   preparing: {
     label: "En preparation",
     emoji: "📦",
