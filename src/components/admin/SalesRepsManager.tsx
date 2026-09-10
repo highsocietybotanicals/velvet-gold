@@ -31,6 +31,7 @@ const SalesRepsManager = () => {
     phone: "",
     zone: "50 km autour d'Abbaretz (44170)",
     commission_percent: 10,
+    password: "",
   });
 
   const { data: reps, isLoading } = useQuery({
@@ -50,36 +51,29 @@ const SalesRepsManager = () => {
   const createRep = useMutation({
     mutationFn: async () => {
       const email = form.email.trim().toLowerCase();
-      const { data: profile, error: pErr } = await db
-        .from("profiles")
-        .select("id, full_name, email")
-        .eq("email", email)
-        .maybeSingle();
-      if (pErr) throw pErr;
-      if (!profile)
-        throw new Error(
-          "Aucun compte avec cet email. Demande-lui de créer son compte sur le site, puis réessaie."
-        );
-
-      const { error: rErr } = await db
-        .from("user_roles")
-        .insert({ user_id: profile.id, role: "commercial" });
-      if (rErr && !rErr.message?.includes("duplicate")) throw rErr;
-
-      const { error } = await db.from("sales_reps").insert({
-        user_id: profile.id,
-        full_name: form.full_name.trim() || profile.full_name || email,
-        email,
-        phone: form.phone || null,
-        zone: form.zone || null,
-        commission_percent: Number(form.commission_percent),
+      const { data, error } = await supabase.functions.invoke("create-commercial-account", {
+        body: {
+          email,
+          full_name: form.full_name.trim(),
+          password: form.password,
+          phone: form.phone || null,
+          zone: form.zone || null,
+          commission_percent: Number(form.commission_percent),
+        },
       });
       if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Création impossible");
+      return data as { emailSent: boolean };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["sales-reps"] });
-      setForm({ ...form, email: "", full_name: "", phone: "" });
-      toast({ title: "Commercial ajouté" });
+      setForm({ ...form, email: "", full_name: "", phone: "", password: "" });
+      toast({
+        title: "Commercial ajouté",
+        description: data.emailSent
+          ? "Ses accès Commercial et Pro lui ont été envoyés par email."
+          : "Le compte est créé, mais l’email n’a pas pu être envoyé.",
+      });
     },
     onError: (e: Error) =>
       toast({ title: "Erreur", description: e.message, variant: "destructive" }),
@@ -130,6 +124,15 @@ const SalesRepsManager = () => {
             />
           </div>
           <div>
+            <Label>Mot de passe provisoire *</Label>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
+          </div>
+          <div>
             <Label>Téléphone</Label>
             <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
@@ -151,7 +154,7 @@ const SalesRepsManager = () => {
           <div className="flex items-end">
             <Button
               onClick={() => createRep.mutate()}
-              disabled={!form.email.trim() || createRep.isPending}
+              disabled={!form.email.trim() || !form.full_name.trim() || form.password.length < 8 || createRep.isPending}
             >
               {createRep.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

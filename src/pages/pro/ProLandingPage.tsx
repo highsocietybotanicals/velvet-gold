@@ -40,9 +40,9 @@ const arguments_ = [
 ];
 
 const ProLandingPage = () => {
-  const { isPro, isProValidated, profile, isAdmin } = useAuth();
+  const { isPro, isProValidated, profile, isAdmin, isCommercial } = useAuth();
   const hasAccess =
-    isAdmin || (isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated);
+    isAdmin || isCommercial || (isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated);
 
   useEffect(() => {
     document.title = "Espace Pro revendeur | High Society Botanicals";

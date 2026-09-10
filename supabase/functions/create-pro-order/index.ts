@@ -92,9 +92,12 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", user.id);
 
-    const isPro = (roles || []).some((r: any) => r.role === "pro" || r.role === "admin");
-    const validated =
+    const isAdmin = (roles || []).some((r: any) => r.role === "admin");
+    const isCommercial = (roles || []).some((r: any) => r.role === "commercial");
+    const isPro = (roles || []).some((r: any) => r.role === "pro");
+    const validatedPartner =
       isPro && profile?.is_pro_validated && profile?.is_vat_validated && !!profile?.vat_number;
+    const validated = isAdmin || isCommercial || validatedPartner;
 
     if (!validated) {
       return new Response(JSON.stringify({ error: "Compte professionnel non validé" }), {
