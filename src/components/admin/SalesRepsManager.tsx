@@ -54,7 +54,7 @@ const SalesRepsManager = () => {
       const { data, error } = await supabase.functions.invoke("create-commercial-account", {
         body: {
           email,
-        full_name: form.full_name.trim() || profile.full_name || email,
+          full_name: form.full_name.trim(),
           password: form.password,
           phone: form.phone || null,
           zone: form.zone || null,
