@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { sendRawEmail } from "../_shared/transactional-email-templates/send-raw-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -350,53 +350,23 @@ Deno.serve(async (req) => {
       console.error("Invoice generation error:", invoiceErr);
     }
 
-    // Send via Gmail SMTP with MIME multipart (attachment if PDF available)
-    const gmailUser = Deno.env.get("GMAIL_USER")!;
-    const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD")!;
-
-    const client = new SMTPClient({
-      connection: {
-        hostname: "smtp.gmail.com",
-        port: 465,
-        tls: true,
-        auth: {
-          username: gmailUser,
-          password: gmailPassword,
-        },
-      },
-    });
-
-    const sendOptions: any = {
-      from: `HSB <${gmailUser}>`,
+    const sendResult = await sendRawEmail({
       to: recipientEmail,
       subject: `Merci ${orderNumber} - HSB`,
-      content: textContent,
+      text: textContent,
       html: htmlEmail,
-    };
+      label: "order_confirmation",
+      idempotencyKey: `order-confirmation-${orderId}`,
+      replyTo: "contacts@highsocietybotanicals.com",
+    });
 
-    if (invoicePdfBase64) {
-      // denomailer supports attachments
-      sendOptions.attachments = [
-        {
-          encoding: "base64",
-          filename: invoiceFileName,
-          content: invoicePdfBase64,
-          contentType: "application/pdf",
-        },
-      ];
-    }
-
-    await client.send(sendOptions);
-
-    await client.close();
-
-    // Log success
-    await supabase.from("email_send_log").insert({
+    const { error: logError } = await supabase.from("email_send_log").insert({
       template_name: "order_confirmation",
       recipient_email: recipientEmail,
-      status: "sent",
+      status: sendResult.sent ? "sent" : "suppressed",
       metadata: { order_id: orderId, order_number: orderNumber },
     });
+    if (logError) console.error("Order confirmation log failed", { code: logError.code, message: logError.message });
 
     console.log(`Confirmation email sent to ${recipientEmail} for order ${orderNumber}`);
 
@@ -412,13 +382,14 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
-      await supabase.from("email_send_log").insert({
+      const { error: logError } = await supabase.from("email_send_log").insert({
         template_name: "order_confirmation",
         recipient_email: "unknown",
         status: "failed",
         error_message: String(error),
         metadata: { order_id: orderId },
       });
+      if (logError) console.error("Order confirmation failure log failed", { code: logError.code, message: logError.message });
     } catch (_) {
       // ignore logging failure
     }

@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { sendRawEmail } from "../_shared/transactional-email-templates/send-raw-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -220,39 +220,23 @@ Deno.serve(async (req) => {
       "L'equipe HSB",
     ].join("\n");
 
-    // Send via Gmail SMTP
-    const gmailUser = Deno.env.get("GMAIL_USER")!;
-    const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD")!;
-
-    const client = new SMTPClient({
-      connection: {
-        hostname: "smtp.gmail.com",
-        port: 465,
-        tls: true,
-        auth: {
-          username: gmailUser,
-          password: gmailPassword,
-        },
-      },
-    });
-
-    await client.send({
-      from: `HSB <${gmailUser}>`,
+    const sendResult = await sendRawEmail({
       to: recipientEmail,
       subject: `${statusInfo.emoji} ${orderNumber} - ${statusInfo.label}`,
-      content: textContent,
+      text: textContent,
       html: htmlEmail,
+      label: "status_update",
+      idempotencyKey: `status-update-${orderId}-${newStatus}`,
+      replyTo: "contacts@highsocietybotanicals.com",
     });
 
-    await client.close();
-
-    // Log
-    await supabase.from("email_send_log").insert({
+    const { error: logError } = await supabase.from("email_send_log").insert({
       template_name: "status_update",
       recipient_email: recipientEmail,
-      status: "sent",
+      status: sendResult.sent ? "sent" : "suppressed",
       metadata: { order_id: orderId, order_number: orderNumber, new_status: newStatus },
     });
+    if (logError) console.error("Status email log failed", { code: logError.code, message: logError.message });
 
     console.log(`Status update email sent to ${recipientEmail} for ${orderNumber} -> ${newStatus}`);
 
