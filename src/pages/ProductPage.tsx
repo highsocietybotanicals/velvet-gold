@@ -244,6 +244,13 @@ const ProductPage = () => {
                 </div>
               )}
 
+              {/* Badge molécule */}
+              {product.molecule && (
+                <div className="inline-flex items-center gap-2 bg-background/80 border border-primary/50 px-4 py-1.5 rounded-full mb-3 w-fit">
+                  <span className="text-sm font-bold text-primary tracking-widest uppercase">Molécule {product.molecule}</span>
+                </div>
+              )}
+
               <h1 className="font-display text-4xl md:text-5xl text-foreground mb-2">
                 {product.name}
               </h1>

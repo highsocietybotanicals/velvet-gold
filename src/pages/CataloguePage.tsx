@@ -326,6 +326,12 @@ const CataloguePage = () => {
                           <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
                         </div>
                       )}
+                      {/* Badge molécule */}
+                      {product.molecule && (
+                        <div className="absolute top-12 left-3 flex items-center gap-1.5 bg-background/85 backdrop-blur-sm px-2.5 py-1 rounded-full border border-primary/50">
+                          <span className="text-[11px] font-bold text-primary tracking-wider uppercase">{product.molecule}</span>
+                        </div>
+                      )}
                     </div>
                     <div className={viewMode === "grid" ? "p-4" : "flex-1 p-4 flex items-center justify-between"}>
                       <div>
