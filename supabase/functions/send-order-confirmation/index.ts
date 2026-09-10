@@ -323,8 +323,7 @@ Deno.serve(async (req) => {
     ].join("\n");
 
     // Generate invoice PDF
-    let invoicePdfBase64: string | null = null;
-    let invoiceFileName = `facture-${orderNumber}.pdf`;
+    let invoiceDownloadUrl: string | null = null;
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -338,9 +337,11 @@ Deno.serve(async (req) => {
       });
       if (invoiceRes.ok) {
         const invoiceData = await invoiceRes.json();
-        invoicePdfBase64 = invoiceData.pdfBase64;
-        if (invoiceData.invoiceNumber) {
-          invoiceFileName = `${invoiceData.invoiceNumber}.pdf`;
+        if (invoiceData.filePath) {
+          const { data: signed } = await supabase.storage
+            .from("invoices")
+            .createSignedUrl(invoiceData.filePath, 60 * 60 * 24 * 7);
+          invoiceDownloadUrl = signed?.signedUrl ?? null;
         }
         console.log("Invoice PDF generated successfully");
       } else {
@@ -350,11 +351,22 @@ Deno.serve(async (req) => {
       console.error("Invoice generation error:", invoiceErr);
     }
 
+    const invoiceHtml = invoiceDownloadUrl
+      ? `<p style="text-align:center;margin:0 0 24px;"><a href="${invoiceDownloadUrl}" style="display:inline-block;background:#d4af37;color:#0a0a0a;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;">Télécharger ma facture</a></p>`
+      : "";
+    const emailHtmlWithInvoice = htmlEmail.replace(
+      '<p style="color:#bbb;font-size:15px;line-height:1.7;margin:0 0 8px;">',
+      `${invoiceHtml}<p style="color:#bbb;font-size:15px;line-height:1.7;margin:0 0 8px;">`,
+    );
+    const emailTextWithInvoice = invoiceDownloadUrl
+      ? `${textContent}\n\nTélécharger la facture : ${invoiceDownloadUrl}`
+      : textContent;
+
     const sendResult = await sendRawEmail({
       to: recipientEmail,
       subject: `Merci ${orderNumber} - HSB`,
-      text: textContent,
-      html: htmlEmail,
+      text: emailTextWithInvoice,
+      html: emailHtmlWithInvoice,
       label: "order_confirmation",
       idempotencyKey: `order-confirmation-${orderId}`,
       replyTo: "contacts@highsocietybotanicals.com",

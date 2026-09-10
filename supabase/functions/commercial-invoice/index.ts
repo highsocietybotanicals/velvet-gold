@@ -406,6 +406,10 @@ Deno.serve(async (req) => {
       .from("invoices")
       .upload(filePath, pdfBytes, { contentType: "application/pdf", upsert: true });
     if (upErr) console.error("commercial-invoice upload error:", upErr);
+    const { data: signedInvoice } = await admin.storage
+      .from("invoices")
+      .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+    const invoiceDownloadUrl = signedInvoice?.signedUrl ?? "https://highsocietybotanicals.com/pro/commandes";
 
     // ---------- Email ----------
     let emailSent = true;
@@ -432,7 +436,7 @@ rubrique « Mes commandes ».
 <p style="color:#f5f0e1;font-size:14px;margin:0;">${iban.replace(/(.{4})/g, "$1 ").trim()}${bic ? ` — BIC ${bic}` : ""}</p>
 </td></tr></table>
 <p style="text-align:center;margin:0 0 22px;">
-<a href="https://highsocietybotanicals.com/pro/commandes" style="display:inline-block;background:#d4af37;color:#0a0a0a;text-decoration:none;padding:13px 32px;border-radius:8px;font-weight:bold;font-size:15px;">Voir dans mon espace pro</a>
+<a href="${invoiceDownloadUrl}" style="display:inline-block;background:#d4af37;color:#0a0a0a;text-decoration:none;padding:13px 32px;border-radius:8px;font-weight:bold;font-size:15px;">Télécharger ma facture</a>
 </p>
 <p style="color:#666;font-size:12px;line-height:1.6;margin:0;">Échéance : ${due}. Merci d'indiquer le numéro ${orderNumber} en libellé de votre virement pour que le règlement soit rattaché automatiquement.</p>
 <p style="color:#666;font-size:12px;margin:22px 0 0;text-align:center;">High Society Botanicals — Abbaretz (44170)</p>
@@ -445,6 +449,7 @@ rubrique « Mes commandes ».
 Règlement par virement — libellé obligatoire : ${orderNumber}
 IBAN : ${iban}${bic ? ` / BIC : ${bic}` : ""}
 Échéance : ${due}
+Télécharger la facture : ${invoiceDownloadUrl}
 
 Facture également disponible dans votre espace pro : https://highsocietybotanicals.com/pro/commandes`,
         html,
