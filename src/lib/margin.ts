@@ -49,9 +49,9 @@ export const GAMME_LABEL: Record<string, string> = {
   "nuage-de-mousseux": "Nuage de Mousseux (Go Fast)",
   "911-og-indoor": "911 OG « Indoor Master »",
   "blue-mango-indoor": "Blue Mango « Indoor Master »",
-  haribo: "Haribo — Nectar Divin",
-  heisenberg: "Heisenberg — Nectar Divin",
-  "mango-x-ice": "Mango X Ice — Nectar Divin",
+  haribo: "Haribo — Force Noire",
+  heisenberg: "Heisenberg — Force Noire",
+  "mango-x-ice": "Mango X Ice — Exotique",
   "piatella": "Piatella — Exotique",
 };
 
