@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendRawEmail } from "../_shared/transactional-email-templates/send-raw-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,69 +13,10 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const encodeBase64 = (str: string) => btoa(unescape(encodeURIComponent(str)));
-const encodeSubject = (s: string) => `=?UTF-8?B?${encodeBase64(s)}?=`;
-
 function generatePassword(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
   const bytes = crypto.getRandomValues(new Uint8Array(12));
   return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-}
-
-async function sendEmail(to: string, subject: string, html: string, text: string) {
-  const gmailUser = Deno.env.get("GMAIL_USER");
-  const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD");
-  if (!gmailUser || !gmailPassword) throw new Error("Configuration email manquante");
-
-  const boundary = "boundary_" + crypto.randomUUID().replace(/-/g, "");
-  const rawEmail = [
-    `From: High Society Botanicals <${gmailUser}>`,
-    `To: ${to}`,
-    `Subject: ${encodeSubject(subject)}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    ``,
-    `--${boundary}`,
-    `Content-Type: text/plain; charset=UTF-8`,
-    `Content-Transfer-Encoding: base64`,
-    ``,
-    encodeBase64(text),
-    ``,
-    `--${boundary}`,
-    `Content-Type: text/html; charset=UTF-8`,
-    `Content-Transfer-Encoding: base64`,
-    ``,
-    encodeBase64(html),
-    ``,
-    `--${boundary}--`,
-  ].join("\r\n");
-
-  const conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  const readResponse = async () => {
-    const buf = new Uint8Array(4096);
-    const n = await conn.read(buf);
-    return n ? decoder.decode(buf.subarray(0, n)) : "";
-  };
-  const sendCommand = async (cmd: string) => {
-    await conn.write(encoder.encode(cmd + "\r\n"));
-    return await readResponse();
-  };
-
-  await readResponse();
-  await sendCommand("EHLO localhost");
-  await sendCommand("AUTH LOGIN");
-  await sendCommand(btoa(gmailUser));
-  await sendCommand(btoa(gmailPassword));
-  await sendCommand(`MAIL FROM:<${gmailUser}>`);
-  await sendCommand(`RCPT TO:<${to}>`);
-  await sendCommand("DATA");
-  await conn.write(encoder.encode(rawEmail + "\r\n.\r\n"));
-  await readResponse();
-  await sendCommand("QUIT");
-  conn.close();
 }
 
 Deno.serve(async (req) => {
@@ -213,7 +155,16 @@ High Society Botanicals — Abbaretz (44170)`;
 
     let emailSent = true;
     try {
-      await sendEmail(rawEmail, subject, html, text);
+      const result = await sendRawEmail({
+        to: rawEmail,
+        subject,
+        html,
+        text,
+        label: "pro-account-access",
+        idempotencyKey: `pro-account-access-${userId}`,
+        replyTo: "contacts@highsocietybotanicals.com",
+      });
+      emailSent = result.sent;
     } catch (e) {
       emailSent = false;
       console.error("Pro account email failed:", (e as Error).message);

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { sendRawEmail } from "../_shared/transactional-email-templates/send-raw-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,69 +8,6 @@ const corsHeaders = {
 };
 
 const SITE_URL = "https://highsocietybotanicals.com";
-
-function encodeBase64(str: string): string {
-  return btoa(unescape(encodeURIComponent(str)));
-}
-function encodeSubject(subject: string): string {
-  return `=?UTF-8?B?${encodeBase64(subject)}?=`;
-}
-
-async function sendGmail(to: string, subject: string, html: string, text: string) {
-  const gmailUser = Deno.env.get("GMAIL_USER")!;
-  const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD")!;
-
-  const boundary = "boundary_" + crypto.randomUUID().replace(/-/g, "");
-  const rawEmail = [
-    `From: High Society Botanicals <${gmailUser}>`,
-    `To: ${to}`,
-    `Subject: ${encodeSubject(subject)}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    ``,
-    `--${boundary}`,
-    `Content-Type: text/plain; charset=UTF-8`,
-    `Content-Transfer-Encoding: base64`,
-    ``,
-    encodeBase64(text),
-    ``,
-    `--${boundary}`,
-    `Content-Type: text/html; charset=UTF-8`,
-    `Content-Transfer-Encoding: base64`,
-    ``,
-    encodeBase64(html),
-    ``,
-    `--${boundary}--`,
-  ].join("\r\n");
-
-  const conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  async function readResp(): Promise<string> {
-    const buf = new Uint8Array(4096);
-    const n = await conn.read(buf);
-    return n ? decoder.decode(buf.subarray(0, n)) : "";
-  }
-  async function send(cmd: string): Promise<string> {
-    await conn.write(encoder.encode(cmd + "\r\n"));
-    return await readResp();
-  }
-  try {
-    await readResp();
-    await send("EHLO localhost");
-    await send("AUTH LOGIN");
-    await send(btoa(gmailUser));
-    await send(btoa(gmailPassword));
-    await send(`MAIL FROM:<${gmailUser}>`);
-    await send(`RCPT TO:<${to}>`);
-    await send("DATA");
-    await conn.write(encoder.encode(rawEmail + "\r\n.\r\n"));
-    await readResp();
-    await send("QUIT");
-  } finally {
-    try { conn.close(); } catch (_) {}
-  }
-}
 
 function buildEmail(opts: {
   firstName?: string | null;
@@ -203,7 +141,15 @@ Deno.serve(async (req) => {
           totalAmount: Number(order.total_amount ?? 0),
           stage: "2h",
         });
-        await sendGmail(r.email, subject, html, text);
+        const result = await sendRawEmail({
+          to: r.email,
+          subject,
+          html,
+          text,
+          label: "abandoned-cart-2h",
+          idempotencyKey: `abandoned-cart-2h-${order.id}`,
+        });
+        if (!result.sent) { results.skipped++; continue; }
         await supabase.from("orders")
           .update({ abandoned_email_2h_sent_at: new Date().toISOString() })
           .eq("id", order.id);
@@ -224,7 +170,15 @@ Deno.serve(async (req) => {
           totalAmount: Number(order.total_amount ?? 0),
           stage: "24h",
         });
-        await sendGmail(r.email, subject, html, text);
+        const result = await sendRawEmail({
+          to: r.email,
+          subject,
+          html,
+          text,
+          label: "abandoned-cart-24h",
+          idempotencyKey: `abandoned-cart-24h-${order.id}`,
+        });
+        if (!result.sent) { results.skipped++; continue; }
         await supabase.from("orders")
           .update({ abandoned_email_24h_sent_at: new Date().toISOString() })
           .eq("id", order.id);
