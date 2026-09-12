@@ -243,6 +243,7 @@ const CommercialCataloguePage = () => {
                 </div>
 
                 <div className="flex flex-col items-end gap-1">
+                  <StockBadge stock={stock} />
                   {p.isExotique && (
                     <Badge className="bg-purple-600/20 text-purple-300 border border-purple-500/50">
                       Exotique
