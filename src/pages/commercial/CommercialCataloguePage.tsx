@@ -382,7 +382,8 @@ const CommercialCataloguePage = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
