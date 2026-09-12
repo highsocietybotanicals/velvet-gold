@@ -13,6 +13,57 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useEnsureBarcodes, wKey } from "@/hooks/useBarcodes";
 import { generateBarcodeSheet } from "@/lib/barcodeSheetPdf";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Package, AlertTriangle, XCircle, Flame } from "lucide-react";
+
+interface StockRow {
+  product_id: string;
+  stock_grams: number;
+  low_stock_threshold_g: number;
+}
+
+const useCommercialStock = () =>
+  useQuery({
+    queryKey: ["commercial", "stock"],
+    queryFn: async (): Promise<Map<string, StockRow>> => {
+      const { data, error } = await (supabase as any)
+        .from("product_inventory")
+        .select("product_id, stock_grams, low_stock_threshold_g");
+      if (error) throw error;
+      return new Map(
+        (data ?? []).map((r: any) => [
+          r.product_id,
+          {
+            product_id: r.product_id,
+            stock_grams: Number(r.stock_grams),
+            low_stock_threshold_g: Number(r.low_stock_threshold_g ?? 10),
+          },
+        ])
+      );
+    },
+  });
+
+const StockBadge = ({ stock }: { stock?: StockRow }) => {
+  if (!stock) return null;
+  if (stock.stock_grams <= 0)
+    return (
+      <Badge className="bg-red-900/40 text-red-300 border border-red-700/50 gap-1">
+        <XCircle className="h-3 w-3" /> Rupture
+      </Badge>
+    );
+  if (stock.stock_grams <= stock.low_stock_threshold_g)
+    return (
+      <Badge className="bg-amber-600/20 text-amber-300 border border-amber-500/50 gap-1">
+        <AlertTriangle className="h-3 w-3" /> Stock faible — {stock.stock_grams} g
+      </Badge>
+    );
+  return (
+    <Badge className="bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 gap-1">
+      <Package className="h-3 w-3" /> {stock.stock_grams} g en stock
+    </Badge>
+  );
+};
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
