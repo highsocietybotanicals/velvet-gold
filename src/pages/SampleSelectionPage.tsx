@@ -33,7 +33,7 @@ const SampleSelectionPage = () => {
     return sampleItems.some(item => item.product.id === productId);
   };
 
-  const handleSelectSample = (product: typeof flowers[0]) => {
+  const handleSelectSample = (product: Product) => {
     if (isSelected(product.id)) {
       removeSample(product.id);
     } else if (samplesRemaining > 0) {
