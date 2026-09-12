@@ -103,7 +103,23 @@ const SommelierSection = () => {
 
   const getRecommendation = (): Product | null => {
     if (!selectedIntention || !selectedTaste) return null;
-    return recommendationMatrix[selectedIntention.id]?.[selectedTaste.id] || null;
+    const suggested = recommendationMatrix[selectedIntention.id]?.[selectedTaste.id] || null;
+    const available = catalogProducts.filter((p) => !p.isOutOfStock);
+    // Une variété désactivée ou en rupture n'est jamais recommandée : on prend
+    // la première variété active correspondant à la même intention et au même goût.
+    if (suggested && available.some((p) => p.id === suggested.id)) {
+      return available.find((p) => p.id === suggested.id) ?? suggested;
+    }
+    return (
+      available.find(
+        (p) =>
+          p.intentionMatch?.includes(selectedIntention.id) &&
+          p.tasteMatch?.includes(selectedTaste.id)
+      ) ??
+      available.find((p) => p.intentionMatch?.includes(selectedIntention.id)) ??
+      available[0] ??
+      null
+    );
   };
 
   return (
