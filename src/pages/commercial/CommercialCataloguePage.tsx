@@ -94,6 +94,15 @@ const CommercialCataloguePage = () => {
   const allProducts = useMemo(() => [...flowers, ...resins], [flowers, resins]);
   const { barcodes } = useEnsureBarcodes(allProducts.map((p) => p.id));
 
+  const priority = useMemo(() => {
+    if (!stockMap) return [];
+    return allProducts
+      .map((p) => ({ p, stock: stockMap.get(p.id) }))
+      .filter((x) => (x.stock?.stock_grams ?? 0) > 0)
+      .sort((a, b) => b.stock!.stock_grams - a.stock!.stock_grams)
+      .slice(0, 5);
+  }, [allProducts, stockMap]);
+
   const reportsFor = (id: string) => {
     const r = labReports?.[id];
     return Array.isArray(r) ? r : [];
