@@ -162,8 +162,9 @@ Deno.serve(async (req) => {
 
     const orderNumber = order.display_order_number as string;
 
-    // Commission du commercial (sa propre fiche, ou celle fournie par l'admin)
-    let repId: string | null = typeof body.rep_id === "string" ? body.rep_id : null;
+    // Commission du commercial : seuls les admins peuvent cibler une autre fiche.
+    // Pour un commercial, le rep_id est toujours dérivé côté serveur de son compte.
+    let repId: string | null = isAdmin && typeof body.rep_id === "string" ? body.rep_id : null;
     if (!repId) {
       const { data: myRep } = await admin
         .from("sales_reps")
