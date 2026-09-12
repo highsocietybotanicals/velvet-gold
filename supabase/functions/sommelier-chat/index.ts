@@ -125,6 +125,18 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const { data: catalogRows } = await supabase
+      .from("products")
+      .select(
+        "id, name, category, price, price_group, cbd_percentage, subtitle, description, mood, is_force_noire, is_out_of_stock"
+      )
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+
+    const availableProducts = (catalogRows ?? []).filter(
+      (p: CatalogRow) => !p.is_out_of_stock
+    );
+
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -136,7 +148,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: PRODUCTS_CONTEXT },
+            { role: "system", content: buildProductsContext(availableProducts) },
             ...safeMessages,
           ],
           stream: true,
