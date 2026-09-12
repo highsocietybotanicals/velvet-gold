@@ -238,6 +238,51 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_movements: {
+        Row: {
+          created_at: string
+          delta_grams: number
+          id: string
+          note: string | null
+          order_id: string | null
+          product_id: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          delta_grams: number
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          product_id: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          delta_grams?: number
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          product_id?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ip_rate_limits: {
         Row: {
           bucket: string
@@ -812,6 +857,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      product_inventory: {
+        Row: {
+          created_at: string
+          low_stock_threshold_g: number
+          product_id: string
+          stock_grams: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          low_stock_threshold_g?: number
+          product_id: string
+          stock_grams?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          low_stock_threshold_g?: number
+          product_id?: string
+          stock_grams?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_inventory_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_lab_reports: {
         Row: {
@@ -1420,6 +1497,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_order_stock: {
+        Args: { p_direction: number; p_order_id: string }
+        Returns: undefined
+      }
       cleanup_abandoned_orders: { Args: never; Returns: number }
       has_role: {
         Args: {
