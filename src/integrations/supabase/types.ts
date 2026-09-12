@@ -1421,15 +1421,6 @@ export type Database = {
     }
     Functions: {
       cleanup_abandoned_orders: { Args: never; Returns: number }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1440,23 +1431,6 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_commercial: { Args: never; Returns: boolean }
       is_pro: { Args: never; Returns: boolean }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
-      }
       validate_promo_code: {
         Args: { p_code: string; p_user_id?: string }
         Returns: Json
