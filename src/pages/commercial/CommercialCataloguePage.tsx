@@ -81,6 +81,7 @@ const CommercialCataloguePage = () => {
   const { data: labReports } = useLabReports();
   const { open: openLab, openingId } = useOpenLabReport();
   const { toast } = useToast();
+  const { data: stockMap } = useCommercialStock();
   const [search, setSearch] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
 
