@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Sparkles, Loader2, ShoppingCart } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useCart } from "@/contexts/CartContext";
-import { allProducts } from "@/data/products";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -111,7 +111,11 @@ async function streamChat({
 
 function CartButton({ command }: { command: CartCommand }) {
   const { addToCart } = useCart();
-  const product = allProducts.find((p) => p.id === command.productId);
+  const { all: catalogProducts } = useCatalogProducts();
+  // Une variété désactivée ou en rupture ne peut plus être proposée ni ajoutée au panier
+  const product = catalogProducts.find(
+    (p) => p.id === command.productId && !p.isOutOfStock
+  );
 
   if (!product) return null;
 

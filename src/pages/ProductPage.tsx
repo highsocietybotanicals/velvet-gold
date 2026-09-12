@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, ShoppingCart, Gift, Package, ChevronDown, Zap, Crown, Gem } from "lucide-react";
 import GoldParticles from "@/components/GoldParticles";
-import { allProducts, PriceGroup } from "@/data/products";
+import { Product, PriceGroup } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
@@ -34,9 +34,13 @@ const calculateTerpeneSimilarity = (
   return similarity / keys.length;
 };
 
-const getSimilarProducts = (currentProduct: typeof allProducts[0], count: number = 4) => {
-  const similarities = allProducts
-    .filter((p) => p.id !== currentProduct.id)
+const getSimilarProducts = (
+  currentProduct: Product,
+  catalog: Product[],
+  count: number = 4
+) => {
+  const similarities = catalog
+    .filter((p) => p.id !== currentProduct.id && !p.isOutOfStock)
     .map((p) => ({
       product: p,
       similarity: calculateTerpeneSimilarity(currentProduct.terpenes, p.terpenes),
@@ -53,9 +57,10 @@ const ProductPage = () => {
   const { isPro, isProValidated, profile } = useAuth();
   const { getPrice } = useProducts();
   const { getProPrice } = useProPrices();
-  const { all: catalogProducts } = useCatalogProducts();
+  const { all: catalogProducts, isLoading: catalogLoading } = useCatalogProducts();
 
-  const product = catalogProducts.find((p) => p.id === id) ?? allProducts.find((p) => p.id === id);
+  // Seul le catalogue actif fait foi : une variété désactivée en base n'est plus consultable.
+  const product = catalogProducts.find((p) => p.id === id);
   const [selectedWeight, setSelectedWeight] = useState<number>(1);
   const [customWeight, setCustomWeight] = useState<string>("1");
 
@@ -128,20 +133,28 @@ const ProductPage = () => {
     }
   };
 
+  if (catalogLoading) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="font-display text-4xl text-primary mb-4">Produit non trouvé</h1>
-          <button onClick={() => navigate("/")} className="btn-luxury-outline">
-            Retour à l'accueil
+        <div className="text-center px-6">
+          <h1 className="font-display text-4xl text-primary mb-4">Variété indisponible</h1>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Cette variété n'est plus proposée pour le moment. Découvrez le reste de notre
+            collection.
+          </p>
+          <button onClick={() => navigate("/catalogue")} className="btn-luxury-outline">
+            Voir le catalogue
           </button>
         </div>
       </div>
     );
   }
 
-  const similarProducts = getSimilarProducts(product, 4);
+  const similarProducts = getSimilarProducts(product, catalogProducts, 4);
 
   return (
     <div className={`min-h-screen relative ${product.isNectarDivin ? "bg-black" : product.isExotique ? "bg-gradient-to-b from-purple-950/30 to-background" : "bg-background"}`}>

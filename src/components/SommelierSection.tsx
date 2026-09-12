@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Sparkles, Moon, Sun, Palette, ArrowRight, RotateCcw, TreePine, Cherry, Flower2, ChevronLeft, ShoppingCart } from "lucide-react";
 import { recommendationMatrix, type Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 
 type IntentionId = "detente" | "creativite" | "sommeil" | "energie";
 type TasteId = "boise" | "fruite" | "floral";
@@ -75,6 +76,7 @@ const SommelierSection = () => {
   const [selectedIntention, setSelectedIntention] = useState<Intention | null>(null);
   const [selectedTaste, setSelectedTaste] = useState<Taste | null>(null);
   const { addToCart } = useCart();
+  const { all: catalogProducts } = useCatalogProducts();
 
   const handleIntentionSelect = (intention: Intention) => {
     setSelectedIntention(intention);
@@ -103,7 +105,23 @@ const SommelierSection = () => {
 
   const getRecommendation = (): Product | null => {
     if (!selectedIntention || !selectedTaste) return null;
-    return recommendationMatrix[selectedIntention.id]?.[selectedTaste.id] || null;
+    const suggested = recommendationMatrix[selectedIntention.id]?.[selectedTaste.id] || null;
+    const available = catalogProducts.filter((p) => !p.isOutOfStock);
+    // Une variété désactivée ou en rupture n'est jamais recommandée : on prend
+    // la première variété active correspondant à la même intention et au même goût.
+    if (suggested && available.some((p) => p.id === suggested.id)) {
+      return available.find((p) => p.id === suggested.id) ?? suggested;
+    }
+    return (
+      available.find(
+        (p) =>
+          p.intentionMatch?.includes(selectedIntention.id) &&
+          p.tasteMatch?.includes(selectedTaste.id)
+      ) ??
+      available.find((p) => p.intentionMatch?.includes(selectedIntention.id)) ??
+      available[0] ??
+      null
+    );
   };
 
   return (

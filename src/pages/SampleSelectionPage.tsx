@@ -2,13 +2,20 @@ import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Gift, Check, ArrowLeft } from "lucide-react";
-import { flowers } from "@/data/products";
+import { Product } from "@/data/products";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useCart } from "@/contexts/CartContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const SampleSelectionPage = () => {
   const navigate = useNavigate();
+  const { flowers: catalogFlowers } = useCatalogProducts();
+  // Seules les fleurs actives et en stock peuvent être offertes en échantillon
+  const flowers = useMemo(
+    () => catalogFlowers.filter((p) => !p.isOutOfStock),
+    [catalogFlowers]
+  );
   const { 
     totalFlowerWeight, 
     sampleItems, 
@@ -26,7 +33,7 @@ const SampleSelectionPage = () => {
     return sampleItems.some(item => item.product.id === productId);
   };
 
-  const handleSelectSample = (product: typeof flowers[0]) => {
+  const handleSelectSample = (product: Product) => {
     if (isSelected(product.id)) {
       removeSample(product.id);
     } else if (samplesRemaining > 0) {

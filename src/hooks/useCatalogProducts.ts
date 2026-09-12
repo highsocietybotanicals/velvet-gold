@@ -51,7 +51,9 @@ export const useCatalogProducts = () => {
     return staticAllProducts
       .map((p) => {
         const o = overrides[p.id];
-        if (!o) return p;
+        // La base fait foi : un produit absent de la réponse (désactivé, donc filtré
+        // par les règles d'accès publiques) ou explicitement inactif disparaît du site.
+        if (!o) return null;
         if (o.is_active === false) return null;
         return {
           ...p,
