@@ -57,9 +57,10 @@ const ProductPage = () => {
   const { isPro, isProValidated, profile } = useAuth();
   const { getPrice } = useProducts();
   const { getProPrice } = useProPrices();
-  const { all: catalogProducts } = useCatalogProducts();
+  const { all: catalogProducts, isLoading: catalogLoading } = useCatalogProducts();
 
-  const product = catalogProducts.find((p) => p.id === id) ?? allProducts.find((p) => p.id === id);
+  // Seul le catalogue actif fait foi : une variété désactivée en base n'est plus consultable.
+  const product = catalogProducts.find((p) => p.id === id);
   const [selectedWeight, setSelectedWeight] = useState<number>(1);
   const [customWeight, setCustomWeight] = useState<string>("1");
 
