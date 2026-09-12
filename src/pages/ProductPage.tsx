@@ -133,20 +133,28 @@ const ProductPage = () => {
     }
   };
 
+  if (catalogLoading) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="font-display text-4xl text-primary mb-4">Produit non trouvé</h1>
-          <button onClick={() => navigate("/")} className="btn-luxury-outline">
-            Retour à l'accueil
+        <div className="text-center px-6">
+          <h1 className="font-display text-4xl text-primary mb-4">Variété indisponible</h1>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Cette variété n'est plus proposée pour le moment. Découvrez le reste de notre
+            collection.
+          </p>
+          <button onClick={() => navigate("/catalogue")} className="btn-luxury-outline">
+            Voir le catalogue
           </button>
         </div>
       </div>
     );
   }
 
-  const similarProducts = getSimilarProducts(product, 4);
+  const similarProducts = getSimilarProducts(product, catalogProducts, 4);
 
   return (
     <div className={`min-h-screen relative ${product.isNectarDivin ? "bg-black" : product.isExotique ? "bg-gradient-to-b from-purple-950/30 to-background" : "bg-background"}`}>
