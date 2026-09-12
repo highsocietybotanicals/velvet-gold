@@ -215,8 +215,11 @@ const CommercialCataloguePage = () => {
       />
 
       <div className="grid gap-4 md:grid-cols-2">
-        {products.map((p) => (
-          <Card key={p.id} className="overflow-hidden">
+        {products.map((p) => {
+          const stock = stockMap?.get(p.id);
+          const outOfStock = !!stock && stock.stock_grams <= 0;
+          return (
+          <Card key={p.id} className={`overflow-hidden ${outOfStock ? "opacity-50" : ""}`}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
