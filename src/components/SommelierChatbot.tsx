@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Sparkles, Loader2, ShoppingCart } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useCart } from "@/contexts/CartContext";
-import { allProducts } from "@/data/products";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
