@@ -10,6 +10,12 @@ import Footer from "@/components/Footer";
 
 const SampleSelectionPage = () => {
   const navigate = useNavigate();
+  const { flowers: catalogFlowers } = useCatalogProducts();
+  // Seules les fleurs actives et en stock peuvent être offertes en échantillon
+  const flowers = useMemo(
+    () => catalogFlowers.filter((p) => !p.isOutOfStock),
+    [catalogFlowers]
+  );
   const { 
     totalFlowerWeight, 
     sampleItems, 
