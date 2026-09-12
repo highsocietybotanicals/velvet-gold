@@ -34,9 +34,13 @@ const calculateTerpeneSimilarity = (
   return similarity / keys.length;
 };
 
-const getSimilarProducts = (currentProduct: typeof allProducts[0], count: number = 4) => {
-  const similarities = allProducts
-    .filter((p) => p.id !== currentProduct.id)
+const getSimilarProducts = (
+  currentProduct: Product,
+  catalog: Product[],
+  count: number = 4
+) => {
+  const similarities = catalog
+    .filter((p) => p.id !== currentProduct.id && !p.isOutOfStock)
     .map((p) => ({
       product: p,
       similarity: calculateTerpeneSimilarity(currentProduct.terpenes, p.terpenes),
