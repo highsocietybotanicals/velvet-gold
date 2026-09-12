@@ -151,6 +151,31 @@ const CommercialCataloguePage = () => {
         </Button>
       </div>
 
+      {priority.length > 0 && (
+        <Card className="border-gold/40 bg-gold/5">
+          <CardContent className="pt-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Flame className="h-4 w-4 text-gold" />
+              <p className="font-medium text-sm">À vendre en priorité</p>
+              <p className="text-xs text-muted-foreground">
+                — les variétés avec le plus de stock à écouler
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {priority.map(({ p, stock }) => (
+                <span
+                  key={p.id}
+                  className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-background/60 px-3 py-1 text-xs"
+                >
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-gold font-semibold">{stock!.stock_grams} g</span>
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {ARGUMENTS_CLES.map((a) => (
           <Card key={a.title} className="bg-card/50">
