@@ -1,0 +1,2 @@
+GRANT SELECT ON public.product_inventory TO authenticated;
+CREATE POLICY "Commercials read inventory" ON public.product_inventory FOR SELECT TO authenticated USING (public.is_admin() OR public.is_commercial());

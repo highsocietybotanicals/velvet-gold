@@ -13,6 +13,57 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useEnsureBarcodes, wKey } from "@/hooks/useBarcodes";
 import { generateBarcodeSheet } from "@/lib/barcodeSheetPdf";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Package, AlertTriangle, XCircle, Flame } from "lucide-react";
+
+interface StockRow {
+  product_id: string;
+  stock_grams: number;
+  low_stock_threshold_g: number;
+}
+
+const useCommercialStock = () =>
+  useQuery({
+    queryKey: ["commercial", "stock"],
+    queryFn: async (): Promise<Map<string, StockRow>> => {
+      const { data, error } = await (supabase as any)
+        .from("product_inventory")
+        .select("product_id, stock_grams, low_stock_threshold_g");
+      if (error) throw error;
+      return new Map(
+        (data ?? []).map((r: any) => [
+          r.product_id,
+          {
+            product_id: r.product_id,
+            stock_grams: Number(r.stock_grams),
+            low_stock_threshold_g: Number(r.low_stock_threshold_g ?? 10),
+          },
+        ])
+      );
+    },
+  });
+
+const StockBadge = ({ stock }: { stock?: StockRow }) => {
+  if (!stock) return null;
+  if (stock.stock_grams <= 0)
+    return (
+      <Badge className="bg-red-900/40 text-red-300 border border-red-700/50 gap-1">
+        <XCircle className="h-3 w-3" /> Rupture
+      </Badge>
+    );
+  if (stock.stock_grams <= stock.low_stock_threshold_g)
+    return (
+      <Badge className="bg-amber-600/20 text-amber-300 border border-amber-500/50 gap-1">
+        <AlertTriangle className="h-3 w-3" /> Stock faible — {stock.stock_grams} g
+      </Badge>
+    );
+  return (
+    <Badge className="bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 gap-1">
+      <Package className="h-3 w-3" /> {stock.stock_grams} g en stock
+    </Badge>
+  );
+};
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
@@ -30,6 +81,7 @@ const CommercialCataloguePage = () => {
   const { data: labReports } = useLabReports();
   const { open: openLab, openingId } = useOpenLabReport();
   const { toast } = useToast();
+  const { data: stockMap } = useCommercialStock();
   const [search, setSearch] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -41,6 +93,15 @@ const CommercialCataloguePage = () => {
 
   const allProducts = useMemo(() => [...flowers, ...resins], [flowers, resins]);
   const { barcodes } = useEnsureBarcodes(allProducts.map((p) => p.id));
+
+  const priority = useMemo(() => {
+    if (!stockMap) return [];
+    return allProducts
+      .map((p) => ({ p, stock: stockMap.get(p.id) }))
+      .filter((x) => (x.stock?.stock_grams ?? 0) > 0)
+      .sort((a, b) => b.stock!.stock_grams - a.stock!.stock_grams)
+      .slice(0, 5);
+  }, [allProducts, stockMap]);
 
   const reportsFor = (id: string) => {
     const r = labReports?.[id];
@@ -90,6 +151,31 @@ const CommercialCataloguePage = () => {
         </Button>
       </div>
 
+      {priority.length > 0 && (
+        <Card className="border-gold/40 bg-gold/5">
+          <CardContent className="pt-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Flame className="h-4 w-4 text-gold" />
+              <p className="font-medium text-sm">À vendre en priorité</p>
+              <p className="text-xs text-muted-foreground">
+                — les variétés avec le plus de stock à écouler
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {priority.map(({ p, stock }) => (
+                <span
+                  key={p.id}
+                  className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-background/60 px-3 py-1 text-xs"
+                >
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-gold font-semibold">{stock!.stock_grams} g</span>
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {ARGUMENTS_CLES.map((a) => (
           <Card key={a.title} className="bg-card/50">
@@ -129,8 +215,11 @@ const CommercialCataloguePage = () => {
       />
 
       <div className="grid gap-4 md:grid-cols-2">
-        {products.map((p) => (
-          <Card key={p.id} className="overflow-hidden">
+        {products.map((p) => {
+          const stock = stockMap?.get(p.id);
+          const outOfStock = !!stock && stock.stock_grams <= 0;
+          return (
+          <Card key={p.id} className={`overflow-hidden ${outOfStock ? "opacity-50" : ""}`}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -154,6 +243,7 @@ const CommercialCataloguePage = () => {
                 </div>
 
                 <div className="flex flex-col items-end gap-1">
+                  <StockBadge stock={stock} />
                   {p.isExotique && (
                     <Badge className="bg-purple-600/20 text-purple-300 border border-purple-500/50">
                       Exotique
@@ -293,7 +383,8 @@ const CommercialCataloguePage = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
