@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Sparkles, Moon, Sun, Palette, ArrowRight, RotateCcw, TreePine, Cherry, Flower2, ChevronLeft, ShoppingCart } from "lucide-react";
 import { recommendationMatrix, type Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 
 type IntentionId = "detente" | "creativite" | "sommeil" | "energie";
 type TasteId = "boise" | "fruite" | "floral";
