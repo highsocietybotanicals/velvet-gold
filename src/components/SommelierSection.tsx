@@ -75,6 +75,7 @@ const SommelierSection = () => {
   const [selectedIntention, setSelectedIntention] = useState<Intention | null>(null);
   const [selectedTaste, setSelectedTaste] = useState<Taste | null>(null);
   const { addToCart } = useCart();
+  const { all: catalogProducts } = useCatalogProducts();
 
   const handleIntentionSelect = (intention: Intention) => {
     setSelectedIntention(intention);
