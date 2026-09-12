@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, ShoppingCart, Gift, Package, ChevronDown, Zap, Crown, Gem } from "lucide-react";
 import GoldParticles from "@/components/GoldParticles";
-import { allProducts, PriceGroup } from "@/data/products";
+import { Product, PriceGroup } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
