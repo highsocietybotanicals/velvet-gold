@@ -14,6 +14,7 @@ import labelMangoXIce from "@/assets/labels/mango-x-ice-label.png";
 import labelHaribo from "@/assets/labels/haribo-label.png";
 import labelHeisenberg from "@/assets/labels/heisenberg-label.png";
 import labelPoussiereDor from "@/assets/labels/poussiere-dor-label.png";
+import labelPiatella from "@/assets/labels/piatella-label.png";
 
 const LABEL_MAP: Record<string, string> = {
   "911-og-indoor": label911og,
@@ -28,6 +29,7 @@ const LABEL_MAP: Record<string, string> = {
   "haribo": labelHaribo,
   "heisenberg": labelHeisenberg,
   "poussiere-dor": labelPoussiereDor,
+  "piatella": labelPiatella,
 };
 
 export const SUPPORTED_LABEL_IDS = Object.keys(LABEL_MAP);
