@@ -38,6 +38,9 @@ const LABEL_MAP: Record<string, string> = {
 
 export const SUPPORTED_LABEL_IDS = Object.keys(LABEL_MAP);
 
+/** Étiquette intégrée d'origine pour un produit (si elle existe) */
+export const builtInLabel = (productId: string): string | undefined => LABEL_MAP[productId];
+
 /** Convert an image URL (imported asset) to a base64 data URL */
 async function toBase64(url: string): Promise<string> {
   const res = await fetch(url);
@@ -56,6 +59,10 @@ interface LabelParams {
   productId: string;
   /** Code-barres EAN-13 interne (optionnel) */
   ean13?: string | null;
+  /** Étiquette importée depuis l'administration (URL signée) */
+  customLabelUrl?: string | null;
+  /** true si l'étiquette importée est un PDF déjà prêt à imprimer */
+  customLabelIsPdf?: boolean;
 }
 
 export async function generateProductLabel({
@@ -63,9 +70,27 @@ export async function generateProductLabel({
   weight,
   productId,
   ean13,
+  customLabelUrl,
+  customLabelIsPdf,
 }: LabelParams) {
-  const labelUrl = LABEL_MAP[productId];
+  // Étiquette importée au format PDF : téléchargement direct, sans recomposition
+  if (customLabelUrl && customLabelIsPdf) {
+    const res = await fetch(customLabelUrl);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `etiquette-${productId}-${weight}g.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return;
+  }
+
+  const labelUrl = customLabelUrl || LABEL_MAP[productId];
   if (!labelUrl) throw new Error(`No label image for product: ${productId}`);
+
 
   const labelB64 = await toBase64(labelUrl);
 
