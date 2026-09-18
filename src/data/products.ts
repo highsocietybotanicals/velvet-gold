@@ -10,11 +10,12 @@ import mangoXIce from "@/assets/flowers/mango-x-ice-real.jpg";
 // Résines Premium
 import iceOLator from "@/assets/resins/ice-o-lator-real.jpg";
 import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
-import nuageDeMousseux from "@/assets/resins/nuage-de-mousseux-real.jpg";
 import hariboPremium from "@/assets/resins/haribo-premium.jpg";
 import heisenbergPremium from "@/assets/resins/heisenberg-premium.jpg";
 import poussiereDorPremium from "@/assets/resins/poussiere-dor-premium.jpg";
 import piatellaImg from "@/assets/resins/piatella.jpg";
+import bhmImg from "@/assets/resins/bhm-real.png";
+import lemonPunchHashImg from "@/assets/resins/lemon-punch-hash-real.png";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
@@ -134,24 +135,6 @@ const groupA: Product[] = [
     intentionMatch: ["sommeil"],
     tasteMatch: ["floral"],
   },
-  {
-    id: "nuage-de-mousseux",
-    name: "Nuage de Mousseux",
-    subtitle: "Élixir Noir Premium",
-    badge: "Élixir Noir",
-    description: "Résine mousseux infusée Élixir Noir 50%. Texture aérienne unique, détente profonde.",
-    price: 13,
-    priceGroup: "A",
-    cbdPercentage: "50% Élixir Noir",
-    molecule: "MS",
-    image: nuageDeMousseux,
-    terpenes: { boise: 80, fruite: 35, epice: 50, terreux: 85 },
-    mood: "Détente",
-    category: "resine",
-    intentionMatch: ["detente", "sommeil"],
-    tasteMatch: ["boise"],
-    isForceNoire: true,
-  },
 ];
 
 
@@ -202,6 +185,42 @@ const groupB: Product[] = [
 // ============================================
 
 const topRange: Product[] = [
+  {
+    id: "bubble-hash-maturer",
+    name: "BHM",
+    subtitle: "Bubble Hash Maturer · Résine Exotique",
+    badge: "Exotique",
+    description: "Bubble Hash Maturer de la gamme Exotique, molécule HE à 24 %, à la teinte crème et à la texture compacte.",
+    price: 16,
+    priceGroup: "B",
+    cbdPercentage: "24%",
+    molecule: "HE",
+    image: bhmImg,
+    terpenes: { boise: 50, fruite: 50, epice: 50, terreux: 50 },
+    mood: "Intense",
+    category: "resine",
+    intentionMatch: ["detente"],
+    tasteMatch: [],
+    isExotique: true,
+  },
+  {
+    id: "lemon-punch-hash",
+    name: "Lemon Punch Hash",
+    subtitle: "Résine Force Noire",
+    badge: "Force Noire",
+    description: "Résine Force Noire, molécule HE à 12 %, à la robe claire et à la texture sèche, poudreuse et friable.",
+    price: 11,
+    priceGroup: "B",
+    cbdPercentage: "12%",
+    molecule: "HE",
+    image: lemonPunchHashImg,
+    terpenes: { boise: 50, fruite: 50, epice: 50, terreux: 50 },
+    mood: "Caractère",
+    category: "resine",
+    intentionMatch: ["detente"],
+    tasteMatch: [],
+    isForceNoire: true,
+  },
   {
     id: "haribo",
     name: "Haribo",
@@ -278,7 +297,7 @@ const topRange: Product[] = [
     subtitle: "Résine Exotique",
     badge: "Exotique",
     description: "Résine ultra-premium de la gamme Exotique — texture fondante d'une rare intensité, arômes gourmands et puissants, effet enveloppant d'exception.",
-    price: 14,
+    price: 13,
     priceGroup: "B",
     cbdPercentage: "70% Exotique",
     molecule: "CBDX",
@@ -362,7 +381,7 @@ export const recommendationMatrix: Record<string, Record<string, Product>> = {
 // Matrice de recommandations pour les résines (utilise les résines disponibles)
 export const resinRecommendationMatrix: Record<string, Record<string, Product>> = {
   detente: {
-    boise: allProducts.find(p => p.id === "nuage-de-mousseux")!,
+    boise: allProducts.find(p => p.id === "lemon-punch-hash")!,
     fruite: allProducts.find(p => p.id === "ice-o-lator")!,
     floral: allProducts.find(p => p.id === "golden-cbn")!,
   },
@@ -372,7 +391,7 @@ export const resinRecommendationMatrix: Record<string, Record<string, Product>> 
     floral: allProducts.find(p => p.id === "golden-cbn")!,
   },
   sommeil: {
-    boise: allProducts.find(p => p.id === "nuage-de-mousseux")!,
+    boise: allProducts.find(p => p.id === "lemon-punch-hash")!,
     fruite: allProducts.find(p => p.id === "ice-o-lator")!,
     floral: allProducts.find(p => p.id === "golden-cbn")!,
   },

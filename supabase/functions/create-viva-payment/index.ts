@@ -39,13 +39,15 @@ const WEIGHT_TIERS_B: WeightTier[] = [
 // Force Noire / Nectar Divin dynamic ratios (mirrors src/lib/pricing.ts)
 // finalPrice(tier) = basePrice × weight × ratio
 const FORCE_NOIRE_RATIOS: Record<string, Record<number, number>> = {
-  "nuage-de-mousseux": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.5 },
+  "lemon-punch-hash":  { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
+  "bubble-hash-maturer": { 1: 1.0, 2.5: 0.9333, 5: 0.8,  10: 0.6667 },
   "911-og-indoor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8667, 10: 0.6 },
   "blue-mango-indoor": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.6154 },
   "haribo":            { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "heisenberg":        { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "mango-x-ice":       { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "poussiere-dor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8333, 10: 0.625 },
+  "piatella":          { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
 };
 
 function calculateForceNoirePrice(productId: string, weight: number, basePrice: number): number | null {
@@ -79,7 +81,7 @@ function calculateForceNoirePrice(productId: string, weight: number, basePrice: 
 const ACCESSORY_BULK_THRESHOLD = 10;
 const ACCESSORY_BULK_DISCOUNT = 0.33;
 
-const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor", "haribo", "heisenberg", "mango-x-ice"]);
+const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor", "haribo", "heisenberg", "mango-x-ice", "piatella", "lemon-punch-hash", "bubble-hash-maturer"]);
 
 const ACCESSORY_PRICES: Record<string, number> = {
   "pochon-petit": 1.50,
@@ -205,7 +207,7 @@ Deno.serve(async (req) => {
     if (productItemIds.length > 0) {
       const { data } = await supabaseAdmin
         .from("products")
-        .select("id, price, category")
+        .select("id, price, category, is_active, is_out_of_stock")
         .in("id", productItemIds);
       dbProducts = data || [];
     }
@@ -251,6 +253,12 @@ Deno.serve(async (req) => {
         const dbProduct = dbProducts.find((p: any) => p.id === item.productId);
         if (!dbProduct) {
           return new Response(JSON.stringify({ error: `Product not found: ${item.productId}` }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (!dbProduct.is_active || dbProduct.is_out_of_stock) {
+          return new Response(JSON.stringify({ error: `Produit indisponible : ${item.productName}` }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });

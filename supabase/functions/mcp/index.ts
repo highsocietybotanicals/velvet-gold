@@ -77,7 +77,7 @@ var list_products_default = defineTool({
     const supabase = supabaseAnon();
     let query = supabase.from("products").select(
       "id, name, subtitle, category, price, price_group, cbd_percentage, is_force_noire, is_nectar_divin, mood, terpenes"
-    ).eq("is_active", true).order("display_order", { ascending: true }).limit(limit ?? 20);
+    ).eq("is_active", true).eq("is_out_of_stock", false).order("display_order", { ascending: true }).limit(limit ?? 20);
     if (category) query = query.ilike("category", `%${category}%`);
     const { data, error } = await query;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
