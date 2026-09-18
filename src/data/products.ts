@@ -192,9 +192,9 @@ const topRange: Product[] = [
   {
     id: "bubble-hash-maturer",
     name: "BHM",
-    subtitle: "Bubble Hash Maturer · Résine Force Noire",
-    badge: "Force Noire",
-    description: "Bubble Hash Maturer de la gamme Force Noire, molécule HE à 24 %, à la teinte crème et à la texture compacte.",
+    subtitle: "Bubble Hash Maturer · Résine Exotique Force Noire",
+    badge: "Exotique",
+    description: "Bubble Hash Maturer de la gamme Exotique Force Noire, molécule HE à 24 %, à la teinte crème et à la texture compacte.",
     price: 16,
     priceGroup: "B",
     cbdPercentage: "24%",
@@ -207,6 +207,7 @@ const topRange: Product[] = [
     intentionMatch: ["detente"],
     tasteMatch: [],
     isForceNoire: true,
+    isExotique: true,
   },
   {
     id: "lemon-punch-hash",
