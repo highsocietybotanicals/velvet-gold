@@ -975,6 +975,7 @@ export type Database = {
           is_nectar_divin: boolean
           is_out_of_stock: boolean
           lab_report_path: string | null
+          label_image_path: string | null
           mood: string | null
           name: string
           price: number
@@ -1000,6 +1001,7 @@ export type Database = {
           is_nectar_divin?: boolean
           is_out_of_stock?: boolean
           lab_report_path?: string | null
+          label_image_path?: string | null
           mood?: string | null
           name: string
           price: number
@@ -1025,6 +1027,7 @@ export type Database = {
           is_nectar_divin?: boolean
           is_out_of_stock?: boolean
           lab_report_path?: string | null
+          label_image_path?: string | null
           mood?: string | null
           name?: string
           price?: number

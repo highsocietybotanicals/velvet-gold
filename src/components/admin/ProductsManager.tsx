@@ -11,10 +11,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff, FlaskConical, Upload, X, Barcode } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Package, Leaf, Zap, ImageOff, FlaskConical, Upload, X, Barcode, Tag } from "lucide-react";
 import { useLabReports, useLabReportAdmin, useOpenLabReport } from "@/hooks/useLabReports";
+import { useProductLabelPaths, useProductLabelAdmin, signedLabelUrl } from "@/hooks/useProductLabels";
+import { builtInLabel } from "@/lib/labelPdf";
 import { useEnsureBarcodes } from "@/hooks/useBarcodes";
 import { generateBarcodeSheet } from "@/lib/barcodeSheetPdf";
+
 import { PRO_FORMATS } from "@/lib/proPricing";
 import { Switch } from "@/components/ui/switch";
 import { useDbProducts, DbProduct } from "@/hooks/useDbProducts";
@@ -30,6 +33,17 @@ const ProductsManager = () => {
   const { upload, remove, rename, busyId } = useLabReportAdmin();
   const { open: openLab, openingId } = useOpenLabReport();
   const { barcodes } = useEnsureBarcodes(products.map((p) => p.id));
+  const { data: labelPaths } = useProductLabelPaths();
+  const { upload: uploadLabel, remove: removeLabel, busyId: labelBusyId } = useProductLabelAdmin();
+
+  const previewLabel = async (path: string) => {
+    try {
+      window.open(await signedLabelUrl(path), "_blank", "noopener,noreferrer");
+    } catch {
+      toast({ title: "Étiquette indisponible", variant: "destructive" });
+    }
+  };
+
 
   const [editing, setEditing] = useState<DbProduct | null>(null);
   const [open, setOpen] = useState(false);
@@ -99,6 +113,8 @@ const ProductsManager = () => {
                     <TableHead>Prix Pro HT</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Analyse labo</TableHead>
+                    <TableHead>Étiquette 10×15</TableHead>
+
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -205,6 +221,60 @@ const ProductsManager = () => {
                           )}
                         </div>
                       </TableCell>
+
+                      <TableCell>
+                        <div className="space-y-1 min-w-[190px]">
+                          {labelPaths?.[p.id] ? (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 gap-1.5 max-w-[150px]"
+                                onClick={() => previewLabel(labelPaths[p.id])}
+                              >
+                                <Tag className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">Étiquette importée</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-destructive"
+                                aria-label={`Supprimer l'étiquette de ${p.name}`}
+                                onClick={() => removeLabel(p.id, labelPaths[p.id])}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              {builtInLabel(p.id) ? "Étiquette d'origine" : "Aucune étiquette"}
+                            </Badge>
+                          )}
+                          {labelBusyId === p.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                          ) : (
+                            <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer text-muted-foreground hover:text-gold">
+                              <Upload className="w-3.5 h-3.5" />
+                              {labelPaths?.[p.id] ? "Remplacer" : "Importer une étiquette"}
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,application/pdf"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) uploadLabel(p.id, file);
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                          )}
+                          <p className="text-[10px] leading-tight text-muted-foreground">
+                            Vertical 10 × 15 cm, noir et blanc très contrasté (PNG, JPEG ou PDF, max 10 Mo).
+                          </p>
+                        </div>
+                      </TableCell>
+
+
 
                       <TableCell>
                         <div className="flex gap-1">
