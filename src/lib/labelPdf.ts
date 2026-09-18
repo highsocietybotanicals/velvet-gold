@@ -15,6 +15,8 @@ import labelHaribo from "@/assets/labels/haribo-label.png";
 import labelHeisenberg from "@/assets/labels/heisenberg-label.png";
 import labelPoussiereDor from "@/assets/labels/poussiere-dor-label.png";
 import labelPiatella from "@/assets/labels/piatella-label.png";
+import labelBhm from "@/assets/labels/bhm-label.png";
+import labelLemonPunchHash from "@/assets/labels/lemon-punch-hash-label.png";
 
 const LABEL_MAP: Record<string, string> = {
   "911-og-indoor": label911og,
@@ -30,6 +32,8 @@ const LABEL_MAP: Record<string, string> = {
   "heisenberg": labelHeisenberg,
   "poussiere-dor": labelPoussiereDor,
   "piatella": labelPiatella,
+  "bubble-hash-maturer": labelBhm,
+  "lemon-punch-hash": labelLemonPunchHash,
 };
 
 export const SUPPORTED_LABEL_IDS = Object.keys(LABEL_MAP);
