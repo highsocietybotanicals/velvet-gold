@@ -125,12 +125,12 @@ Deno.serve(async (req) => {
     const productIds = [...new Set(safeLines.map((l: any) => l.productId))];
     const { data: dbProducts } = await supabaseAdmin
       .from("products")
-      .select("id, name, category, is_active")
+      .select("id, name, category, is_active, is_out_of_stock")
       .in("id", productIds);
 
     for (const id of productIds) {
       const p = (dbProducts || []).find((d: any) => d.id === id);
-      if (!p || p.is_active === false) {
+      if (!p || p.is_active === false || p.is_out_of_stock === true) {
         return new Response(JSON.stringify({ error: `Produit indisponible : ${id}` }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

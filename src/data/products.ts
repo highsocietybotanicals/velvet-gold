@@ -14,8 +14,8 @@ import hariboPremium from "@/assets/resins/haribo-premium.jpg";
 import heisenbergPremium from "@/assets/resins/heisenberg-premium.jpg";
 import poussiereDorPremium from "@/assets/resins/poussiere-dor-premium.jpg";
 import piatellaImg from "@/assets/resins/piatella.jpg";
-import bhmImg from "@/assets/resins/bhm-real.jpg";
-import lemonPunchHashImg from "@/assets/resins/lemon-punch-hash-real.jpg";
+import bhmImg from "@/assets/resins/bhm-real.png";
+import lemonPunchHashImg from "@/assets/resins/lemon-punch-hash-real.png";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
