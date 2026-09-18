@@ -1,0 +1,4 @@
+- [ ] Créer et valider les visuels réels BHM et Lemon Punch Hash
+- [ ] Ajouter BHM et Lemon, retirer Nuage des nouvelles ventes, ajuster Piatella
+- [ ] Synchroniser tarifs, inventaire, paiement et espace pro
+- [ ] Vérifier le catalogue et les prix sur mobile et ordinateur
