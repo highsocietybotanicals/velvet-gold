@@ -223,6 +223,60 @@ const ProductsManager = () => {
                       </TableCell>
 
                       <TableCell>
+                        <div className="space-y-1 min-w-[190px]">
+                          {labelPaths?.[p.id] ? (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 gap-1.5 max-w-[150px]"
+                                onClick={() => previewLabel(labelPaths[p.id])}
+                              >
+                                <Tag className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">Étiquette importée</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-destructive"
+                                aria-label={`Supprimer l'étiquette de ${p.name}`}
+                                onClick={() => removeLabel(p.id, labelPaths[p.id])}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              {builtInLabel(p.id) ? "Étiquette d'origine" : "Aucune étiquette"}
+                            </Badge>
+                          )}
+                          {labelBusyId === p.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                          ) : (
+                            <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer text-muted-foreground hover:text-gold">
+                              <Upload className="w-3.5 h-3.5" />
+                              {labelPaths?.[p.id] ? "Remplacer" : "Importer une étiquette"}
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,application/pdf"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) uploadLabel(p.id, file);
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                          )}
+                          <p className="text-[10px] leading-tight text-muted-foreground">
+                            Vertical 10 × 15 cm, noir et blanc très contrasté (PNG, JPEG ou PDF, max 10 Mo).
+                          </p>
+                        </div>
+                      </TableCell>
+
+
+
+                      <TableCell>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(p)}>
                             <Pencil className="w-4 h-4" />
