@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Leaf, Sparkles, ShoppingCart, Zap, Crown, Gem } from "lucide-react";
@@ -190,12 +190,31 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
     addToCart(product, selectedWeight);
   };
 
+  // Aperçu vidéo au survol (ordinateur uniquement, sans son)
+  const previewRef = useRef<HTMLVideoElement>(null);
+
+  const handlePreviewEnter = () => {
+    const v = previewRef.current;
+    if (!v) return;
+    if (typeof window !== "undefined" && !window.matchMedia("(hover: hover)").matches) return;
+    v.play().catch(() => {});
+  };
+
+  const handlePreviewLeave = () => {
+    const v = previewRef.current;
+    if (!v) return;
+    v.pause();
+    v.currentTime = 0;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.15 }}
+      onMouseEnter={handlePreviewEnter}
+      onMouseLeave={handlePreviewLeave}
       className={`group product-card rounded-lg border overflow-hidden relative ${
         product.isExotique
           ? "bg-card border-purple-600/50 hover:border-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.4)]"
