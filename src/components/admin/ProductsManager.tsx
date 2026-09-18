@@ -113,6 +113,8 @@ const ProductsManager = () => {
                     <TableHead>Prix Pro HT</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Analyse labo</TableHead>
+                    <TableHead>Étiquette 10×15</TableHead>
+
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
