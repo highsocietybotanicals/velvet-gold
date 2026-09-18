@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789765493787,
+      "tag": "0000_add_product_label_import",
+      "breakpoints": true
+    }
+  ]
+}
