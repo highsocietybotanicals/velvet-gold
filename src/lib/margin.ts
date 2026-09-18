@@ -47,13 +47,13 @@ export const GAMME_LABEL: Record<string, string> = {
   "mint-kush": "Mint Kush",
   "platinum-og": "Platinum OG",
   "lemon-punch-hash": "Lemon Punch Hash — Force Noire",
-  "bubble-hash-maturer": "BHM — Bubble Hash Maturer — Exotique",
+  "bubble-hash-maturer": "BHM — Bubble Hash Maturer — Force Noire",
   "911-og-indoor": "911 OG « Indoor Master »",
   "blue-mango-indoor": "Blue Mango « Indoor Master »",
   haribo: "Haribo — Force Noire",
   heisenberg: "Heisenberg — Force Noire",
   "mango-x-ice": "Mango X Ice — Exotique",
-  "piatella": "Piatella — Exotique",
+  "piatella": "Piatella — Force Noire",
 };
 
 export const getGammeForProduct = (productId: string): ProGamme => productId;

@@ -16,6 +16,8 @@ import poussiereDorPremium from "@/assets/resins/poussiere-dor-premium.jpg";
 import piatellaImg from "@/assets/resins/piatella.jpg";
 import bhmImg from "@/assets/resins/bhm-real.jpg";
 import lemonPunchHashImg from "@/assets/resins/lemon-punch-hash-real.jpg";
+import bhmVideo from "@/assets/videos/bubble-hash-maturer.mp4.asset.json";
+import lemonPunchHashVideo from "@/assets/videos/lemon-punch-hash.mp4.asset.json";
 
 export type ProductCategory = "fleur" | "resine";
 export type PriceGroup = "A" | "B";
@@ -190,20 +192,21 @@ const topRange: Product[] = [
   {
     id: "bubble-hash-maturer",
     name: "BHM",
-    subtitle: "Bubble Hash Maturer · Résine Exotique",
-    badge: "Exotique",
-    description: "Bubble Hash Maturer de la gamme Exotique, molécule HE à 24 %, à la teinte crème et à la texture compacte.",
+    subtitle: "Bubble Hash Maturer · Résine Force Noire",
+    badge: "Force Noire",
+    description: "Bubble Hash Maturer de la gamme Force Noire, molécule HE à 24 %, à la teinte crème et à la texture compacte.",
     price: 16,
     priceGroup: "B",
     cbdPercentage: "24%",
     molecule: "HE",
     image: bhmImg,
+    video: bhmVideo.url,
     terpenes: { boise: 50, fruite: 50, epice: 50, terreux: 50 },
     mood: "Intense",
     category: "resine",
     intentionMatch: ["detente"],
     tasteMatch: [],
-    isExotique: true,
+    isForceNoire: true,
   },
   {
     id: "lemon-punch-hash",
@@ -216,6 +219,7 @@ const topRange: Product[] = [
     cbdPercentage: "12%",
     molecule: "HE",
     image: lemonPunchHashImg,
+    video: lemonPunchHashVideo.url,
     terpenes: { boise: 50, fruite: 50, epice: 50, terreux: 50 },
     mood: "Caractère",
     category: "resine",
@@ -296,12 +300,12 @@ const topRange: Product[] = [
   {
     id: "piatella",
     name: "Piatella",
-    subtitle: "Résine Exotique",
-    badge: "Exotique",
-    description: "Résine ultra-premium de la gamme Exotique — texture fondante d'une rare intensité, arômes gourmands et puissants, effet enveloppant d'exception.",
+    subtitle: "Résine Force Noire",
+    badge: "Force Noire",
+    description: "Résine ultra-premium de la gamme Force Noire — texture fondante d'une rare intensité, arômes gourmands et puissants, effet enveloppant d'exception.",
     price: 13,
     priceGroup: "B",
-    cbdPercentage: "70% Exotique",
+    cbdPercentage: "70%",
     molecule: "CBDX",
     image: piatellaImg,
     terpenes: { boise: 50, fruite: 85, epice: 45, terreux: 60 },
@@ -309,7 +313,7 @@ const topRange: Product[] = [
     category: "resine",
     intentionMatch: ["detente", "sommeil"],
     tasteMatch: ["fruite"],
-    isExotique: true,
+    isForceNoire: true,
   },
 ];
 
