@@ -47,7 +47,7 @@ export const GAMME_LABEL: Record<string, string> = {
   "mint-kush": "Mint Kush",
   "platinum-og": "Platinum OG",
   "lemon-punch-hash": "Lemon Punch Hash — Force Noire",
-  "bubble-hash-maturer": "Bubble Hash Maturer — Exotique",
+  "bubble-hash-maturer": "BHM — Bubble Hash Maturer — Exotique",
   "911-og-indoor": "911 OG « Indoor Master »",
   "blue-mango-indoor": "Blue Mango « Indoor Master »",
   haribo: "Haribo — Force Noire",

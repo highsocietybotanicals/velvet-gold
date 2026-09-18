@@ -47,6 +47,7 @@ const FORCE_NOIRE_RATIOS: Record<string, Record<number, number>> = {
   "heisenberg":        { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "mango-x-ice":       { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
   "poussiere-dor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8333, 10: 0.625 },
+  "piatella":          { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
 };
 
 function calculateForceNoirePrice(productId: string, weight: number, basePrice: number): number | null {
@@ -206,7 +207,7 @@ Deno.serve(async (req) => {
     if (productItemIds.length > 0) {
       const { data } = await supabaseAdmin
         .from("products")
-        .select("id, price, category")
+        .select("id, price, category, is_active, is_out_of_stock")
         .in("id", productItemIds);
       dbProducts = data || [];
     }
@@ -252,6 +253,12 @@ Deno.serve(async (req) => {
         const dbProduct = dbProducts.find((p: any) => p.id === item.productId);
         if (!dbProduct) {
           return new Response(JSON.stringify({ error: `Product not found: ${item.productId}` }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (!dbProduct.is_active || dbProduct.is_out_of_stock) {
+          return new Response(JSON.stringify({ error: `Produit indisponible : ${item.productName}` }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
