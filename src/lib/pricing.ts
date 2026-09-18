@@ -67,7 +67,8 @@ export const WEIGHT_TIERS_B: WeightTier[] = [
 // Le prix final au palier = basePrice (prix DB du 1 g) × weight × ratio.
 // Modifier le prix 1 g dans l'admin met à jour automatiquement TOUS les paliers.
 export const FORCE_NOIRE_RATIOS: Record<string, Record<number, number>> = {
-  "nuage-de-mousseux": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.5 },
+  "lemon-punch-hash":  { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
+  "bubble-hash-maturer": { 1: 1.0, 2.5: 0.9333, 5: 0.8,  10: 0.6667 },
   "911-og-indoor":     { 1: 1.0, 2.5: 0.9333, 5: 0.8667, 10: 0.6 },
   "blue-mango-indoor": { 1: 1.0, 2.5: 0.9231, 5: 0.8462, 10: 0.6154 },
   "haribo":            { 1: 1.0, 2.5: 0.9333, 5: 0.8,    10: 0.6667 },
