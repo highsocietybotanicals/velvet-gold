@@ -1,9 +1,10 @@
 import { Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { generateProductLabel, SUPPORTED_LABEL_IDS } from "@/lib/labelPdf";
+import { generateProductLabel, builtInLabel } from "@/lib/labelPdf";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useBarcodes, wKey } from "@/hooks/useBarcodes";
+import { useProductLabelPaths, signedLabelUrl } from "@/hooks/useProductLabels";
 
 interface MolecularLabelProps {
   productId: string;
@@ -14,17 +15,23 @@ interface MolecularLabelProps {
 export function MolecularLabel({ productId, productName, weight }: MolecularLabelProps) {
   const [loading, setLoading] = useState(false);
   const { data: barcodes } = useBarcodes();
+  const { data: labelPaths } = useProductLabelPaths();
 
-  if (!SUPPORTED_LABEL_IDS.includes(productId) || !weight) return null;
+  const customPath = labelPaths?.[productId];
+  const hasLabel = !!customPath || !!builtInLabel(productId);
+  if (!hasLabel || !weight) return null;
 
   const handleClick = async () => {
     setLoading(true);
     try {
+      const customLabelUrl = customPath ? await signedLabelUrl(customPath) : null;
       await generateProductLabel({
         productName,
         weight,
         productId,
         ean13: barcodes?.[productId]?.[wKey(weight)] ?? null,
+        customLabelUrl,
+        customLabelIsPdf: !!customPath?.toLowerCase().endsWith(".pdf"),
       });
     } catch (e) {
       console.error(e);
