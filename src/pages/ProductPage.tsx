@@ -192,14 +192,25 @@ const ProductPage = () => {
               transition={{ duration: 0.6 }}
             >
               <div className={`relative aspect-square rounded-2xl overflow-hidden border ${product.isNectarDivin ? "bg-black border-primary/40 shadow-[0_0_40px_rgba(212,175,55,0.25)]" : product.isExotique ? "bg-card border-purple-500/50 shadow-[0_0_35px_rgba(168,85,247,0.3)]" : "bg-card border-border"}`}>
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                  onError={(e) => {
-                    e.currentTarget.src = '/placeholder.svg';
-                  }}
-                />
+                {product.video ? (
+                  <video
+                    src={product.video}
+                    poster={product.image}
+                    controls
+                    playsInline
+                    preload="none"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder.svg';
+                    }}
+                  />
+                )}
               </div>
               
               {/* Pochon indicator - separate section below image */}

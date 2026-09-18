@@ -37,6 +37,8 @@ export interface Product {
   priceGroup: PriceGroup;
   cbdPercentage: string;
   image: string;
+  /** Vidéo produit optionnelle (MP4) : lecteur sur la fiche + aperçu au survol */
+  video?: string;
   terpenes: TerpeneProfile;
   mood: string;
   /** Nom commercial de la molécule présente (affiché en badge) */
