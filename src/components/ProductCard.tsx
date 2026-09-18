@@ -232,6 +232,19 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             }}
           />
 
+          {/* Aperçu vidéo au survol (ordinateur uniquement) */}
+          {product.video && (
+            <video
+              ref={previewRef}
+              src={product.video}
+              muted
+              loop
+              playsInline
+              preload="none"
+              className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none hidden md:block"
+            />
+          )}
+
           {/* Rupture de stock — "Victime de son succès" */}
           {product.isOutOfStock && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-[2px]">
