@@ -33,6 +33,17 @@ const ProductsManager = () => {
   const { upload, remove, rename, busyId } = useLabReportAdmin();
   const { open: openLab, openingId } = useOpenLabReport();
   const { barcodes } = useEnsureBarcodes(products.map((p) => p.id));
+  const { data: labelPaths } = useProductLabelPaths();
+  const { upload: uploadLabel, remove: removeLabel, busyId: labelBusyId } = useProductLabelAdmin();
+
+  const previewLabel = async (path: string) => {
+    try {
+      window.open(await signedLabelUrl(path), "_blank", "noopener,noreferrer");
+    } catch {
+      toast({ title: "Étiquette indisponible", variant: "destructive" });
+    }
+  };
+
 
   const [editing, setEditing] = useState<DbProduct | null>(null);
   const [open, setOpen] = useState(false);
