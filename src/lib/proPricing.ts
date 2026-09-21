@@ -119,6 +119,50 @@ export interface ProductPriceInfo {
   priceGroup: PriceGroup;
 }
 
+/** Une ligne de tarif par format de pochon (1 g / 2,5 g / 5 g / 10 g) */
+export interface FormatPriceRow {
+  format: number;
+  /** Prix pro HT du pochon (prix fixe, propre au format et à la variété) */
+  proUnitHT: number;
+  /** €/g HT correspondant, pour information */
+  proPerGramHT: number;
+  /** Prix de vente public conseillé TTC (identique au site) */
+  retailUnitTTC: number;
+  retailUnitHT: number;
+  /** Gain HT du revendeur sur un pochon */
+  marginHT: number;
+  coef: number;
+}
+
+/**
+ * Tarifs pro par format pour une variété. Le prix de chaque format est FIXE
+ * (il ne dépend pas du volume commandé) ; la dégressivité volume (-5/-10/-15/-20 %)
+ * s'applique ensuite au poids total du panier via `totalWeightG`.
+ */
+export const proFormatPrices = (
+  tiers: PriceTier[],
+  productId: string,
+  info: ProductPriceInfo,
+  totalWeightG = 0
+): FormatPriceRow[] =>
+  PRO_FORMATS.map((f) => {
+    const ppg = proPricePerGram(tiers, productId, totalWeightG, f, info);
+    const proUnitHT = round2(ppg * f);
+    const retailUnitTTC = round2(
+      calculateItemPrice(info.price, f, info.priceGroup, productId).finalPrice
+    );
+    const retailUnitHT = round2(retailUnitTTC / (1 + VAT_RATE));
+    return {
+      format: f,
+      proUnitHT,
+      proPerGramHT: ppg,
+      retailUnitTTC,
+      retailUnitHT,
+      marginHT: round2(retailUnitHT - proUnitHT),
+      coef: proUnitHT > 0 ? retailUnitHT / proUnitHT : 0,
+    };
+  });
+
 /**
  * Calcule un panier pro : le €/g dépend du poids TOTAL du panier (tous produits
  * confondus), appliqué par gamme.
