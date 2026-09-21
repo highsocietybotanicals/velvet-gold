@@ -75,6 +75,33 @@ const ProPage = () => {
         >
           <FileText className="h-4 w-4 mr-2" /> Fiche nouveau client pro
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy !== null}
+          onClick={() => run("grille", () => downloadProPriceGrid(toDocProducts(), tiers), "Grille tarifaire")}
+        >
+          {busy === "grille" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+          Grille tarifaire pro
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy !== null}
+          onClick={() => run("catalogue", () => downloadProCatalogue(toDocProducts(), tiers), "Catalogue pro")}
+        >
+          {busy === "catalogue" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+          Catalogue pro
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy !== null}
+          onClick={() => run("guide", () => downloadProGuide(), "Guide commercial")}
+        >
+          {busy === "guide" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+          Guide commercial
+        </Button>
         <Button asChild variant="outline" size="sm">
           <a href="/documents/HSB-RIB.pdf" target="_blank" rel="noopener noreferrer">
             <Landmark className="h-4 w-4 mr-2" /> RIB High Society Botanicals
