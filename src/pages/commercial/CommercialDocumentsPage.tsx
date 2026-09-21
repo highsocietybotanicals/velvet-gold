@@ -7,7 +7,7 @@ import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { downloadProOrderForm, downloadProClientForm } from "@/lib/proFormsPdf";
 import { downloadProPriceGrid, downloadProCatalogue, downloadProGuide, type DocProduct } from "@/lib/proDocsPdf";
-import { getGammeForProduct, getProPricePerGram } from "@/lib/margin";
+import { proFormatPrices } from "@/lib/proPricing";
 
 const PITCH = `Bonjour,
 
@@ -40,6 +40,7 @@ const CommercialDocumentsPage = () => {
       isForceNoire: p.isForceNoire,
       isExotique: p.isExotique,
       publicPrice: p.price,
+      priceGroup: p.priceGroup,
       image: p.image,
     }));
 
@@ -51,15 +52,14 @@ const CommercialDocumentsPage = () => {
   };
 
   const handleOrderForm = () => {
-    const formProducts = products.map((p) => {
-      const basePrice = getProPricePerGram(tiers, getGammeForProduct(p.id), 50) ?? 0;
-      return {
-        id: p.id,
-        name: p.name,
-        pricePerGram: basePrice,
-        isOutOfStock: p.isOutOfStock,
-      };
-    });
+    const formProducts = products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      formats: proFormatPrices(tiers, p.id, { price: p.price, priceGroup: p.priceGroup }).map(
+        (r) => ({ format: r.format, unitHT: r.proUnitHT })
+      ),
+      isOutOfStock: p.isOutOfStock,
+    }));
     downloadProOrderForm(formProducts);
     toast({ title: "Bon de commande téléchargé" });
   };
