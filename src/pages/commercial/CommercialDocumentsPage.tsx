@@ -41,12 +41,28 @@ Bien à vous,`;
 const CommercialDocumentsPage = () => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const { all: products } = useCatalogProducts();
+  const { tiers } = useProPriceTiers();
 
   const copy = async () => {
     await navigator.clipboard.writeText(PITCH);
     setCopied(true);
     toast({ title: "Pitch copié" });
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleOrderForm = () => {
+    const formProducts = products.map((p) => {
+      const basePrice = getProPricePerGram(tiers, getGammeForProduct(p.id), 50) ?? 0;
+      return {
+        id: p.id,
+        name: p.name,
+        pricePerGram: basePrice,
+        isOutOfStock: p.isOutOfStock,
+      };
+    });
+    downloadProOrderForm(formProducts);
+    toast({ title: "Bon de commande téléchargé" });
   };
 
   return (
@@ -56,6 +72,47 @@ const CommercialDocumentsPage = () => {
         <p className="text-sm text-muted-foreground mt-1">
           À envoyer par mail ou à présenter sur tablette pendant la visite.
         </p>
+      </div>
+
+      {/* Formulaires à imprimer */}
+      <div className="grid gap-3 md:grid-cols-2">
+        <Card>
+          <CardContent className="pt-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Printer className="h-4 w-4 text-primary" />
+              <p className="font-medium text-sm">Bon de commande papier (A4)</p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              À imprimer et remplir au stylo pendant la visite. Prix pro HT fixés par variété,
+              dégressivité volume imprimée, totaux et signatures.
+            </p>
+            <Button variant="outline" size="sm" onClick={handleOrderForm}>
+              <Printer className="h-4 w-4 mr-2" /> Télécharger le PDF
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              <p className="font-medium text-sm">Fiche nouveau client pro (A4)</p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Toutes les informations nécessaires pour créer le compte pro en back-office.
+              À remplir au stylo, cases e-mail incluses.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                downloadProClientForm();
+                toast({ title: "Fiche client téléchargée" });
+              }}
+            >
+              <FileText className="h-4 w-4 mr-2" /> Télécharger le PDF
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
