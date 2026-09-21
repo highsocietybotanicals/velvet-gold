@@ -1,10 +1,12 @@
 import ProRequestsSection from "@/components/admin/ProRequestsSection";
 import ProInvoicingManager from "@/components/admin/ProInvoicingManager";
 import { Button } from "@/components/ui/button";
-import { Printer, FileText, Landmark } from "lucide-react";
+import { Printer, FileText, Landmark, FileDown, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { downloadProOrderForm, downloadProClientForm } from "@/lib/proFormsPdf";
+import { downloadProPriceGrid, downloadProCatalogue, downloadProGuide, type DocProduct } from "@/lib/proDocsPdf";
 import { getGammeForProduct, getProPricePerGram } from "@/lib/margin";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +14,22 @@ const ProPage = () => {
   const { toast } = useToast();
   const { all: products } = useCatalogProducts();
   const { tiers } = useProPriceTiers();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const toDocProducts = (): DocProduct[] =>
+    products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      subtitle: p.subtitle,
+      description: p.description,
+      category: p.category,
+      cbdPercentage: p.cbdPercentage,
+      molecule: p.molecule,
+      isForceNoire: p.isForceNoire,
+      isExotique: p.isExotique,
+      publicPrice: p.price,
+      image: p.image,
+    }));
 
   const handleOrderForm = () => {
     const formProducts = products.map((p) => {
@@ -25,6 +43,18 @@ const ProPage = () => {
     });
     downloadProOrderForm(formProducts);
     toast({ title: "Bon de commande téléchargé" });
+  };
+
+  const run = async (key: string, fn: () => void | Promise<void>, label: string) => {
+    setBusy(key);
+    try {
+      await fn();
+      toast({ title: `${label} téléchargé` });
+    } catch {
+      toast({ title: "Erreur de génération", variant: "destructive" });
+    } finally {
+      setBusy(null);
+    }
   };
 
   return (
