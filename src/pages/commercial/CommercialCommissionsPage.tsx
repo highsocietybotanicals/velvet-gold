@@ -10,6 +10,7 @@ import {
   aggregateMonthly,
   resolveTier,
   nextTier,
+  saleTypeLabel,
 } from "@/hooks/useCommercial";
 
 const euro = (n: number) =>
