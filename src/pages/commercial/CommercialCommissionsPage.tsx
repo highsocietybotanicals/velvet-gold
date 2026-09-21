@@ -97,7 +97,7 @@ const CommercialCommissionsPage = () => {
       <Card className="border-gold/30">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-gold" /> Paliers de rémunération
+            <TrendingUp className="h-4 w-4 text-gold" /> Paliers nouveaux clients
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -125,23 +125,25 @@ const CommercialCommissionsPage = () => {
           <div>
             <div className="flex justify-between text-xs text-muted-foreground mb-1">
               <span className="capitalize">
-                {monthLabel(currentKey)} · {euro(currentRevenue)} HT · taux actuel{" "}
-                <strong className="text-gold">{currentTier.commission_percent} %</strong>
+                {monthLabel(currentKey)} · nouveaux clients {euro(newRevenue)} HT · tranche
+                atteinte <strong className="text-gold">{currentTier.commission_percent} %</strong>
               </span>
               {upcoming && (
                 <span>
-                  encore {euro(upcoming.min_revenue_ht - currentRevenue)} pour{" "}
+                  encore {euro(upcoming.min_revenue_ht - newRevenue)} pour{" "}
                   {upcoming.commission_percent} %
                 </span>
               )}
             </div>
             <Progress
               value={
-                upcoming
-                  ? Math.min(100, (currentRevenue / upcoming.min_revenue_ht) * 100)
-                  : 100
+                upcoming ? Math.min(100, (newRevenue / upcoming.min_revenue_ht) * 100) : 100
               }
             />
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Les tranches ne s'appliquent qu'au chiffre réalisé sur les nouveaux clients. Les
+              réassorts restent à {months[0]?.reassortPercent ?? 10} % fixe.
+            </p>
           </div>
         </CardContent>
       </Card>
