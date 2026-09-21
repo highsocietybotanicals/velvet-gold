@@ -8,10 +8,18 @@ const PAGE_H = 297;
 const MARGIN = 15;
 const CONTENT_W = PAGE_W - MARGIN * 2; // 180mm
 
-interface FormProduct {
+export interface FormFormatPrice {
+  /** Taille du pochon en grammes (1 / 2,5 / 5 / 10) */
+  format: number;
+  /** Prix HT fixe du pochon pour cette variété */
+  unitHT: number;
+}
+
+export interface FormProduct {
   id: string;
   name: string;
-  pricePerGram: number; // base tier (jusqu'à 100g) €/g HT
+  /** Prix HT fixe par format de pochon */
+  formats: FormFormatPrice[];
   isOutOfStock?: boolean;
 }
 
@@ -154,75 +162,86 @@ export function generateProOrderForm(products: FormProduct[]): jsPDF {
   doc.text("PRODUITS", MARGIN, y);
   y += 3;
 
+  // Formats de pochon présents dans le tarif (1 g / 2,5 g / 5 g / 10 g)
+  const formats = products[0]?.formats.map((f) => f.format) ?? [1, 2.5, 5, 10];
+  const fmtLabel = (f: number) => `${String(f).replace(".", ",")} g`;
+
   // Column widths
-  const cName = 52;
-  const cFmt = 16; // ×4 (1g, 2.5g, 5g, 10g)
-  const cTotalG = 20;
-  const cPriceG = 16;
-  const cTotalHT = 20;
-  // total: 52 + 16*4 + 20 + 16 + 20 = 172 → fits in 180
-
+  const cName = 46;
+  const cFmt = 28; // prix HT imprimé + case quantité
+  const cTotalHT = 22;
   const tableX = MARGIN;
-  const tableW = cName + cFmt * 4 + cTotalG + cPriceG + cTotalHT;
+  const tableW = cName + cFmt * formats.length + cTotalHT; // 180
 
-  // Header row
-  const headerH = 6;
-  fillRect(doc, tableX, y, tableW, headerH, GOLD);
+  // Header row 1 : formats
+  fillRect(doc, tableX, y, tableW, 5.5, GOLD);
   setFont(doc, 7, "bold", [255, 255, 255]);
   doc.setTextColor(255, 255, 255);
   let cx = tableX;
-  doc.text("Produit", cx + 2, y + 4); cx += cName;
-  doc.text("1g", cx + cFmt / 2, y + 4, { align: "center" }); cx += cFmt;
-  doc.text("2,5g", cx + cFmt / 2, y + 4, { align: "center" }); cx += cFmt;
-  doc.text("5g", cx + cFmt / 2, y + 4, { align: "center" }); cx += cFmt;
-  doc.text("10g", cx + cFmt / 2, y + 4, { align: "center" }); cx += cFmt;
-  doc.text("Total g", cx + cTotalG / 2, y + 4, { align: "center" }); cx += cTotalG;
-  doc.text("€/g HT", cx + cPriceG / 2, y + 4, { align: "center" }); cx += cPriceG;
-  doc.text("Total HT", cx + cTotalHT / 2, y + 4, { align: "center" });
-  y += headerH;
+  doc.text("Produit", cx + 2, y + 3.8); cx += cName;
+  for (const f of formats) {
+    doc.text(`POCHON ${fmtLabel(f)}`, cx + cFmt / 2, y + 3.8, { align: "center" });
+    cx += cFmt;
+  }
+  doc.text("Total HT", cx + cTotalHT / 2, y + 3.8, { align: "center" });
+  y += 5.5;
+
+  // Header row 2 : prix / quantité
+  fillRect(doc, tableX, y, tableW, 4.5, [250, 245, 230]);
+  setFont(doc, 6, "bold", GRAY);
+  cx = tableX + cName;
+  for (let i = 0; i < formats.length; i++) {
+    doc.text("Prix HT", cx + cFmt * 0.27, y + 3.2, { align: "center" });
+    doc.text("Nb", cx + cFmt * 0.76, y + 3.2, { align: "center" });
+    cx += cFmt;
+  }
+  y += 4.5;
 
   // Product rows
-  const rowH = 6.5;
-  const activeProducts = products.filter(p => !p.isOutOfStock);
-  const outOfStockProducts = products.filter(p => p.isOutOfStock);
+  const rowH = 6.4;
+  const activeProducts = products.filter((p) => !p.isOutOfStock);
+  const outOfStockProducts = products.filter((p) => p.isOutOfStock);
 
   for (const p of [...activeProducts, ...outOfStockProducts]) {
-    // Alternating row background
-    if (p.isOutOfStock) {
-      fillRect(doc, tableX, y, tableW, rowH, [245, 240, 240]);
-    }
+    if (p.isOutOfStock) fillRect(doc, tableX, y, tableW, rowH, [245, 240, 240]);
     drawLine(doc, tableX, y, tableX + tableW, y, LIGHT_GRAY, 0.2);
 
     cx = tableX;
     setFont(doc, 7.5, p.isOutOfStock ? "italic" : "normal", p.isOutOfStock ? GRAY : DARK);
     const name = p.isOutOfStock ? `${p.name} (rupture)` : p.name;
-    doc.text(name.length > 28 ? name.substring(0, 27) + "…" : name, cx + 2, y + 4.5);
+    doc.text(name.length > 26 ? name.substring(0, 25) + "…" : name, cx + 2, y + 4.4);
     cx += cName;
-    // Empty cells for quantities (lines to write on)
-    for (let i = 0; i < 4; i++) {
-      drawLine(doc, cx, y + rowH, cx + cFmt, y + rowH, LIGHT_GRAY, 0.2);
+
+    for (const f of formats) {
+      const row = p.formats.find((x) => x.format === f);
+      // Prix HT fixe du pochon
+      setFont(doc, 7.5, "bold", p.isOutOfStock ? GRAY : DARK);
+      doc.text(
+        row ? `${row.unitHT.toFixed(2).replace(".", ",")} €` : "—",
+        cx + cFmt * 0.27,
+        y + 4.4,
+        { align: "center" }
+      );
+      // Case quantité à remplir au stylo
+      drawLine(doc, cx + cFmt * 0.52, y + 0.5, cx + cFmt * 0.52, y + rowH - 0.5, LIGHT_GRAY, 0.2);
+      drawLine(doc, cx + cFmt * 0.55, y + rowH, cx + cFmt, y + rowH, LIGHT_GRAY, 0.3);
       cx += cFmt;
     }
-    drawLine(doc, cx, y + rowH, cx + cTotalG, y + rowH, LIGHT_GRAY, 0.2);
-    cx += cTotalG;
-    // Print the base €/g
-    setFont(doc, 7.5, "bold", DARK);
-    doc.text(p.pricePerGram.toFixed(2).replace(".", ","), cx + cPriceG / 2, y + 4.5, { align: "center" });
-    cx += cPriceG;
-    drawLine(doc, cx, y + rowH, cx + cTotalHT, y + rowH, LIGHT_GRAY, 0.2);
-    cx += cTotalHT;
-
+    drawLine(doc, cx, y + rowH, cx + cTotalHT, y + rowH, LIGHT_GRAY, 0.3);
     y += rowH;
   }
 
-  // 4 blank rows for accessories / custom items
-  for (let i = 0; i < 4; i++) {
+  // 2 lignes libres (accessoires, remarque)
+  for (let i = 0; i < 2; i++) {
     drawLine(doc, tableX, y, tableX + tableW, y, LIGHT_GRAY, 0.2);
-    cx = tableX + cName;
-    for (let j = 0; j < 6; j++) {
-      drawLine(doc, cx, y + rowH, cx + (j < 4 ? cFmt : j === 4 ? cTotalG : cTotalHT), y + rowH, LIGHT_GRAY, 0.2);
-      cx += j < 4 ? cFmt : j === 4 ? cTotalG : cTotalHT;
+    cx = tableX;
+    drawLine(doc, cx, y + rowH, cx + cName, y + rowH, LIGHT_GRAY, 0.3);
+    cx += cName;
+    for (let j = 0; j < formats.length; j++) {
+      drawLine(doc, cx, y + rowH, cx + cFmt, y + rowH, LIGHT_GRAY, 0.3);
+      cx += cFmt;
     }
+    drawLine(doc, cx, y + rowH, cx + cTotalHT, y + rowH, LIGHT_GRAY, 0.3);
     y += rowH;
   }
 
@@ -230,9 +249,16 @@ export function generateProOrderForm(products: FormProduct[]): jsPDF {
   drawLine(doc, tableX, y, tableX + tableW, y, DARK, 0.4);
   y += 4;
 
+  setFont(doc, 6.5, "italic", GRAY);
+  doc.text(
+    "Prix HT fixes par variété et par format de pochon. Total HT d'une ligne = prix du pochon × nombre de pochons.",
+    MARGIN, y
+  );
+  y += 5;
+
   // --- Volume discount scale ---
   setFont(doc, 7.5, "bold", GOLD);
-  doc.text("DÉGRESSIVITÉ VOLUME (remise sur le poids total de la commande)", MARGIN, y);
+  doc.text("REMISE VOLUME (sur le poids total de la commande, tous formats confondus)", MARGIN, y);
   y += 4;
   setFont(doc, 7, "normal", DARK);
 
@@ -240,19 +266,16 @@ export function generateProOrderForm(products: FormProduct[]): jsPDF {
   for (let i = 0; i < PRO_TIERS.length; i++) {
     const tierMax = PRO_TIERS[i];
     const discount = TIER_DISCOUNT[tierMax] ?? 0;
-    const label = proTierLabel(tierMax);
-    tierLabels.push(discount === 0 ? label : `${label} (−${discount}%)`);
+    tierLabels.push(proTierLabel(tierMax));
   }
-  // Print as two lines
-  const half = Math.ceil(tierLabels.length / 2);
-  doc.text(tierLabels.slice(0, half).join("   |   "), MARGIN, y);
-  if (tierLabels.slice(half).length) {
-    doc.text(tierLabels.slice(half).join("   |   "), MARGIN, y + 4);
-    y += 4;
-  }
+  doc.text(tierLabels.join("  |  "), MARGIN, y);
+  y += 4;
   setFont(doc, 6.5, "italic", GRAY);
-  doc.text("Le €/g HT imprimé ci-dessus est le tarif de base (jusqu'à 100 g). Déduire la remise du palier atteint.", MARGIN, y + 3);
-  y += 9;
+  doc.text(
+    "Additionner les grammes de tous les pochons (ex. 40 x 2,5 g + 10 x 10 g = 200 g, soit remise 5 %), puis appliquer la remise au total HT.",
+    MARGIN, y
+  );
+  y += 6;
 
   // --- Totals ---
   const totalsX = MARGIN + 100;

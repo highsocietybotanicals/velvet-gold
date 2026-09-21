@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
-import { PRO_TIERS, TIER_DISCOUNT, getProPricePerGram, type PriceTier } from "./margin";
+import { PRO_TIERS, TIER_DISCOUNT, type PriceTier } from "./margin";
+import { PRO_FORMATS, proFormatPrices } from "./proPricing";
+import type { PriceGroup } from "@/data/products";
 import { BANK_DETAILS } from "./bankDetails";
 
 // A4 portrait : 210 × 297 mm
@@ -30,6 +32,8 @@ export interface DocProduct {
   isExotique?: boolean;
   /** Prix public TTC au gramme (site) */
   publicPrice: number;
+  /** Groupe tarifaire public (A / B) — nécessaire au calcul du prix par format */
+  priceGroup: PriceGroup;
   /** URL ou data-url du visuel produit (catalogue uniquement) */
   image?: string;
 }
@@ -211,7 +215,11 @@ export function generateProPriceGrid(products: DocProduct[], tiers: PriceTier[])
   doc.text("LECTURE DU BARÈME", MARGIN, y);
   y += 5;
   y = para(doc,
-    "Exemple : pour une commande de 300 g, la remise de 10 % s'applique sur le prix HT de l'ensemble des variétés commandées. Le prix au gramme imprimé page suivante est le tarif de base (moins de 100 g) : déduisez la remise du palier atteint.",
+    "Les prix partenaire sont fixes : un prix HT par variété ET par format de pochon (1 g, 2,5 g, 5 g, 10 g). Ils ne changent pas selon la taille de la commande.",
+    y, 9.5);
+  y += 3;
+  y = para(doc,
+    "La remise de volume s'applique en plus, sur le poids total de la commande, tous formats et toutes variétés confondus. Exemple : 40 pochons de 2,5 g d'une variété et 10 pochons de 10 g d'une autre font 200 g au total, donc -5 % sur l'ensemble du bon de commande.",
     y, 9.5);
   y += 4;
   y = para(doc,
@@ -219,45 +227,59 @@ export function generateProPriceGrid(products: DocProduct[], tiers: PriceTier[])
     y, 9.5, GRAY, "italic");
   footer(doc, "III · Barème");
 
-  // --- Tarifs par variété ---
+  // --- Tarifs par variété et par format ---
+  const cName = 50;
+  const cFam = 20;
+  const cFmt = (CONTENT_W - cName - cFam) / PRO_FORMATS.length; // 27
+  const fmtLabel = (f: number) => `${String(f).replace(".", ",")} g`;
+
+  const drawTariffHeader = () => {
+    fillRect(doc, MARGIN, y, CONTENT_W, 7, GOLD);
+    setFont(doc, 7, "bold", WHITE);
+    doc.text("PRODUIT", MARGIN + 2, y + 4.7);
+    doc.text("GAMME", MARGIN + cName + 2, y + 4.7);
+    let hx = MARGIN + cName + cFam;
+    PRO_FORMATS.forEach((f) => {
+      doc.text(`POCHON ${fmtLabel(f)}`, hx + cFmt / 2, y + 4.7, { align: "center" });
+      hx += cFmt;
+    });
+    y += 7;
+    fillRect(doc, MARGIN, y, CONTENT_W, 5, [247, 243, 234]);
+    setFont(doc, 6, "bold", GRAY);
+    let sx = MARGIN + cName + cFam;
+    PRO_FORMATS.forEach(() => {
+      doc.text("PRO HT", sx + cFmt * 0.27, y + 3.5, { align: "center" });
+      doc.text("PV TTC", sx + cFmt * 0.75, y + 3.5, { align: "center" });
+      sx += cFmt;
+    });
+    y += 5;
+  };
+
   doc.addPage();
   y = 24;
   spacedTitle(doc, "Tarifs partenaire", y);
   y += 8;
   setFont(doc, 9, "normal", GRAY);
-  doc.text("Prix professionnels HT au gramme, par palier de volume. Prix public conseillé identique au site.", PAGE_W / 2, y, { align: "center" });
-  y += 8;
-
-  const cName = 52;
-  const cFam = 22;
-  const cPv = 20;
-  const cTier = (CONTENT_W - cName - cFam - cPv) / TIER_WEIGHTS.length; // ~17.2
-
-  fillRect(doc, MARGIN, y, CONTENT_W, 7, GOLD);
-  setFont(doc, 7, "bold", WHITE);
-  cx = MARGIN;
-  doc.text("PRODUIT", cx + 2, y + 4.8); cx += cName;
-  doc.text("GAMME", cx + 2, y + 4.8); cx += cFam;
-  doc.text("PV TTC/g", cx + cPv / 2, y + 4.8, { align: "center" }); cx += cPv;
-  for (const l of TIER_COL_LABELS) {
-    doc.text(l, cx + cTier / 2, y + 4.8, { align: "center" });
-    cx += cTier;
-  }
-  y += 7;
+  doc.text("Prix HT du pochon, fixé par variété et par format. Prix de vente public conseillé identique au site.", PAGE_W / 2, y, { align: "center" });
+  y += 9;
+  drawTariffHeader();
 
   const rowH = 11;
   products.forEach((p, idx) => {
-    if (y + rowH > PAGE_H - 20) {
+    if (y + rowH > PAGE_H - 22) {
       footer(doc, "IV · Tarifs");
       doc.addPage();
       y = 24;
+      spacedTitle(doc, "Tarifs partenaire", y);
+      y += 9;
+      drawTariffHeader();
     }
     if (idx % 2 === 1) fillRect(doc, MARGIN, y, CONTENT_W, rowH, [247, 243, 234]);
     hLine(doc, y, LIGHT, 0.2);
 
     cx = MARGIN;
     setFont(doc, 8.5, "bold", DARK);
-    const nm = p.name.length > 26 ? p.name.slice(0, 25) + "…" : p.name;
+    const nm = p.name.length > 25 ? p.name.slice(0, 24) + "…" : p.name;
     doc.text(nm, cx + 2, y + 4.5);
     setFont(doc, 6.5, "italic", GRAY);
     doc.text(`${p.category === "fleur" ? "Fleur" : "Résine"}${p.cbdPercentage ? ` · ${p.cbdPercentage}` : ""}`, cx + 2, y + 9);
@@ -265,22 +287,22 @@ export function generateProPriceGrid(products: DocProduct[], tiers: PriceTier[])
     setFont(doc, 7.5, "normal", p.isExotique || p.isForceNoire ? GOLD : GRAY);
     doc.text(familleLabel(p), cx + 2, y + 4.5);
     cx += cFam;
-    setFont(doc, 8, "normal", DARK);
-    doc.text(eur(p.publicPrice), cx + cPv / 2, y + 4.5, { align: "center" });
-    cx += cPv;
-    TIER_WEIGHTS.forEach((w) => {
-      const price = getProPricePerGram(tiers, p.id, w);
-      setFont(doc, 8, "bold", DARK);
-      doc.text(price != null ? price.toFixed(2).replace(".", ",") : "—", cx + cTier / 2, y + 4.5, { align: "center" });
-      cx += cTier;
+
+    const rows = proFormatPrices(tiers, p.id, { price: p.publicPrice, priceGroup: p.priceGroup });
+    rows.forEach((r) => {
+      setFont(doc, 8.5, "bold", DARK);
+      doc.text(r.proUnitHT > 0 ? eur(r.proUnitHT) : "—", cx + cFmt / 2, y + 4.5, { align: "center" });
+      setFont(doc, 7, "normal", GRAY);
+      doc.text(`PV ${eur(r.retailUnitTTC)}`, cx + cFmt / 2, y + 9, { align: "center" });
+      cx += cFmt;
     });
     y += rowH;
   });
   hLine(doc, y, DARK, 0.4);
   y += 6;
   setFont(doc, 7.5, "normal", GRAY);
-  doc.text("Prix HT au gramme, préconditionné 1 g · 2,5 g · 5 g · 10 g. Boveda 62 % et kit cadeau client (briquet BIC + feuilles/carton) inclus.", MARGIN, y);
-  doc.text("Marge conseillée : coefficient ×2 HT minimum en revente au prix public conseillé.", MARGIN, y + 4);
+  doc.text("Prix HT par pochon préconditionné, Boveda 62 % et kit cadeau client (briquet BIC + feuilles/carton) inclus.", MARGIN, y);
+  doc.text("PV = prix de vente public conseillé TTC, identique au site. Remise volume en plus : -5 % dès 100 g, -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg.", MARGIN, y + 4);
   footer(doc, "IV · Tarifs");
 
   // --- Modalités ---
@@ -392,12 +414,13 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
   }
   footer(doc, "2");
 
-  // --- Fiches produits : 3 par page ---
+  // --- Fiches produits : 2 par page ---
   // Pré-chargement des visuels
   const images = await Promise.all(products.map((p) => (p.image ? loadImageData(p.image) : null)));
 
-  const CARD_H = 77;
-  const perPage = 3;
+  const CARD_H = 110;
+  const perPage = 2;
+  const fmtLabel = (f: number) => `${String(f).replace(".", ",")} g`;
   for (let i = 0; i < products.length; i++) {
     const p = products[i];
     if (i % perPage === 0) {
@@ -421,7 +444,7 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
 
     // Image
     const img = images[i];
-    const imgSize = CARD_H - 16;
+    const imgSize = 58;
     if (img) {
       const ratio = Math.min(imgSize / img.w, imgSize / img.h);
       const w = img.w * ratio;
@@ -432,7 +455,7 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
     // Texte
     const tx = MARGIN + imgSize + 10;
     const tw = CONTENT_W - imgSize - 14;
-    let ty = y + 15;
+    let ty = y + 16;
     setFont(doc, 12, "bold", DARK);
     doc.text(p.name, tx, ty);
     if (p.molecule) {
@@ -449,25 +472,46 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
     if (p.description) {
       setFont(doc, 8.5, "italic", DARK);
       const lines = doc.splitTextToSize(p.description, tw);
-      doc.text(lines.slice(0, 3), tx, ty);
-      ty += Math.min(lines.length, 3) * 4 + 2;
+      doc.text(lines.slice(0, 4), tx, ty);
     }
-    ty += 2;
-    setFont(doc, 8, "bold", DARK);
-    doc.text("FORMATS : 1 g · 2,5 g · 5 g · 10 g", tx, ty);
-    ty += 6;
 
-    // Prix
-    const basePrice = getProPricePerGram(tiers, p.id, 50);
-    if (basePrice != null) {
-      fillRect(doc, tx - 2, ty - 4, tw, 12, [247, 243, 234]);
-      setFont(doc, 8.5, "bold", GOLD);
-      doc.text(`Pro HT : ${eur(basePrice)}/g`, tx, ty + 2);
-      setFont(doc, 8, "normal", DARK);
-      doc.text(`Prix public conseillé : ${eur(p.publicPrice)}/g TTC`, tx, ty + 7);
-      setFont(doc, 7, "italic", GRAY);
-      doc.text("Dégressivité volume : -5 % dès 100 g · -10 % dès 250 g · -15 % dès 500 g · -20 % dès 1 kg", tx, ty + 11);
-    }
+    // --- Tarifs par format (prix fixes du pochon) ---
+    const rows = proFormatPrices(tiers, p.id, { price: p.publicPrice, priceGroup: p.priceGroup });
+    const tabX = MARGIN + 4;
+    const tabW = CONTENT_W - 8;
+    const labW = 42;
+    const colW2 = (tabW - labW) / rows.length;
+    let tabY = y + CARD_H - 34;
+
+    fillRect(doc, tabX, tabY, tabW, 6, GOLD);
+    setFont(doc, 7, "bold", WHITE);
+    doc.text("FORMAT (POCHON)", tabX + 2, tabY + 4.2);
+    rows.forEach((r, ri) => {
+      doc.text(fmtLabel(r.format), tabX + labW + colW2 * ri + colW2 / 2, tabY + 4.2, { align: "center" });
+    });
+    tabY += 6;
+
+    const priceRows: Array<[string, (r: typeof rows[number]) => string, boolean]> = [
+      ["Prix pro HT", (r) => eur(r.proUnitHT), true],
+      ["Prix public conseillé TTC", (r) => eur(r.retailUnitTTC), false],
+      ["Gain revendeur HT", (r) => `+${eur(r.marginHT)}`, false],
+    ];
+    priceRows.forEach(([label, fn, bold], ri) => {
+      if (ri % 2 === 1) fillRect(doc, tabX, tabY, tabW, 6, [247, 243, 234]);
+      setFont(doc, 7.5, "normal", GRAY);
+      doc.text(label, tabX + 2, tabY + 4.2);
+      rows.forEach((r, ci) => {
+        setFont(doc, 8, bold ? "bold" : "normal", bold ? GOLD : DARK);
+        doc.text(fn(r), tabX + labW + colW2 * ci + colW2 / 2, tabY + 4.2, { align: "center" });
+      });
+      hLine(doc, tabY + 6, LIGHT, 0.2);
+      tabY += 6;
+    });
+    setFont(doc, 6.5, "italic", GRAY);
+    doc.text(
+      "Prix fixes par format. Remise volume en plus sur le poids total de la commande : -5 % dès 100 g, -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg.",
+      tabX, tabY + 4
+    );
 
     y += CARD_H + 6;
   }
@@ -682,10 +726,10 @@ export function generateProGuide(): jsPDF {
   setFont(doc, 10, "bold", DARK);
   doc.text("2. Ristournes par volume", MARGIN, y);
   y += 5;
-  y = para(doc, "Plus la commande est importante, plus le prix au gramme baisse. Les paliers sont automatiques :", y);
+  y = para(doc, "Chaque variété a un prix HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g) : ce prix ne change jamais. En plus, une remise s'applique sur le poids total de la commande, tous formats et toutes variétés additionnés :", y);
   y += 3;
   y = table(y, ["Palier de commande", "Remise", "Argument"], [
-    ["Moins de 100 g", "tarif de base", "Le prix pro HT affiché par variété."],
+    ["Moins de 100 g", "tarif de base", "Le prix HT du pochon affiché par variété."],
     ["À partir de 100 g", "-5 %", "Le palier d'entrée réaliste pour une première vraie commande."],
     ["À partir de 250 g", "-10 %", "Point de vente qui tourne, réassort régulier."],
     ["À partir de 500 g", "-15 %", "Partenaire installé, plusieurs familles en rayon."],
