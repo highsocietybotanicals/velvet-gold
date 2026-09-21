@@ -125,7 +125,10 @@ const ProCataloguePage = () => {
 
 
           return (
-            <Card key={p.id} className="bg-card/60 border-border/50">
+            <Card
+              key={p.id}
+              className={`bg-card/60 border-border/50 ${rupture ? "opacity-60" : ""}`}
+            >
               <CardContent className="p-4 grid gap-4 md:grid-cols-[1fr_auto] items-center">
                 <div className="flex items-center gap-3 min-w-0">
                   <img
@@ -140,6 +143,9 @@ const ProCataloguePage = () => {
                       PV public conseillé : {eur(p.price)} /g TTC · Prix pro dès{" "}
                       <span className="text-gold font-medium">{eur(basePpg)} /g HT</span>
                     </p>
+                    <div className="mt-1">
+                      <StockBadge stock={stock} />
+                    </div>
                   </div>
                 </div>
 
@@ -168,6 +174,7 @@ const ProCataloguePage = () => {
                           inputMode="numeric"
                           value={getUnits(p.id, f) || ""}
                           placeholder="0"
+                          disabled={rupture}
                           onChange={(e) => setUnits(p.id, p.name, f, Number(e.target.value))}
                           className="h-9"
                         />
