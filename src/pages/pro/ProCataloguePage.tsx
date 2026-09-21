@@ -69,6 +69,7 @@ const ProCataloguePage = () => {
   const { setUnits, getUnits } = useProCart();
   const { totals, products, isLoading } = useProCartTotals();
   const { tiers } = useProPriceTiers();
+  const { data: stockMap } = useProStock();
 
   if (isLoading) {
     return (
@@ -111,6 +112,8 @@ const ProCataloguePage = () => {
 
       <div className="space-y-3">
         {products.map((p) => {
+          const stock = stockMap?.get(p.id);
+          const rupture = !!stock && stock.stock_grams <= 0;
           const info = { price: p.price, priceGroup: p.priceGroup };
           const basePpg = proPricePerGram(tiers, p.id, totals.totalWeightG, 10, info);
           const productSubtotal = PRO_FORMATS.reduce(
