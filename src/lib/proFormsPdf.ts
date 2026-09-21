@@ -115,31 +115,32 @@ export function generateProOrderForm(products: FormProduct[]): jsPDF {
   fieldLine(doc, MARGIN, y + 5, CONTENT_W, "E-mail :", 14);
   y += 10;
 
-  // --- Delivery + Payment ---
+  // --- Delivery ---
   setFont(doc, 8, "bold", GOLD);
   doc.text("LIVRAISON", MARGIN, y);
   setFont(doc, 8, "normal", DARK);
   let lx = MARGIN + 22;
   checkBox(doc, lx, y - 3);
   doc.text("Colissimo domicile", lx + 5, y);
-  lx += 40;
+  lx += 42;
   checkBox(doc, lx, y - 3);
   doc.text("Point relais", lx + 5, y);
-  lx += 30;
+  lx += 32;
   checkBox(doc, lx, y - 3);
   doc.text("Remise en main propre", lx + 5, y);
+  y += 7;
 
-  const px = MARGIN + 100;
+  // --- Payment ---
   setFont(doc, 8, "bold", GOLD);
-  doc.text("PAIEMENT", px, y);
+  doc.text("PAIEMENT", MARGIN, y);
   setFont(doc, 8, "normal", DARK);
-  let plx = px + 22;
+  let plx = MARGIN + 22;
   checkBox(doc, plx, y - 3);
   doc.text("En ligne", plx + 5, y);
   plx += 30;
   checkBox(doc, plx, y - 3);
   doc.text("Virement à 30 jours", plx + 5, y);
-  y += 8;
+  y += 9;
 
   // --- Product table ---
   setFont(doc, 8, "bold", GOLD);
