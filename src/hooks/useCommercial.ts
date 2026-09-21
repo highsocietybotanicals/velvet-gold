@@ -51,6 +51,8 @@ export const PROSPECT_STATUSES: { value: ProspectStatus; label: string }[] = [
 export const prospectStatusLabel = (s: string) =>
   PROSPECT_STATUSES.find((p) => p.value === s)?.label ?? s;
 
+export type SaleType = "new" | "reassort";
+
 export interface Commission {
   id: string;
   rep_id: string;
@@ -63,7 +65,14 @@ export interface Commission {
   status: string;
   paid_at: string | null;
   notes: string | null;
+  sale_type: SaleType;
+  new_client_bonus: number;
 }
+
+export const NEW_CLIENT_BONUS = 50;
+
+export const saleTypeLabel = (t: string) =>
+  t === "new" ? "Nouveau client" : "Réassort";
 
 const db = supabase as any;
 
