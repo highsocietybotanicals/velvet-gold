@@ -266,14 +266,13 @@ export function generateProOrderForm(products: FormProduct[]): jsPDF {
   for (let i = 0; i < PRO_TIERS.length; i++) {
     const tierMax = PRO_TIERS[i];
     const discount = TIER_DISCOUNT[tierMax] ?? 0;
-    const label = proTierLabel(tierMax);
-    tierLabels.push(discount === 0 ? label : `${label} (−${discount}%)`);
+    tierLabels.push(proTierLabel(tierMax));
   }
   doc.text(tierLabels.join("  |  "), MARGIN, y);
   y += 4;
   setFont(doc, 6.5, "italic", GRAY);
   doc.text(
-    "Additionner les grammes de tous les pochons (ex. 40 × 2,5 g + 10 × 10 g = 200 g → −5 %), puis appliquer la remise au total HT.",
+    "Additionner les grammes de tous les pochons (ex. 40 x 2,5 g + 10 x 10 g = 200 g, soit remise 5 %), puis appliquer la remise au total HT.",
     MARGIN, y
   );
   y += 6;
