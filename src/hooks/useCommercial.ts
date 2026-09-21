@@ -303,6 +303,10 @@ export interface MonthlyCommission {
   newClientCount: number;
   /** Total des primes de nouveau client */
   bonusTotal: number;
+  /** Somme des commissions déjà enregistrées ligne par ligne */
+  baseCommission: number;
+  /** Complément à verser au-delà des lignes enregistrées (tranches + primes) */
+  supplement: number;
   /** Total dû au commercial pour le mois */
   totalDue: number;
   allPaid: boolean;
