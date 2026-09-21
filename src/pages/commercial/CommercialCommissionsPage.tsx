@@ -30,9 +30,9 @@ const CommercialCommissionsPage = () => {
 
   const currentKey = new Date().toISOString().slice(0, 7);
   const currentMonth = months.find((m) => m.month === currentKey);
-  const currentRevenue = currentMonth?.revenueHT ?? 0;
-  const currentTier = resolveTier(tiers, currentRevenue);
-  const upcoming = nextTier(tiers, currentRevenue);
+  const newRevenue = currentMonth?.newClientRevenue ?? 0;
+  const currentTier = resolveTier(tiers, newRevenue);
+  const upcoming = nextTier(tiers, newRevenue);
 
   const totals = useMemo(() => {
     const paid = commissions.filter((c) => c.status === "paid");
@@ -42,7 +42,8 @@ const CommercialCommissionsPage = () => {
       pending: commissions
         .filter((c) => c.status !== "paid")
         .reduce((s, c) => s + Number(c.commission_amount), 0),
-      bonus: months.reduce((s, m) => s + m.bonus, 0),
+      bonus: months.reduce((s, m) => s + m.bonusTotal, 0),
+      bonusCount: months.reduce((s, m) => s + m.newClientCount, 0),
     };
   }, [commissions, months]);
 
@@ -52,10 +53,46 @@ const CommercialCommissionsPage = () => {
         <h1 className="text-2xl font-semibold gold-text">Mes commissions</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {rep
-            ? "Barème progressif par tranche : 10 % jusqu'à 5 000 € HT, 12 % de 5 000 à 10 000 €, 15 % au-delà. Chaque tranche ne s'applique qu'à la part de CA qu'elle couvre."
+            ? "Nouveaux clients : barème par tranche sur le cumul du mois — 10 % jusqu'à 5 000 € HT, 12 % de 5 000 à 10 000 €, 15 % au-delà. Réassorts : 10 % fixe. Plus 50 € de prime par nouveau client pro signé."
             : "Aucune fiche commerciale rattachée à ce compte."}
         </p>
       </div>
+
+      {currentMonth && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Card className="border-gold/30">
+            <CardContent className="pt-5">
+              <p className="text-xs text-muted-foreground">Nouveaux clients ce mois</p>
+              <p className="text-xl font-semibold">{euro(currentMonth.newClientRevenue)} HT</p>
+              <p className="text-xs text-gold mt-1">
+                {euro(currentMonth.newClientCommission)} · taux moyen{" "}
+                {currentMonth.newClientPercent} %
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5">
+              <p className="text-xs text-muted-foreground">Réassorts ce mois</p>
+              <p className="text-xl font-semibold">{euro(currentMonth.reassortRevenue)} HT</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {euro(currentMonth.reassortCommission)} · {currentMonth.reassortPercent} % fixe
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5">
+              <p className="text-xs text-muted-foreground">Total dû ce mois</p>
+              <p className="text-xl font-semibold text-emerald-400">
+                {euro(currentMonth.totalDue)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                dont {currentMonth.newClientCount} prime
+                {currentMonth.newClientCount > 1 ? "s" : ""} · {euro(currentMonth.bonusTotal)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card className="border-gold/30">
         <CardHeader className="pb-3">
