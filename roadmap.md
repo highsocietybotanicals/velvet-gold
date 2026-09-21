@@ -1,4 +1,5 @@
-- [x] Créer et valider les visuels réels BHM et Lemon Punch Hash
-- [x] Ajouter BHM et Lemon, retirer Nuage des nouvelles ventes, ajuster Piatella
-- [x] Synchroniser tarifs, inventaire, paiement et espace pro
-- [x] Vérifier le catalogue et les prix sur mobile et ordinateur
+# Payment documents
+- [x] Extract the provided business bank details safely
+- [x] Add prefilled bank details to paper order forms and downloadable documents
+- [x] Keep card payment preferred and remove cash/cheque references
+- [x] Validate generated PDFs visually and verify the app

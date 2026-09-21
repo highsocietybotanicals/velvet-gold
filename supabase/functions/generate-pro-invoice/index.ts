@@ -8,6 +8,9 @@ const corsHeaders = {
 };
 
 const TVA_RATE = 20;
+const BANK_HOLDER = "HIGH SOCIETY BOTANICALS";
+const BANK_IBAN = "FR76 1732 8844 0042 2905 2329 583";
+const BANK_BIC = "SWNBFR22";
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -101,6 +104,25 @@ Deno.serve(async (req) => {
     doc.setTextColor(...gold);
     doc.setFont("helvetica", "bold");
     doc.text("HIGH SOCIETY BOTANICALS", margin, y + 6);
+    if (y > 222) {
+      doc.addPage();
+      y = margin;
+    }
+    doc.setFillColor(249, 247, 243);
+    doc.setDrawColor(232, 224, 208);
+    doc.roundedRect(margin, y, contentW, 31, 2, 2, "FD");
+    doc.setFontSize(8);
+    doc.setTextColor(...gold);
+    doc.setFont("helvetica", "bold");
+    doc.text("REGLEMENT PAR VIREMENT BANCAIRE", margin + 4, y + 7);
+    doc.setFontSize(9);
+    doc.setTextColor(...dark);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Titulaire : ${BANK_HOLDER}`, margin + 4, y + 14);
+    doc.text(`IBAN : ${BANK_IBAN}`, margin + 4, y + 20);
+    doc.text(`BIC : ${BANK_BIC}`, margin + 4, y + 26);
+    y += 39;
+
     doc.setFontSize(8);
     doc.setTextColor(...gray);
     doc.setFont("helvetica", "normal");

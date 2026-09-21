@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { PRO_TIERS, TIER_DISCOUNT, proTierLabel } from "./margin";
+import { BANK_DETAILS } from "./bankDetails";
 
 // A4 portrait: 210 × 297 mm
 const PAGE_W = 210;
@@ -136,11 +137,17 @@ export function generateProOrderForm(products: FormProduct[]): jsPDF {
   setFont(doc, 8, "normal", DARK);
   let plx = MARGIN + 22;
   checkBox(doc, plx, y - 3);
-  doc.text("En ligne", plx + 5, y);
-  plx += 30;
+  doc.text("Carte bancaire (à privilégier)", plx + 5, y);
+  plx += 58;
   checkBox(doc, plx, y - 3);
-  doc.text("Virement à 30 jours", plx + 5, y);
-  y += 9;
+  doc.text("Virement bancaire", plx + 5, y);
+  y += 5;
+  setFont(doc, 6.5, "normal", DARK);
+  doc.text(`Titulaire : ${BANK_DETAILS.holder}`, MARGIN + 22, y);
+  doc.text(`BIC : ${BANK_DETAILS.bic}`, MARGIN + 95, y);
+  y += 3.5;
+  doc.text(`IBAN : ${BANK_DETAILS.iban}`, MARGIN + 22, y);
+  y += 6;
 
   // --- Product table ---
   setFont(doc, 8, "bold", GOLD);

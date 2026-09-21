@@ -10,6 +10,11 @@ import { getGammeForProduct, getProPricePerGram } from "@/lib/margin";
 
 const DOCS = [
   {
+    name: "RIB — High Society Botanicals",
+    desc: "Coordonnées bancaires officielles à transmettre aux clients réglant par virement.",
+    href: "/documents/HSB-RIB.pdf",
+  },
+  {
     name: "Guide commercial — marque, gamme, légalité, pitch",
     desc: "11 chapitres : notre histoire, la sélection, le packaging, les analyses laboratoire (GC-MS / GC-FID), l'offre revendeur, le déroulé de visite, les objections et votre rémunération.",
     href: "/documents/HSB-Guide-Commercial.pdf",
@@ -84,7 +89,7 @@ const CommercialDocumentsPage = () => {
             </div>
             <p className="text-xs text-muted-foreground">
               À imprimer et remplir au stylo pendant la visite. Prix pro HT fixés par variété,
-              dégressivité volume imprimée, totaux et signatures.
+              dégressivité volume, coordonnées bancaires préremplies, totaux et signatures.
             </p>
             <Button variant="outline" size="sm" onClick={handleOrderForm}>
               <Printer className="h-4 w-4 mr-2" /> Télécharger le PDF

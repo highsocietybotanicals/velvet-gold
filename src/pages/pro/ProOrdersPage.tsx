@@ -15,6 +15,7 @@ import { Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { BANK_DETAILS } from "@/lib/bankDetails";
 
 const eur = (n: number) => `${Number(n || 0).toFixed(2)} €`;
 const dt = (d?: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "—");
@@ -110,6 +111,20 @@ const ProOrdersPage = () => {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold gold-text">Mes commandes & devis</h1>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Coordonnées de règlement par virement</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1 text-sm">
+          <p><span className="text-muted-foreground">Titulaire :</span> {BANK_DETAILS.holder}</p>
+          <p><span className="text-muted-foreground">IBAN :</span> {BANK_DETAILS.iban}</p>
+          <p><span className="text-muted-foreground">BIC :</span> {BANK_DETAILS.bic}</p>
+          <p className="pt-1 text-xs text-muted-foreground">
+            Indique le numéro de commande dans le libellé du virement.
+          </p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

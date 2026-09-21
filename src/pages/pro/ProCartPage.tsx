@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, Trash2 } from "lucide-react";
+import { BANK_DETAILS } from "@/lib/bankDetails";
 
 const eur = (n: number) => `${n.toFixed(2)} €`;
 
@@ -31,7 +32,7 @@ const ProCartPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState<"transfer" | "physical" | "quote">("transfer");
+  const [mode, setMode] = useState<"transfer" | "physical" | "quote">("physical");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -215,13 +216,16 @@ const ProCartPage = () => {
               <div className="flex items-start gap-2">
                 <RadioGroupItem value="transfer" id="m-transfer" className="mt-1" />
                 <Label htmlFor="m-transfer" className="font-normal">
-                  Virement — facture à {delai} jours
+                  <span>Virement — facture à {delai} jours</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {BANK_DETAILS.holder} · IBAN {BANK_DETAILS.iban} · BIC {BANK_DETAILS.bic}
+                  </span>
                 </Label>
               </div>
               <div className="flex items-start gap-2">
                 <RadioGroupItem value="physical" id="m-physical" className="mt-1" />
                 <Label htmlFor="m-physical" className="font-normal">
-                  Paiement par TPE à la remise (carte bancaire sur place) — validé par HSB
+                  Carte bancaire par TPE à la remise — mode privilégié
                 </Label>
               </div>
               <div className="flex items-start gap-2">
