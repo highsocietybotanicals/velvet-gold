@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
-import { PRO_TIERS, TIER_DISCOUNT, getProPricePerGram, type PriceTier } from "./margin";
+import { PRO_TIERS, TIER_DISCOUNT, type PriceTier } from "./margin";
+import { PRO_FORMATS, proFormatPrices } from "./proPricing";
+import type { PriceGroup } from "@/data/products";
 import { BANK_DETAILS } from "./bankDetails";
 
 // A4 portrait : 210 × 297 mm
@@ -30,6 +32,8 @@ export interface DocProduct {
   isExotique?: boolean;
   /** Prix public TTC au gramme (site) */
   publicPrice: number;
+  /** Groupe tarifaire public (A / B) — nécessaire au calcul du prix par format */
+  priceGroup: PriceGroup;
   /** URL ou data-url du visuel produit (catalogue uniquement) */
   image?: string;
 }
