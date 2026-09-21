@@ -11,7 +11,7 @@ const CONTENT_W = PAGE_W - MARGIN * 2; // 180mm
 interface FormProduct {
   id: string;
   name: string;
-  pricePerGram: number; // base tier (≤100g) €/g HT
+  pricePerGram: number; // base tier (jusqu'à 100g) €/g HT
   isOutOfStock?: boolean;
 }
 
@@ -251,7 +251,7 @@ export function generateProOrderForm(products: FormProduct[]): jsPDF {
     y += 4;
   }
   setFont(doc, 6.5, "italic", GRAY);
-  doc.text("Le €/g HT imprimé ci-dessus est le tarif de base (≤ 100 g). Déduire la remise du palier atteint.", MARGIN, y + 3);
+  doc.text("Le €/g HT imprimé ci-dessus est le tarif de base (jusqu'à 100 g). Déduire la remise du palier atteint.", MARGIN, y + 3);
   y += 9;
 
   // --- Totals ---
