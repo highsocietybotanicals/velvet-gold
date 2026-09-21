@@ -113,7 +113,7 @@ function darkCover(doc: jsPDF, title: string, subtitle: string, lines: string[])
 
 // ---------- utilitaires données ----------
 const TIER_WEIGHTS = [50, 100, 250, 500, 1000]; // poids représentatif de chaque palier
-const TIER_COL_LABELS = ["≤ 100 g", "dès 100 g", "dès 250 g", "dès 500 g", "dès 1 kg"];
+const TIER_COL_LABELS = ["jusqu’à 100 g", "dès 100 g", "dès 250 g", "dès 500 g", "dès 1 kg"];
 
 function familleLabel(p: DocProduct): string {
   if (p.isExotique) return "Exotique";
