@@ -1,8 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileDown, Copy, Check } from "lucide-react";
+import { FileDown, Copy, Check, Printer, FileText } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
+import { useProPriceTiers } from "@/hooks/useProPriceTiers";
+import { downloadProOrderForm, downloadProClientForm } from "@/lib/proFormsPdf";
+import { getGammeForProduct, getProPricePerGram } from "@/lib/margin";
 
 const DOCS = [
   {
