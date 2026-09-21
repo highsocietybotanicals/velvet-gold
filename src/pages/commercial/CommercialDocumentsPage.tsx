@@ -1,35 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileDown, Copy, Check, Printer, FileText } from "lucide-react";
+import { FileDown, Copy, Check, Printer, FileText, Landmark, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { downloadProOrderForm, downloadProClientForm } from "@/lib/proFormsPdf";
+import { downloadProPriceGrid, downloadProCatalogue, downloadProGuide, type DocProduct } from "@/lib/proDocsPdf";
 import { getGammeForProduct, getProPricePerGram } from "@/lib/margin";
-
-const DOCS = [
-  {
-    name: "RIB — High Society Botanicals",
-    desc: "Coordonnées bancaires officielles à transmettre aux clients réglant par virement.",
-    href: "/documents/HSB-RIB.pdf",
-  },
-  {
-    name: "Guide commercial — marque, gamme, légalité, pitch",
-    desc: "11 chapitres : notre histoire, la sélection, le packaging, les analyses laboratoire (GC-MS / GC-FID), l'offre revendeur, le déroulé de visite, les objections et votre rémunération.",
-    href: "/documents/HSB-Guide-Commercial.pdf",
-  },
-  {
-    name: "Grille tarifaire pro — préconditionné",
-    desc: "Prix HT par format (1 g / 2,5 g / 5 g / 10 g) et dégressivité volume.",
-    href: "/documents/HSB-Grille-Tarifaire-Pro-Preconditionne.pdf",
-  },
-  {
-    name: "Catalogue pro — vente directe",
-    desc: "Présentation des gammes, visuels produits et argumentaire commercial.",
-    href: "/documents/HSB-Catalogue-Pro-Tabac-VenteDirecte.pdf",
-  },
-];
 
 const PITCH = `Bonjour,
 
@@ -37,7 +15,7 @@ Je suis commercial pour High Society Botanicals, une marque française de CBD ha
 
 Nous proposons aux buralistes une gamme préconditionnée prête à vendre : pochons 1 g, 2,5 g, 5 g et 10 g, humidité maîtrisée par Boveda 62 %, briquet BIC et feuilles slim offerts dans les 10 g.
 
-Le principe est simple : vous revendez aux mêmes prix que notre site, et vous achetez à moitié prix — soit un coefficient x2 sur votre prix de vente hors taxes. Dégressivité supplémentaire dès 100 g.
+Le principe est simple : vous revendez aux mêmes prix que notre site, avec un prix professionnel HT fixe par variété construit pour vous laisser un coefficient ×2 — et une ristourne automatique dès 100 g (-5 %, puis -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg).
 
 Je peux passer vous déposer des échantillons et la grille tarifaire complète. Quel jour vous arrange ?
 
@@ -46,8 +24,24 @@ Bien à vous,`;
 const CommercialDocumentsPage = () => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const { all: products } = useCatalogProducts();
   const { tiers } = useProPriceTiers();
+
+  const toDocProducts = (): DocProduct[] =>
+    products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      subtitle: p.subtitle,
+      description: p.description,
+      category: p.category,
+      cbdPercentage: p.cbdPercentage,
+      molecule: p.molecule,
+      isForceNoire: p.isForceNoire,
+      isExotique: p.isExotique,
+      publicPrice: p.price,
+      image: p.image,
+    }));
 
   const copy = async () => {
     await navigator.clipboard.writeText(PITCH);
@@ -70,12 +64,45 @@ const CommercialDocumentsPage = () => {
     toast({ title: "Bon de commande téléchargé" });
   };
 
+  const run = async (key: string, fn: () => void | Promise<void>, label: string) => {
+    setBusy(key);
+    try {
+      await fn();
+      toast({ title: `${label} téléchargé` });
+    } catch {
+      toast({ title: "Erreur de génération", variant: "destructive" });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const GENERATED_DOCS = [
+    {
+      key: "grille",
+      name: "Grille tarifaire pro — préconditionné",
+      desc: "Prix pro HT au gramme par variété, paliers de dégressivité volume, modalités et RIB. Générée à jour à chaque téléchargement.",
+      action: () => run("grille", () => downloadProPriceGrid(toDocProducts(), tiers), "Grille tarifaire"),
+    },
+    {
+      key: "catalogue",
+      name: "Catalogue pro — vente directe",
+      desc: "Présentation des gammes, visuels produits et prix pro par variété. Uniquement les variétés actives, toujours à jour.",
+      action: () => run("catalogue", () => downloadProCatalogue(toDocProducts(), tiers), "Catalogue pro"),
+    },
+    {
+      key: "guide",
+      name: "Guide commercial — marque, gamme, légalité, pitch",
+      desc: "11 chapitres : notre histoire, la sélection, le packaging, les analyses laboratoire, l'offre revendeur, le déroulé de visite, les objections et votre rémunération (10 % + 10 % réassorts + 50 € par nouveau client).",
+      action: () => run("guide", () => downloadProGuide(), "Guide commercial"),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold gold-text">Documents & pitch</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          À envoyer par mail ou à présenter sur tablette pendant la visite.
+          À envoyer par mail ou à présenter sur tablette pendant la visite. Les documents sont générés à jour à chaque téléchargement.
         </p>
       </div>
 
@@ -121,19 +148,35 @@ const CommercialDocumentsPage = () => {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        {DOCS.map((d) => (
-          <Card key={d.href}>
+        {GENERATED_DOCS.map((d) => (
+          <Card key={d.key}>
             <CardContent className="pt-5 space-y-3">
               <p className="font-medium text-sm">{d.name}</p>
               <p className="text-xs text-muted-foreground">{d.desc}</p>
-              <Button asChild variant="outline" size="sm">
-                <a href={d.href} target="_blank" rel="noopener noreferrer">
-                  <FileDown className="h-4 w-4 mr-2" /> Télécharger le PDF
-                </a>
+              <Button variant="outline" size="sm" onClick={d.action} disabled={busy !== null}>
+                {busy === d.key ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4 mr-2" />
+                )}
+                Télécharger le PDF
               </Button>
             </CardContent>
           </Card>
         ))}
+        <Card>
+          <CardContent className="pt-5 space-y-3">
+            <p className="font-medium text-sm">RIB — High Society Botanicals</p>
+            <p className="text-xs text-muted-foreground">
+              Coordonnées bancaires officielles à transmettre aux clients réglant par virement.
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <a href="/documents/HSB-RIB.pdf" target="_blank" rel="noopener noreferrer">
+                <Landmark className="h-4 w-4 mr-2" /> Télécharger le PDF
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
