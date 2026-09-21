@@ -192,10 +192,11 @@ const CommercialCommissionsPage = () => {
                 <thead className="text-xs text-muted-foreground">
                   <tr className="border-b border-border/50">
                     <th className="text-left py-2">Mois</th>
-                    <th className="text-right py-2">CA HT</th>
-                    <th className="text-right py-2">Taux moyen</th>
-                    <th className="text-right py-2">Base</th>
-                    <th className="text-right py-2">Bonus</th>
+                    <th className="text-right py-2">CA nouveaux clients</th>
+                    <th className="text-right py-2">Commission</th>
+                    <th className="text-right py-2">CA réassorts</th>
+                    <th className="text-right py-2">Commission</th>
+                    <th className="text-right py-2">Primes</th>
                     <th className="text-right py-2">Total dû</th>
                   </tr>
                 </thead>
@@ -203,13 +204,24 @@ const CommercialCommissionsPage = () => {
                   {months.map((m) => (
                     <tr key={m.month} className="border-b border-border/30 last:border-0">
                       <td className="py-2 capitalize">{monthLabel(m.month)}</td>
-                      <td className="py-2 text-right">{euro(m.revenueHT)}</td>
-                      <td className="py-2 text-right text-gold">{m.tierPercent} %</td>
-                      <td className="py-2 text-right">{euro(m.baseCommission)}</td>
+                      <td className="py-2 text-right">{euro(m.newClientRevenue)}</td>
                       <td className="py-2 text-right text-gold">
-                        {m.bonus > 0 ? `+${euro(m.bonus)}` : "—"}
+                        {euro(m.newClientCommission)}{" "}
+                        <span className="text-[11px] text-muted-foreground">
+                          ({m.newClientPercent} %)
+                        </span>
                       </td>
-                      <td className="py-2 text-right font-medium">{euro(m.tierCommission)}</td>
+                      <td className="py-2 text-right">{euro(m.reassortRevenue)}</td>
+                      <td className="py-2 text-right">
+                        {euro(m.reassortCommission)}{" "}
+                        <span className="text-[11px] text-muted-foreground">
+                          ({m.reassortPercent} %)
+                        </span>
+                      </td>
+                      <td className="py-2 text-right text-gold">
+                        {m.bonusTotal > 0 ? `+${euro(m.bonusTotal)}` : "—"}
+                      </td>
+                      <td className="py-2 text-right font-medium">{euro(m.totalDue)}</td>
                     </tr>
                   ))}
                 </tbody>
