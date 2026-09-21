@@ -373,6 +373,8 @@ export const aggregateMonthly = (
       const reassortCommission = r2((reassortRevenue * flatPercent) / 100);
       const bonusTotal = r2(list.reduce((s, c) => s + Number(c.new_client_bonus ?? 0), 0));
       const newClientCount = list.filter((c) => Number(c.new_client_bonus ?? 0) > 0).length;
+      const baseCommission = r2(list.reduce((s, c) => s + Number(c.commission_amount), 0));
+      const totalDue = r2(newClientCommission + reassortCommission + bonusTotal);
 
       return {
         month,
@@ -386,7 +388,9 @@ export const aggregateMonthly = (
         reassortPercent: flatPercent,
         newClientCount,
         bonusTotal,
-        totalDue: r2(newClientCommission + reassortCommission + bonusTotal),
+        baseCommission,
+        supplement: r2(Math.max(0, totalDue - baseCommission)),
+        totalDue,
         allPaid: list.length > 0 && list.every((c) => c.status === "paid"),
       };
     });
