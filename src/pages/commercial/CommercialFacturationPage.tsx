@@ -47,7 +47,7 @@ const CommercialFacturationPage = () => {
   const [lines, setLines] = useState<Line[]>([{ ...emptyLine }]);
   const [dueDays, setDueDays] = useState("30");
   const [notes, setNotes] = useState("");
-  const [bank, setBank] = useState({
+  const [bank, setBank] = useState<{ holder: string; iban: string; bic: string }>({
     holder: BANK_DETAILS.holder,
     iban: BANK_DETAILS.iban,
     bic: BANK_DETAILS.bic,
