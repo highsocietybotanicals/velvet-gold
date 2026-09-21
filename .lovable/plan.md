@@ -1,35 +1,38 @@
-# Bons de commande papier + fiche « Nouveau client pro »
+# Catalogue pro : badges de stock + gestion rupture
 
-Deux documents A4 imprimables, à remplir au stylo pendant la visite, téléchargeables depuis l'espace commercial (onglet Documents) et depuis l'administration.
+## Constat
 
-## 1. Bon de commande papier (A4)
+Le catalogue pro (`/pro/catalogue`) affiche déjà les 10 variétés actives — dont BHM, Lemon Punch Hash et Piatella — avec leurs prix pro HT corrects et la dégressivité volume. Les paliers en base sont à jour pour chaque variété.
 
-- En-tête : logo/nom High Society Botanicals, SIRET, TVA intracom, site, e-mail de commande.
-- Cadre « Client » à remplir : raison sociale, enseigne, SIRET, TVA intracom, adresse, code postal, ville, nom du contact, téléphone, e-mail.
-- Cadre « Commande » : n° de bon (vide), date, nom du commercial, mode de livraison (cases à cocher : Colissimo domicile / Point relais / Remise en main propre), mode de paiement (cases : en ligne / virement à 30 jours).
-- Tableau des lignes avec **les variétés en vente déjà imprimées** (une ligne par variété), colonnes vides à remplir : unités 1 g, 2,5 g, 5 g, 10 g, total grammes, prix €/g, total HT. Plus 4 lignes vierges pour accessoires ou nouveautés.
-- Rappel de la dégressivité volume (paliers ≤200 g / >200 g / >600 g / >1 kg) imprimé en pied de tableau, pour que le commercial applique le bon €/g.
-- Totaux à remplir : total grammes, total HT, TVA 20 %, total TTC, franco de port éventuel.
-- Mentions : cadeaux inclus dès 10 g (briquet + feuilles), produits < 0,3 % THC, analyses laboratoire disponibles.
-- Deux cadres signature : « Le client (cachet et signature) » et « Le commercial ».
+Ce qui manque : le catalogue pro n'affiche pas le stock disponible. Le client pro ne voit pas si une variété est en stock, en stock faible ou en rupture — alors que c'est déjà le cas dans l'espace commercial (`CommercialCataloguePage.tsx` avec `StockBadge`).
 
-## 2. Fiche « Nouveau client pro » (A4)
+## Changements
 
-Reprend exactement les informations nécessaires pour créer ensuite le compte pro en back-office, dans le même ordre que le formulaire en ligne :
+### 1. Badges de stock dans le catalogue pro
 
-- Raison sociale, enseigne commerciale, type d'établissement (buraliste / CBD shop / autre).
-- SIRET, numéro de TVA intracommunautaire.
-- Adresse, complément, code postal, ville, pays.
-- Nom et prénom du contact, fonction, téléphone, e-mail (e-mail = identifiant de connexion, à écrire très lisiblement en cases).
-- Commission / conditions négociées, commercial référent, date de signature.
-- Horaires d'ouverture et jour de réassort préféré.
-- Case « Accepte de recevoir ses accès à l'espace Pro par e-mail » + signature du client.
-- Encadré « Réservé HSB » : compte créé le ___, validé par ___, TVA vérifiée ☐.
+Reprendre le même système que l'espace commercial :
 
-## Détails techniques
+- Hook `useProStock` (query `product_inventory` : `product_id, stock_grams, low_stock_threshold_g`) — identique à `useCommercialStock` mais avec une queryKey dédiée `["pro","stock"]`.
+- Composant `StockBadge` réutilisé (vert « X g en stock », orange « Stock faible — X g », rouge « Rupture »).
+- Affichage du badge à côté du nom du produit dans chaque carte du catalogue pro.
 
-- Nouveau fichier `src/lib/proFormsPdf.ts` : `generateProOrderForm(products)` et `generateProClientForm()` en jsPDF A4 (même approche que `src/lib/labelPdf.ts` / `accountingPdf.ts`), tracé en niveaux de gris pour une impression noir et blanc nette.
-- Le bon de commande lit les variétés actives via `useCatalogProducts` (donc il suit le catalogue automatiquement) ; aucune donnée figée en dur.
-- `src/pages/commercial/CommercialDocumentsPage.tsx` : deux boutons « Bon de commande (PDF à imprimer) » et « Fiche nouveau client pro (PDF à imprimer) » ajoutés à la liste des documents.
-- Même paire de boutons ajoutée dans `src/pages/admin/ProPage.tsx` pour que l'administration puisse réimprimer les liasses.
-- Aucun changement de prix, de stock, de base de données ni de logique de commande.
+### 2. Produits en rupture
+
+- Un produit `is_out_of_stock = true` (rupture) reste visible dans le catalogue pro (pour information) mais :
+  - Carte estompée (opacity réduite)
+  - Badge « Rupture » affiché
+  - Les inputs de quantité sont désactivés (on ne peut pas commander une variété en rupture)
+
+### 3. Section « À vendre en priorité »
+
+- En haut du catalogue pro, un petit bandeau reprenant les 5 variétés avec le plus de stock (pour écouler les surplus) — identique à ce qui existe dans l'espace commercial si pertinent, sinon omis.
+
+## Fichiers touchés
+
+- `src/pages/pro/ProCataloguePage.tsx` — ajout des badges de stock, estompement des produits en rupture, désactivation des inputs
+- Aucun changement de base de données, de prix ou de logique de commande
+
+## Vérification
+
+- Typecheck propre (`npx tsgo --noEmit -p tsconfig.app.json`)
+- Playwright sur `/pro/catalogue` : toutes les variétés visibles, badges de stock corrects, produit en rupture estompé et inputs désactivés
