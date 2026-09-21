@@ -1,7 +1,7 @@
 import ProRequestsSection from "@/components/admin/ProRequestsSection";
 import ProInvoicingManager from "@/components/admin/ProInvoicingManager";
 import { Button } from "@/components/ui/button";
-import { Printer, FileText } from "lucide-react";
+import { Printer, FileText, Landmark } from "lucide-react";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { downloadProOrderForm, downloadProClientForm } from "@/lib/proFormsPdf";
@@ -44,6 +44,11 @@ const ProPage = () => {
           }}
         >
           <FileText className="h-4 w-4 mr-2" /> Fiche nouveau client pro
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <a href="/documents/HSB-RIB.pdf" target="_blank" rel="noopener noreferrer">
+            <Landmark className="h-4 w-4 mr-2" /> RIB High Society Botanicals
+          </a>
         </Button>
       </div>
 

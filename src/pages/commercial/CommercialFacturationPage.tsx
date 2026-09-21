@@ -19,6 +19,7 @@ import { useMyRep, useAllReps, useProspects } from "@/hooks/useCommercial";
 import { VAT_RATE, PRO_FORMATS, proPricePerGram } from "@/lib/proPricing";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
+import { BANK_DETAILS } from "@/lib/bankDetails";
 
 interface Line {
   designation: string;
@@ -46,7 +47,11 @@ const CommercialFacturationPage = () => {
   const [lines, setLines] = useState<Line[]>([{ ...emptyLine }]);
   const [dueDays, setDueDays] = useState("30");
   const [notes, setNotes] = useState("");
-  const [bank, setBank] = useState({ holder: "High Society Botanicals", iban: "", bic: "" });
+  const [bank, setBank] = useState({
+    holder: BANK_DETAILS.holder,
+    iban: BANK_DETAILS.iban,
+    bic: BANK_DETAILS.bic,
+  });
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ orderNumber: string; url?: string; emailSent: boolean } | null>(
     null
@@ -55,7 +60,14 @@ const CommercialFacturationPage = () => {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(BANK_KEY);
-      if (saved) setBank((b) => ({ ...b, ...JSON.parse(saved) }));
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<typeof bank>;
+        setBank((current) => ({
+          holder: parsed.holder?.trim() || current.holder,
+          iban: parsed.iban?.trim() || current.iban,
+          bic: parsed.bic?.trim() || current.bic,
+        }));
+      }
     } catch {
       /* ignore */
     }
