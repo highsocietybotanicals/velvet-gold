@@ -726,10 +726,10 @@ export function generateProGuide(): jsPDF {
   setFont(doc, 10, "bold", DARK);
   doc.text("2. Ristournes par volume", MARGIN, y);
   y += 5;
-  y = para(doc, "Plus la commande est importante, plus le prix au gramme baisse. Les paliers sont automatiques :", y);
+  y = para(doc, "Chaque variété a un prix HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g) : ce prix ne change jamais. En plus, une remise s'applique sur le poids total de la commande, tous formats et toutes variétés additionnés :", y);
   y += 3;
   y = table(y, ["Palier de commande", "Remise", "Argument"], [
-    ["Moins de 100 g", "tarif de base", "Le prix pro HT affiché par variété."],
+    ["Moins de 100 g", "tarif de base", "Le prix HT du pochon affiché par variété."],
     ["À partir de 100 g", "-5 %", "Le palier d'entrée réaliste pour une première vraie commande."],
     ["À partir de 250 g", "-10 %", "Point de vente qui tourne, réassort régulier."],
     ["À partir de 500 g", "-15 %", "Partenaire installé, plusieurs familles en rayon."],
