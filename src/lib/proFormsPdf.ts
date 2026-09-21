@@ -8,10 +8,18 @@ const PAGE_H = 297;
 const MARGIN = 15;
 const CONTENT_W = PAGE_W - MARGIN * 2; // 180mm
 
-interface FormProduct {
+export interface FormFormatPrice {
+  /** Taille du pochon en grammes (1 / 2,5 / 5 / 10) */
+  format: number;
+  /** Prix HT fixe du pochon pour cette variété */
+  unitHT: number;
+}
+
+export interface FormProduct {
   id: string;
   name: string;
-  pricePerGram: number; // base tier (jusqu'à 100g) €/g HT
+  /** Prix HT fixe par format de pochon */
+  formats: FormFormatPrice[];
   isOutOfStock?: boolean;
 }
 
