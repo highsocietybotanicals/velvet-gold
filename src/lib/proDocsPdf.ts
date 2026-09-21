@@ -396,7 +396,7 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
   // Pré-chargement des visuels
   const images = await Promise.all(products.map((p) => (p.image ? loadImageData(p.image) : null)));
 
-  const CARD_H = 82;
+  const CARD_H = 77;
   const perPage = 3;
   for (let i = 0; i < products.length; i++) {
     const p = products[i];
@@ -405,7 +405,7 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
       doc.addPage();
       y = 22;
       spacedTitle(doc, "Le catalogue", y, 13);
-      y += 10;
+      y += 8;
     }
 
     const fam = familleLabel(p);
