@@ -334,6 +334,7 @@ export function generateProPriceGrid(products: DocProduct[], tiers: PriceTier[])
 // ============================================================
 async function loadImageData(url: string): Promise<{ data: string; w: number; h: number } | null> {
   try {
+    if (typeof Image === "undefined" || typeof document === "undefined") return null;
     const img = new Image();
     img.crossOrigin = "anonymous";
     await new Promise<void>((resolve, reject) => {
