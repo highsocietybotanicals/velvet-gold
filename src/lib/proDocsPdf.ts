@@ -414,12 +414,13 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
   }
   footer(doc, "2");
 
-  // --- Fiches produits : 3 par page ---
+  // --- Fiches produits : 2 par page ---
   // Pré-chargement des visuels
   const images = await Promise.all(products.map((p) => (p.image ? loadImageData(p.image) : null)));
 
-  const CARD_H = 77;
-  const perPage = 3;
+  const CARD_H = 110;
+  const perPage = 2;
+  const fmtLabel = (f: number) => `${String(f).replace(".", ",")} g`;
   for (let i = 0; i < products.length; i++) {
     const p = products[i];
     if (i % perPage === 0) {
@@ -443,7 +444,7 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
 
     // Image
     const img = images[i];
-    const imgSize = CARD_H - 16;
+    const imgSize = 58;
     if (img) {
       const ratio = Math.min(imgSize / img.w, imgSize / img.h);
       const w = img.w * ratio;
@@ -454,7 +455,7 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
     // Texte
     const tx = MARGIN + imgSize + 10;
     const tw = CONTENT_W - imgSize - 14;
-    let ty = y + 15;
+    let ty = y + 16;
     setFont(doc, 12, "bold", DARK);
     doc.text(p.name, tx, ty);
     if (p.molecule) {
@@ -471,25 +472,46 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
     if (p.description) {
       setFont(doc, 8.5, "italic", DARK);
       const lines = doc.splitTextToSize(p.description, tw);
-      doc.text(lines.slice(0, 3), tx, ty);
-      ty += Math.min(lines.length, 3) * 4 + 2;
+      doc.text(lines.slice(0, 4), tx, ty);
     }
-    ty += 2;
-    setFont(doc, 8, "bold", DARK);
-    doc.text("FORMATS : 1 g · 2,5 g · 5 g · 10 g", tx, ty);
-    ty += 6;
 
-    // Prix
-    const basePrice = getProPricePerGram(tiers, p.id, 50);
-    if (basePrice != null) {
-      fillRect(doc, tx - 2, ty - 4, tw, 12, [247, 243, 234]);
-      setFont(doc, 8.5, "bold", GOLD);
-      doc.text(`Pro HT : ${eur(basePrice)}/g`, tx, ty + 2);
-      setFont(doc, 8, "normal", DARK);
-      doc.text(`Prix public conseillé : ${eur(p.publicPrice)}/g TTC`, tx, ty + 7);
-      setFont(doc, 7, "italic", GRAY);
-      doc.text("Dégressivité volume : -5 % dès 100 g · -10 % dès 250 g · -15 % dès 500 g · -20 % dès 1 kg", tx, ty + 11);
-    }
+    // --- Tarifs par format (prix fixes du pochon) ---
+    const rows = proFormatPrices(tiers, p.id, { price: p.publicPrice, priceGroup: p.priceGroup });
+    const tabX = MARGIN + 4;
+    const tabW = CONTENT_W - 8;
+    const labW = 42;
+    const colW2 = (tabW - labW) / rows.length;
+    let tabY = y + CARD_H - 34;
+
+    fillRect(doc, tabX, tabY, tabW, 6, GOLD);
+    setFont(doc, 7, "bold", WHITE);
+    doc.text("FORMAT (POCHON)", tabX + 2, tabY + 4.2);
+    rows.forEach((r, ri) => {
+      doc.text(fmtLabel(r.format), tabX + labW + colW2 * ri + colW2 / 2, tabY + 4.2, { align: "center" });
+    });
+    tabY += 6;
+
+    const priceRows: Array<[string, (r: typeof rows[number]) => string, boolean]> = [
+      ["Prix pro HT", (r) => eur(r.proUnitHT), true],
+      ["Prix public conseillé TTC", (r) => eur(r.retailUnitTTC), false],
+      ["Gain revendeur HT", (r) => `+${eur(r.marginHT)}`, false],
+    ];
+    priceRows.forEach(([label, fn, bold], ri) => {
+      if (ri % 2 === 1) fillRect(doc, tabX, tabY, tabW, 6, [247, 243, 234]);
+      setFont(doc, 7.5, "normal", GRAY);
+      doc.text(label, tabX + 2, tabY + 4.2);
+      rows.forEach((r, ci) => {
+        setFont(doc, 8, bold ? "bold" : "normal", bold ? GOLD : DARK);
+        doc.text(fn(r), tabX + labW + colW2 * ci + colW2 / 2, tabY + 4.2, { align: "center" });
+      });
+      hLine(doc, tabY + 6, LIGHT, 0.2);
+      tabY += 6;
+    });
+    setFont(doc, 6.5, "italic", GRAY);
+    doc.text(
+      "Prix fixes par format. Remise volume en plus sur le poids total de la commande : -5 % dès 100 g, -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg.",
+      tabX, tabY + 4
+    );
 
     y += CARD_H + 6;
   }
