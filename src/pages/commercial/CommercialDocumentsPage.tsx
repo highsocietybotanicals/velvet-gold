@@ -15,7 +15,7 @@ Je suis commercial pour High Society Botanicals, une marque française de CBD ha
 
 Nous proposons aux buralistes une gamme préconditionnée prête à vendre : pochons 1 g, 2,5 g, 5 g et 10 g, humidité maîtrisée par Boveda 62 %, briquet BIC et feuilles slim offerts dans les 10 g.
 
-Le principe est simple : vous revendez aux mêmes prix que notre site, avec un prix professionnel HT fixe par variété construit pour vous laisser un coefficient ×2 — et une ristourne automatique dès 100 g (-5 %, puis -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg).
+Le principe est simple : vous revendez aux mêmes prix que notre site. Chaque variété a un prix professionnel HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g), construit pour vous laisser un coefficient ×2 — et une remise s'ajoute sur le poids total de la commande dès 100 g (-5 %, puis -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg).
 
 Je peux passer vous déposer des échantillons et la grille tarifaire complète. Quel jour vous arrange ?
 
@@ -80,13 +80,13 @@ const CommercialDocumentsPage = () => {
     {
       key: "grille",
       name: "Grille tarifaire pro — préconditionné",
-      desc: "Prix pro HT au gramme par variété, paliers de dégressivité volume, modalités et RIB. Générée à jour à chaque téléchargement.",
+      desc: "Prix HT du pochon par variété et par format (1 g / 2,5 g / 5 g / 10 g), prix public conseillé, remises de volume, modalités et RIB. Générée à jour à chaque téléchargement.",
       action: () => run("grille", () => downloadProPriceGrid(toDocProducts(), tiers), "Grille tarifaire"),
     },
     {
       key: "catalogue",
       name: "Catalogue pro — vente directe",
-      desc: "Présentation des gammes, visuels produits et prix pro par variété. Uniquement les variétés actives, toujours à jour.",
+      desc: "Visuels produits et tableau de prix par format : prix pro HT, prix public conseillé et gain du revendeur. Uniquement les variétés actives.",
       action: () => run("catalogue", () => downloadProCatalogue(toDocProducts(), tiers), "Catalogue pro"),
     },
     {
