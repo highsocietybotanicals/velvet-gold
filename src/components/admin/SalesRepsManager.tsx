@@ -177,7 +177,7 @@ const SalesRepsManager = () => {
             const due = myCommissions
               .filter((c) => c.status !== "paid")
               .reduce((s, c) => s + Number(c.commission_amount), 0);
-            const months = aggregateMonthly(myCommissions, tiers).filter((m) => m.bonus > 0);
+            const months = aggregateMonthly(myCommissions, tiers).filter((m) => m.supplement > 0);
             const bonusPaid = (month: string) =>
               payouts.some(
                 (p) =>
@@ -187,7 +187,7 @@ const SalesRepsManager = () => {
               );
             const bonusDue = months
               .filter((m) => !bonusPaid(m.month))
-              .reduce((s, m) => s + m.bonus, 0);
+              .reduce((s, m) => s + m.supplement, 0);
             return (
               <Card key={rep.id}>
                 <CardContent className="pt-5 space-y-2">
@@ -217,14 +217,16 @@ const SalesRepsManager = () => {
                     </Badge>
                     {bonusDue > 0 && (
                       <Badge className="bg-gold/15 text-gold">
-                        dont bonus paliers {euro(bonusDue)}
+                        dont compléments {euro(bonusDue)}
                       </Badge>
                     )}
                   </div>
 
                   {months.length > 0 && (
                     <div className="space-y-1 pt-1">
-                      <p className="text-xs font-medium">Bonus de palier</p>
+                      <p className="text-xs font-medium">
+                        Compléments à verser (tranches nouveaux clients + primes)
+                      </p>
                       {months.map((m) => (
                         <div
                           key={m.month}
@@ -235,11 +237,15 @@ const SalesRepsManager = () => {
                               month: "long",
                               year: "numeric",
                             })}{" "}
-                            · {euro(m.revenueHT)} HT · {m.tierPercent} %
+                            · nouveaux {euro(m.newClientRevenue)} HT à {m.newClientPercent} % ·
+                            réassorts {euro(m.reassortRevenue)} HT à {m.reassortPercent} %
+                            {m.newClientCount > 0
+                              ? ` · ${m.newClientCount} prime${m.newClientCount > 1 ? "s" : ""} ${euro(m.bonusTotal)}`
+                              : ""}
                           </span>
                           {bonusPaid(m.month) ? (
                             <Badge className="bg-emerald-500/15 text-emerald-300">
-                              Bonus versé {euro(m.bonus)}
+                              Complément versé {euro(m.supplement)}
                             </Badge>
                           ) : (
                             <Button
@@ -251,12 +257,12 @@ const SalesRepsManager = () => {
                                   rep_id: rep.id,
                                   period_month: m.month,
                                   revenue_ht: m.revenueHT,
-                                  tier_percent: m.tierPercent,
-                                  bonus_amount: m.bonus,
+                                  tier_percent: m.newClientPercent,
+                                  bonus_amount: m.supplement,
                                 })
                               }
                             >
-                              Verser {euro(m.bonus)}
+                              Verser {euro(m.supplement)}
                             </Button>
                           )}
                         </div>

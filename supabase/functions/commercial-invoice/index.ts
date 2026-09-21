@@ -181,15 +181,37 @@ Deno.serve(async (req) => {
         .maybeSingle();
       const pct = Number(rep?.commission_percent ?? 10);
       const month = new Date(order.created_at as string);
+      const periodMonth = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-01`;
+      const clientLabel = profile.company_name || email;
+
+      // Nouveau client / réassort : on regarde l'historique du couple (commercial, client).
+      // Aucune ligne antérieure => nouveau client, et prime de 50 € sur la 1re facture.
+      // Lignes existantes mais toutes dans le mois courant => encore le mois d'ouverture.
+      const { data: previous } = await admin
+        .from("sales_commissions")
+        .select("id, period_month")
+        .eq("rep_id", repId)
+        .eq("client_label", clientLabel)
+        .order("period_month", { ascending: true });
+
+      const priorRows = previous ?? [];
+      const firstMonth = priorRows[0]
+        ? String(priorRows[0].period_month).slice(0, 7)
+        : null;
+      const isNewClient = !firstMonth || firstMonth === periodMonth.slice(0, 7);
+      const isFirstInvoiceEver = priorRows.length === 0;
+
       await admin.from("sales_commissions").insert({
         rep_id: repId,
         order_id: order.id,
-        client_label: profile.company_name || email,
-        period_month: `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-01`,
+        client_label: clientLabel,
+        period_month: periodMonth,
         revenue_ht: totalHT,
         commission_percent: pct,
         commission_amount: Math.round(totalHT * (pct / 100) * 100) / 100,
         status: "pending",
+        sale_type: isNewClient ? "new" : "reassort",
+        new_client_bonus: isFirstInvoiceEver ? 50 : 0,
       });
     }
 

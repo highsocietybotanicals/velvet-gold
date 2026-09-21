@@ -561,7 +561,7 @@ export function generateProGuide(): jsPDF {
     ["7. L'offre revendeur", "Marge ×2 HT, ristournes, cadeaux 10 g.", "Négociation"],
     ["8. Le pitch", "Déroulé minuté d'une visite.", "Sur le terrain"],
     ["9. Objections", "Réponses courtes + preuves.", "Sur le terrain"],
-    ["10. Rémunération", "10 % fixe, réassorts, prime nouveau client.", "Votre suivi"],
+    ["10. Rémunération", "Tranches sur les nouveaux clients, 10 % sur les réassorts, prime.", "Votre suivi"],
     ["11. Aide-mémoire", "Sacoche, documents, contacts.", "Avant de partir"],
   ], [42, 78, 58]);
 
@@ -730,20 +730,22 @@ export function generateProGuide(): jsPDF {
 
   // ---------- 10 Rémunération (conditions actuelles) ----------
   newPage();
-  y = chapterHead("10", "Votre rémunération", "10 % fixe, réassorts, prime nouveau client");
-  y = para(doc, "Vous êtes rémunéré à la commission sur le chiffre d'affaires HT que vous générez. Le taux est unique et simple :", y);
+  y = chapterHead("10", "Votre rémunération", "Tranches sur les nouveaux clients, 10 % sur les réassorts");
+  y = para(doc, "Votre rémunération distingue deux choses : ce que vous ouvrez (nouveaux clients) et ce que vous entretenez (réassorts).", y);
   y += 4;
   y = table(y, ["Type de vente", "Commission"], [
-    ["Toute commande d'un client pro rattaché", "10 % du CA HT"],
-    ["Réassort d'un client pro rattaché", "10 % du CA HT"],
+    ["Nouveaux clients — part jusqu'à 5 000 € HT sur le mois", "10 % du CA HT"],
+    ["Nouveaux clients — part de 5 000 à 10 000 € HT sur le mois", "12 % du CA HT"],
+    ["Nouveaux clients — part au-delà de 10 000 € HT sur le mois", "15 % du CA HT"],
+    ["Réassort d'un client déjà ouvert", "10 % du CA HT, toujours"],
     ["Nouveau client pro signé (prime unique)", "50 €"],
   ], [120, 58]);
-  y = box(y, "EXEMPLE DE CALCUL — 6 000 € HT DE CA SUR LE MOIS + 1 NOUVEAU CLIENT", "6 000 € × 10 % = 600 € de commission\n+ 50 € de prime de nouveau partenaire\nTotal du mois = 650 €");
-  y = para(doc, "Réassorts : les commandes de réassort de vos partenaires sont commissionnées au même taux de 10 %. Un client bien installé continue donc de vous rapporter mois après mois, sans nouvelle prospection.", y);
+  y = para(doc, "Nouveaux clients : tout ce qu'un client commande pendant son mois d'ouverture compte comme nouveau client. Ces montants s'additionnent sur le mois et les taux s'appliquent par tranche, comme les tranches d'impôt : seule la part de chiffre comprise dans une tranche est payée au taux de cette tranche.", y);
   y += 2;
-  y = para(doc, "Prime de nouveau partenaire : 50 € par nouveau client B2B apporté et signé. Chaque point de vente que vous ouvrez est doublement payé : la prime immédiate, puis la commission sur toutes ses commandes.", y);
+  y = para(doc, "Réassorts : dès le mois suivant, les commandes de ce client sont des réassorts, commissionnés à 10 % fixe. Ils ne comptent pas dans les tranches. Un client bien installé continue donc de vous rapporter mois après mois, sans nouvelle prospection.", y);
   y += 4;
-  box(y, "SUIVI EN TEMPS RÉEL", "Votre espace commercial vous montre, mois par mois : le CA HT rattaché, la commission calculée, l'état des versements. Vos prospects et vos relances se gèrent dans le même espace.");
+  y = box(y, "EXEMPLE DE CALCUL SUR UN MOIS", "Nouveaux clients : 12 000 € HT\n  5 000 € × 10 % = 500 €  ·  5 000 € × 12 % = 600 €  ·  2 000 € × 15 % = 300 €\nRéassorts : 8 000 € HT × 10 % = 800 €\n3 nouveaux clients signés : 3 × 50 € = 150 €\nTotal du mois = 2 350 €");
+  box(y, "SUIVI EN TEMPS RÉEL", "Votre espace commercial vous montre, mois par mois : le chiffre nouveaux clients et la tranche atteinte, le chiffre réassorts, les primes et l'état des versements. Vos prospects et vos relances se gèrent dans le même espace.");
 
   // ---------- 11 Aide-mémoire ----------
   newPage();

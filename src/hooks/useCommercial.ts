@@ -51,6 +51,8 @@ export const PROSPECT_STATUSES: { value: ProspectStatus; label: string }[] = [
 export const prospectStatusLabel = (s: string) =>
   PROSPECT_STATUSES.find((p) => p.value === s)?.label ?? s;
 
+export type SaleType = "new" | "reassort";
+
 export interface Commission {
   id: string;
   rep_id: string;
@@ -63,7 +65,14 @@ export interface Commission {
   status: string;
   paid_at: string | null;
   notes: string | null;
+  sale_type: SaleType;
+  new_client_bonus: number;
 }
+
+export const NEW_CLIENT_BONUS = 50;
+
+export const saleTypeLabel = (t: string) =>
+  t === "new" ? "Nouveau client" : "Réassort";
 
 const db = supabase as any;
 
@@ -276,11 +285,30 @@ export const nextTier = (tiers: CommissionTier[], revenueHT: number): Commission
 
 export interface MonthlyCommission {
   month: string;
+  /** CA HT total du mois (nouveaux clients + réassorts) */
   revenueHT: number;
+  /** CA HT réalisé sur des nouveaux clients (mois d'ouverture) */
+  newClientRevenue: number;
+  /** CA HT réalisé sur des réassorts */
+  reassortRevenue: number;
+  /** Commission sur les nouveaux clients, barème progressif par tranche */
+  newClientCommission: number;
+  /** Commission sur les réassorts, taux fixe */
+  reassortCommission: number;
+  /** Taux moyen effectif sur la part nouveaux clients */
+  newClientPercent: number;
+  /** Taux fixe appliqué aux réassorts */
+  reassortPercent: number;
+  /** Nombre de nouveaux clients ouverts sur le mois */
+  newClientCount: number;
+  /** Total des primes de nouveau client */
+  bonusTotal: number;
+  /** Somme des commissions déjà enregistrées ligne par ligne */
   baseCommission: number;
-  tierPercent: number;
-  tierCommission: number;
-  bonus: number;
+  /** Complément à verser au-delà des lignes enregistrées (tranches + primes) */
+  supplement: number;
+  /** Total dû au commercial pour le mois */
+  totalDue: number;
   allPaid: boolean;
 }
 
@@ -308,7 +336,18 @@ export const computeProgressiveCommission = (
   return r2(total);
 };
 
-/** Agrégation mois par mois avec barème progressif par tranche */
+/** Taux fixe des réassorts = palier de base du barème (10 %) */
+export const reassortPercent = (tiers: CommissionTier[]): number => {
+  const sorted = [...tiers].sort((a, b) => a.min_revenue_ht - b.min_revenue_ht);
+  return sorted[0]?.commission_percent ?? 10;
+};
+
+/**
+ * Agrégation mois par mois :
+ * - nouveaux clients → barème progressif par tranche, cumulé sur le mois
+ * - réassorts → taux fixe (palier de base)
+ * - prime de 50 € par nouveau client ouvert
+ */
 export const aggregateMonthly = (
   commissions: Commission[],
   tiers: CommissionTier[]
@@ -319,21 +358,39 @@ export const aggregateMonthly = (
     byMonth.set(key, [...(byMonth.get(key) ?? []), c]);
   });
 
+  const flatPercent = reassortPercent(tiers);
+
   return [...byMonth.entries()]
     .sort((a, b) => (a[0] < b[0] ? 1 : -1))
     .map(([month, list]) => {
-      const revenueHT = r2(list.reduce((s, c) => s + Number(c.revenue_ht), 0));
+      const isNew = (c: Commission) => c.sale_type === "new";
+      const sum = (rows: Commission[]) =>
+        r2(rows.reduce((s, c) => s + Number(c.revenue_ht), 0));
+
+      const newClientRevenue = sum(list.filter(isNew));
+      const reassortRevenue = sum(list.filter((c) => !isNew(c)));
+      const newClientCommission = computeProgressiveCommission(tiers, newClientRevenue);
+      const reassortCommission = r2((reassortRevenue * flatPercent) / 100);
+      const bonusTotal = r2(list.reduce((s, c) => s + Number(c.new_client_bonus ?? 0), 0));
+      const newClientCount = list.filter((c) => Number(c.new_client_bonus ?? 0) > 0).length;
       const baseCommission = r2(list.reduce((s, c) => s + Number(c.commission_amount), 0));
-      const tierCommission = computeProgressiveCommission(tiers, revenueHT);
-      const effectivePercent =
-        revenueHT > 0 ? r2((tierCommission / revenueHT) * 100) : 0;
+      const totalDue = r2(newClientCommission + reassortCommission + bonusTotal);
+
       return {
         month,
-        revenueHT,
+        revenueHT: r2(newClientRevenue + reassortRevenue),
+        newClientRevenue,
+        reassortRevenue,
+        newClientCommission,
+        reassortCommission,
+        newClientPercent:
+          newClientRevenue > 0 ? r2((newClientCommission / newClientRevenue) * 100) : 0,
+        reassortPercent: flatPercent,
+        newClientCount,
+        bonusTotal,
         baseCommission,
-        tierPercent: effectivePercent,
-        tierCommission,
-        bonus: r2(Math.max(0, tierCommission - baseCommission)),
+        supplement: r2(Math.max(0, totalDue - baseCommission)),
+        totalDue,
         allPaid: list.length > 0 && list.every((c) => c.status === "paid"),
       };
     });

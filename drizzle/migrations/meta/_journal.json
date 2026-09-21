@@ -8,6 +8,13 @@
       "when": 1789765493787,
       "tag": "0000_add_product_label_import",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790003221056,
+      "tag": "0001_add_sale_type_to_sales_commissions",
+      "breakpoints": true
     }
   ]
 }

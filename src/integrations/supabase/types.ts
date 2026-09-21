@@ -1248,12 +1248,14 @@ export type Database = {
           commission_percent: number
           created_at: string
           id: string
+          new_client_bonus: number
           notes: string | null
           order_id: string | null
           paid_at: string | null
           period_month: string
           rep_id: string
           revenue_ht: number
+          sale_type: string
           status: string
           updated_at: string
         }
@@ -1263,12 +1265,14 @@ export type Database = {
           commission_percent?: number
           created_at?: string
           id?: string
+          new_client_bonus?: number
           notes?: string | null
           order_id?: string | null
           paid_at?: string | null
           period_month?: string
           rep_id: string
           revenue_ht?: number
+          sale_type?: string
           status?: string
           updated_at?: string
         }
@@ -1278,12 +1282,14 @@ export type Database = {
           commission_percent?: number
           created_at?: string
           id?: string
+          new_client_bonus?: number
           notes?: string | null
           order_id?: string | null
           paid_at?: string | null
           period_month?: string
           rep_id?: string
           revenue_ht?: number
+          sale_type?: string
           status?: string
           updated_at?: string
         }

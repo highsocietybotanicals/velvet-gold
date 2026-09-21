@@ -10,6 +10,7 @@ import {
   aggregateMonthly,
   resolveTier,
   nextTier,
+  saleTypeLabel,
 } from "@/hooks/useCommercial";
 
 const euro = (n: number) =>
@@ -30,9 +31,9 @@ const CommercialCommissionsPage = () => {
 
   const currentKey = new Date().toISOString().slice(0, 7);
   const currentMonth = months.find((m) => m.month === currentKey);
-  const currentRevenue = currentMonth?.revenueHT ?? 0;
-  const currentTier = resolveTier(tiers, currentRevenue);
-  const upcoming = nextTier(tiers, currentRevenue);
+  const newRevenue = currentMonth?.newClientRevenue ?? 0;
+  const currentTier = resolveTier(tiers, newRevenue);
+  const upcoming = nextTier(tiers, newRevenue);
 
   const totals = useMemo(() => {
     const paid = commissions.filter((c) => c.status === "paid");
@@ -42,7 +43,8 @@ const CommercialCommissionsPage = () => {
       pending: commissions
         .filter((c) => c.status !== "paid")
         .reduce((s, c) => s + Number(c.commission_amount), 0),
-      bonus: months.reduce((s, m) => s + m.bonus, 0),
+      bonus: months.reduce((s, m) => s + m.bonusTotal, 0),
+      bonusCount: months.reduce((s, m) => s + m.newClientCount, 0),
     };
   }, [commissions, months]);
 
@@ -52,15 +54,51 @@ const CommercialCommissionsPage = () => {
         <h1 className="text-2xl font-semibold gold-text">Mes commissions</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {rep
-            ? "Barème progressif par tranche : 10 % jusqu'à 5 000 € HT, 12 % de 5 000 à 10 000 €, 15 % au-delà. Chaque tranche ne s'applique qu'à la part de CA qu'elle couvre."
+            ? "Nouveaux clients : barème par tranche sur le cumul du mois — 10 % jusqu'à 5 000 € HT, 12 % de 5 000 à 10 000 €, 15 % au-delà. Réassorts : 10 % fixe. Plus 50 € de prime par nouveau client pro signé."
             : "Aucune fiche commerciale rattachée à ce compte."}
         </p>
       </div>
 
+      {currentMonth && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Card className="border-gold/30">
+            <CardContent className="pt-5">
+              <p className="text-xs text-muted-foreground">Nouveaux clients ce mois</p>
+              <p className="text-xl font-semibold">{euro(currentMonth.newClientRevenue)} HT</p>
+              <p className="text-xs text-gold mt-1">
+                {euro(currentMonth.newClientCommission)} · taux moyen{" "}
+                {currentMonth.newClientPercent} %
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5">
+              <p className="text-xs text-muted-foreground">Réassorts ce mois</p>
+              <p className="text-xl font-semibold">{euro(currentMonth.reassortRevenue)} HT</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {euro(currentMonth.reassortCommission)} · {currentMonth.reassortPercent} % fixe
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5">
+              <p className="text-xs text-muted-foreground">Total dû ce mois</p>
+              <p className="text-xl font-semibold text-emerald-400">
+                {euro(currentMonth.totalDue)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                dont {currentMonth.newClientCount} prime
+                {currentMonth.newClientCount > 1 ? "s" : ""} · {euro(currentMonth.bonusTotal)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <Card className="border-gold/30">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-gold" /> Paliers de rémunération
+            <TrendingUp className="h-4 w-4 text-gold" /> Paliers nouveaux clients
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -88,23 +126,25 @@ const CommercialCommissionsPage = () => {
           <div>
             <div className="flex justify-between text-xs text-muted-foreground mb-1">
               <span className="capitalize">
-                {monthLabel(currentKey)} · {euro(currentRevenue)} HT · taux actuel{" "}
-                <strong className="text-gold">{currentTier.commission_percent} %</strong>
+                {monthLabel(currentKey)} · nouveaux clients {euro(newRevenue)} HT · tranche
+                atteinte <strong className="text-gold">{currentTier.commission_percent} %</strong>
               </span>
               {upcoming && (
                 <span>
-                  encore {euro(upcoming.min_revenue_ht - currentRevenue)} pour{" "}
+                  encore {euro(upcoming.min_revenue_ht - newRevenue)} pour{" "}
                   {upcoming.commission_percent} %
                 </span>
               )}
             </div>
             <Progress
               value={
-                upcoming
-                  ? Math.min(100, (currentRevenue / upcoming.min_revenue_ht) * 100)
-                  : 100
+                upcoming ? Math.min(100, (newRevenue / upcoming.min_revenue_ht) * 100) : 100
               }
             />
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Les tranches ne s'appliquent qu'au chiffre réalisé sur les nouveaux clients. Les
+              réassorts restent à {months[0]?.reassortPercent ?? 10} % fixe.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -124,7 +164,9 @@ const CommercialCommissionsPage = () => {
         </Card>
         <Card>
           <CardContent className="pt-5">
-            <p className="text-xs text-muted-foreground">Bonus de palier</p>
+            <p className="text-xs text-muted-foreground">
+              Primes nouveaux clients ({totals.bonusCount})
+            </p>
             <p className="text-xl font-semibold text-gold">{euro(totals.bonus)}</p>
           </CardContent>
         </Card>
@@ -153,10 +195,11 @@ const CommercialCommissionsPage = () => {
                 <thead className="text-xs text-muted-foreground">
                   <tr className="border-b border-border/50">
                     <th className="text-left py-2">Mois</th>
-                    <th className="text-right py-2">CA HT</th>
-                    <th className="text-right py-2">Taux moyen</th>
-                    <th className="text-right py-2">Base</th>
-                    <th className="text-right py-2">Bonus</th>
+                    <th className="text-right py-2">CA nouveaux clients</th>
+                    <th className="text-right py-2">Commission</th>
+                    <th className="text-right py-2">CA réassorts</th>
+                    <th className="text-right py-2">Commission</th>
+                    <th className="text-right py-2">Primes</th>
                     <th className="text-right py-2">Total dû</th>
                   </tr>
                 </thead>
@@ -164,13 +207,24 @@ const CommercialCommissionsPage = () => {
                   {months.map((m) => (
                     <tr key={m.month} className="border-b border-border/30 last:border-0">
                       <td className="py-2 capitalize">{monthLabel(m.month)}</td>
-                      <td className="py-2 text-right">{euro(m.revenueHT)}</td>
-                      <td className="py-2 text-right text-gold">{m.tierPercent} %</td>
-                      <td className="py-2 text-right">{euro(m.baseCommission)}</td>
+                      <td className="py-2 text-right">{euro(m.newClientRevenue)}</td>
                       <td className="py-2 text-right text-gold">
-                        {m.bonus > 0 ? `+${euro(m.bonus)}` : "—"}
+                        {euro(m.newClientCommission)}{" "}
+                        <span className="text-[11px] text-muted-foreground">
+                          ({m.newClientPercent} %)
+                        </span>
                       </td>
-                      <td className="py-2 text-right font-medium">{euro(m.tierCommission)}</td>
+                      <td className="py-2 text-right">{euro(m.reassortRevenue)}</td>
+                      <td className="py-2 text-right">
+                        {euro(m.reassortCommission)}{" "}
+                        <span className="text-[11px] text-muted-foreground">
+                          ({m.reassortPercent} %)
+                        </span>
+                      </td>
+                      <td className="py-2 text-right text-gold">
+                        {m.bonusTotal > 0 ? `+${euro(m.bonusTotal)}` : "—"}
+                      </td>
+                      <td className="py-2 text-right font-medium">{euro(m.totalDue)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -194,6 +248,7 @@ const CommercialCommissionsPage = () => {
                   <tr className="border-b border-border/50">
                     <th className="text-left py-2">Période</th>
                     <th className="text-left py-2">Client</th>
+                    <th className="text-left py-2">Type</th>
                     <th className="text-right py-2">CA HT</th>
                     <th className="text-right py-2">Taux</th>
                     <th className="text-right py-2">Commission</th>
@@ -205,6 +260,17 @@ const CommercialCommissionsPage = () => {
                     <tr key={c.id} className="border-b border-border/30 last:border-0">
                       <td className="py-2 capitalize">{monthLabel(c.period_month)}</td>
                       <td className="py-2">{c.client_label}</td>
+                      <td className="py-2">
+                        <Badge
+                          className={
+                            c.sale_type === "new"
+                              ? "bg-gold/15 text-gold"
+                              : "bg-muted text-muted-foreground"
+                          }
+                        >
+                          {saleTypeLabel(c.sale_type)}
+                        </Badge>
+                      </td>
                       <td className="py-2 text-right">{euro(Number(c.revenue_ht))}</td>
                       <td className="py-2 text-right">{Number(c.commission_percent)} %</td>
                       <td className="py-2 text-right font-medium">
