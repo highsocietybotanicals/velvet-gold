@@ -108,20 +108,6 @@ Deno.serve(async (req) => {
       doc.addPage();
       y = margin;
     }
-    doc.setFillColor(249, 247, 243);
-    doc.setDrawColor(232, 224, 208);
-    doc.roundedRect(margin, y, contentW, 31, 2, 2, "FD");
-    doc.setFontSize(8);
-    doc.setTextColor(...gold);
-    doc.setFont("helvetica", "bold");
-    doc.text("REGLEMENT PAR VIREMENT BANCAIRE", margin + 4, y + 7);
-    doc.setFontSize(9);
-    doc.setTextColor(...dark);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Titulaire : ${BANK_HOLDER}`, margin + 4, y + 14);
-    doc.text(`IBAN : ${BANK_IBAN}`, margin + 4, y + 20);
-    doc.text(`BIC : ${BANK_BIC}`, margin + 4, y + 26);
-    y += 39;
 
     doc.setFontSize(8);
     doc.setTextColor(...gray);
@@ -357,6 +343,23 @@ Deno.serve(async (req) => {
       y,
     );
     y += 10;
+
+    // Bank transfer details box
+    const bankBoxH = 31;
+    doc.setFillColor(249, 247, 243);
+    doc.setDrawColor(232, 224, 208);
+    doc.roundedRect(margin, y, contentW, bankBoxH, 2, 2, "FD");
+    doc.setFontSize(8);
+    doc.setTextColor(...gold);
+    doc.setFont("helvetica", "bold");
+    doc.text("REGLEMENT PAR VIREMENT BANCAIRE", margin + 4, y + 7);
+    doc.setFontSize(9);
+    doc.setTextColor(...dark);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Titulaire : ${BANK_HOLDER}`, margin + 4, y + 14);
+    doc.text(`IBAN : ${BANK_IBAN}`, margin + 4, y + 20);
+    doc.text(`BIC : ${BANK_BIC}`, margin + 4, y + 26);
+    y += bankBoxH + 6;
 
     doc.setDrawColor(221, 221, 221);
     doc.setLineWidth(0.2);
