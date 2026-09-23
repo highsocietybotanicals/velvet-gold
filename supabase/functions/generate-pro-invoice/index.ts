@@ -104,10 +104,6 @@ Deno.serve(async (req) => {
     doc.setTextColor(...gold);
     doc.setFont("helvetica", "bold");
     doc.text("HIGH SOCIETY BOTANICALS", margin, y + 6);
-    if (y > 222) {
-      doc.addPage();
-      y = margin;
-    }
 
     doc.setFontSize(8);
     doc.setTextColor(...gray);
