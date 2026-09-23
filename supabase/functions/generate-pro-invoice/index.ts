@@ -347,7 +347,11 @@ Deno.serve(async (req) => {
     );
     y += 10;
 
-    // Bank transfer details box
+    // Bank transfer details box — ensure it fits with the footer (box 31mm + footer ~12mm).
+    if (y > 240) {
+      doc.addPage();
+      y = margin;
+    }
     const bankBoxH = 31;
     doc.setFillColor(249, 247, 243);
     doc.setDrawColor(232, 224, 208);
