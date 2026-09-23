@@ -276,6 +276,13 @@ Deno.serve(async (req) => {
     const totalHT = totalInvoicedTTC / (1 + TVA_RATE / 100);
     const totalTVA = totalInvoicedTTC - totalHT;
 
+    // Keep totals + bank details + footer together on one page (A4 = 297mm).
+    // The whole tail (totals ~50mm, notes ~20mm, bank box 31mm, footer ~12mm) is ~113mm.
+    if (y > 160) {
+      doc.addPage();
+      y = margin;
+    }
+
     y += 4;
     doc.setDrawColor(...gold);
     doc.setLineWidth(0.6);
