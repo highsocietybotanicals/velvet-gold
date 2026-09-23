@@ -104,10 +104,6 @@ Deno.serve(async (req) => {
     doc.setTextColor(...gold);
     doc.setFont("helvetica", "bold");
     doc.text("HIGH SOCIETY BOTANICALS", margin, y + 6);
-    if (y > 222) {
-      doc.addPage();
-      y = margin;
-    }
 
     doc.setFontSize(8);
     doc.setTextColor(...gray);
@@ -280,6 +276,13 @@ Deno.serve(async (req) => {
     const totalHT = totalInvoicedTTC / (1 + TVA_RATE / 100);
     const totalTVA = totalInvoicedTTC - totalHT;
 
+    // Keep totals + bank details + footer together on one page (A4 = 297mm).
+    // The whole tail (totals ~50mm, notes ~20mm, bank box 31mm, footer ~12mm) is ~113mm.
+    if (y > 160) {
+      doc.addPage();
+      y = margin;
+    }
+
     y += 4;
     doc.setDrawColor(...gold);
     doc.setLineWidth(0.6);
@@ -344,7 +347,11 @@ Deno.serve(async (req) => {
     );
     y += 10;
 
-    // Bank transfer details box
+    // Bank transfer details box — ensure it fits with the footer (box 31mm + footer ~12mm).
+    if (y > 240) {
+      doc.addPage();
+      y = margin;
+    }
     const bankBoxH = 31;
     doc.setFillColor(249, 247, 243);
     doc.setDrawColor(232, 224, 208);
