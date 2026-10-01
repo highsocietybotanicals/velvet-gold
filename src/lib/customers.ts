@@ -150,7 +150,8 @@ export const fmtDate = (d: Date) => d.toLocaleDateString("fr-FR", { timeZone: "E
 export const fmtShortDate = (d: Date) => d.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "2-digit", year: "2-digit" });
 export const fmtMonth = (key: string) =>
   new Date(`${key}-15T12:00:00Z`).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
-export const fmtEuro = (n: number) => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 });
+export const fmtEuro = (n: number) =>
+  n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: n % 1 ? 2 : 0 });
 
 /* ---------------- Labels ---------------- */
 
@@ -370,7 +371,7 @@ export const buildCustomers = (
       favoriteProduct: topProduct(allProducts),
       tastesByMonth,
       status,
-      isReseller: group.some((o) => Number(o.total_flower_weight) >= 50 || Number(o.total_amount) >= 400),
+      isReseller: group.some((o) => Number(o.total_flower_weight) >= 100 || Number(o.total_amount) >= 400),
       merges: clusterMerges,
     });
   });
