@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS public.customer_notes (customer_key text PRIMARY KEY, notes text NOT NULL DEFAULT '', updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS public.customer_merges (source_key text PRIMARY KEY, target_key text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), CONSTRAINT customer_merges_not_self CHECK (source_key <> target_key));
+ALTER TABLE public.customer_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.customer_merges ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.customer_notes, public.customer_merges FROM anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.customer_notes, public.customer_merges TO authenticated;
+GRANT ALL ON public.customer_notes, public.customer_merges TO service_role;
+DROP POLICY IF EXISTS "Admins manage customer notes" ON public.customer_notes;
+CREATE POLICY "Admins manage customer notes" ON public.customer_notes FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "Admins manage customer merges" ON public.customer_merges;
+CREATE POLICY "Admins manage customer merges" ON public.customer_merges FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
