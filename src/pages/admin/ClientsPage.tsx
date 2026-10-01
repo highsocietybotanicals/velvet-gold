@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ const detailPath = (c: Customer) => `/admin/clients/${encodeURIComponent(c.key)}
 const ago = (d: number) => (d === 0 ? "aujourd'hui" : `il y a ${d} jour${d > 1 ? "s" : ""}`);
 
 const ClientsPage = () => {
+  const navigate = useNavigate();
   const { customers, isLoading, error, merge } = useCustomers();
   const { toast } = useToast();
   const [q, setQ] = useState("");
@@ -185,9 +186,13 @@ const ClientsPage = () => {
               </thead>
               <tbody>
                 {list.map((c) => (
-                  <tr key={c.key} className="relative border-b border-border/30 transition-colors hover:bg-gold/5 focus-within:bg-gold/5">
+                  <tr
+                    key={c.key}
+                    className="cursor-pointer border-b border-border/30 transition-colors hover:bg-gold/5"
+                    onClick={() => navigate(detailPath(c))}
+                  >
                     <td className="px-4 py-3">
-                      <Link to={detailPath(c)} className="flex items-center gap-3 after:absolute after:inset-0 focus-visible:outline-none">
+                      <Link to={detailPath(c)} className="flex items-center gap-3 focus-visible:outline-none" onClick={(e) => e.stopPropagation()}>
                         <Avatar name={c.name} />
                         <span>
                           <span className="block font-medium">{c.name}</span>
