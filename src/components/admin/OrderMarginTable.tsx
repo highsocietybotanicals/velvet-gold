@@ -42,9 +42,38 @@ export default function OrderMarginTable() {
         .eq("payment_status", "paid")
         .neq("status", "cancelled")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(1000);
       if (error) throw error;
       return data as OrderRow[];
+    },
+  });
+
+  const { data: proRows } = useQuery({
+    queryKey: ["pro-invoices-margin"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("pro_invoices")
+        .select("id, invoice_number, issued_at, total_invoiced_ttc, status, pro_deposits(product_id, weight_grams, quantity, retail_price_ttc)")
+        .neq("status", "cancelled");
+      if (error) throw error;
+      return (data || []).map((inv: any) => ({
+        id: inv.id,
+        display_order_number: inv.invoice_number,
+        created_at: inv.issued_at,
+        total_amount: Number(inv.total_invoiced_ttc) || 0,
+        total_flower_weight: 0,
+        delivery_type: "Dépôt pro",
+        payment_status: "paid",
+        status: inv.status,
+        isDeposit: true,
+        order_items: (inv.pro_deposits || []).map((d: any) => ({
+          product_id: d.product_id || "",
+          weight: (Number(d.weight_grams) || 0) * (Number(d.quantity) || 1),
+          quantity: 1,
+          unit_price: 0,
+          total_price: Number(d.retail_price_ttc) || 0,
+        })),
+      })) as (OrderRow & { isDeposit?: boolean })[];
     },
   });
 
@@ -67,9 +96,24 @@ export default function OrderMarginTable() {
 
   const rows = useMemo(() => {
     if (!orders || !costs) return [];
-    return orders.map((o) => {
-      const km = (mileageMap && mileageMap[o.id]) || 0;
-      const breakdown = computeOrderMargin(o as OrderLite, costs, km);
+    const all = [...orders, ...(proRows ?? [])].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    ) as (OrderRow & { isDeposit?: boolean })[];
+    return all.map((o) => {
+      const km = o.isDeposit ? 0 : (mileageMap && mileageMap[o.id]) || 0;
+      let breakdown = computeOrderMargin(o as OrderLite, costs, km);
+      if (o.isDeposit) {
+        const totalCost = breakdown.totalCost - breakdown.costCommission - breakdown.costGifts;
+        const margin = breakdown.revenue - totalCost;
+        breakdown = {
+          ...breakdown,
+          costCommission: 0,
+          costGifts: 0,
+          totalCost,
+          margin,
+          marginPct: breakdown.revenue > 0 ? (margin / breakdown.revenue) * 100 : 0,
+        };
+      }
       const itemsWeight = (o.order_items ?? []).reduce(
         (s, it) => s + (Number(it.weight) || 0) * (Number(it.quantity) || 1),
         0
@@ -77,7 +121,7 @@ export default function OrderMarginTable() {
       const totalWeight = itemsWeight || Number(o.total_flower_weight) || 0;
       return { o, breakdown, km, totalWeight };
     });
-  }, [orders, costs, mileageMap]);
+  }, [orders, proRows, costs, mileageMap]);
 
   const totals = useMemo(() => {
     return rows.reduce(
@@ -153,7 +197,10 @@ export default function OrderMarginTable() {
             <TableBody>
               {rows.map(({ o, breakdown, totalWeight, km }) => (
                 <TableRow key={o.id}>
-                  <TableCell className="font-mono text-xs">{o.display_order_number ?? o.id.slice(0, 8)}</TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {o.display_order_number ?? o.id.slice(0, 8)}
+                    {o.isDeposit && <span className="ml-2 font-sans text-[10px] text-gold">Dépôt pro</span>}
+                  </TableCell>
                   <TableCell className="text-xs">{new Date(o.created_at).toLocaleDateString("fr-FR")}</TableCell>
                   <TableCell>{totalWeight}g</TableCell>
                   <TableCell>{fmt(breakdown.revenue)}</TableCell>
