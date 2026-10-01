@@ -65,6 +65,42 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_merges: {
+        Row: {
+          created_at: string
+          source_key: string
+          target_key: string
+        }
+        Insert: {
+          created_at?: string
+          source_key: string
+          target_key: string
+        }
+        Update: {
+          created_at?: string
+          source_key?: string
+          target_key?: string
+        }
+        Relationships: []
+      }
+      customer_notes: {
+        Row: {
+          customer_key: string
+          notes: string
+          updated_at: string
+        }
+        Insert: {
+          customer_key: string
+          notes?: string
+          updated_at?: string
+        }
+        Update: {
+          customer_key?: string
+          notes?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       delivery_mileage: {
         Row: {
           arrival_address: string
