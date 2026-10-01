@@ -40,6 +40,8 @@ const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(217 91% 60%)",
 
 type Period = 7 | 30 | 90;
 
+const fmtG = (g: number) => `${g.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} g`;
+
 interface ProInvoiceRow {
   id: string;
   issued_at: string;
@@ -52,6 +54,7 @@ interface ProInvoiceRow {
 const StatsManager = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [proInvoices, setProInvoices] = useState<ProInvoiceRow[]>([]);
+  const [depositGrams, setDepositGrams] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>(30);
 
@@ -241,10 +244,11 @@ const StatsManager = () => {
   }, [orders, proInvoices, period]);
 
   const exportMonthlyCSV = () => {
-    const headers = ["Mois", "CA TTC", "CA HT", "Commandes", "Clients uniques", "Panier moyen TTC"];
+    const headers = ["Mois", "CA TTC", "Quantité écoulée (g)", "CA HT", "Commandes", "Clients uniques", "Panier moyen TTC"];
     const rows = stats.monthly.map((m) => [
       m.month,
       m.ca.toFixed(2),
+      m.grams.toFixed(2).replace(".", ","),
       m.ht.toFixed(2),
       m.count.toString(),
       m.clients.toString(),
@@ -283,6 +287,7 @@ const StatsManager = () => {
   // Cumulative totals on 12 months
   const total12m = stats.monthly.reduce((s, m) => s + m.ca, 0);
   const totalOrders12m = stats.monthly.reduce((s, m) => s + m.count, 0);
+  const totalGrams12m = stats.monthly.reduce((s, m) => s + m.grams, 0);
   const bestMonth = stats.monthly.reduce((best, m) => (m.ca > best.ca ? m : best), stats.monthly[0] || { month: "—", ca: 0 });
 
   return (
@@ -370,6 +375,10 @@ const StatsManager = () => {
               <p className="text-lg font-bold text-primary">{totalOrders12m}</p>
             </div>
             <div className="p-3 rounded-lg border border-border/40 bg-card">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Écoulé 12 mois</p>
+              <p className="text-lg font-bold text-primary">{fmtG(totalGrams12m)}</p>
+            </div>
+            <div className="p-3 rounded-lg border border-border/40 bg-card">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Meilleur mois</p>
               <p className="text-lg font-bold text-primary">{bestMonth.month}</p>
               <p className="text-[10px] text-gold">{bestMonth.ca.toFixed(2)}€</p>
@@ -384,7 +393,11 @@ const StatsManager = () => {
               <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
               <Tooltip
                 contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
-                formatter={(v: number, n: string) => [n === "ca" ? `${v.toFixed(2)}€` : `${v}`, n === "ca" ? "CA TTC" : "Commandes"]}
+                formatter={(v: number, n: string) => [n.startsWith("CA") ? `${v.toFixed(2)}€` : `${v}`, n]}
+                labelFormatter={(label: string) => {
+                  const m = stats.monthly.find((x) => x.month === label);
+                  return m ? `${label} — ${fmtG(m.grams)} écoulés` : label;
+                }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar yAxisId="left" dataKey="ca" name="CA TTC (€)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
