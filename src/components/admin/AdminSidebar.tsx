@@ -12,6 +12,7 @@ import {
   Shield,
   TrendingUp,
   Briefcase,
+  UserRound,
 } from "lucide-react";
 import {
   Sidebar,
@@ -28,6 +29,7 @@ import {
 const items = [
   { title: "Tableau de bord", url: "/admin/tableau-de-bord", icon: LayoutDashboard },
   { title: "Commandes", url: "/admin/commandes", icon: Package },
+  { title: "Clients", url: "/admin/clients", icon: UserRound },
   { title: "Produits", url: "/admin/produits", icon: Boxes },
   { title: "Inventaire", url: "/admin/inventaire", icon: Scale },
   { title: "Prix", url: "/admin/prix", icon: Euro },

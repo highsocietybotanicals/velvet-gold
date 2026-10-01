@@ -17,6 +17,8 @@ const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const AdminLayout = lazy(() => import("@/pages/admin/AdminLayout"));
 const AdminDashboardPage = lazy(() => import("@/pages/admin/DashboardPage"));
 const AdminOrdersPage = lazy(() => import("@/pages/admin/OrdersPage"));
+const AdminClientsPage = lazy(() => import("@/pages/admin/ClientsPage"));
+const AdminClientDetailPage = lazy(() => import("@/pages/admin/ClientDetailPage"));
 const AdminProductsPage = lazy(() => import("@/pages/admin/ProductsPage"));
 const AdminInventoryPage = lazy(() => import("@/pages/admin/InventoryPage"));
 const AdminPricesPage = lazy(() => import("@/pages/admin/PricesPage"));
@@ -91,6 +93,8 @@ const AnimatedRoutes = () => {
             <Route index element={<AdminDashboardPage />} />
             <Route path="tableau-de-bord" element={<AdminDashboardPage />} />
             <Route path="commandes" element={<AdminOrdersPage />} />
+            <Route path="clients" element={<AdminClientsPage />} />
+            <Route path="clients/:key" element={<AdminClientDetailPage />} />
             <Route path="produits" element={<AdminProductsPage />} />
             <Route path="inventaire" element={<AdminInventoryPage />} />
             <Route path="prix" element={<AdminPricesPage />} />
