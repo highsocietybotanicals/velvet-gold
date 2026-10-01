@@ -40,6 +40,8 @@ const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(217 91% 60%)",
 
 type Period = 7 | 30 | 90;
 
+const fmtG = (g: number) => `${g.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} g`;
+
 interface ProInvoiceRow {
   id: string;
   issued_at: string;
@@ -52,6 +54,7 @@ interface ProInvoiceRow {
 const StatsManager = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [proInvoices, setProInvoices] = useState<ProInvoiceRow[]>([]);
+  const [depositGrams, setDepositGrams] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>(30);
 
@@ -61,7 +64,7 @@ const StatsManager = () => {
         // Fetch 13 months back so monthly history covers 12 full months + current
         const since = subMonths(new Date(), 13).toISOString();
         const sinceDate = format(subMonths(new Date(), 13), "yyyy-MM-dd");
-        const [ordersRes, proRes] = await Promise.all([
+        const [ordersRes, proRes, depRes] = await Promise.all([
           supabase
             .from("orders")
             .select("id, user_id, guest_email, total_amount, total_flower_weight, delivery_type, payment_status, status, created_at, order_items(product_name, product_id, total_price, weight, quantity)")
@@ -74,11 +77,17 @@ const StatsManager = () => {
             .select("id, issued_at, total_invoiced_ttc, total_invoiced_ht, status, commission_percent")
             .neq("status", "cancelled")
             .gte("issued_at", sinceDate),
+          supabase.from("pro_deposits").select("invoice_id, weight_grams, quantity").not("invoice_id", "is", null),
         ]);
         if (ordersRes.error) throw ordersRes.error;
         if (proRes.error) throw proRes.error;
         setOrders((ordersRes.data as any) || []);
         setProInvoices((proRes.data as any) || []);
+        const dg: Record<string, number> = {};
+        for (const d of (depRes.data as any[]) || []) {
+          dg[d.invoice_id] = (dg[d.invoice_id] || 0) + Number(d.weight_grams || 0) * Number(d.quantity || 1);
+        }
+        setDepositGrams(dg);
       } catch (e) {
         console.error("Stats load error:", e);
       } finally {
@@ -132,7 +141,7 @@ const StatsManager = () => {
     }
 
     // Monthly history — last 12 months
-    const monthly: { month: string; ca: number; ht: number; count: number; clients: number; caPro: number }[] = [];
+    const monthly: { month: string; ca: number; ht: number; count: number; clients: number; caPro: number; grams: number }[] = [];
     for (let i = 11; i >= 0; i--) {
       const mStart = startOfMonth(subMonths(now, i));
       const mEnd = endOfMonth(mStart);
@@ -149,6 +158,9 @@ const StatsManager = () => {
       const ca = caOrders + caPro;
       const ht = caOrders / 1.2 + sumProHT(mPro);
       const uniqClients = new Set(mOrders.map((o) => o.user_id || o.guest_email || "anon")).size;
+      const grams =
+        mOrders.reduce((s, o) => s + Number(o.total_flower_weight || 0), 0) +
+        mPro.reduce((s, p) => s + (depositGrams[p.id] || 0), 0);
       monthly.push({
         month: format(mStart, "MMM yy", { locale: fr }),
         ca: Math.round(ca * 100) / 100,
@@ -156,6 +168,7 @@ const StatsManager = () => {
         count: mOrders.length + mPro.length,
         clients: uniqClients,
         caPro: Math.round(caPro * 100) / 100,
+        grams: Math.round(grams * 100) / 100,
       });
     }
 
@@ -238,13 +251,14 @@ const StatsManager = () => {
       newClients,
       returning,
     };
-  }, [orders, proInvoices, period]);
+  }, [orders, proInvoices, depositGrams, period]);
 
   const exportMonthlyCSV = () => {
-    const headers = ["Mois", "CA TTC", "CA HT", "Commandes", "Clients uniques", "Panier moyen TTC"];
+    const headers = ["Mois", "CA TTC", "Quantité écoulée (g)", "CA HT", "Commandes", "Clients uniques", "Panier moyen TTC"];
     const rows = stats.monthly.map((m) => [
       m.month,
       m.ca.toFixed(2),
+      m.grams.toFixed(2).replace(".", ","),
       m.ht.toFixed(2),
       m.count.toString(),
       m.clients.toString(),
@@ -283,6 +297,7 @@ const StatsManager = () => {
   // Cumulative totals on 12 months
   const total12m = stats.monthly.reduce((s, m) => s + m.ca, 0);
   const totalOrders12m = stats.monthly.reduce((s, m) => s + m.count, 0);
+  const totalGrams12m = stats.monthly.reduce((s, m) => s + m.grams, 0);
   const bestMonth = stats.monthly.reduce((best, m) => (m.ca > best.ca ? m : best), stats.monthly[0] || { month: "—", ca: 0 });
 
   return (
@@ -370,6 +385,10 @@ const StatsManager = () => {
               <p className="text-lg font-bold text-primary">{totalOrders12m}</p>
             </div>
             <div className="p-3 rounded-lg border border-border/40 bg-card">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Écoulé 12 mois</p>
+              <p className="text-lg font-bold text-primary">{fmtG(totalGrams12m)}</p>
+            </div>
+            <div className="p-3 rounded-lg border border-border/40 bg-card">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Meilleur mois</p>
               <p className="text-lg font-bold text-primary">{bestMonth.month}</p>
               <p className="text-[10px] text-gold">{bestMonth.ca.toFixed(2)}€</p>
@@ -384,7 +403,11 @@ const StatsManager = () => {
               <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
               <Tooltip
                 contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
-                formatter={(v: number, n: string) => [n === "ca" ? `${v.toFixed(2)}€` : `${v}`, n === "ca" ? "CA TTC" : "Commandes"]}
+                formatter={(v: number, n: string) => [n.startsWith("CA") ? `${v.toFixed(2)}€` : `${v}`, n]}
+                labelFormatter={(label: string) => {
+                  const m = stats.monthly.find((x) => x.month === label);
+                  return m ? `${label} — ${fmtG(m.grams)} écoulés` : label;
+                }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar yAxisId="left" dataKey="ca" name="CA TTC (€)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
@@ -398,6 +421,7 @@ const StatsManager = () => {
                 <tr className="border-b border-border/40 text-xs uppercase text-muted-foreground">
                   <th className="text-left py-2">Mois</th>
                   <th className="text-right py-2">CA TTC</th>
+                  <th className="text-right py-2">Écoulé</th>
                   <th className="text-right py-2 hidden sm:table-cell">CA HT</th>
                   <th className="text-right py-2">Cmd</th>
                   <th className="text-right py-2 hidden sm:table-cell">Clients</th>
@@ -409,6 +433,7 @@ const StatsManager = () => {
                   <tr key={m.month} className="border-b border-border/20">
                     <td className="py-2 capitalize">{m.month}</td>
                     <td className="text-right py-2 font-semibold text-gold">{m.ca.toFixed(2)}€</td>
+                    <td className="text-right py-2">{fmtG(m.grams)}</td>
                     <td className="text-right py-2 text-muted-foreground hidden sm:table-cell">{m.ht.toFixed(2)}€</td>
                     <td className="text-right py-2">{m.count}</td>
                     <td className="text-right py-2 hidden sm:table-cell">{m.clients}</td>
