@@ -262,7 +262,7 @@ const CinematicHero = () => {
   return (
     <section ref={sectionRef} className="relative h-[380vh] bg-carbon-deep md:h-[600vh]">
       <div className="sticky top-0 h-screen h-[100svh] overflow-hidden bg-[radial-gradient(ellipse_at_50%_42%,hsl(var(--gold-dark)/0.24)_0%,hsl(var(--background))_45%,hsl(var(--carbon-deep))_100%)] [perspective:1400px]">
-        <motion.img src={mangoImage} alt="Mango X Ice, fleur premium" width={1200} height={1200} fetchPriority="high" style={{ scale: imageScale, opacity: imageOpacity }} className="absolute inset-0 h-full w-full object-cover will-change-transform" />
+        <motion.img src={mangoImage} alt="Mango X Ice, fleur premium" width={1200} height={1200} {...{ fetchpriority: "high" }} style={{ scale: imageScale, opacity: imageOpacity }} className="absolute inset-0 h-full w-full object-cover will-change-transform" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-background/70" />
 
         <motion.div style={{ opacity: emblemSceneOpacity }} className="absolute inset-0 z-20">
