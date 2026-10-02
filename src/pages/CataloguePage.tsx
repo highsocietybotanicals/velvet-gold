@@ -179,6 +179,8 @@ const CataloguePage = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
+                aria-label={showFilters ? "Masquer les filtres" : "Afficher les filtres"}
+                aria-pressed={showFilters}
                 className={`p-3 rounded-full border transition-all ${
                   showFilters
                     ? "bg-primary text-primary-foreground border-primary"
@@ -189,6 +191,8 @@ const CataloguePage = () => {
               </button>
               <button
                 onClick={() => setViewMode("grid")}
+                aria-label="Afficher en grille"
+                aria-pressed={viewMode === "grid"}
                 className={`p-3 rounded-full border transition-all ${
                   viewMode === "grid"
                     ? "bg-primary text-primary-foreground border-primary"
@@ -199,6 +203,8 @@ const CataloguePage = () => {
               </button>
               <button
                 onClick={() => setViewMode("list")}
+                aria-label="Afficher en liste"
+                aria-pressed={viewMode === "list"}
                 className={`p-3 rounded-full border transition-all ${
                   viewMode === "list"
                     ? "bg-primary text-primary-foreground border-primary"
