@@ -303,10 +303,24 @@
     animation: emblem-fill 1.6s ease 2.6s forwards;
   }
 
+  .emblem-fill .emblem-draw {
+    fill: url(#goldFill);
+    stroke: none;
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
   .emblem-sheen {
     fill: url(#sheen);
     opacity: 0;
     animation: emblem-fill 1.6s ease 2.6s forwards;
+  }
+
+  .emblem-sheen .emblem-draw {
+    fill: url(#sheen);
+    stroke: none;
+    stroke-dashoffset: 0;
+    animation: none;
   }
 
   .emblem-kicker {
