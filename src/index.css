@@ -51,6 +51,7 @@
     --carbon-elevated: 0 0% 8%;
     --botanical: 155 35% 16%;
     --velvet: 280 20% 8%;
+    --exotique: 284 64% 56%;
     
     /* Gradients */
     --gradient-gold: linear-gradient(135deg, hsl(43 70% 55%), hsl(43 50% 45%), hsl(43 70% 55%));
@@ -85,11 +86,11 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Geist', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Poiret One', sans-serif;
   }
 }
 
@@ -237,6 +238,41 @@
                 0 0 40px hsl(43 70% 55% / 0.2);
   }
 
+  .product-card-exotique {
+    box-shadow: 0 0 0 1px hsl(var(--exotique) / 0.35);
+  }
+
+  .product-card-exotique:hover {
+    border-color: hsl(var(--exotique) / 0.85);
+    box-shadow: 0 24px 55px -18px hsl(var(--background) / 0.9),
+                0 0 34px hsl(var(--exotique) / 0.42);
+  }
+
+  .title-3d {
+    --title-rx: 0deg;
+    --title-ry: 0deg;
+    --spec: 50%;
+    perspective: 900px;
+  }
+
+  .title-3d > span {
+    transform: rotateX(var(--title-rx)) rotateY(var(--title-ry));
+    transition: transform 180ms ease-out;
+  }
+
+  .title-3d-face {
+    color: transparent;
+    background: linear-gradient(105deg,
+      hsl(var(--gold-dark)) 0%,
+      hsl(var(--gold-light)) calc(var(--spec) - 14%),
+      hsl(var(--foreground)) var(--spec),
+      hsl(var(--gold-shimmer)) calc(var(--spec) + 12%),
+      hsl(var(--gold-dark)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
   /* Elegant scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
@@ -258,14 +294,32 @@
 
 @layer utilities {
   .font-display {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Poiret One', sans-serif;
   }
 
   .font-body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Geist', sans-serif;
   }
 
   .text-balance {
     text-wrap: balance;
   }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  .title-3d > span {
+    animation: title-3d-mobile 6s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-3d-reduced > span {
+    transform: none;
+    transition: none;
+  }
+}
+
+@keyframes title-3d-mobile {
+  0%, 100% { transform: rotateX(-2deg) rotateY(-4deg); }
+  50% { transform: rotateX(2deg) rotateY(4deg); }
 }

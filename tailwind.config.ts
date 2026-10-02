@@ -65,6 +65,7 @@ export default {
         },
         botanical: "hsl(var(--botanical))",
         velvet: "hsl(var(--velvet))",
+        exotique: "hsl(var(--exotique))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -77,8 +78,10 @@ export default {
         },
       },
       fontFamily: {
-        display: ["Playfair Display", "serif"],
-        body: ["Inter", "sans-serif"],
+        display: ["Poiret One", "sans-serif"],
+        body: ["Geist", "sans-serif"],
+        sans: ["Geist", "sans-serif"],
+        mono: ["Geist Mono", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",
