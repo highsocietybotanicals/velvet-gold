@@ -51,6 +51,7 @@
     --carbon-elevated: 0 0% 8%;
     --botanical: 155 35% 16%;
     --velvet: 280 20% 8%;
+    --exotique: 284 64% 56%;
     
     /* Gradients */
     --gradient-gold: linear-gradient(135deg, hsl(43 70% 55%), hsl(43 50% 45%), hsl(43 70% 55%));
@@ -85,11 +86,11 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Geist', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Poiret One', sans-serif;
   }
 }
 
@@ -237,6 +238,111 @@
                 0 0 40px hsl(43 70% 55% / 0.2);
   }
 
+  .product-card-exotique {
+    box-shadow: 0 0 0 1px hsl(var(--exotique) / 0.35);
+  }
+
+  .product-card-exotique:hover {
+    border-color: hsl(var(--exotique) / 0.85);
+    box-shadow: 0 24px 55px -18px hsl(var(--background) / 0.9),
+                0 0 34px hsl(var(--exotique) / 0.42);
+  }
+
+  .title-3d {
+    --title-rx: 0deg;
+    --title-ry: 0deg;
+    --spec: 50%;
+    perspective: 900px;
+  }
+
+  .title-3d > span {
+    transform: rotateX(var(--title-rx)) rotateY(var(--title-ry));
+    transition: transform 180ms ease-out;
+  }
+
+  .title-3d-face {
+    color: transparent;
+    background: linear-gradient(105deg,
+      hsl(var(--gold-dark)) 0%,
+      hsl(var(--gold-light)) calc(var(--spec) - 14%),
+      hsl(var(--foreground)) var(--spec),
+      hsl(var(--gold-shimmer)) calc(var(--spec) + 12%),
+      hsl(var(--gold-dark)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .emblem-stage::before {
+    content: '';
+    position: absolute;
+    inset: -25%;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.16), transparent 62%);
+    pointer-events: none;
+  }
+
+  .emblem-stage svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .emblem-draw {
+    fill: transparent;
+    stroke: url(#goldStroke);
+    stroke-width: 14;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: emblem-draw 3.2s cubic-bezier(.65, 0, .35, 1) .3s forwards;
+  }
+
+  .emblem-fill {
+    fill: url(#goldFill);
+    opacity: 0;
+    animation: emblem-fill 1.6s ease 2.6s forwards;
+  }
+
+  .emblem-fill .emblem-draw {
+    fill: url(#goldFill);
+    stroke: none;
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .emblem-sheen {
+    fill: url(#sheen);
+    opacity: 0;
+    animation: emblem-fill 1.6s ease 2.6s forwards;
+  }
+
+  .emblem-sheen .emblem-draw {
+    fill: url(#sheen);
+    stroke: none;
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .emblem-kicker {
+    opacity: 0;
+    animation: emblem-fade 1.4s ease 3.6s forwards;
+  }
+
+  .emblem-hint {
+    opacity: 0;
+    animation: emblem-fade 1.4s ease 4.2s forwards;
+  }
+
+  .emblem-hint i {
+    animation: emblem-line 2.2s ease-in-out infinite;
+  }
+
+  .hero-film-grain {
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    animation: hero-grain 1.2s steps(6) infinite;
+  }
+
   /* Elegant scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
@@ -258,14 +364,64 @@
 
 @layer utilities {
   .font-display {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Poiret One', sans-serif;
   }
 
   .font-body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Geist', sans-serif;
   }
 
   .text-balance {
     text-wrap: balance;
   }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  .title-3d > span {
+    animation: title-3d-mobile 6s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-3d-reduced > span {
+    transform: none;
+    transition: none;
+  }
+
+  .emblem-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .emblem-fill,
+  .emblem-sheen {
+    animation: none;
+    opacity: 1;
+  }
+
+  .hero-film-grain {
+    animation: none;
+  }
+}
+
+@keyframes title-3d-mobile {
+  0%, 100% { transform: rotateX(-2deg) rotateY(-4deg); }
+  50% { transform: rotateX(2deg) rotateY(4deg); }
+}
+
+@keyframes emblem-draw { to { stroke-dashoffset: 0; } }
+@keyframes emblem-fill { to { opacity: 1; } }
+@keyframes emblem-fade { to { opacity: 1; } }
+@keyframes emblem-line {
+  0% { transform: scaleY(0); transform-origin: top; }
+  50% { transform: scaleY(1); transform-origin: top; }
+  51% { transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+@keyframes hero-grain {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
 }

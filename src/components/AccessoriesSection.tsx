@@ -3,6 +3,7 @@ import { Package, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { accessories } from "@/data/accessories";
 import AccessoryCard from "./AccessoryCard";
+import Title3D from "./Title3D";
 
 const AccessoriesSection = () => {
   return (
@@ -25,9 +26,7 @@ const AccessoriesSection = () => {
               Accessoires
             </span>
           </div>
-          <h2 className="font-display text-3xl md:text-4xl text-foreground mb-3">
-            Les Essentiels de l'Initié
-          </h2>
+          <Title3D className="mb-3 text-3xl md:text-4xl">Les Essentiels de l'Initié</Title3D>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Complétez votre expérience avec nos accessoires premium. 
             <span className="text-primary font-medium"> -33% dès 10 unités</span>

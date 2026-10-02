@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { type Product } from "@/data/products";
+import Title3D from "./Title3D";
 
 type CategoryFilter = "all" | "fleur" | "resine" | "force-noire";
 
@@ -46,9 +47,7 @@ const ProductSection = () => {
             Notre Sélection
           </motion.p>
 
-          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl mb-6">
-            <span className="text-gold-gradient">La Collection</span>
-          </h2>
+          <Title3D className="mb-6 text-4xl md:text-5xl lg:text-6xl">La Collection</Title3D>
 
           <motion.div
             initial={{ scaleX: 0 }}
