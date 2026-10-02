@@ -7,6 +7,7 @@ import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import Title3D from "@/components/Title3D";
 
 type ViewMode = "grid" | "list";
 type SortOption = "name" | "price-asc" | "price-desc" | "cbd";
@@ -128,9 +129,7 @@ const CataloguePage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
-            <h1 className="font-display text-4xl md:text-5xl text-gold-gradient mb-4">
-              Le Coffre
-            </h1>
+            <Title3D as="h1" className="mb-4 text-4xl md:text-5xl">Le Coffre</Title3D>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Découvrez notre collection complète de fleurs, résines CBD et accessoires
               d'exception, sélectionnés avec soin pour les connaisseurs.
@@ -267,7 +266,7 @@ const CataloguePage = () => {
             <AnimatePresence mode="popLayout">
               {/* Flowers & Resins */}
               {filteredProducts.map((product, index) => (
-                <ProductCard key={product.id} product={product} index={index} />
+                <ProductCard key={product.id} product={product} index={index} layout={viewMode} />
               ))}
 
               {/* Accessories - Masqué temporairement - rupture de stock */}
