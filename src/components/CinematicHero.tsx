@@ -103,6 +103,11 @@ const CinematicHero = () => {
   const cardsY = useTransform(scrollYProgress, [0.48, 0.6, 0.72], [120, 0, -50]);
   const carouselX = useTransform(scrollYProgress, [0.72, 1], ["15%", "-12%"]);
   const thcCount = useTransform(scrollYProgress, [0.27, 0.42], [0, 0.3]);
+  const leftCardRotate = useTransform(scrollYProgress, [0.5, 0.62], [-8, 0]);
+  const leftCardDepth = useTransform(scrollYProgress, [0.5, 0.62], [-100, 0]);
+  const centerCardDepth = useTransform(scrollYProgress, [0.5, 0.62], [-40, 0]);
+  const rightCardRotate = useTransform(scrollYProgress, [0.5, 0.62], [8, 0]);
+  const rightCardDepth = useTransform(scrollYProgress, [0.5, 0.62], [-100, 0]);
   const [thc, setThc] = useState("0,0");
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
@@ -176,18 +181,18 @@ const CinematicHero = () => {
               <h2 className="mt-3 font-display text-4xl md:text-6xl text-gold-gradient">Décomposition</h2>
             </div>
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-3 md:overflow-visible [scrollbar-width:none]">
-              <motion.article style={{ rotateY: useTransform(scrollYProgress, [0.5, 0.62], [-8, 0]), z: useTransform(scrollYProgress, [0.5, 0.62], [-100, 0]) }} className="min-w-[82vw] snap-center border border-primary/40 bg-card/65 p-5 backdrop-blur-xl md:min-w-0">
+              <motion.article style={{ rotateY: leftCardRotate, z: leftCardDepth }} className="min-w-[82vw] snap-center border border-primary/40 bg-card/65 p-5 backdrop-blur-xl md:min-w-0 max-md:transform-none">
                 <div className="flex items-center gap-3 text-primary"><Leaf className="h-5 w-5" /><h3 className="font-display text-xl">Profil terpénique</h3></div>
                 <div className="mt-2 flex justify-center"><TerpeneRadar terpenes={terpeneProfile} size={190} /></div>
               </motion.article>
-              <motion.article style={{ rotateY: useTransform(scrollYProgress, [0.5, 0.62], [0, 0]), z: useTransform(scrollYProgress, [0.5, 0.62], [-40, 0]) }} className="min-w-[82vw] snap-center border border-primary/40 bg-card/65 p-6 backdrop-blur-xl md:min-w-0">
+              <motion.article style={{ z: centerCardDepth }} className="min-w-[82vw] snap-center border border-primary/40 bg-card/65 p-6 backdrop-blur-xl md:min-w-0 max-md:transform-none">
                 <FlaskConical className="h-6 w-6 text-primary" />
                 <h3 className="mt-5 font-display text-2xl text-primary">Analyse labo</h3>
                 <p className="mt-4 text-sm leading-relaxed text-muted-foreground">Chaque référence est contrôlée pour garantir sa conformité, sa composition et sa traçabilité.</p>
                 <div className="mt-8 divider-gold" />
                 <p className="mt-5 text-xs uppercase tracking-[0.2em] text-foreground/75">THC inférieur à 0,3 %</p>
               </motion.article>
-              <motion.article style={{ rotateY: useTransform(scrollYProgress, [0.5, 0.62], [8, 0]), z: useTransform(scrollYProgress, [0.5, 0.62], [-100, 0]) }} className="min-w-[82vw] snap-center border border-primary/40 bg-card/65 p-6 backdrop-blur-xl md:min-w-0">
+              <motion.article style={{ rotateY: rightCardRotate, z: rightCardDepth }} className="min-w-[82vw] snap-center border border-primary/40 bg-card/65 p-6 backdrop-blur-xl md:min-w-0 max-md:transform-none">
                 <MapPin className="h-6 w-6 text-primary" />
                 <h3 className="mt-5 font-display text-2xl text-primary">Origine & culture</h3>
                 <p className="mt-4 text-sm leading-relaxed text-muted-foreground">Des cultures indoor sélectionnées pour leur régularité, leur précision aromatique et leur finition.</p>
