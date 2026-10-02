@@ -117,7 +117,7 @@ const CinematicHero = () => {
 
   if (reducedMotion) {
     return (
-      <section className="relative min-h-[88vh] flex items-center overflow-hidden bg-carbon-deep">
+      <section ref={sectionRef} className="relative min-h-[88vh] flex items-center overflow-hidden bg-carbon-deep">
         <img src={mangoImage} alt="Mango X Ice, fleur premium" fetchpriority="high" width={1200} height={1200} className="absolute inset-0 h-full w-full object-cover opacity-50" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-background/60" />
         <div className="relative z-10 container mx-auto px-6 pt-24 text-center">
