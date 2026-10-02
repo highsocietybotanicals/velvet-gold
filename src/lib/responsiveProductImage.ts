@@ -18,7 +18,10 @@ Object.entries(originals).forEach(([path, module]) => {
   const source = typeof module === "string" ? module : module.default;
   const responsiveModule = responsive[path];
   const srcSet = typeof responsiveModule === "string" ? responsiveModule : responsiveModule?.default;
-  if (source && srcSet) sourceSets.set(source, srcSet);
+  if (source && srcSet) {
+    sourceSets.set(source, srcSet);
+    sourceSets.set(path, srcSet);
+  }
 });
 
 export const responsiveProductSrcSet = (source: string) => sourceSets.get(source);

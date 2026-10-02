@@ -118,7 +118,7 @@ const CinematicHero = () => {
   if (reducedMotion) {
     return (
       <section ref={sectionRef} className="relative min-h-[88vh] flex items-center overflow-hidden bg-carbon-deep">
-        <img src={mangoImage} alt="Mango X Ice, fleur premium" fetchpriority="high" width={1200} height={1200} className="absolute inset-0 h-full w-full object-cover opacity-50" />
+        <img ref={(node) => node?.setAttribute("fetchpriority", "high")} src={mangoImage} alt="Mango X Ice, fleur premium" width={1200} height={1200} className="absolute inset-0 h-full w-full object-cover opacity-50" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-background/60" />
         <div className="relative z-10 container mx-auto px-6 pt-24 text-center">
           <p className="mb-5 text-xs uppercase text-primary tracking-[0.3em]">Collection exclusive</p>
@@ -139,7 +139,7 @@ const CinematicHero = () => {
         <motion.img
           src={mangoImage}
           alt="Mango X Ice, fleur premium"
-          fetchpriority="high"
+          ref={(node) => node?.setAttribute("fetchpriority", "high")}
           width={1200}
           height={1200}
           style={{ scale: imageScale, opacity: imageOpacity }}
