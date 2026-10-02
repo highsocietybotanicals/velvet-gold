@@ -1,20 +1,18 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { Filter, Grid, List, Search, ShoppingCart, Package, Zap, Gem } from "lucide-react";
+import { Filter, Grid, List, Search } from "lucide-react";
 import { ProductCategory } from "@/data/products";
 import { accessories } from "@/data/accessories";
-import { useCart } from "@/contexts/CartContext";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ProductCard from "@/components/ProductCard";
 
 type ViewMode = "grid" | "list";
 type SortOption = "name" | "price-asc" | "price-desc" | "cbd";
 type CategoryFilter = "all" | ProductCategory | "accessoire" | "force-noire" | "exotique";
 
 const CataloguePage = () => {
-  const { addToCart, addAccessory } = useCart();
   const { all: allProducts, forceNoire: forceNoireProducts, exotique: exotiqueProducts } = useCatalogProducts();
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -263,114 +261,7 @@ const CataloguePage = () => {
             <AnimatePresence mode="popLayout">
               {/* Flowers & Resins */}
               {filteredProducts.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.03 }}
-                  className={
-                    viewMode === "grid"
-                      ? `product-card group bg-card border rounded-xl overflow-hidden ${product.isExotique ? "border-purple-600/50 hover:border-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.4)]" : product.isForceNoire ? "border-red-900/50 hover:border-red-800/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.3)]" : "border-border"}`
-                      : `product-card group bg-card border rounded-xl overflow-hidden flex ${product.isExotique ? "border-purple-600/50 hover:border-purple-500" : product.isForceNoire ? "border-red-900/50 hover:border-red-800/80" : "border-border"}`
-                  }
-                >
-                  <Link
-                    to={`/produit/${product.id}`}
-                    className={viewMode === "list" ? "flex flex-1" : "block"}
-                  >
-                    <div
-                      className={
-                        viewMode === "grid"
-                          ? "relative aspect-square overflow-hidden"
-                          : "relative w-32 h-32 flex-shrink-0 overflow-hidden"
-                      }
-                    >
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      
-                      {/* Rupture de stock — "Victime de son succès" */}
-                      {product.isOutOfStock && (
-                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-[2px]">
-                          <div className="border border-primary/60 bg-black/80 px-4 py-3 rounded-sm shadow-[0_0_30px_rgba(212,175,55,0.35)] text-center mx-3">
-                            <span className="block text-[9px] uppercase tracking-[0.3em] text-primary/80 mb-1">
-                              Rupture de stock
-                            </span>
-                            <span className="font-display text-base text-primary italic">
-                              Victime de son succès
-                            </span>
-                            <span className="block text-[9px] text-muted-foreground mt-1 tracking-wider">
-                              Bientôt de retour
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Exotique badge */}
-                      {product.isExotique && (
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-gradient-to-r from-purple-950/90 to-purple-700/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-purple-500/70 shadow-[0_0_18px_rgba(168,85,247,0.5)]">
-                          <Gem className="w-3 h-3 text-purple-300" />
-                          <span className="text-xs font-bold text-purple-200 tracking-wider uppercase">Exotique</span>
-                        </div>
-                      )}
-
-                      {/* Force Noire badge */}
-                      {!product.isExotique && product.isForceNoire && (
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-gradient-to-r from-red-950/90 to-black/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-red-800/60">
-                          <Zap className="w-3 h-3 text-red-400" />
-                          <span className="text-xs font-bold text-red-300 tracking-wider uppercase">Force Noire</span>
-                        </div>
-                      )}
-                      {/* Badge molécule */}
-                      {product.molecule && (
-                        <div className="absolute top-12 left-3 bg-black/85 backdrop-blur-sm px-2.5 py-0.5 rounded-sm border border-primary/60">
-                          <span className="text-[10px] font-bold text-primary tracking-[0.2em] uppercase">{product.molecule}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className={viewMode === "grid" ? "p-4" : "flex-1 p-4 flex items-center justify-between"}>
-                      <div>
-                        <span className="text-xs text-primary tracking-wider uppercase">
-                          {product.category === "fleur" ? "Fleur" : "Résine"}
-                        </span>
-                        <h3 className="font-display text-lg text-foreground mt-1">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                          {product.subtitle}
-                        </p>
-                      </div>
-                      <div className={viewMode === "list" ? "text-right" : "flex justify-between items-center mt-4"}>
-                        <span className="text-sm text-muted-foreground">
-                          {product.isForceNoire || product.isNectarDivin || product.isExotique || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
-                        </span>
-                        <span className="text-lg font-display text-primary">
-                          {product.price}€<span className="text-xs text-muted-foreground">/g</span>
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                  {!product.isOutOfStock && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        addToCart(product, 2.5);
-                      }}
-                      className={`${
-                        viewMode === "grid"
-                          ? "absolute bottom-4 right-4 opacity-0 group-hover:opacity-100"
-                          : "m-4 flex-shrink-0"
-                      } p-3 bg-primary text-primary-foreground rounded-full transition-all hover:glow-gold`}
-                    >
-                      <ShoppingCart className="w-5 h-5" />
-                    </button>
-                  )}
-                </motion.div>
+                <ProductCard key={product.id} product={product} index={index} />
               ))}
 
               {/* Accessories - Masqué temporairement - rupture de stock */}

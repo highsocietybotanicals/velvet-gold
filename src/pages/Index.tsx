@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import AgeGate from "@/components/AgeGate";
 import Header from "@/components/Header";
-import HeroSection from "@/components/HeroSection";
+import CinematicHero from "@/components/CinematicHero";
 import ProductSection from "@/components/ProductSection";
 import AccessoriesSection from "@/components/AccessoriesSection";
 import Footer from "@/components/Footer";
@@ -42,7 +42,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main>
-        <HeroSection />
+        <CinematicHero />
         <ProductSection />
         <AccessoriesSection />
       </main>
