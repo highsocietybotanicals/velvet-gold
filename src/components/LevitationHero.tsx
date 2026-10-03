@@ -3,18 +3,18 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import emblemRaw from "@/assets/brand/hsb-emblem.svg?raw";
-import mango from "@/assets/cutouts/mango-x-ice.webp";
-import platinum from "@/assets/cutouts/platinum-og.webp";
-import lemon from "@/assets/cutouts/lemon-punch-hash.webp";
-import bhm from "@/assets/cutouts/bhm.webp";
+import mango from "@/assets/flowers/mango-x-ice-real.jpg";
+import platinum from "@/assets/flowers/platinum-og-real.jpg";
+import lemon from "@/assets/resins/lemon-punch-hash-real.jpg";
+import bhm from "@/assets/resins/bhm-real.jpg";
 import { mountLevitation, type LevitationProduct } from "./levitationEngine";
 import "./levitation-hero.css";
 
 const PRODUCTS: LevitationProduct[] = [
-  { name: "Mango X Ice", cat: "Fleur exotique", src: mango, w: 573, h: 507 },
-  { name: "Platinum OG", cat: "Fleur · Cali Genetics", src: platinum, w: 680, h: 522 },
-  { name: "Lemon Punch Hash", cat: "Résine · Force Noire", src: lemon, w: 584, h: 456 },
-  { name: "BHM", cat: "Résine exotique", src: bhm, w: 816, h: 499 },
+  { name: "Mango X Ice", cat: "Fleur exotique", src: mango, w: 768, h: 1024 },
+  { name: "Platinum OG", cat: "Fleur · Cali Genetics", src: platinum, w: 1024, h: 1024 },
+  { name: "Lemon Punch Hash", cat: "Résine · Force Noire", src: lemon, w: 1200, h: 1200 },
+  { name: "BHM", cat: "Résine exotique", src: bhm, w: 1200, h: 1200 },
 ];
 
 const EMBLEM_PATH = (emblemRaw.match(/\sd="([^"]+)"/) || [])[1] || "";
@@ -24,7 +24,7 @@ const LevitationHero = () => {
 
   useEffect(() => {
     if (!rootRef.current || !EMBLEM_PATH) return;
-    return mountLevitation(rootRef.current, { products: PRODUCTS, emblemPath: EMBLEM_PATH });
+    return mountLevitation(rootRef.current, { products: PRODUCTS, emblemPath: EMBLEM_PATH, blend: true });
   }, []);
 
   return (
