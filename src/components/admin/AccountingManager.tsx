@@ -17,6 +17,7 @@ import { Calculator, Download, FileText, Loader2, FileSpreadsheet } from "lucide
 import { format, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
 import { fr } from "date-fns/locale";
 import { generateAccountingPdf, generateAccountingCsv, summarize, AccountingLine } from "@/lib/accountingPdf";
+import JSZip from "jszip";
 
 type TypeFilter = "all" | "site" | "pro" | "mileage";
 type StatusFilter = "billable" | "paid" | "all";
@@ -221,6 +222,35 @@ const AccountingManager = () => {
   const invoiceLines = useMemo(() => lines.filter((l) => l.type !== "mileage"), [lines]);
   const mileageLines = useMemo(() => lines.filter((l) => l.type === "mileage"), [lines]);
   const mileageTotals = useMemo(() => summarize(mileageLines), [mileageLines]);
+  const [zipLoading, setZipLoading] = useState(false);
+  const downloadInvoicesZip = async () => {
+    setZipLoading(true);
+    try {
+      const wanted = new Set(invoiceLines.map((l) => `${l.invoiceNumber}.pdf`));
+      const bucket = supabase.storage.from("invoices");
+      const { data: roots } = await bucket.list("", { limit: 1000 });
+      const folders = (roots || []).filter((r: any) => !r.id).map((r: any) => r.name);
+      const zip = new JSZip();
+      let n = 0;
+      for (const folder of folders) {
+        const { data: files } = await bucket.list(folder, { limit: 1000 });
+        for (const file of files || []) {
+          if (!wanted.has(file.name) || zip.file(file.name)) continue;
+          const { data: blob } = await bucket.download(`${folder}/${file.name}`);
+          if (blob) { zip.file(file.name, blob); n++; }
+        }
+      }
+      if (n === 0) { alert("Aucune facture PDF trouvée pour cette période."); return; }
+      const content = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(content);
+      a.download = `factures_${from}_${to}.zip`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } finally {
+      setZipLoading(false);
+    }
+  };
 
   const totals = useMemo(() => summarize(invoiceLines), [invoiceLines]);
   const tableTotals = useMemo(() => summarize(typeFilter === "mileage" ? mileageLines : invoiceLines), [typeFilter, mileageLines, invoiceLines]);
@@ -325,6 +355,9 @@ const AccountingManager = () => {
             </Button>
             <Button variant="outline" onClick={() => generateAccountingCsv(lines, fromDate, toDate)} disabled={lines.length === 0} className="gap-2">
               <FileSpreadsheet className="w-4 h-4" />Exporter CSV
+            </Button>
+            <Button variant="outline" onClick={downloadInvoicesZip} disabled={invoiceLines.length === 0 || zipLoading} className="gap-2">
+              {zipLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}Factures PDF (ZIP)
             </Button>
           </div>
         </CardContent>
