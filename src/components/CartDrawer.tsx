@@ -365,6 +365,8 @@ const CartDrawer = () => {
         const { data: result, error } = await supabase.rpc("validate_promo_code" as any, {
           p_code: code,
           p_user_id: user?.id || null,
+          p_flower_weight: totalFlowerWeight,
+          p_product_ids: items.map((i) => i.product.id),
         });
 
         if (error || !result || !(result as any).valid) {

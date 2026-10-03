@@ -404,6 +404,36 @@ Deno.serve(async (req) => {
         serverTotal = Math.round((serverTotal - promoDiscountAmount) * 100) / 100;
         validPromoCode = "BIENVENUE15";
       }
+    } else if (promoCode && typeof promoCode === "string"
+        && !["DEMI160", "NUAGE90", "BIENVENUE15"].includes(promoCode.trim().toUpperCase())) {
+      // Codes génériques de la table promo_codes (temporaires, poids minimum, produits ciblés)
+      const code = promoCode.trim().toUpperCase().slice(0, 50);
+      const { data: promo } = await supabaseAdmin
+        .from("promo_codes")
+        .select("code, discount_percent, is_active, max_uses, current_uses, expires_at, min_flower_weight_g, product_ids")
+        .eq("code", code)
+        .maybeSingle();
+      let ok = !!promo && promo.is_active
+        && (!promo.expires_at || new Date(promo.expires_at) > new Date())
+        && (promo.max_uses == null || promo.current_uses < promo.max_uses)
+        && (!promo.min_flower_weight_g || serverFlowerWeight >= Number(promo.min_flower_weight_g));
+      if (ok && Array.isArray(promo!.product_ids) && promo!.product_ids.length > 0) {
+        const allowed = new Set(promo!.product_ids);
+        ok = serverItems
+          .filter((i: any) => i.product_type === "fleur" || i.product_type === "resine")
+          .every((i: any) => allowed.has(i.product_id));
+      }
+      if (ok && userId) {
+        const { data: used } = await supabaseAdmin
+          .from("promo_code_usage").select("id").eq("user_id", userId).eq("code", code).maybeSingle();
+        if (used) ok = false;
+      }
+      if (ok) {
+        promoDiscountPercent = Number(promo!.discount_percent);
+        promoDiscountAmount = Math.round(serverTotal * promoDiscountPercent) / 100;
+        serverTotal = Math.round((serverTotal - promoDiscountAmount) * 100) / 100;
+        validPromoCode = code;
+      }
     }
 
     serverTotal = Math.round(serverTotal * 100) / 100;
