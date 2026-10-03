@@ -1183,6 +1183,8 @@ export type Database = {
           id: string
           is_active: boolean
           max_uses: number | null
+          min_flower_weight_g: number | null
+          product_ids: string[] | null
         }
         Insert: {
           code: string
@@ -1193,6 +1195,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          min_flower_weight_g?: number | null
+          product_ids?: string[] | null
         }
         Update: {
           code?: string
@@ -1203,6 +1207,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          min_flower_weight_g?: number | null
+          product_ids?: string[] | null
         }
         Relationships: []
       }
@@ -1558,7 +1564,12 @@ export type Database = {
       is_commercial: { Args: never; Returns: boolean }
       is_pro: { Args: never; Returns: boolean }
       validate_promo_code: {
-        Args: { p_code: string; p_user_id?: string }
+        Args: {
+          p_code: string
+          p_flower_weight?: number
+          p_product_ids?: string[]
+          p_user_id?: string
+        }
         Returns: Json
       }
     }
