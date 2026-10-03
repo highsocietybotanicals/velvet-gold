@@ -6,7 +6,7 @@ import Lenis from "lenis";
 
 export interface LevitationProduct { name: string; cat: string; src: string; w: number; h: number; }
 
-export function mountLevitation(root: HTMLElement, opts: { products: LevitationProduct[]; emblemPath: string }): () => void {
+export function mountLevitation(root: HTMLElement, opts: { products: LevitationProduct[]; emblemPath: string; blend?: boolean }): () => void {
   const $ = (id) => root.querySelector(`[data-lh="${id}"]`);
   const offs = [];
   const on = (t, type, fn, o) => { t.addEventListener(type, fn, o); offs.push(() => t.removeEventListener(type, fn, o)); };
@@ -88,10 +88,10 @@ export function mountLevitation(root: HTMLElement, opts: { products: LevitationP
   const rig = $('rig');
   rig.innerHTML = '';
   const els = PRODUCTS.map((p, i) => {
-    const d = document.createElement('div'); d.className = 'lh-prod';
+    const d = document.createElement('div'); d.className = opts.blend ? 'lh-prod lh-blend' : 'lh-prod';
     // never display bigger than the file's own pixels → always sharp
-    d.style.setProperty('--mw', `min(${mobile ? 80 : 50}vw, ${p.w}px)`);
-    d.style.setProperty('--mh', `min(${mobile ? 34 : 46}vh, ${p.h}px)`);
+    d.style.setProperty('--mw', `min(${mobile ? (opts.blend ? 96 : 80) : (opts.blend ? 58 : 50)}vw, ${p.w}px)`);
+    d.style.setProperty('--mh', `min(${mobile ? (opts.blend ? 50 : 34) : (opts.blend ? 70 : 46)}vh, ${p.h}px)`);
     d.innerHTML = `<div class="lh-glow"></div><img src="${p.src}" alt="${p.name}" ${i ? 'loading="lazy"' : ''} decoding="async"><img class="lh-refl" src="${p.src}" alt="" aria-hidden="true" decoding="async">`;
     rig.appendChild(d); return d;
   });

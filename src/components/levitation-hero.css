@@ -81,3 +81,8 @@ html.lenis,html.lenis body{height:auto}
 @media (prefers-reduced-motion:reduce){
   .lh-dive,.lh-show{height:auto}.lh-sticky{position:relative;height:100vh}
 }
+
+/* Photos d'origine (fond noir) fondues dans la scène, sans détourage */
+.lh-blend img{-webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 48%,#000 52%,rgba(0,0,0,.55) 72%,transparent 100%);mask-image:radial-gradient(ellipse 50% 50% at 50% 48%,#000 52%,rgba(0,0,0,.55) 72%,transparent 100%)}
+.lh-blend .lh-refl{display:none}
+.lh-blend .lh-glow{opacity:.6}
