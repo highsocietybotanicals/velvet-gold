@@ -1,0 +1,60 @@
+/* HSB FX — effets 3D. Va avec hsb-fx.ts. Tout est désactivé si l'utilisateur
+   a demandé moins d'animations (prefers-reduced-motion) ou dans /admin. */
+
+/* ---------- 1. cartes produits : inclinaison 3D + reflet ---------- */
+.hsb-fx-mouse .fx-tilt{transform-style:preserve-3d;transition:box-shadow .5s ease}
+.hsb-fx-mouse .fx-tilt.fx-tilting{transform:perspective(1000px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))!important;will-change:transform}
+.hsb-fx-mouse .fx-tilt.fx-tilting{box-shadow:0 30px 60px -20px rgba(0,0,0,.85),0 0 0 1px rgba(212,175,55,.35),0 0 40px -10px rgba(212,175,55,.35)}
+.hsb-fx-mouse .fx-tilt img{transform:scale(1.06);transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+.hsb-fx-mouse .fx-tilt.fx-tilting img{transform:scale(1.12)!important}
+.hsb-fx-mouse .fx-tilt h3,.hsb-fx-mouse .fx-tilt .font-display{transform:translateZ(28px);transition:transform .5s}
+.fx-glare{position:absolute;inset:0;z-index:30;pointer-events:none;border-radius:inherit;opacity:0;mix-blend-mode:soft-light;transition:opacity .45s;
+  background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,244,210,.55),rgba(255,230,160,.12) 28%,transparent 55%)}
+.fx-tilt.fx-tilting .fx-glare{opacity:1}
+
+/* ---------- 2. boutons magnétiques + reflet doré ---------- */
+.fx-magnet{position:relative;overflow:hidden;isolation:isolate;translate:var(--mx,0px) var(--my,0px);transition:box-shadow .4s,filter .4s}
+.fx-magnet::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,248,225,.55) 48%,transparent 66%);transform:translateX(-120%)}
+.hsb-fx-mouse .fx-magnet:hover::after{animation:fx-shine 1s cubic-bezier(.3,.6,.2,1)}
+.hsb-fx-mouse .fx-magnet:hover{box-shadow:0 12px 34px -12px rgba(212,175,55,.6)}
+.hsb-fx-touch .fx-magnet:active{scale:.97}
+@keyframes fx-shine{to{transform:translateX(120%)}}
+
+/* ---------- 3. titres : lettres qui basculent en 3D ---------- */
+.fx-split{perspective:700px}
+.fx-split .fx-word{display:inline-block;white-space:nowrap;background:inherit;-webkit-background-clip:inherit;background-clip:inherit;color:inherit}
+.fx-split .fx-ch{display:inline-block;opacity:0;transform:translateY(.55em) rotateX(-85deg);transform-origin:50% 100%;
+  transition:transform .9s cubic-bezier(.2,.75,.2,1),opacity .6s ease;transition-delay:calc(var(--i) * 28ms);
+  background:inherit;-webkit-background-clip:inherit;background-clip:inherit;color:inherit}
+.fx-split.fx-in .fx-ch{opacity:1;transform:none}
+
+/* ---------- 4. sections qui montent en profondeur ---------- */
+.fx-reveal{opacity:0;transform:perspective(1200px) translateY(60px) rotateX(8deg) scale(.98);transform-origin:50% 0;
+  transition:opacity 1s ease,transform 1.2s cubic-bezier(.16,.8,.2,1)}
+.fx-reveal.fx-in{opacity:1;transform:none}
+
+/* ---------- 5. parallaxe des photos ---------- */
+.fx-parallax{translate:0 var(--py,0px)}
+
+/* ---------- 6. barre de progression dorée ---------- */
+.fx-progress{position:fixed;left:0;right:0;top:0;height:2px;z-index:9998;pointer-events:none;transform-origin:0 50%;transform:scaleX(0);
+  background:linear-gradient(90deg,#8a6a2c,#f2dc9c 60%,#fff3cf);box-shadow:0 0 10px rgba(242,220,156,.6)}
+
+/* ---------- 7. curseur doré (souris seulement) ---------- */
+.fx-cursor-dot,.fx-cursor-ring{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;border-radius:50%;opacity:0;transition:opacity .3s}
+.fx-cursor-dot{width:6px;height:6px;margin:-3px 0 0 -3px;background:#f2dc9c;box-shadow:0 0 10px #e2c06a}
+.fx-cursor-ring{width:34px;height:34px;margin:-17px 0 0 -17px;border:1px solid rgba(242,220,156,.7);transition:opacity .3s,border-color .3s,background .3s}
+.fx-cursor-ring.fx-press{background:rgba(212,175,55,.15);border-color:#fff1c2}
+.fx-cursor-on .fx-cursor-dot{opacity:1}
+.fx-cursor-on .fx-cursor-ring{opacity:.6}
+
+/* ---------- 8. étincelles au clic ---------- */
+.fx-burst{position:fixed;inset:0;width:100vw;height:100vh;z-index:9997;pointer-events:none}
+
+/* ---------- coupe-circuits ---------- */
+.hsb-fx-off .fx-cursor-dot,.hsb-fx-off .fx-cursor-ring,.hsb-fx-off .fx-progress{display:none}
+@media (prefers-reduced-motion:reduce){
+  .fx-reveal,.fx-split .fx-ch{opacity:1!important;transform:none!important;transition:none!important}
+  .fx-cursor-dot,.fx-cursor-ring,.fx-burst{display:none}
+}
