@@ -16,9 +16,11 @@ const readVerified = () => { try { return sessionStorage.getItem(AGE_KEY) === "t
 const prefersReduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Image qui passe à la source suivante si la première ne répond pas. */
-const Img = ({ srcs, ...rest }: { srcs: string[] } & ImgHTMLAttributes<HTMLImageElement>) => {
+const Img = ({ srcs, photoLast, className, ...rest }: { srcs: string[]; photoLast?: boolean } & ImgHTMLAttributes<HTMLImageElement>) => {
   const [i, setI] = useState(0);
-  return <img {...rest} src={srcs[i]} onError={() => setI((v) => (v + 1 < srcs.length ? v + 1 : v))} />;
+  // is-photo : la photo de repli (fond noir) reçoit le fondu ; un détourage reste net
+  const photo = photoLast && srcs.length > 1 && i === srcs.length - 1;
+  return <img {...rest} className={[className, photo && "is-photo"].filter(Boolean).join(" ") || undefined} src={srcs[i]} onError={() => setI((v) => (v + 1 < srcs.length ? v + 1 : v))} />;
 };
 
 const PriceBlock = ({ p }: { p: Product }) => {
@@ -306,8 +308,8 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
                     onPointerLeave={(ev) => { const img = ev.currentTarget.querySelector<HTMLImageElement>(".lot-vis img"); img?.style.setProperty("--ry", "0deg"); img?.style.setProperty("--rx", "0deg"); }}>
                     <span className="num" aria-hidden="true">{String((n < 0 ? 0 : n) + 1).padStart(2, "0")}</span>
                     {e.vedette && <span className="vedette">{e.vedette}</span>}
-                    <div className="lot-vis"><Img srcs={cutSources(p)} alt={`${p.name}, ${typeLabel(p).toLowerCase()} CBD`} loading="lazy" draggable={false} /></div>
-                    <div className="floor" aria-hidden="true"><Img srcs={cutSources(p)} alt="" loading="lazy" /></div>
+                    <div className="lot-vis"><Img photoLast srcs={cutSources(p)} alt={`${p.name}, ${typeLabel(p).toLowerCase()} CBD`} loading="lazy" draggable={false} /></div>
+                    <div className="floor" aria-hidden="true"><Img photoLast srcs={cutSources(p)} alt="" loading="lazy" /></div>
                     <div className="meta">
                       <p className="tag">{e.gamme} · {typeLabel(p)}</p>
                       <h3>{p.name}</h3>
@@ -414,7 +416,7 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
           </div>
           {reco && (
             <div className="reco" aria-live="polite">
-              <Img srcs={cutSources(reco)} alt={reco.name} loading="lazy" />
+              <Img photoLast srcs={cutSources(reco)} alt={reco.name} loading="lazy" />
               <div>
                 <p className="kicker">Le Sommelier vous sert</p>
                 <h3>{reco.name}</h3>

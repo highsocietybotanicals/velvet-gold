@@ -143,13 +143,11 @@ html.lenis, html.lenis body { height: auto; }
 .mc .lot::before { content: ""; position: absolute; left: 50%; top: -6%; width: 130%; height: 74%; transform: translateX(-50%); background: linear-gradient(180deg, rgba(255, 232, 170, .26), rgba(255, 232, 170, .06) 60%, transparent 92%); clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%); z-index: -1; opacity: .85; }
 .mc .lot .num { position: absolute; top: 6%; left: 50%; transform: translateX(-50%); font-family: var(--serif); font-style: italic; font-size: clamp(120px, 13vw, 190px); line-height: 1; color: transparent; -webkit-text-stroke: 1px rgba(201, 162, 74, .38); z-index: -1; user-select: none; }
 .mc .lot-vis { position: relative; height: clamp(220px, 34vh, 330px); display: grid; place-items: end center; perspective: 900px; }
-.mc .lot-vis img { max-height: 100%; max-width: 100%; object-fit: contain; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .25s ease-out; filter: drop-shadow(0 30px 30px rgba(0, 0, 0, .6)); animation: mc-float 6s ease-in-out infinite; mix-blend-mode: lighten;
-  /* fondu des bords : invisible sur un détourage, efface le cadre d'une photo de repli */
-  -webkit-mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 58%, transparent 78%); mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 58%, transparent 78%); }
+.mc .lot-vis img { max-height: 100%; max-width: 100%; object-fit: contain; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .25s ease-out; filter: drop-shadow(0 30px 30px rgba(0, 0, 0, .6)); animation: mc-float 6s ease-in-out infinite; }
 @keyframes mc-float { 0%, 100% { translate: 0 0 } 50% { translate: 0 -10px } }
 .mc .floor { position: relative; height: 56px; margin-top: 4px; overflow: hidden; }
 .mc .floor::before { content: ""; position: absolute; left: 6%; right: 6%; top: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--or), transparent); box-shadow: 0 0 14px rgba(244, 220, 146, .6); }
-.mc .floor img { position: absolute; left: 50%; top: 2px; max-height: 150px; max-width: 90%; transform: translateX(-50%) scaleY(-1); opacity: .22; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 40%); mask-image: linear-gradient(180deg, #000 0%, transparent 40%); filter: blur(1.5px); mix-blend-mode: lighten; }
+.mc .floor img { position: absolute; left: 50%; top: 2px; max-height: 150px; max-width: 90%; transform: translateX(-50%) scaleY(-1); opacity: .22; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 40%); mask-image: linear-gradient(180deg, #000 0%, transparent 40%); filter: blur(1.5px); }
 .mc .lot .meta { text-align: center; padding-top: 6px; }
 .mc .lot .tag { font-family: var(--wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .3em; text-transform: uppercase; color: var(--or); }
 .mc .lot.exo .tag { color: #D9A5F0; }
@@ -242,7 +240,7 @@ html.lenis, html.lenis body { height: auto; }
 .mc .q h4 span { font-family: var(--mono); font-style: normal; font-size: 11px; color: var(--or); margin-right: 10px; letter-spacing: .2em; }
 .mc .q .opts { display: flex; flex-wrap: wrap; gap: 8px; }
 .mc .reco { border: 1px solid var(--ligne); padding: clamp(22px, 3vw, 36px); display: grid; grid-template-columns: 150px 1fr; gap: 22px; align-items: center; background: linear-gradient(160deg, rgba(176, 97, 214, .06), rgba(6, 5, 8, .9)); min-height: 280px; }
-.mc .reco img { width: 150px; height: 180px; object-fit: contain; mix-blend-mode: lighten; -webkit-mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 58%, transparent 78%); mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 58%, transparent 78%); }
+.mc .reco img { width: 150px; height: 180px; object-fit: contain; }
 .mc .reco h3 { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(28px, 3vw, 38px); line-height: 1.08; margin: 8px 0; }
 .mc .reco p { font-size: 12.5px; color: var(--ivoire-2); }
 .mc .reco .row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 16px; }
@@ -254,6 +252,8 @@ html.lenis, html.lenis body { height: auto; }
 .mc .final h2 .choc { display: block; font-size: .8em; margin-top: .08em; }
 .mc .final p { max-width: 520px; margin: 24px auto 30px; text-shadow: 0 1px 14px rgba(0, 0, 0, .95), 0 0 2px rgba(0, 0, 0, .8); }
 
+/* photo de repli sur fond noir (tant qu'un détourage manque) : le noir disparaît, les bords fondent */
+.mc img.is-photo { mix-blend-mode: lighten; -webkit-mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 58%, transparent 78%); mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 58%, transparent 78%); }
 .mc .rv { opacity: 0; transform: translateY(40px); transition: opacity 1s var(--ease), transform 1.2s var(--ease); }
 .mc .rv.in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {

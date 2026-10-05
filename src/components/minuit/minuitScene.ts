@@ -28,9 +28,9 @@ const sstep = (a: number, b: number, x: number) => {
 };
 
 /** Charge la première source qui répond (bucket, puis détourage du code, puis photo). */
-function loadFirst(loader: THREE.TextureLoader, srcs: string[], done: (t: THREE.Texture) => void, i = 0) {
+function loadFirst(loader: THREE.TextureLoader, srcs: string[], done: (t: THREE.Texture, i: number) => void, i = 0) {
   if (i >= srcs.length) return;
-  loader.load(srcs[i], (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; done(t); }, undefined, () => loadFirst(loader, srcs, done, i + 1));
+  loader.load(srcs[i], (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; done(t, i); }, undefined, () => loadFirst(loader, srcs, done, i + 1));
 }
 
 export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptions): MinuitScene {
@@ -134,14 +134,15 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 0.93, 96), new THREE.MeshBasicMaterial({ color: 0xf4c66a, side: THREE.DoubleSide }));
     ring.rotation.x = -Math.PI / 2; ring.position.y = GY - 0.2 + 0.015; grp.add(ring);
     const mat = new THREE.ShaderMaterial({
-      uniforms: { map: { value: null }, uO: { value: 0 } }, transparent: true, depthWrite: false,
+      // uKey = 1 seulement pour la photo de repli (fond noir à effacer) ; un détourage garde son alpha intact
+      uniforms: { map: { value: null }, uO: { value: 0 }, uKey: { value: 0 } }, transparent: true, depthWrite: false,
       vertexShader: "varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
-      fragmentShader: "uniform sampler2D map; uniform float uO; varying vec2 vUv; void main(){ vec4 c=texture2D(map,vUv); float l=max(c.r,max(c.g,c.b)); float a=c.a*smoothstep(0.035,0.13,l); vec2 d=vUv-0.5; a*=smoothstep(0.5,0.4,max(abs(d.x),abs(d.y))); gl_FragColor=vec4(c.rgb,a*uO); }",
+      fragmentShader: "uniform sampler2D map; uniform float uO; uniform float uKey; varying vec2 vUv; void main(){ vec4 c=texture2D(map,vUv); float l=max(c.r,max(c.g,c.b)); vec2 d=vUv-0.5; float k=smoothstep(0.035,0.13,l)*smoothstep(0.5,0.4,max(abs(d.x),abs(d.y))); float a=c.a*mix(1.0,k,uKey); gl_FragColor=vec4(c.rgb,a*uO); }",
     });
     mat.toneMapped = false;
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); grp.add(mesh);
-    loadFirst(loader, s.srcs, (t) => {
-      mat.uniforms.map.value = t; mat.needsUpdate = true;
+    loadFirst(loader, s.srcs, (t, i) => {
+      mat.uniforms.map.value = t; mat.uniforms.uKey.value = s.srcs.length > 1 && i === s.srcs.length - 1 ? 1 : 0; mat.needsUpdate = true;
       const img = t.image as { width: number; height: number };
       const h = 2.0; mesh.scale.set((h * img.width) / img.height, h, 1);
     });
