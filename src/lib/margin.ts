@@ -131,7 +131,8 @@ export const computeOrderMargin = (
   costs: CostsBundle,
   mileageKm: number = 0
 ): MarginBreakdown => {
-  const revenue = Number(order.total_amount) || 0;
+  const revenueTTC = Number(order.total_amount) || 0;
+  const revenue = revenueTTC / 1.2; // CA hors taxes : la TVA (20 %) est reversée à l'État, ce n'est pas du bénéfice
   const items = order.order_items ?? [];
 
   // Matter cost = sum over flower items of (weight * cost_per_gram)
@@ -173,8 +174,8 @@ export const computeOrderMargin = (
   // Mileage cost for personal delivery
   const costMileage = mileageKm * (costs.fixed.essence_per_km || 0);
 
-  // Viva commission
-  const costCommission = revenue * ((costs.fixed.viva_commission_pct || 0) / 100);
+  // Commission Viva : prélevée sur le montant TTC payé par le client
+  const costCommission = revenueTTC * ((costs.fixed.viva_commission_pct || 0) / 100);
 
   const totalCost =
     costMatter + costConsumables + costGifts + costShipping + costCommission + costMileage;
@@ -206,7 +207,8 @@ export interface SimInput {
 }
 
 export const computeSimulation = (input: SimInput, costs: CostsBundle): MarginBreakdown => {
-  const revenue = input.weightG * input.unitPricePerGram;
+  const revenueTTC = input.weightG * input.unitPricePerGram;
+  const revenue = revenueTTC / 1.2; // CA hors taxes
   const cpg = costs.productCosts[input.productId] ?? 0;
   const costMatter = input.weightG * cpg;
 
@@ -230,7 +232,7 @@ export const computeSimulation = (input: SimInput, costs: CostsBundle): MarginBr
   const costMileage =
     input.shipping === "personal" ? input.mileageKm * (costs.fixed.essence_per_km || 0) : 0;
 
-  const costCommission = revenue * ((costs.fixed.viva_commission_pct || 0) / 100);
+  const costCommission = revenueTTC * ((costs.fixed.viva_commission_pct || 0) / 100);
 
   const totalCost =
     costMatter + costConsumables + costGifts + costShipping + costCommission + costMileage;

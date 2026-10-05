@@ -75,7 +75,7 @@ export interface PendingReview {
   created_at: string;
 }
 
-export const useAdmin = () => {
+export const useAdmin = ({ withOrders = true }: { withOrders?: boolean } = {}) => {
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -152,7 +152,7 @@ export const useAdmin = () => {
         promo_discount_amount: order.promo_discount_amount ?? promoMap.get(order.id)?.discount_amount ?? undefined,
       })) as AdminOrder[];
     },
-    enabled: !!user && isAdmin,
+    enabled: !!user && isAdmin && withOrders,
   });
 
   // Pending reviews for moderation

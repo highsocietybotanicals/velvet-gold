@@ -134,7 +134,7 @@ export default function MarginSimulator() {
           {breakdown && (
             <>
               <div className="space-y-1 text-sm">
-                <Row label="Chiffre d'affaires" value={fmt(breakdown.revenue)} strong />
+                <Row label="Chiffre d'affaires HT" value={fmt(breakdown.revenue)} strong />
                 <Row label="Coût matière" value={`- ${fmt(breakdown.costMatter)}`} />
                 <Row label="Consommables (pochons, Boveda…)" value={`- ${fmt(breakdown.costConsumables)}`} />
                 <Row label="Cadeaux offerts" value={`- ${fmt(breakdown.costGifts)}`} />

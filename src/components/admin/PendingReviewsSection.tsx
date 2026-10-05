@@ -12,7 +12,7 @@ const PendingReviewsSection = () => {
     deleteReview,
     isApprovingReview,
     isDeletingReview,
-  } = useAdmin();
+  } = useAdmin({ withOrders: false });
 
   return (
     <motion.section

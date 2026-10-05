@@ -60,12 +60,17 @@ const OrderRow = ({
     const totalTTC = order.total_amount;
     const totalHT = totalTTC / 1.2;
     const totalTVA = totalTTC - totalHT;
+    const lineVat = order.order_channel === "pro" ? 1 : 1.2; // commandes pro : lignes déjà en HT
+    const promoHT = (Number(order.promo_discount_amount) || 0) / 1.2;
+    const promoRow = promoHT > 0
+      ? `<tr><td colspan="4" style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;color:#b8860b">Remise code promo ${esc(order.promo_code || "")}${order.promo_discount_percent ? ` (-${order.promo_discount_percent}%)` : ""}</td><td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right;font-weight:600;color:#b8860b">-${promoHT.toFixed(2)} €</td></tr>`
+      : "";
     const itemsHtml = (order.order_items || []).map(item => {
       const qty = item.weight ? `${item.weight}g` : `x${item.quantity}`;
-      const unitHT = item.unit_price / 1.2;
-      const totalItemHT = item.total_price / 1.2;
+      const unitHT = item.unit_price / lineVat;
+      const totalItemHT = item.total_price / lineVat;
       return `<tr><td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt">${esc(item.product_name)}</td><td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:center">${qty}</td><td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${unitHT.toFixed(2)} €</td><td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right">${TVA_RATE}%</td><td style="padding:3mm 2mm;border-bottom:0.5px solid #ddd;font-size:9pt;text-align:right;font-weight:600">${totalItemHT.toFixed(2)} €</td></tr>`;
-    }).join("");
+    }).join("") + promoRow;
     const w = window.open("", "_blank", "width=700,height=900");
     if (!w) return;
     w.document.write(`<!DOCTYPE html><html><head><title>Facture ${invoiceNum}</title><style>@page{size:A4;margin:15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;background:#fff;padding:15mm;font-size:10pt}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8mm;padding-bottom:5mm;border-bottom:3px solid #b8860b}.brand{font-size:16pt;font-weight:bold;color:#b8860b}.company-info{font-size:8pt;color:#555;text-align:right;line-height:1.6}.invoice-title{font-size:18pt;font-weight:bold;color:#b8860b;text-align:center;margin:6mm 0;letter-spacing:2px}.meta-row{display:flex;justify-content:space-between;margin-bottom:8mm}.meta-box{background:#f9f7f3;border:1px solid #e8e0d0;border-radius:4px;padding:4mm;width:48%}.meta-box h3{font-size:7pt;text-transform:uppercase;color:#b8860b;margin-bottom:2mm}.meta-box p{font-size:9pt;line-height:1.5}table{width:100%;border-collapse:collapse;margin-bottom:5mm}thead th{font-size:7pt;text-transform:uppercase;color:#fff;background:#b8860b;padding:2.5mm 2mm;text-align:left}thead th:nth-child(2){text-align:center}thead th:nth-child(3),thead th:nth-child(4),thead th:nth-child(5){text-align:right}.totals{margin-top:3mm;border-top:2px solid #b8860b;padding-top:4mm}.totals-row{display:flex;justify-content:flex-end;gap:10mm;font-size:10pt;padding:1mm 0}.totals-row.grand{font-size:14pt;font-weight:bold;color:#b8860b;border-top:1px solid #b8860b;padding-top:3mm}.totals-row .label{min-width:40mm;text-align:right}.totals-row .value{min-width:25mm;text-align:right}.payment-badge{display:inline-block;background:#e8f5e9;color:#2e7d32;padding:2mm 4mm;border-radius:4px;font-size:9pt;font-weight:600;margin-top:4mm}.bank{margin-top:5mm;padding:4mm;border:1px solid #e8e0d0;background:#f9f7f3;font-size:8pt;line-height:1.6}.bank strong{color:#b8860b}.legal{font-size:7pt;color:#888;margin-top:4mm;text-align:center}</style></head><body><div class="header"><div><div class="brand">HIGH SOCIETY BOTANICALS</div><div style="font-size:8pt;color:#666">highsocietybotanicals.com</div></div><div class="company-info"><strong>High Society Botanicals</strong><br/>SIRET : 994 621 910 00011<br/>TVA Intra. : FR 48 994 621 910<br/>France</div></div><div class="invoice-title">FACTURE</div><div class="meta-row"><div class="meta-box"><h3>Informations facture</h3><p><strong>${invoiceNum}</strong><br/>Commande : ${orderNum}<br/>Date : ${date}<br/>Mode : ${delivery}</p></div><div class="meta-box"><h3>Client</h3><p><strong>${name}</strong><br/>${order.guest_email || order.user_email ? `${esc(order.guest_email || order.user_email || "")}<br/>` : ""}${order.guest_phone || order.contact_phone ? `Tél : ${esc(order.guest_phone || order.contact_phone || "")}<br/>` : ""}${address ? `${address}` : ""}</p></div></div><table><thead><tr><th>Désignation</th><th>Quantité</th><th>Prix unit. HT</th><th>TVA</th><th>Total HT</th></tr></thead><tbody>${itemsHtml}</tbody></table><div class="totals"><div class="totals-row"><span class="label">Total HT :</span><span class="value">${totalHT.toFixed(2)} €</span></div><div class="totals-row"><span class="label">TVA (${TVA_RATE}%) :</span><span class="value">${totalTVA.toFixed(2)} €</span></div><div class="totals-row grand"><span class="label">TOTAL TTC :</span><span class="value">${totalTTC.toFixed(2)} €</span></div></div><div class="payment-badge">PAYÉ</div><div class="bank"><strong>COORDONNÉES BANCAIRES</strong><br/>Titulaire : ${BANK_DETAILS.holder}<br/>IBAN : ${BANK_DETAILS.iban} — BIC : ${BANK_DETAILS.bic}</div><div class="legal">High Society Botanicals — SIRET : 994 621 910 00011 — TVA Intra. : FR 48 994 621 910</div></body></html>`);
@@ -205,7 +210,7 @@ const OrdersSection = () => {
   };
 
   const isAbandoned = (o: AdminOrder) =>
-    o.payment_status !== "paid" &&
+    o.payment_status === "unpaid" &&
     (o.payment_method ?? "online") === "online" &&
     !!o.viva_order_code;
 

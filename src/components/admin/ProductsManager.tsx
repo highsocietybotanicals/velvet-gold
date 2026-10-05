@@ -194,7 +194,7 @@ const ProductsManager = () => {
                                 size="sm"
                                 className="h-7 w-7 p-0 text-destructive"
                                 aria-label={`Supprimer l'analyse ${r.label}`}
-                                onClick={() => remove(r)}
+                                onClick={() => { if (window.confirm(`Supprimer définitivement l'analyse « ${r.label} » ? Le PDF sera effacé du stockage.`)) remove(r); }}
                               >
                                 <X className="w-3.5 h-3.5" />
                               </Button>

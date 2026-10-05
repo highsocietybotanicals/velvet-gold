@@ -148,7 +148,7 @@ export default function OrderMarginTable() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">CA total (payées)</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">CA HT (payées)</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold gold-text">{fmt(totals.revenue)}</p>
@@ -188,7 +188,7 @@ export default function OrderMarginTable() {
                 <TableHead>Commande</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Poids</TableHead>
-                <TableHead>CA</TableHead>
+                <TableHead>CA HT</TableHead>
                 <TableHead>Coût</TableHead>
                 <TableHead>Marge €</TableHead>
                 <TableHead>Marge %</TableHead>

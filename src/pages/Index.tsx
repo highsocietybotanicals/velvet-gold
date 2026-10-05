@@ -1,52 +1,29 @@
-import { useState, useEffect } from "react";
-import AgeGate from "@/components/AgeGate";
+import { useState } from "react";
 import Header from "@/components/Header";
-import LevitationHero from "@/components/LevitationHero";
-import ProductSection from "@/components/ProductSection";
 import AccessoriesSection from "@/components/AccessoriesSection";
 import Footer from "@/components/Footer";
+import MinuitHome from "@/components/minuit/MinuitHome";
 
+const readVerified = () => {
+  try {
+    return sessionStorage.getItem("hsb-age-verified") === "true";
+  } catch {
+    return false;
+  }
+};
 
 const Index = () => {
-  const [isVerified, setIsVerified] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
-
-  useEffect(() => {
-    const verified = sessionStorage.getItem("hsb-age-verified");
-    if (verified === "true") {
-      setIsVerified(true);
-    }
-    setIsLoading(false);
-  }, []);
-
-
-  const handleVerified = () => {
-    sessionStorage.setItem("hsb-age-verified", "true");
-    setIsVerified(true);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!isVerified) {
-    return <AgeGate onVerified={handleVerified} />;
-  }
+  // La porte d'âge (rideau de fer 3D) est dans MinuitHome ; l'en-tête apparaît une fois la porte passée.
+  const [entered, setEntered] = useState(readVerified);
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      {entered && <Header />}
       <main>
-        <LevitationHero />
-        <ProductSection />
+        <MinuitHome onEnter={() => setEntered(true)} />
         <AccessoriesSection />
       </main>
-<Footer />
+      <Footer />
     </div>
   );
 };

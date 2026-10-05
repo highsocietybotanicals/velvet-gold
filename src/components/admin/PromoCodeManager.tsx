@@ -218,7 +218,7 @@ const PromoCodeManager = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteCode(code.id)}
+                            onClick={() => { if (window.confirm(`Supprimer définitivement le code ${code.code} ?`)) deleteCode(code.id); }}
                             className="text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />

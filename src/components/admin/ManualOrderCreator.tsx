@@ -436,7 +436,7 @@ const ManualOrderCreator = () => {
           delivery_type: "personal",
           total_amount: totalAmount,
           total_flower_weight: totalFlowerWeight,
-          payment_status: settlement === "paid" ? "paid" : "unpaid",
+          payment_status: "unpaid", // passé à "paid" après l'insertion des lignes, sinon le stock n'est jamais décompté
           payment_method: settlement === "transfer" ? "transfer" : "physical",
           status: "preparing",
 
@@ -532,7 +532,16 @@ const ManualOrderCreator = () => {
       }
 
       const { error: itemsError } = await supabase.from("order_items").insert(items);
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        await supabase.from("orders").delete().eq("id", order.id); // évite une commande vide orpheline
+        throw itemsError;
+      }
+
+      if (settlement === "paid") {
+        // La baisse de stock et le calcul des frais km se déclenchent au passage à « payé », lignes déjà présentes
+        const { error: payError } = await supabase.from("orders").update({ payment_status: "paid" }).eq("id", order.id);
+        if (payError) throw payError;
+      }
 
       setLastCreatedOrder({ ...order, items });
       toast({ title: "Commande créée ✅", description: `${order.display_order_number} — En préparation, en attente de paiement` });

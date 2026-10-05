@@ -84,6 +84,11 @@
     scroll-behavior: smooth;
   }
 
+  /* Coupe le débordement horizontal (effets d'apparition 3D sur mobile) sans casser position: sticky */
+  html, body {
+    overflow-x: clip;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Geist', sans-serif;

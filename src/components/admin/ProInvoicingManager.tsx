@@ -309,8 +309,7 @@ export default function ProInvoicingManager() {
 
   const deleteInvoice = useMutation({
     mutationFn: async (id: string) => {
-      // detach deposits
-      await supabase.from("pro_deposits").update({ invoice_id: null }).eq("invoice_id", id);
+      // Les lignes de dépôt se détachent seules (clé étrangère ON DELETE SET NULL)
       const { error } = await supabase.from("pro_invoices").delete().eq("id", id);
       if (error) throw error;
     },
@@ -943,8 +942,10 @@ export default function ProInvoicingManager() {
                           <Button size="sm" variant="ghost" title="Régénérer le PDF" onClick={() => regeneratePdf(i)}>
                             <RefreshCw className="h-4 w-4" />
                           </Button>
-                          {Number(i.commission_percent) !== 0 && (
-                            <Button size="sm" variant="ghost" title="Corriger en facture directe B2B 100%" onClick={() => regeneratePdf(i, true)}>
+                          {Number(i.commission_percent) !== 0 && i.status !== "paid" && (
+                            <Button size="sm" variant="ghost" title="Corriger en facture directe B2B 100%" onClick={() => {
+                              if (confirm(`Passer la facture ${i.invoice_number} en vente directe 100 % ? Les montants HT / TVA / TTC seront recalculés.`)) regeneratePdf(i, true);
+                            }}>
                               100%
                             </Button>
                           )}
@@ -953,8 +954,8 @@ export default function ProInvoicingManager() {
                               <CheckCircle2 className="h-4 w-4 text-green-500" />
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" title="Supprimer" onClick={() => {
-                            if (confirm(`Supprimer la facture ${i.invoice_number} ?`)) deleteInvoice.mutate(i.id);
+                          <Button size="sm" variant="ghost" title={i.status === "paid" ? "Une facture payée ne peut pas être supprimée" : "Supprimer"} disabled={i.status === "paid"} onClick={() => {
+                            if (confirm(`Supprimer définitivement la facture ${i.invoice_number} ? Le numéro sera perdu, action impossible à annuler.`)) deleteInvoice.mutate(i.id);
                           }}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>

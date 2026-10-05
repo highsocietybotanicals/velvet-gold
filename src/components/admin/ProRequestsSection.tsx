@@ -28,7 +28,7 @@ const ProRequestsSection = () => {
     isRejecting,
     isValidatingVat,
     isRejectingVat,
-  } = useAdmin();
+  } = useAdmin({ withOrders: false });
 
   return (
     <div className="space-y-8">
@@ -83,7 +83,7 @@ const ProRequestsSection = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => rejectPro(request.id)}
+                            onClick={() => { if (window.confirm(`Refuser la demande de ${request.company_name ?? "ce client"} ? La raison sociale et le SIRET saisis seront effacés.`)) rejectPro(request.id); }}
                             disabled={isRejecting || isValidating}
                             className="border-destructive/50 text-destructive hover:bg-destructive/10"
                           >
@@ -150,7 +150,7 @@ const ProRequestsSection = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => rejectVat(request.id)}
+                            onClick={() => { if (window.confirm(`Refuser le numéro de TVA de ${request.company_name ?? "ce client"} ?`)) rejectVat(request.id); }}
                             disabled={isRejectingVat || isValidatingVat}
                             className="border-destructive/50 text-destructive hover:bg-destructive/10"
                           >
