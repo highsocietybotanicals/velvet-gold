@@ -191,9 +191,10 @@ export function startHsbFx() {
   };
   apply(document.body);
   let queued = [];
+  let scheduled = false;
   new MutationObserver((muts) => {
     muts.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && queued.push(n)));
-    if (queued.length === 1) requestAnimationFrame(() => { const list = queued; queued = []; list.forEach((n) => n.isConnected && apply(n)); });
+    if (queued.length && !scheduled) { scheduled = true; requestAnimationFrame(() => { scheduled = false; const list = queued; queued = []; list.forEach((n) => n.isConnected && apply(n)); }); }
   }).observe(document.body, { childList: true, subtree: true });
 
   // l'admin est une SPA : si on y entre, on coupe le curseur doré
