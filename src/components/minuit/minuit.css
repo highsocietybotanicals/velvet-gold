@@ -22,6 +22,9 @@
 .mc .choc { font-family: var(--wide); font-stretch: 125%; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; line-height: .9; }
 .mc .foil { background: var(--foil); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: mc-foil 9s linear infinite; filter: drop-shadow(0 8px 26px rgba(201, 162, 74, .22)); }
 @keyframes mc-foil { to { background-position: -220% 0; } }
+/* écran tactile : feuille d'or fixe (l'animer repeint le texte à chaque image) */
+@media (hover: none) { .mc .foil { animation: none; background-position: 18% 0; } }
+.mc.lite .lot-vis img { animation: none; }
 .mc .neon { font-family: var(--neon); font-weight: 400; color: #FFF3D1; text-shadow: 0 0 2px #fff6dc, 0 0 10px #F4DC92, 0 0 24px #C9A24A, 0 0 56px rgba(201, 162, 74, .65), 0 0 110px rgba(201, 162, 74, .35); }
 .mc .mono-s { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ivoire-2); }
 .mc .btn-or { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .8em; min-height: 52px; padding: 0 28px; font-family: var(--wide); font-stretch: 125%; font-weight: 800; font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: #120E06; background: var(--foil); background-size: 200% 100%; border-radius: 2px; text-decoration: none; transition: background-position .9s var(--ease), box-shadow .4s; box-shadow: 0 0 0 1px rgba(244, 220, 146, .4), 0 18px 40px -18px rgba(201, 162, 74, .8); }
@@ -63,8 +66,10 @@
 .mc .foot-line { left: 0; right: 0; bottom: max(18px, env(safe-area-inset-bottom)); text-align: center; padding: 0 var(--gut); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--ivoire-3); opacity: 0; transition: opacity 1s 1s; }
 .mc.lit .foot-line { opacity: 1; }
 .mc .foot-line b { color: var(--or); font-weight: 400; }
-.mc .lotcap { right: var(--gut); bottom: clamp(96px, 15vh, 150px); width: min(380px, calc(100vw - 2 * var(--gut))); padding: 22px 22px 20px; background: linear-gradient(180deg, rgba(13, 11, 16, .72), rgba(6, 5, 8, .88)); border: 1px solid var(--ligne); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); opacity: 0; transform: translateY(24px); transition: opacity .5s, transform .7s var(--ease); pointer-events: none; }
+.mc .lotcap { right: var(--gut); bottom: clamp(96px, 15vh, 150px); width: min(380px, calc(100vw - 2 * var(--gut))); padding: 22px 22px 20px; background: linear-gradient(180deg, rgba(13, 11, 16, .86), rgba(6, 5, 8, .94)); border: 1px solid var(--ligne); opacity: 0; transform: translateY(24px); transition: opacity .5s, transform .7s var(--ease); pointer-events: none; }
 .mc .lotcap.show { opacity: 1; transform: none; pointer-events: auto; }
+/* flou d'arrière-plan sur ordinateur seulement : au-dessus d'une 3D animée, un téléphone devrait le recalculer à chaque image */
+@media (min-width: 900px) { .mc .lotcap { background: linear-gradient(180deg, rgba(13, 11, 16, .72), rgba(6, 5, 8, .88)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); } }
 .mc .lotcap .no { display: flex; justify-content: space-between; align-items: baseline; }
 .mc .lotcap h3 { font-size: clamp(30px, 3.4vw, 40px); line-height: 1.05; margin: 8px 0 6px; }
 .mc .notes { font-size: 12.5px; color: var(--ivoire-2); line-height: 1.6; }

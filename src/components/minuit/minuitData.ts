@@ -86,4 +86,11 @@ export const eur = (n: number) => {
 };
 export const gfmt = (w: number) => String(w).replace(".", ",") + " g";
 
-export const BAND = ["Analyse labo sur chaque fiche", "THC < 0,3 %", "Expédition discrète 48 h", "Main propre autour du 44", "Kit et échantillon offerts dès 10 g", "Paiement sécurisé", "Réservé aux majeurs"];
+/** Téléphone modeste (4 cœurs ou moins, 4 Go ou moins, économiseur de données) : effets allégés dès le départ. */
+export const isLowEnd = () => {
+  if (typeof navigator === "undefined") return false;
+  const n = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
+  return (n.hardwareConcurrency || 8) <= 4 || (n.deviceMemory || 8) <= 4 || !!n.connection?.saveData;
+};
+
+export const BAND = ["Analysé en laboratoire","THC < 0,3 %", "Expédition discrète 48 h", "Main propre autour du 44", "Kit et échantillon offerts dès 10 g", "Paiement sécurisé", "Réservé aux majeurs"];

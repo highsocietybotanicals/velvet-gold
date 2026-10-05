@@ -1,21 +1,24 @@
-import { useState, useMemo } from "react";
+// Fiche produit « Minuit Carat » : vitrine sous projecteur, ticket de grammage aux prix exacts du site,
+// mot de la maison, profil aromatique, avis et lots de la même veine.
+// Prix, prix pro HT, cadeaux et panier : logique d'origine conservée (calculatePrice, getGifts, addToCart).
+import { useEffect, useMemo, useRef, useState, type ImgHTMLAttributes, type PointerEvent as ReactPointerEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Gift, Package, ChevronDown, Zap, Crown, Gem } from "lucide-react";
-import GoldParticles from "@/components/GoldParticles";
 import { Product, PriceGroup } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPrices } from "@/hooks/useProPrices";
+import { useLabReports, useOpenLabReport } from "@/hooks/useLabReports";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerpeneRadar from "@/components/TerpeneRadar";
 import ProductReviews from "@/components/ProductReviews";
-import { Input } from "@/components/ui/input";
-import { PRESET_WEIGHTS, calculatePrice, getGifts, getLowestPricePerGram } from "@/lib/pricing";
+import { calculatePrice, getGifts } from "@/lib/pricing";
 import { getPochonImage, getPochonLabel } from "@/data/accessories";
+import { LOT_ORDER, WEIGHTS, cutSources, edito, eur, gfmt, typeLabel } from "@/components/minuit/minuitData";
+import "@/components/minuit/minuit.css";
+import "@/components/minuit/minuitProduct.css";
 
 // Calculate similarity between two products based on terpenes
 const calculateTerpeneSimilarity = (
@@ -24,13 +27,13 @@ const calculateTerpeneSimilarity = (
 ): number => {
   const keys = ["boise", "fruite", "epice", "terreux"] as const;
   let similarity = 0;
-  
+
   keys.forEach((key) => {
     const val1 = terpenes1[key];
     const val2 = terpenes2[key];
     similarity += 1 - Math.abs(val1 - val2) / 100;
   });
-  
+
   return similarity / keys.length;
 };
 
@@ -50,6 +53,38 @@ const getSimilarProducts = (
   return similarities.slice(0, count).map((s) => s.product);
 };
 
+const cbdLabel = (p: Product) =>
+  p.isForceNoire || p.isNectarDivin || p.isExotique || p.cbdPercentage.includes("CBD") ? p.cbdPercentage : `${p.cbdPercentage} CBD`;
+
+// Textes de gamme : arômes, sélection, rareté. Aucune allégation d'effet.
+const GAMME_TXT: Record<string, string> = {
+  "Force Noire": "Nos lots les plus denses, travaillés autour d'une molécule signature. Un registre de caractère, pensé pour les connaisseurs.",
+  Exotique: "Des variétés rares aux profils aromatiques hors norme, sélectionnées lot par lot.",
+  "Cali Genetics": "Des génétiques californiennes, choisies pour leur bouquet et la densité de leurs têtes.",
+  Artiste: "Une édition signée, produite en série limitée.",
+  "Nectar Divin": "La réserve de la maison : quelques lots d'exception, sortis au compte-gouttes.",
+};
+
+const TRUST = ["THC < 0,3 %", "Expédition discrète 48 h", "Main propre autour du 44", "Paiement sécurisé"];
+
+/** Détourage du lot (bucket, puis code), sinon photo produit en plein cadre. */
+const LotImg = ({ p, className, ...rest }: { p: Product } & ImgHTMLAttributes<HTMLImageElement>) => {
+  const srcs = useMemo(() => cutSources(p), [p]);
+  const [i, setI] = useState(0);
+  return (
+    <img
+      decoding="async"
+      {...rest}
+      src={srcs[i]}
+      className={[className, srcs[i] === p.image ? "ph" : "cut"].filter(Boolean).join(" ")}
+      onError={(e) => {
+        if (i + 1 < srcs.length) setI(i + 1);
+        else if (!e.currentTarget.src.endsWith("/placeholder.svg")) e.currentTarget.src = "/placeholder.svg";
+      }}
+    />
+  );
+};
+
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -58,11 +93,20 @@ const ProductPage = () => {
   const { getPrice } = useProducts();
   const { getProPrice } = useProPrices();
   const { all: catalogProducts, isLoading: catalogLoading } = useCatalogProducts();
+  const { data: labReports } = useLabReports();
+  const { open: openLabReport, openingId } = useOpenLabReport();
 
   // Seul le catalogue actif fait foi : une variété désactivée en base n'est plus consultable.
   const product = catalogProducts.find((p) => p.id === id);
-  const [selectedWeight, setSelectedWeight] = useState<number>(1);
-  const [customWeight, setCustomWeight] = useState<string>("1");
+  // 10 g par défaut : c'est le palier qui débloque le kit et l'échantillon offerts
+  const [selectedWeight, setSelectedWeight] = useState<number>(10);
+  const [customWeight, setCustomWeight] = useState<string>("10");
+  const [showVideo, setShowVideo] = useState(false);
+  const [barOn, setBarOn] = useState(false);
+  const ctaRef = useRef<HTMLButtonElement>(null);
+  const vitRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setShowVideo(false); }, [id]);
 
   // Get dynamic price from database
   const dbPrice = product ? getPrice(product.id) : null;
@@ -74,6 +118,10 @@ const ProductPage = () => {
 
   // Get price group from product (default to A if not defined)
   const priceGroup: PriceGroup = product?.priceGroup || "A";
+
+  /** Prix exact d'un grammage pour ce visiteur (TTC dégressif, ou HT à plat pour un pro validé). */
+  const priceAt = (w: number) =>
+    isProWithValidatedVat && proPrice ? proPrice * w : Number(calculatePrice(basePrice, w, priceGroup, product?.id).finalPrice);
 
   const priceInfo = useMemo(() => {
     if (!product) return null;
@@ -102,13 +150,17 @@ const ProductPage = () => {
     return getGifts(selectedWeight);
   }, [selectedWeight, isProWithValidatedVat]);
 
-  const pochonImage = useMemo(() => {
-    return getPochonImage(selectedWeight);
-  }, [selectedWeight]);
+  const pochonImage = useMemo(() => getPochonImage(selectedWeight), [selectedWeight]);
+  const pochonLabel = useMemo(() => getPochonLabel(selectedWeight), [selectedWeight]);
 
-  const pochonLabel = useMemo(() => {
-    return getPochonLabel(selectedWeight);
-  }, [selectedWeight]);
+  // Barre d'achat mobile : visible tant que le bouton principal n'est pas à l'écran
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el) { setBarOn(false); return; }
+    const io = new IntersectionObserver(([e]) => setBarOn(!e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, [product?.id, product?.isOutOfStock]);
 
   const handlePresetClick = (weight: number) => {
     setSelectedWeight(weight);
@@ -134,453 +186,241 @@ const ProductPage = () => {
   };
 
   if (catalogLoading) {
-    return <div className="min-h-screen bg-background" />;
+    return <div className="min-h-screen" style={{ background: "#060508" }} />;
   }
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center px-6">
-          <h1 className="font-display text-4xl text-primary mb-4">Variété indisponible</h1>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Cette variété n'est plus proposée pour le moment. Découvrez le reste de notre
-            collection.
-          </p>
-          <button onClick={() => navigate("/catalogue")} className="btn-luxury-outline">
-            Voir le catalogue
-          </button>
+      <div className="mcp-page">
+        <Header />
+        <div className="mc mcp-missing">
+          <p className="kicker">Collection N° 26</p>
+          <h1 className="serif-i">Variété indisponible</h1>
+          <p>Cette variété n'est plus proposée pour le moment. Découvrez le reste de la collection.</p>
+          <button onClick={() => navigate("/catalogue")} className="btn-or">Voir le catalogue</button>
         </div>
+        <Footer />
       </div>
     );
   }
 
   const similarProducts = getSimilarProducts(product, catalogProducts, 4);
+  const e = edito(product);
+  const gamme = product.isNectarDivin ? "Nectar Divin" : e.gamme;
+  const exo = gamme === "Exotique";
+  const lotNo = LOT_ORDER.indexOf(product.id);
+  const total = Number(priceInfo?.finalPrice ?? 0);
+  const giftN = gifts?.count ?? 0;
+  const reports = labReports?.[product.id] ?? [];
+
+  // relance vers le palier suivant (10 g d'abord : il débloque les cadeaux)
+  const nudge = (() => {
+    if (isProWithValidatedVat) return null;
+    const w = selectedWeight;
+    if (w < 10) {
+      const p10 = priceAt(10);
+      return { to: 10, html: <>Passez à <b>10 g</b> : <b>{eur(p10)}</b>, soit {eur(p10 / 10)} le gramme (−{Math.round((1 - p10 / (basePrice * 10)) * 100)} %), avec <b>1 kit</b> et <b>1 échantillon de 1 g</b> offerts.</> };
+    }
+    const next = WEIGHTS.find((x) => x > w);
+    if (!next) return { to: 0, html: <>Vous êtes au sommet de la grille : <b>{eur(priceAt(w) / w)} le gramme</b>.</> };
+    const pgN = priceAt(next) / next, gain = Math.round((1 - pgN / (priceAt(w) / w)) * 100), k = Math.floor(next / 10);
+    return { to: next, html: <>À {gfmt(next)}, le gramme passe à <b>{eur(pgN)}</b>{gain > 0 ? ` (−${gain} %)` : ""}{k > giftN ? <> et <b>{k} kits</b> offerts</> : null}.</> };
+  })();
+
+  const tilt = (ev: ReactPointerEvent<HTMLDivElement>) => {
+    if (ev.pointerType !== "mouse") return;
+    const r = ev.currentTarget.getBoundingClientRect();
+    vitRef.current?.style.setProperty("--ry", `${((ev.clientX - r.left) / r.width - 0.5) * 22}deg`);
+    vitRef.current?.style.setProperty("--rx", `${-((ev.clientY - r.top) / r.height - 0.5) * 14}deg`);
+  };
+  const untilt = () => { vitRef.current?.style.setProperty("--ry", "0deg"); vitRef.current?.style.setProperty("--rx", "0deg"); };
 
   return (
-    <div className={`min-h-screen relative ${product.isNectarDivin ? "bg-black" : product.isExotique ? "bg-gradient-to-b from-purple-950/30 to-background" : "bg-background"}`}>
-      {product.isNectarDivin && (
-        <div className="absolute inset-0 pointer-events-none z-0 opacity-60">
-          <GoldParticles />
-        </div>
-      )}
-      {product.isExotique && (
-        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="absolute -inset-1 bg-gradient-to-tr from-purple-900/10 via-purple-500/5 to-fuchsia-600/10 animate-pulse" />
-        </div>
-      )}
-      <div className="relative z-10">
+    <div className="mcp-page">
       <Header />
-      
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-6">
-          {/* Back button */}
-          <motion.button
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Retour</span>
-          </motion.button>
 
-          <div className="grid lg:grid-cols-2 gap-12">
-            {/* Product Image with Pochon indicator */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className={`relative aspect-square rounded-2xl overflow-hidden border ${product.isNectarDivin ? "bg-black border-primary/40 shadow-[0_0_40px_rgba(212,175,55,0.25)]" : product.isExotique ? "bg-card border-purple-500/50 shadow-[0_0_35px_rgba(168,85,247,0.3)]" : "bg-card border-border"}`}>
-                {product.video ? (
-                  <video
-                    src={product.video}
-                    poster={product.image}
-                    controls
-                    playsInline
-                    preload="none"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder.svg';
-                    }}
-                  />
-                )}
-              </div>
-              
-              {/* Pochon indicator - separate section below image */}
-              <motion.div
-                key={pochonImage}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mt-4 flex items-center gap-4 p-4 bg-card/80 backdrop-blur-sm rounded-xl border border-border/50"
-              >
-                <img
-                  src={pochonImage}
-                  alt={pochonLabel}
-                  className="w-12 h-12 object-cover rounded-lg border border-primary/20"
-                />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{pochonLabel}</p>
-                  <p className="text-xs text-muted-foreground">Inclus avec votre commande</p>
-                </div>
-              </motion.div>
-            </motion.div>
+      {/* data-fx-off : la fiche gère ses propres animations (le kit hsb-fx décalerait la vitrine) */}
+      <main className="mc mcp mcp-main" data-fx-off="">
+        <nav className="mcp-crumb" aria-label="Fil d'Ariane">
+          <button onClick={() => navigate(-1)}>← Retour</button>
+          <span className="mono-s">Collection N° 26 · {typeLabel(product)}</span>
+        </nav>
 
-            {/* Product Info */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex flex-col"
-            >
-              <span className="text-primary text-sm tracking-widest uppercase mb-2">
-                {product.category === "fleur" ? "Fleur CBD" : "Résine CBD"}
-              </span>
-
-              {/* Exotique badge on detail page (priorité absolue) */}
-              {product.isExotique && (
-                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-950 to-purple-700/30 border border-purple-500/70 px-4 py-2 rounded-full mb-3 w-fit shadow-[0_0_20px_rgba(168,85,247,0.5)]">
-                  <Gem className="w-4 h-4 text-purple-300" />
-                  <span className="text-sm font-bold text-purple-200 tracking-widest uppercase">Collection Exotique</span>
-                </div>
-              )}
-
-              {/* Nectar Divin badge on detail page */}
-              {product.isNectarDivin && (
-                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-black to-primary/30 border border-primary/70 px-4 py-2 rounded-full mb-3 w-fit shadow-[0_0_20px_rgba(212,175,55,0.4)]">
-                  <Crown className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-bold text-primary tracking-widest uppercase">Collection Nectar Divin</span>
-                </div>
-              )}
-
-              {/* Force Noire badge on detail page */}
-              {!product.isNectarDivin && !product.isExotique && product.isForceNoire && (
-                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-red-950 to-black/90 border border-red-800/60 px-4 py-2 rounded-full mb-3 w-fit">
-                  <Zap className="w-4 h-4 text-red-400" />
-                  <span className="text-sm font-bold text-red-300 tracking-widest uppercase">Collection Force Noire</span>
-                </div>
-              )}
-
-              {/* Badge molécule */}
-              {product.molecule && (
-                <div className="inline-flex items-center gap-2 bg-black/85 border border-primary/60 px-4 py-1.5 rounded-sm mb-3 w-fit">
-                  <span className="text-sm font-bold text-primary tracking-[0.2em] uppercase">Molécule {product.molecule}</span>
-                </div>
-              )}
-
-              <h1 className="font-display text-4xl md:text-5xl text-foreground mb-2">
-                {product.name}
-              </h1>
-              <p className="text-lg text-muted-foreground mb-6">
-                {product.subtitle}
-              </p>
-
-              <div className="flex items-center gap-4 mb-6 flex-wrap">
-                {isProWithValidatedVat && proPrice ? (
-                  <>
-                    <span className="text-3xl font-display text-primary">
-                      {proPrice}€
-                    </span>
-                    <span className="text-muted-foreground">/gramme</span>
-                    <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">
-                      HT
-                    </span>
-                  </>
-                ) : (
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-sm text-muted-foreground uppercase tracking-wider">
-                      À partir de
-                    </span>
-                    <span className="text-3xl font-display text-primary">
-                      {getLowestPricePerGram(basePrice, priceGroup, product.id).toFixed(2)}€
-                    </span>
-                    <span className="text-muted-foreground">/g</span>
-                  </div>
-                )}
-                <span className="ml-auto px-4 py-1 bg-secondary/50 rounded-full text-sm text-foreground">
-                  {product.isForceNoire || product.isNectarDivin || product.isExotique || product.cbdPercentage.includes('CBD') ? product.cbdPercentage : `${product.cbdPercentage} CBD`}
-                </span>
-              </div>
-
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                {product.description}
-              </p>
-
-              {/* Mood tag */}
-              <div className="mb-6">
-                <span className="text-sm text-muted-foreground">Ambiance</span>
-                <span className="ml-3 px-4 py-2 bg-card border border-border rounded-full text-foreground">
-                  {product.mood}
-                </span>
-              </div>
-
-              {/* Weight Selection */}
-              {product.isOutOfStock ? (
-                <div className="border border-primary/50 rounded-xl p-8 mb-6 text-center bg-black/60 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
-                  <span className="block text-xs uppercase tracking-[0.35em] text-primary/70 mb-2">
-                    Rupture de stock
-                  </span>
-                  <p className="font-display text-2xl text-primary italic mb-2">
-                    Victime de son succès
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Cette variété d'exception est momentanément épuisée. Réapprovisionnement en cours —
-                    elle sera bientôt de retour dans la collection.
-                  </p>
-                </div>
+        <section className="mcp-hero" aria-labelledby="mcp-t">
+          <div className="mcp-vit">
+            <div ref={vitRef} className={`mcp-arch${exo ? " exo" : ""}${showVideo ? " vid" : ""}`} onPointerMove={tilt} onPointerLeave={untilt}>
+              {!showVideo && <span className="mcp-num" aria-hidden="true">{lotNo >= 0 ? String(lotNo + 1).padStart(2, "0") : "26"}</span>}
+              {showVideo && product.video ? (
+                <video src={product.video} poster={product.image} controls autoPlay muted loop playsInline preload="metadata" />
               ) : (
-              <div className="bg-card border border-border rounded-xl p-5 mb-6 space-y-4">
-                <h4 className="text-sm font-medium text-foreground uppercase tracking-wider">
-                  Choisissez votre grammage
-                </h4>
-                
-                {/* Preset weight buttons */}
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_WEIGHTS.map((weight) => (
-                    <button
-                      key={weight}
-                      onClick={() => handlePresetClick(weight)}
-                      className={`px-4 py-2.5 text-sm rounded-lg border transition-all ${
-                        selectedWeight === weight
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background border-border text-muted-foreground hover:border-primary/50 hover:text-primary"
-                      }`}
-                    >
-                      {weight}g
+                <>
+                  <div className="mcp-stage">
+                    <LotImg key={product.id} p={product} alt={`${product.name}, ${typeLabel(product).toLowerCase()} CBD`} draggable={false} />
+                  </div>
+                  <span className="mcp-ring" aria-hidden="true" />
+                </>
+              )}
+            </div>
+            <div className="mcp-vit-act">
+              {e.vedette && <span className="mcp-badge">{e.vedette}</span>}
+              {product.video && (
+                <button className="btn-line" onClick={() => setShowVideo((v) => !v)}>
+                  {showVideo ? "← Revenir au lot" : "▶ Le lot en vidéo"}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mcp-info">
+            <div className="mcp-badges">
+              <span className={`mcp-badge${exo ? " exo" : ""}`}>{gamme}</span>
+              <span className="mcp-badge">{typeLabel(product)} CBD</span>
+              <span className="mcp-badge">{cbdLabel(product)}</span>
+              {product.molecule && <span className="mcp-badge or">Molécule {product.molecule}</span>}
+            </div>
+            <h1 id="mcp-t" className="serif-i">{product.name}</h1>
+            <p className="mcp-sub">{product.subtitle}</p>
+            {e.notes && e.notes !== product.subtitle && <p className="notes mcp-notes">{e.notes}</p>}
+
+            {isProWithValidatedVat && proPrice ? (
+              <div className="pr">
+                <div className="hi"><small>Prix pro</small><strong>{eur(proPrice)}</strong><em>le gramme · HT</em></div>
+              </div>
+            ) : (
+              <div className="pr">
+                <div><small>1 g</small><strong>{eur(priceAt(1))}</strong></div>
+                <div className="hi"><small>10 g</small><strong>{eur(priceAt(10))}</strong><em>{eur(priceAt(10) / 10)}/g · kit offert</em></div>
+              </div>
+            )}
+
+            {product.isOutOfStock ? (
+              <div className="ticket mcp-out">
+                <p className="kicker">Rupture de stock</p>
+                <p className="mcp-out-t serif-i">Victime de son succès</p>
+                <p>Cette variété d'exception est momentanément épuisée. Réapprovisionnement en cours : elle sera bientôt de retour dans la collection.</p>
+                <a className="btn-line" href="#veine">Les lots de la même veine ↓</a>
+              </div>
+            ) : (
+              <div className="ticket mcp-ticket">
+                <p className="kicker">Choisissez votre grammage</p>
+                <div className="gr-w" role="radiogroup" aria-label="Grammage">
+                  {WEIGHTS.map((w) => (
+                    <button key={w} className={`wbtn${w >= 10 && !isProWithValidatedVat ? " gift" : ""}`} role="radio" aria-checked={w === selectedWeight} onClick={() => handlePresetClick(w)}>
+                      <b>{String(w).replace(".", ",")}<span> g</span></b>
+                      <small>{eur(priceAt(w))}</small>
                     </button>
                   ))}
                 </div>
+                <label className="mcp-custom">
+                  Poids précis
+                  <input type="number" inputMode="decimal" min="0.5" max="1000" step="0.5" value={customWeight} onChange={(ev) => handleCustomWeightChange(ev.target.value)} />
+                  grammes
+                </label>
 
-                {/* Custom weight input */}
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">ou saisissez un poids précis :</span>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="0.5"
-                      max="1000"
-                      step="0.5"
-                      value={customWeight}
-                      onChange={(e) => handleCustomWeightChange(e.target.value)}
-                      className="w-24 h-10 text-center border-primary/30 focus:border-primary bg-background"
-                    />
-                    <span className="text-sm text-muted-foreground">grammes</span>
-                  </div>
+                <div className="total">
+                  <strong className="foil">{eur(total)}</strong>
+                  <span>{gfmt(selectedWeight)} · soit {eur(total / selectedWeight)} le gramme{priceInfo?.isHT ? " · HT" : ""}</span>
                 </div>
-
-                {/* Price display */}
-                <div className="pt-4 border-t border-border/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-sm text-muted-foreground mb-1">
-                        {priceInfo?.isHT ? "Prix total HT" : "Prix total"}
-                      </span>
-                      <div className="flex items-baseline gap-3">
-                        <span className="font-display text-3xl text-primary font-bold">
-                          {priceInfo?.finalPrice}€
-                        </span>
-                        {priceInfo?.isHT && (
-                          <span className="text-sm bg-primary/20 text-primary px-2 py-1 rounded-md font-medium">
-                            HT
-                          </span>
-                        )}
-                        {priceInfo && !priceInfo.isHT && priceInfo.discount > 0 && (
-                          <>
-                            <span className="text-lg text-muted-foreground line-through">
-                              {priceInfo.rawPrice}€
-                            </span>
-                            <span className="text-sm bg-green-500/20 text-green-400 px-2 py-1 rounded-md font-medium">
-                              {priceInfo.discountLabel}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {priceInfo?.isHT && (
-                        <span className="text-sm text-primary mt-1">
-                          Prix professionnel • Économie: {priceInfo.savings}€ vs TTC
-                        </span>
-                      )}
-                      {priceInfo && !priceInfo.isHT && priceInfo.discount > 0 && (
-                        <span className="text-sm text-green-400 mt-1">
-                          Vous économisez {priceInfo.savings}€
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gifts display - only for non-Pro users */}
-                {gifts && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-lg bg-primary/10 border border-primary/20"
-                  >
-                    <div className="flex items-center gap-3">
-                      {gifts.type === "kit" ? (
-                        <Package className="w-5 h-5 text-primary" />
-                      ) : (
-                        <Gift className="w-5 h-5 text-primary" />
-                      )}
-                      <span className="text-sm text-primary font-medium">
-                        + {gifts.label} offert{gifts.count > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2 ml-8">
-                      Contenu : {gifts.contents.feuillesSlim}x Feuilles Slim + Carton RAW, {gifts.contents.briquetBIC}x Briquet BIC Noir
-                    </p>
-                  </motion.div>
+                {priceInfo?.isHT ? (
+                  <p className="save">Prix professionnel HT appliqué · économie de {eur(Number(priceInfo.savings))} par rapport au TTC.</p>
+                ) : priceInfo && priceInfo.discount > 0 ? (
+                  <p className="save"><s>{eur(Number(priceInfo.rawPrice))}</s> · {priceInfo.discountLabel} · vous économisez {eur(Number(priceInfo.savings))}</p>
+                ) : (
+                  <p className="save">Le prix du gramme, sans engagement.</p>
                 )}
 
-                {/* Pro with validated VAT notice */}
-                {isProWithValidatedVat && (
-                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-                    <p className="text-sm text-primary font-medium">
-                      ✓ Prix professionnel HT appliqué
-                    </p>
+                {!isProWithValidatedVat && (
+                  <div className="gifts">
+                    <span className={giftN ? "" : "off"}>✦ <b>{giftN || "Aucun"} kit{giftN > 1 ? "s" : ""} offert{giftN > 1 ? "s" : ""}</b> · briquet BIC et feuilles slim RAW</span>
+                    <span className={giftN ? "" : "off"}>✦ <b>{giftN || "Aucun"} échantillon{giftN > 1 ? "s" : ""} de 1 g</b> au choix</span>
                   </div>
                 )}
-              </div>
-              )}
-
-              {/* Add to cart button */}
-              {!product.isOutOfStock && (
-              <button
-                onClick={handleAddToCart}
-                className="w-full btn-luxury flex items-center justify-center gap-3 py-4"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                Ajouter au panier ({selectedWeight}g)
-              </button>
-              )}
-
-              {/* Link to accessories */}
-              <Link
-                to="/#accessoires"
-                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mt-4"
-              >
-                Besoin d'un pochon en plus ?
-                <ChevronDown className="w-4 h-4" />
-              </Link>
-
-              {/* Force Noire section */}
-              {product.isForceNoire && (
-                <div className="bg-gradient-to-br from-red-950/30 to-card border border-red-900/40 rounded-2xl p-6 mt-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Zap className="w-5 h-5 text-red-400" />
-                    <h3 className="font-display text-lg text-red-300">Force Noire</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Ce produit appartient à notre collection exclusive <span className="text-red-300 font-medium">Force Noire</span> — 
-                    des variétés enrichies avec une molécule supplémentaire pour une puissance et une intensité 
-                    qui transcendent le CBD traditionnel. Réservé aux connaisseurs en quête d'absolu.
+                {nudge && (
+                  <p className="nudge mcp-nudge">
+                    <span>{nudge.html}</span>
+                    {nudge.to > 0 && <button onClick={() => handlePresetClick(nudge.to)}>Passer à {gfmt(nudge.to)}</button>}
                   </p>
-                </div>
-              )}
+                )}
 
-              {/* Exotique section */}
-              {product.isExotique && (
-                <div className="bg-gradient-to-br from-purple-950/30 to-card border border-purple-700/40 rounded-2xl p-6 mt-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Gem className="w-5 h-5 text-purple-400" />
-                    <h3 className="font-display text-lg text-purple-300">Exotique</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Ce produit appartient à notre collection exclusive <span className="text-purple-300 font-medium">Exotique</span> —
-                    des variétés d'exception aux arômes rares et envoûtants, cultivées avec une
-                    exigence absolue. Une expérience sensorielle inédite, réservée aux palais les
-                    plus aventuriers.
-                  </p>
-                </div>
-              )}
+                <button ref={ctaRef} className="btn-or" onClick={handleAddToCart}>Ajouter {gfmt(selectedWeight)} · {eur(total)}</button>
 
-              {/* Terpene Radar */}
-              <div className="bg-card border border-border rounded-2xl p-6 mt-6">
-                <h3 className="font-display text-lg text-foreground mb-4 text-center">
-                  Profil Terpénique
-                </h3>
-                <div className="flex justify-center">
-                  <TerpeneRadar terpenes={product.terpenes} size={220} />
+                <div className="mcp-pochon">
+                  <img src={pochonImage} alt={pochonLabel} loading="lazy" />
+                  <p><b>{pochonLabel} inclus</b>Votre lot voyage scellé, colis discret.</p>
+                  <Link className="btn-line" to="/#accessoires">Un pochon en plus ?</Link>
                 </div>
               </div>
-            </motion.div>
+            )}
+
+            <ul className="mcp-trust">{TRUST.map((t) => <li key={t}>{t}</li>)}</ul>
           </div>
+        </section>
 
-          {/* Avis Clients */}
-          <ProductReviews productId={product.id} />
-
-          {/* Similar Products Section */}
-          <motion.section
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-20"
-          >
-            <h2 className="font-display text-3xl text-foreground text-center mb-2">
-              Produits Similaires
-            </h2>
-            <p className="text-muted-foreground text-center mb-10">
-              Basé sur le profil terpénique de {product.name}
-            </p>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {similarProducts.map((similarProduct, index) => (
-                <motion.div
-                  key={similarProduct.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
-                >
-                  <Link
-                    to={`/produit/${similarProduct.id}`}
-                    className="group block"
-                  >
-                    <div className="relative aspect-square bg-card rounded-xl overflow-hidden border border-border group-hover:border-primary/50 transition-all duration-300">
-                      <img
-                        src={similarProduct.image}
-                        alt={similarProduct.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder.svg';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <span className="text-xs text-primary uppercase tracking-wider">
-                          {similarProduct.category === "fleur" ? "Fleur" : "Résine"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <h3 className="font-display text-lg text-foreground group-hover:text-primary transition-colors">
-                        {similarProduct.name}
-                      </h3>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-primary font-medium">
-                          {getPrice(similarProduct.id)?.price ?? similarProduct.price}€/g
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {similarProduct.isForceNoire || similarProduct.isNectarDivin || similarProduct.isExotique || similarProduct.cbdPercentage.includes('CBD') ? similarProduct.cbdPercentage : `${similarProduct.cbdPercentage} CBD`}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+        <section className="mcp-story" aria-label="Le lot en détail">
+          <div>
+            <p className="kicker">Le mot de la maison</p>
+            <p className="mcp-desc">{product.description}</p>
+            {GAMME_TXT[gamme] && (
+              <div className={`mcp-gamme${exo ? " exo" : ""}`}>
+                <span className="neon">{gamme}</span>
+                <p>Collection {gamme} · {GAMME_TXT[gamme]}</p>
+              </div>
+            )}
+            <div className="mcp-lab">
+              <p className="kicker">Analyse laboratoire</p>
+              {reports.length ? (
+                reports.map((r) => (
+                  <button key={r.id} className="btn-line" disabled={openingId === r.id} onClick={() => openLabReport(r.id, r.storage_path)}>
+                    {openingId === r.id ? "Ouverture…" : `${r.label} ↗`}
+                  </button>
+                ))
+              ) : (
+                <p>THC inférieur à 0,3 %, conforme à la réglementation française. Analyse disponible sur simple demande : <Link to="/contact">écrivez-nous</Link>.</p>
+              )}
             </div>
-          </motion.section>
-        </div>
+          </div>
+          <div className="mcp-radar">
+            <p className="kicker">Profil aromatique</p>
+            <TerpeneRadar terpenes={product.terpenes} size={240} />
+            {product.mood && <p className="mcp-mood">Ambiance · <b>{product.mood}</b></p>}
+          </div>
+        </section>
+
+        {!product.isOutOfStock && (
+          <div className={`mcp-bar${barOn ? " on" : ""}`} aria-hidden={!barOn}>
+            <div><small>{gfmt(selectedWeight)}</small><strong>{eur(total)}</strong></div>
+            <button className="btn-or" tabIndex={barOn ? 0 : -1} onClick={handleAddToCart}>Ajouter au panier</button>
+          </div>
+        )}
       </main>
 
-      <Footer />
+      {/* Avis : hors du périmètre .mc pour garder le style des formulaires du site */}
+      <div className="container mx-auto px-6 mcp-reviews">
+        <ProductReviews productId={product.id} />
       </div>
+
+      {similarProducts.length > 0 && (
+        <section id="veine" className="mc mcp mcp-veine" data-fx-off="" aria-labelledby="mcp-veine-t">
+          <p className="kicker">Même profil aromatique</p>
+          <h2 id="mcp-veine-t" className="serif-i">Dans la même<span className="choc foil">veine</span></h2>
+          <div className="mcp-grid">
+            {similarProducts.map((s) => {
+              const sp = getPrice(s.id)?.price ?? s.price;
+              const at = (w: number) => Number(calculatePrice(sp, w, s.priceGroup || "A", s.id).finalPrice);
+              return (
+                <Link key={s.id} to={`/produit/${s.id}`} className={`mcp-card${edito(s).gamme === "Exotique" ? " exo" : ""}`}>
+                  <div className="v"><LotImg p={s} alt={s.name} loading="lazy" /></div>
+                  <p className="tag">{edito(s).gamme} · {typeLabel(s)}</p>
+                  <h3>{s.name}</h3>
+                  <p className="px"><span>1 g · <b>{eur(at(1))}</b></span><span>10 g · <b>{eur(at(10))}</b></span></p>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      <Footer />
     </div>
   );
 };

@@ -8,12 +8,14 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 export interface MinuitSceneOptions {
   lots: string[][]; // pour chaque lot du tunnel : sources d'image par ordre de préférence
   emblemSvg: string;
   mobile: boolean;
   reduce: boolean;
+  lite?: boolean; // téléphone modeste : on démarre un cran plus bas
 }
 export interface MinuitScene {
   lift: (instant: boolean) => void;
@@ -36,7 +38,12 @@ function loadFirst(loader: THREE.TextureLoader, srcs: string[], done: (t: THREE.
 export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptions): MinuitScene {
   const { mobile: MOBILE, reduce: REDUCE } = o;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MOBILE ? 1.5 : 2));
+  // qualité adaptative : on part du maximum et on ne descend que si le téléphone peine (jamais de baisse sur un appareil fluide)
+  const MAX_DPR = Math.min(window.devicePixelRatio || 1, MOBILE ? 1.5 : 2), MIN_DPR = Math.min(MAX_DPR, MOBILE ? 0.75 : 1);
+  const MIRROR_RES = MOBILE ? 0.35 : 0.5;
+  let quality = o.lite ? 2 : 0; // 0 plein · 1-3 résolution -0,25 par cran · ≥2 reflet une image sur deux · 4 cadence 30 i/s
+  const dprFor = (q: number) => Math.max(MIN_DPR, MAX_DPR - 0.25 * Math.min(q, 3));
+  renderer.setPixelRatio(dprFor(quality));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -54,32 +61,39 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
   const sweep = new THREE.PointLight(0xfff0c8, 6, 0, 2); sweep.position.set(-1.5, 0.6, 5.2); scene.add(sweep);
   const prodLight = new THREE.PointLight(0xffc979, 0, 0, 2); scene.add(prodLight);
 
-  // tunnel d'arches
+  // tunnel d'arches : toute la pierre en un seul maillage, le filet doré en un maillage par arche
+  // (de 8 à 1-2 appels de dessin par arche : c'est ce qui soulage le plus les vieux téléphones)
   const GY = -1.6, CY = 1.3, R = 4.2, N = MOBILE ? 9 : 13, STEP = 5.5;
   const archMat = new THREE.MeshStandardMaterial({ color: 0x15110d, metalness: 0.9, roughness: 0.38, envMapIntensity: 0.3 });
-  const archGeo = new THREE.TorusGeometry(R, 0.17, 12, 96, Math.PI);
-  const legGeo = new THREE.CylinderGeometry(0.17, 0.21, CY - GY, 14);
-  const filGeo = new THREE.TorusGeometry(R - 0.22, 0.016, 6, 128, Math.PI);
+  const archGeo = new THREE.TorusGeometry(R, 0.17, MOBILE ? 8 : 12, MOBILE ? 64 : 96, Math.PI);
+  const legGeo = new THREE.CylinderGeometry(0.17, 0.21, CY - GY, MOBILE ? 10 : 14);
+  const filGeo = new THREE.TorusGeometry(R - 0.22, 0.016, MOBILE ? 4 : 6, MOBILE ? 72 : 128, Math.PI);
   const filLeg = new THREE.CylinderGeometry(0.016, 0.016, CY - GY, 6);
-  const lampGeo = new THREE.SphereGeometry(0.075, 14, 14);
+  const lampGeo = new THREE.SphereGeometry(0.075, MOBILE ? 10 : 14, MOBILE ? 10 : 14);
   const arches: { fm: THREE.MeshBasicMaterial; z: number }[] = [];
+  const stone: THREE.BufferGeometry[] = [];
   for (let i = 0; i < N; i++) {
-    const z = -2 - i * STEP, g = new THREE.Group(); g.position.z = z;
-    const a = new THREE.Mesh(archGeo, archMat); a.position.y = CY; g.add(a);
-    const fm = new THREE.MeshBasicMaterial({ color: 0xf6c86a, transparent: true, opacity: 0 });
-    const f = new THREE.Mesh(filGeo, fm); f.position.set(0, CY, 0.19); g.add(f);
+    const z = -2 - i * STEP, fil: THREE.BufferGeometry[] = [filGeo.clone().translate(0, CY, z + 0.19)];
+    stone.push(archGeo.clone().translate(0, CY, z));
     [-1, 1].forEach((s) => {
-      const l = new THREE.Mesh(legGeo, archMat); l.position.set(s * R, (CY + GY) / 2, 0); g.add(l);
-      const fl = new THREE.Mesh(filLeg, fm); fl.position.set(s * (R - 0.22), (CY + GY) / 2, 0.19); g.add(fl);
-      const lamp = new THREE.Mesh(lampGeo, fm); lamp.position.set(s * (R - 0.55), CY - 0.15, 0.3); g.add(lamp);
+      stone.push(legGeo.clone().translate(s * R, (CY + GY) / 2, z));
+      fil.push(filLeg.clone().translate(s * (R - 0.22), (CY + GY) / 2, z + 0.19), lampGeo.clone().translate(s * (R - 0.55), CY - 0.15, z + 0.3));
     });
-    scene.add(g); arches.push({ fm, z });
+    const fm = new THREE.MeshBasicMaterial({ color: 0xf6c86a, transparent: true, opacity: 0 });
+    const fMesh = new THREE.Mesh(mergeGeometries(fil) ?? filGeo, fm); fMesh.visible = false;
+    fm.userData.mesh = fMesh; scene.add(fMesh); arches.push({ fm, z });
   }
+  scene.add(new THREE.Mesh(mergeGeometries(stone) ?? archGeo, archMat));
+  const setFil = (fm: THREE.MeshBasicMaterial, v: number) => { fm.opacity = v; (fm.userData.mesh as THREE.Mesh).visible = v > 0.01; };
 
   // sol mouillé : miroir + flaques
   const W0 = window.innerWidth, H0 = window.innerHeight, DPR = renderer.getPixelRatio();
-  const mirror = new Reflector(new THREE.PlaneGeometry(16, 150), { textureWidth: W0 * DPR * 0.5, textureHeight: H0 * DPR * 0.5, color: 0x6e6e6e, clipBias: 0.003 });
+  const mirror = new Reflector(new THREE.PlaneGeometry(16, 150), { textureWidth: W0 * DPR * MIRROR_RES, textureHeight: H0 * DPR * MIRROR_RES, color: 0x6e6e6e, clipBias: 0.003 });
   mirror.rotation.x = -Math.PI / 2; mirror.position.set(0, GY, -66); scene.add(mirror);
+  // le reflet recalcule toute la scène : sur un appareil qui peine, une image sur deux suffit
+  const mirrorRender = mirror.onBeforeRender.bind(mirror);
+  let mirrorTick = 0;
+  mirror.onBeforeRender = (...a: Parameters<typeof mirrorRender>) => { if (quality < 2 || mirrorTick++ % 2 === 0) mirrorRender(...a); };
   const pc = document.createElement("canvas"); pc.width = pc.height = 512;
   const px = pc.getContext("2d")!;
   px.fillStyle = "#fff"; px.fillRect(0, 0, 512, 512);
@@ -134,10 +148,12 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 0.93, 96), new THREE.MeshBasicMaterial({ color: 0xf4c66a, side: THREE.DoubleSide }));
     ring.rotation.x = -Math.PI / 2; ring.position.y = GY - 0.2 + 0.015; grp.add(ring);
     const mat = new THREE.ShaderMaterial({
-      // uKey = 1 seulement pour la photo de repli (fond noir à effacer) ; un détourage garde son alpha intact
+      // uKey = 1 seulement pour la photo de repli (fond noir à effacer) ; un détourage garde son alpha intact.
+      // colorspace_fragment : sans lui, sur mobile (rendu direct à l'écran, sans post-traitement) les lots sortaient trop sombres
+
       uniforms: { map: { value: null }, uO: { value: 0 }, uKey: { value: 0 } }, transparent: true, depthWrite: false,
       vertexShader: "varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
-      fragmentShader: "uniform sampler2D map; uniform float uO; uniform float uKey; varying vec2 vUv; void main(){ vec4 c=texture2D(map,vUv); float l=max(c.r,max(c.g,c.b)); vec2 d=vUv-0.5; float k=smoothstep(0.035,0.13,l)*smoothstep(0.5,0.4,max(abs(d.x),abs(d.y))); float a=c.a*mix(1.0,k,uKey); gl_FragColor=vec4(c.rgb,a*uO); }",
+      fragmentShader: "uniform sampler2D map; uniform float uO; uniform float uKey; varying vec2 vUv; void main(){ vec4 c=texture2D(map,vUv); float l=max(c.r,max(c.g,c.b)); vec2 d=vUv-0.5; float k=smoothstep(0.035,0.13,l)*smoothstep(0.5,0.4,max(abs(d.x),abs(d.y))); float a=c.a*mix(1.0,k,uKey); gl_FragColor=vec4(c.rgb,a*uO); \n#include <colorspace_fragment>\n}",
     });
     mat.toneMapped = false;
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); grp.add(mesh);
@@ -173,7 +189,7 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
     const geo = new THREE.ExtrudeGeometry(shapes, { depth: 110, bevelEnabled: true, bevelThickness: 26, bevelSize: 16, bevelSegments: 2, curveSegments: MOBILE ? 4 : 6 });
     geo.center(); geo.computeBoundingBox();
     const bb = geo.boundingBox!, hgt = bb.max.y - bb.min.y || 1;
-    const m = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: 0xe0b95e, metalness: 1, roughness: 0.27, clearcoat: 0.5, clearcoatRoughness: 0.25, envMapIntensity: 1.5, side: THREE.DoubleSide }));
+    const m = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: 0xe0b95e, metalness: 1, roughness: 0.27, clearcoat: o.lite ? 0 : 0.5, clearcoatRoughness: 0.25, envMapIntensity: 1.5, side: THREE.DoubleSide }));
     m.scale.set(1 / hgt, -1 / hgt, 1 / hgt); emblem.add(m); emblem.visible = true;
   } catch { /* emblème absent : le rideau suffit */ }
 
@@ -197,17 +213,42 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
   window.addEventListener("resize", resize);
   window.addEventListener("pointermove", onMove, { passive: true });
 
-  let visible = true, raf = 0, disposed = false;
-  const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) raf = requestAnimationFrame(frame); });
+  let visible = true, raf = 0, disposed = false, ready = false;
+  const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (ready && visible && !raf) raf = requestAnimationFrame(frame); });
   io.observe(canvas);
-  const onVis = () => { if (!document.hidden && visible && !raf) raf = requestAnimationFrame(frame); };
+  const onVis = () => { lastT = 0; if (ready && !document.hidden && visible && !raf) raf = requestAnimationFrame(frame); };
   document.addEventListener("visibilitychange", onVis);
   const clock = new THREE.Clock();
+
+  // fluidité mesurée en continu : 2 secondes de suite sous ~38 i/s → un cran de qualité en moins (jamais pendant un chargement)
+  let fpsAcc = 0, fpsN = 0, slow = 0, lastT = 0, odd = false, settleUntil = Infinity;
+  const degrade = () => {
+    quality++;
+    const d = dprFor(quality);
+    if (d === renderer.getPixelRatio()) return;
+    renderer.setPixelRatio(d); composer?.setPixelRatio(d); resize();
+    const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
+    mirror.getRenderTarget().setSize(Math.round(w * d * MIRROR_RES), Math.round(h * d * MIRROR_RES));
+    dustMat.uniforms.uPR.value = d;
+  };
+  const measure = (now: number) => {
+    const dt = lastT ? now - lastT : 0; lastT = now;
+    if (quality >= 4 || now < settleUntil || dt <= 0 || dt > 250) return;
+    fpsAcc += dt; fpsN++;
+    if (fpsAcc < 1000) return;
+    const avg = fpsAcc / fpsN; fpsAcc = 0; fpsN = 0;
+    slow = avg > 26 ? slow + 1 : 0;
+    if (slow >= 2) { slow = 0; degrade(); settleUntil = now + 1500; }
+  };
 
   function frame() {
     raf = 0;
     if (disposed || !visible || document.hidden) return;
-    const t = REDUCE ? 0 : clock.getElapsedTime(), now = performance.now();
+    raf = requestAnimationFrame(frame);
+    if (quality >= 4 && (odd = !odd)) return; // dernier cran : 30 images/s régulières plutôt que des saccades
+    const now = performance.now();
+    measure(now);
+    const t = REDUCE ? 0 : clock.getElapsedTime();
     rainMat.uniforms.uT.value = t; dustMat.uniforms.uT.value = t;
     if (state.phase === "gate") {
       emblem.rotation.y = Math.sin(t * 0.7) * 0.55 + state.mx * 0.6; emblem.rotation.x = state.my * 0.25;
@@ -218,13 +259,13 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
       emblem.position.y += (2.2 - emblem.position.y) * 0.02 * sstep(0.15, 1, k);
       emblem.scale.setScalar(emblemBase * (1 - sstep(0.35, 0.95, k)));
       shutter.position.y = GY + 6 + e * 10;
-      arches.forEach((a, i) => { a.fm.opacity = sstep(0.25 + i * 0.04, 0.45 + i * 0.04, k) * (0.85 + Math.random() * 0.15); });
+      arches.forEach((a, i) => setFil(a.fm, sstep(0.25 + i * 0.04, 0.45 + i * 0.04, k) * (0.85 + Math.random() * 0.15)));
       state.camZ = 6 - 6 * sstep(0.3, 1, k);
       key.intensity = 14 * (1 - e) + 3;
       if (bloom) { bloom.strength = 0.12 + 0.68 * e; bloom.threshold = 0.92 - 0.12 * e; bloom.radius = 0.4 + 0.15 * e; }
       if (k >= 1) { state.phase = "hero"; shutter.visible = false; emblem.visible = false; }
     } else {
-      arches.forEach((a) => { a.fm.opacity = 0.92 + Math.sin(t * 7 + a.z) * 0.04; });
+      arches.forEach((a) => setFil(a.fm, 0.92 + Math.sin(t * 7 + a.z) * 0.04));
       const x = state.p * 2, fl = Math.floor(Math.min(x, 1.999));
       const stair = fl + sstep(0.2, 0.8, x - fl);
       state.tz = -18 * Math.min(2, stair);
@@ -249,16 +290,23 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
     const cur = lots3d[Math.min(state.station, lots3d.length - 1)];
     if (cur) { prodLight.position.set(cur.grp.position.x, 2.4, cur.z + 1.6); prodLight.intensity = state.phase === "gate" ? 0 : 9; }
     if (composer) composer.render(); else renderer.render(scene, camera);
-    raf = requestAnimationFrame(frame);
   }
-  resize(); raf = requestAnimationFrame(frame);
+  resize();
+  // shaders compilés en tâche de fond (KHR_parallel_shader_compile) : la page ne gèle pas au premier affichage
+  const start = () => {
+    if (disposed || ready) return;
+    ready = true; settleUntil = performance.now() + 2500;
+    if (!raf) raf = requestAnimationFrame(frame);
+  };
+  renderer.compileAsync(scene, camera).then(start, start);
+  setTimeout(start, 4000);
 
   return {
     lift(instant) {
       state.t0 = performance.now();
       if (instant) {
         state.phase = "hero"; shutter.visible = false; emblem.visible = false; state.camZ = 0;
-        arches.forEach((a) => (a.fm.opacity = 1));
+        arches.forEach((a) => setFil(a.fm, 1));
         if (bloom) { bloom.strength = 0.8; bloom.threshold = 0.8; bloom.radius = 0.55; }
       } else state.phase = "lift";
     },

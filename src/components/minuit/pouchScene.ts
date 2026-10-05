@@ -5,7 +5,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 export function createPouchScene(card: HTMLElement, canvas: HTMLCanvasElement, faceUrl: string, backUrl: string, onFail: () => void) {
   const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.matchMedia("(max-width: 899px)").matches ? 1.5 : 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();

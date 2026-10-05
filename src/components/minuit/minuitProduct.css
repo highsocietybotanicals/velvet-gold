@@ -1,0 +1,122 @@
+/* Fiche produit « Minuit Carat » — complète minuit.css (jetons et composants sous .mc) */
+.mcp-page { background: #060508; min-height: 100vh; }
+.mc.mcp-main { max-width: 1440px; margin: 0 auto; padding: clamp(92px, 12vh, 124px) var(--gut) clamp(40px, 6vh, 70px); }
+.mcp-crumb { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: clamp(18px, 3vh, 30px); }
+.mcp-crumb button { font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: var(--ivoire-2); transition: color .3s; }
+.mcp-crumb button:hover { color: var(--or-clair); }
+
+.mcp-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 84px); align-items: start; }
+@media (max-width: 899px) { .mcp-hero { grid-template-columns: minmax(0, 1fr); } .mcp-crumb .mono-s { display: none; } }
+
+/* ---- vitrine : arche, projecteur, lot flottant, anneau d'or et reflet ---- */
+@media (min-width: 900px) {
+  .mcp-vit { position: sticky; top: 100px; }
+  .mcp-arch { width: min(100%, calc((100vh - 200px) * .8)); margin: 0 auto; } /* l'arche tient toujours dans l'écran */
+}
+.mcp-arch { position: relative; aspect-ratio: 4 / 5; border-radius: 50% 50% 0 0 / 32% 32% 0 0; overflow: hidden; isolation: isolate; perspective: 900px;
+  border: 1px solid rgba(201, 162, 74, .45);
+  box-shadow: 0 0 0 8px var(--nuit), 0 0 0 9px rgba(201, 162, 74, .2), 0 50px 120px -50px rgba(201, 162, 74, .55);
+  background: radial-gradient(ellipse 62% 40% at 50% 74%, #2c2112 0%, #120e0b 55%, var(--nuit) 100%); }
+.mcp-arch::before { content: ""; position: absolute; left: 50%; top: -4%; width: 124%; height: 88%; transform: translateX(-50%); z-index: -1;
+  background: linear-gradient(180deg, rgba(255, 232, 170, .24), rgba(255, 232, 170, .05) 62%, transparent 92%); clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%); }
+.mcp-arch::after { content: ""; position: absolute; left: 10%; right: 10%; bottom: 21%; height: 1px; background: linear-gradient(90deg, transparent, var(--or), transparent); box-shadow: 0 0 16px rgba(244, 220, 146, .6); }
+.mcp-arch.exo { border-color: rgba(176, 97, 214, .5); box-shadow: 0 0 0 8px var(--nuit), 0 0 0 9px rgba(176, 97, 214, .3), 0 50px 120px -50px rgba(176, 97, 214, .55);
+  background: radial-gradient(ellipse 62% 40% at 50% 74%, #25152d 0%, #100b12 55%, var(--nuit) 100%); }
+@media (max-width: 899px) { .mcp-arch { aspect-ratio: 1 / 1.08; max-width: 520px; margin: 0 auto; } }
+.mcp-num { position: absolute; top: 6%; left: 50%; transform: translateX(-50%); z-index: -1; user-select: none; font-family: var(--serif); font-style: italic; font-size: clamp(150px, 18vw, 250px); line-height: 1; color: transparent; -webkit-text-stroke: 1px rgba(201, 162, 74, .3); }
+.mcp-stage { position: absolute; left: 9%; right: 9%; top: 15%; bottom: 21%; display: grid; place-items: end center; }
+.mcp-stage img.cut { max-width: 100%; max-height: 100%; object-fit: contain; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .3s ease-out;
+  filter: drop-shadow(0 30px 28px rgba(0, 0, 0, .65)); animation: mc-float 6s ease-in-out infinite;
+  -webkit-box-reflect: below 6px linear-gradient(transparent 64%, rgba(255, 255, 255, .2)); }
+.mcp-arch .mcp-stage img.ph { position: absolute; inset: -30% -12% -40%; width: 124%; height: 170%; max-width: none; object-fit: cover; }
+.mcp-arch:has(img.ph)::after, .mcp-arch:has(img.ph) .mcp-ring, .mcp-arch:has(img.ph) .mcp-num { display: none; }
+.mcp-ring { position: absolute; left: 50%; bottom: 16%; width: 60%; height: 9%; transform: translateX(-50%); border-radius: 50%; border: 1px solid rgba(244, 198, 106, .7);
+  box-shadow: 0 0 22px rgba(244, 198, 106, .35), inset 0 0 18px rgba(244, 198, 106, .16); pointer-events: none; }
+.mcp-arch.exo .mcp-ring { border-color: rgba(217, 165, 240, .6); box-shadow: 0 0 22px rgba(176, 97, 214, .4), inset 0 0 18px rgba(176, 97, 214, .2); }
+.mcp-arch.vid video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mcp-arch.vid::before, .mcp-arch.vid::after { display: none; }
+.mcp-vit-act { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 22px; margin-top: 26px; min-height: 30px; }
+
+/* ---- informations et ticket ---- */
+.mcp-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.mcp-badge { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--ivoire-2); border: 1px solid rgba(241, 232, 212, .16); padding: 6px 10px; border-radius: 2px; white-space: nowrap; }
+.mcp-badge.or, .mcp-vit-act .mcp-badge { color: var(--nuit); background: var(--or-clair); border-color: var(--or-clair); }
+.mcp-badge.exo { color: #D9A5F0; border-color: rgba(176, 97, 214, .5); }
+.mcp-info h1 { font-size: clamp(48px, 6.6vw, 104px); line-height: .94; margin: 18px 0 12px; }
+.mcp-sub { font-size: 14px; color: var(--ivoire-2); }
+.mcp-notes { margin-top: 8px; font-size: 13px; }
+.mcp-info .pr { margin: 22px 0 24px; gap: 28px; }
+.mcp-ticket .gr-w { margin-top: 14px; }
+.mcp-custom { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; margin-top: 16px; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--ivoire-3); }
+.mcp-custom input { width: 92px; height: 42px; background: transparent; border: 1px solid rgba(241, 232, 212, .18); border-radius: 2px; color: var(--ivoire); text-align: center; font: inherit; font-size: 16px; letter-spacing: 0; }
+.mcp-custom input:focus { outline: none; border-color: var(--or-clair); }
+.mcp-ticket .total strong { font-size: clamp(46px, 5.6vw, 80px); }
+.mcp-ticket .save s { color: var(--ivoire-3); }
+.mcp-nudge { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.mcp-nudge button { flex: none; color: var(--or-clair); border-bottom: 1px solid var(--or); padding: 4px 0; font-family: var(--wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase; }
+.mcp-pochon { display: flex; align-items: center; gap: 14px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--ligne); font-size: 12px; color: var(--ivoire-2); }
+.mcp-pochon img { width: 48px; height: 48px; flex: none; object-fit: cover; border: 1px solid var(--ligne); border-radius: 2px; }
+.mcp-pochon p { flex: 1; min-width: 0; }
+.mcp-pochon b { display: block; color: var(--ivoire); font-weight: 400; }
+.mcp-pochon .btn-line { flex: none; font-size: 10px; }
+@media (max-width: 480px) { .mcp-pochon { flex-wrap: wrap; } .mcp-pochon .btn-line { margin-left: 62px; } }
+.mcp-out .mcp-out-t { font-size: clamp(32px, 3.6vw, 46px); color: var(--or-clair); margin: 8px 0 10px; }
+.mcp-out p { font-size: 13px; color: var(--ivoire-2); margin-bottom: 18px; }
+.mcp-trust { list-style: none; padding: 0; margin: 22px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ivoire-2); }
+.mcp-trust li::before { content: "✦"; color: var(--or); margin-right: 10px; }
+
+/* ---- mot de la maison, gamme, analyse, profil aromatique ---- */
+.mcp-story { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: clamp(28px, 5vw, 84px); margin-top: clamp(64px, 10vh, 120px); padding-top: clamp(40px, 6vh, 64px); border-top: 1px solid var(--ligne); }
+@media (max-width: 899px) { .mcp-story { grid-template-columns: minmax(0, 1fr); } }
+.mcp-desc { margin-top: 16px; font-family: var(--serif); font-size: clamp(19px, 1.9vw, 25px); line-height: 1.55; color: var(--ivoire); }
+.mcp-gamme { margin-top: 34px; padding: 22px 24px; border: 1px solid var(--ligne); background: linear-gradient(160deg, rgba(201, 162, 74, .08), rgba(6, 5, 8, .9)); }
+.mcp-gamme.exo { border-color: rgba(176, 97, 214, .35); background: linear-gradient(160deg, rgba(176, 97, 214, .1), rgba(6, 5, 8, .9)); }
+.mcp-gamme .neon { font-size: clamp(30px, 3vw, 44px); line-height: 1; }
+.mcp-gamme p { margin-top: 12px; font-size: 13px; color: var(--ivoire-2); }
+.mcp-lab { margin-top: 30px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.mcp-lab p { font-size: 13px; color: var(--ivoire-2); }
+.mcp-lab a { color: var(--or-clair); }
+.mcp-radar { border: 1px solid var(--ligne); padding: 26px; display: flex; flex-direction: column; align-items: center; gap: 16px; background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(201, 162, 74, .09), transparent 70%); }
+.mcp-radar .kicker { align-self: flex-start; }
+.mcp-mood { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--ivoire-3); }
+.mcp-mood b { color: var(--or-clair); font-weight: 400; }
+
+/* ---- avis (composant du site) ---- */
+.mcp-reviews { max-width: 1440px; padding-bottom: 20px; }
+
+/* ---- même veine ---- */
+.mc.mcp-veine { max-width: 1440px; margin: 0 auto; padding: clamp(60px, 9vh, 110px) var(--gut) clamp(70px, 10vh, 120px); }
+.mcp-veine h2 { font-size: clamp(42px, 6vw, 86px); line-height: .95; margin-top: 10px; }
+.mcp-veine h2 .choc { display: block; font-size: .78em; margin-top: .04em; }
+.mcp-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 2vw, 24px); margin-top: 40px; }
+@media (max-width: 899px) { .mcp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mcp-card { position: relative; display: flex; flex-direction: column; text-decoration: none; color: inherit; border: 1px solid var(--ligne); padding: 18px 16px 20px; background: linear-gradient(180deg, rgba(201, 162, 74, .07), transparent 55%); transition: border-color .3s, transform .5s var(--ease); }
+.mcp-card.exo { background: linear-gradient(180deg, rgba(176, 97, 214, .09), transparent 55%); }
+.mcp-card:hover { border-color: rgba(244, 220, 146, .6); transform: translateY(-4px); }
+.mcp-card .v { position: relative; height: clamp(120px, 17vw, 200px); display: grid; place-items: end center; overflow: hidden; }
+.mcp-card .v img.cut { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 16px 16px rgba(0, 0, 0, .6)); }
+.mcp-card .v img.ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mcp-card .tag { margin-top: 14px; font-family: var(--wide); font-stretch: 125%; font-weight: 800; font-size: 9px; letter-spacing: .26em; text-transform: uppercase; color: var(--or); }
+.mcp-card.exo .tag { color: #D9A5F0; }
+.mcp-card h3 { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(21px, 2.2vw, 30px); line-height: 1.1; margin: 6px 0 12px; }
+.mcp-card .px { margin-top: auto; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11.5px; color: var(--ivoire-2); }
+.mcp-card .px b { color: var(--or-clair); font-weight: 400; }
+
+/* ---- produit introuvable ---- */
+.mc.mcp-missing { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 120px var(--gut) 60px; }
+.mcp-missing h1 { font-size: clamp(40px, 6vw, 72px); }
+.mcp-missing p:not(.kicker) { max-width: 420px; color: var(--ivoire-2); }
+
+/* ---- barre d'achat mobile (laisse la place au bouton du Sommelier en bas à droite) ---- */
+.mcp-bar { display: none; }
+@media (max-width: 899px) {
+  .mcp-bar { position: fixed; z-index: 35; left: 12px; right: 88px; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; padding: 7px 7px 7px 14px;
+    background: rgba(10, 8, 12, .97); border: 1px solid rgba(201, 162, 74, .45); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .9);
+    transform: translateY(160%); visibility: hidden; transition: transform .45s var(--ease), visibility 0s .45s; }
+  .mcp-bar.on { transform: none; visibility: visible; transition: transform .45s var(--ease); }
+  .mcp-bar div { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+  .mcp-bar small { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ivoire-3); }
+  .mcp-bar strong { font-family: var(--serif); font-weight: 500; font-size: 20px; color: var(--or-clair); white-space: nowrap; }
+  .mcp-bar .btn-or { flex: 1; min-height: 46px; padding: 0 10px; letter-spacing: .1em; font-size: 10.5px; }
+  .mc.mcp-main { padding-bottom: 90px; }
+}

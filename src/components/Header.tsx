@@ -66,7 +66,8 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-40">
       {/* Backdrop blur */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-md border-b border-border/50" />
+      {/* flou sur grand écran seulement : sur téléphone, au-dessus de la 3D, il ferait ramer */}
+      <div className="absolute inset-0 bg-background/95 lg:bg-background/80 lg:backdrop-blur-md border-b border-border/50" />
 
       <div className="relative container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">

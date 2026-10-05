@@ -112,13 +112,17 @@ export function startHsbFx() {
     el.classList.add('fx-reveal'); io.observe(el);
   }
 
+  /* ---------------- 6. gold scroll progress bar ---------------- */
+  const progress = document.createElement('div'); progress.className = 'fx-progress'; progress.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(progress);
+
   /* ---------------- 5. parallax (images inside cards) ---------------- */
+  // calculé seulement quand la page défile (aucune boucle permanente : zéro travail au repos, utile sur les vieux téléphones)
   const para = new Set();
-  function parallax(el) { el.classList.add('fx-parallax'); para.add(el); }
-  let lastY = -1;
-  addTick(() => {
-    const y = scrollY; if (y === lastY) return; lastY = y;
-    const vh = innerHeight;
+  let scrollQueued = false;
+  const onScrollFx = () => {
+    scrollQueued = false;
+    const y = scrollY, vh = innerHeight;
     para.forEach((img) => {
       if (!img.isConnected) { para.delete(img); return; }
       const r = img.getBoundingClientRect(); if (r.bottom < 0 || r.top > vh) return;
@@ -126,11 +130,11 @@ export function startHsbFx() {
       img.style.setProperty('--py', `${(p * -18).toFixed(1)}px`);
     });
     progress.style.transform = `scaleX(${clamp(y / Math.max(1, document.documentElement.scrollHeight - vh), 0, 1).toFixed(4)})`;
-  });
-
-  /* ---------------- 6. gold scroll progress bar ---------------- */
-  const progress = document.createElement('div'); progress.className = 'fx-progress'; progress.setAttribute('aria-hidden', 'true');
-  document.body.appendChild(progress);
+  };
+  const queueScroll = () => { if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(onScrollFx); } };
+  addEventListener('scroll', queueScroll, { passive: true });
+  addEventListener('resize', queueScroll);
+  function parallax(el) { el.classList.add('fx-parallax'); para.add(el); queueScroll(); }
 
   /* ---------------- 7. golden cursor (mouse only) ---------------- */
   if (fine) {
@@ -156,10 +160,12 @@ export function startHsbFx() {
   }
 
   /* ---------------- 8. gold burst on every click/tap ---------------- */
+  // calque plein écran masqué au repos : sinon le téléphone le recompose à chaque image pour rien
   const burst = document.createElement('canvas'); burst.className = 'fx-burst'; burst.setAttribute('aria-hidden', 'true');
+  burst.style.visibility = 'hidden';
   document.body.appendChild(burst);
   const bx = burst.getContext('2d'); let sparks = [];
-  const sizeBurst = () => { const d = Math.min(devicePixelRatio || 1, 2); burst.width = innerWidth * d; burst.height = innerHeight * d; bx.setTransform(d, 0, 0, d, 0, 0); };
+  const sizeBurst = () => { const d = Math.min(devicePixelRatio || 1, fine ? 2 : 1.5); burst.width = innerWidth * d; burst.height = innerHeight * d; bx.setTransform(d, 0, 0, d, 0, 0); };
   sizeBurst(); addEventListener('resize', sizeBurst);
   const drawBurst = () => {
     bx.clearRect(0, 0, innerWidth, innerHeight);
@@ -169,7 +175,7 @@ export function startHsbFx() {
       bx.globalAlpha = s.life; bx.fillStyle = s.c;
       bx.beginPath(); bx.arc(s.x, s.y, s.r * (0.5 + s.life * 0.5), 0, 6.283); bx.fill();
     }
-    if (!sparks.length) { delTick(drawBurst); bx.clearRect(0, 0, innerWidth, innerHeight); }
+    if (!sparks.length) { delTick(drawBurst); bx.clearRect(0, 0, innerWidth, innerHeight); burst.style.visibility = 'hidden'; }
   };
   addEventListener('pointerdown', (e) => {
     const t = e.target instanceof Element ? e.target.closest('a, button, [role="button"], .product-card') : null;
@@ -180,6 +186,7 @@ export function startHsbFx() {
       sparks.push({ x: e.clientX, y: e.clientY, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.5, r: 1 + Math.random() * 2.4, life: 1,
         c: ['#fff1c2', '#f0d68e', '#d4af37', '#b8913f'][i % 4] });
     }
+    burst.style.visibility = '';
     addTick(drawBurst);
   }, { passive: true });
 

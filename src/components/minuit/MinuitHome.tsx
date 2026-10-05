@@ -8,7 +8,7 @@ import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/data/products";
 import emblemSvg from "@/assets/brand/hsb-emblem.svg?raw";
 import type { MinuitScene } from "./minuitScene";
-import { AMBIANCE, BAND, HERO_LOTS, LOT_ORDER, WEIGHTS, cutSources, edito, eur, gfmt, priceOf, shortName, typeLabel } from "./minuitData";
+import { AMBIANCE, BAND, HERO_LOTS, LOT_ORDER, WEIGHTS, cutSources, edito, eur, gfmt, isLowEnd, priceOf, shortName, typeLabel } from "./minuitData";
 import "./minuit.css";
 
 const AGE_KEY = "hsb-age-verified";
@@ -20,7 +20,7 @@ const Img = ({ srcs, photoLast, className, ...rest }: { srcs: string[]; photoLas
   const [i, setI] = useState(0);
   // is-photo : la photo de repli (fond noir) reçoit le fondu ; un détourage reste net
   const photo = photoLast && srcs.length > 1 && i === srcs.length - 1;
-  return <img {...rest} className={[className, photo && "is-photo"].filter(Boolean).join(" ") || undefined} src={srcs[i]} onError={() => setI((v) => (v + 1 < srcs.length ? v + 1 : v))} />;
+  return <img decoding="async" {...rest} className={[className, photo && "is-photo"].filter(Boolean).join(" ") || undefined} src={srcs[i]} onError={() => setI((v) => (v + 1 < srcs.length ? v + 1 : v))} />;
 };
 
 const PriceBlock = ({ p }: { p: Product }) => {
@@ -82,6 +82,7 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
   const sceneRef = useRef<MinuitScene | null>(null), lenisRef = useRef<Lenis | null>(null), pinMax = useRef(0);
 
   const [lit, setLit] = useState(readVerified);
+  const [lite] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 899px)").matches && isLowEnd());
   const [glOk, setGlOk] = useState(true);
   const [isDesk, setIsDesk] = useState(false);
   const [station, setStation] = useState(0);
@@ -103,7 +104,7 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
         try {
           sceneRef.current = createMinuitScene(c, {
             lots: heroLots.map(cutSources), emblemSvg,
-            mobile: window.matchMedia("(max-width: 899px)").matches, reduce: prefersReduced(),
+            mobile: window.matchMedia("(max-width: 899px)").matches, reduce: prefersReduced(), lite,
           });
           // porte déjà passée (session) ou franchie pendant le chargement : rideau levé d'office
           if (litRef.current) sceneRef.current.lift(true);
@@ -235,7 +236,7 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
     return best;
   }, [lots, quiz]);
 
-  const cls = ["mc", lit && "lit", !glOk && "no-gl", isDesk && "is-desk"].filter(Boolean).join(" ");
+  const cls = ["mc", lit && "lit", !glOk && "no-gl", isDesk && "is-desk", lite && "lite"].filter(Boolean).join(" ");
 
   return (
     // data-fx-off : le kit hsb-fx n'anime pas ces sections (sa transformation 3D casse l'épinglage du tunnel et du boulevard)
@@ -397,7 +398,7 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
           <p>Votre lot voyage dans notre pochon scellé. Colis discret par La Poste ou en point relais, et livraison en main propre autour du 44.</p>
           {!pouchFail && <small className="turn">↻ Faites-le tourner</small>}
         </article>
-        <article className="preuve rv"><Img srcs={AMBIANCE.trichomes} alt="Macro de trichomes sur une fleur violette naturelle" loading="lazy" /><p className="kicker">Transparence</p><h3>Analysé en labo</h3><p>Analyse consultable sur chaque fiche. THC inférieur à 0,3 %, conforme à la réglementation française.</p></article>
+        <article className="preuve rv"><Img srcs={AMBIANCE.trichomes} alt="Macro de trichomes sur une fleur violette naturelle" loading="lazy" /><p className="kicker">Transparence</p><h3>Analysé en labo</h3><p>Analyse laboratoire disponible sur demande. THC inférieur à 0,3 %, conforme à la réglementation française.</p></article>
       </section>
 
       <section id="sommelier" className="sec sommelier" aria-labelledby="mc-so-t">
