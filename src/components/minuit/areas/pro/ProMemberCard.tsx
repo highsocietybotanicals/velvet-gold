@@ -74,17 +74,22 @@ const ProMemberCard = ({ holder, pending = false }: Props) => {
     if (reduce || !fine) return () => { window.clearTimeout(failsafe); io?.disconnect(); };
 
     apply();
-    const onEnter = () => { hover = true; scene.classList.add("is-on"); run(); };
+    // Cadre de la scène mesuré une fois par survol (pas à chaque mouvement) ; re-mesuré après un défilement ou un redimensionnement.
+    let rect: DOMRect | null = null;
+    const dropRect = () => { rect = null; };
+    const onEnter = () => { hover = true; rect = null; scene.classList.add("is-on"); run(); };
     const onMove = (e: PointerEvent) => {
-      const r = scene.getBoundingClientRect();
+      const r = rect ?? (rect = scene.getBoundingClientRect());
       tx = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width - 0.5) * 2));
       ty = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height - 0.5) * 2));
       run();
     };
     const onLeave = () => { hover = false; tx = REST_X; ty = REST_Y; scene.classList.remove("is-on"); run(); };
-    scene.addEventListener("pointerenter", onEnter);
-    scene.addEventListener("pointermove", onMove);
-    scene.addEventListener("pointerleave", onLeave);
+    scene.addEventListener("pointerenter", onEnter, { passive: true });
+    scene.addEventListener("pointermove", onMove, { passive: true });
+    scene.addEventListener("pointerleave", onLeave, { passive: true });
+    window.addEventListener("scroll", dropRect, { passive: true });
+    window.addEventListener("resize", dropRect, { passive: true });
     return () => {
       window.clearTimeout(failsafe);
       io?.disconnect();
@@ -92,6 +97,8 @@ const ProMemberCard = ({ holder, pending = false }: Props) => {
       scene.removeEventListener("pointerenter", onEnter);
       scene.removeEventListener("pointermove", onMove);
       scene.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("scroll", dropRect);
+      window.removeEventListener("resize", dropRect);
     };
   }, []);
 

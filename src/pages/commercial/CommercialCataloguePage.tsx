@@ -18,6 +18,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { Flame, Search } from "lucide-react";
 import LogHead from "@/components/minuit/areas/commercial/LogHead";
 import { typeLabel } from "@/components/minuit/minuitData";
+import { responsiveProductSrcSet } from "@/lib/responsiveProductImage";
+
+/* Pastille de lot (64 px) : la photo du catalogue (900 px, voir src/data/products.ts) est servie en
+   vignette de 192 px (écran ×3). Même requête d'image que le catalogue → même URL, qui sert de clé ;
+   si la photo vient d'ailleurs (surcharge en base), on garde la photo telle quelle.
+   ATTENTION : la requête « ?w=900&quality=82&format=webp » ci-dessous DOIT rester identique à celle des
+   imports de src/data/products.ts (lignes 5-20). Si elle change là-bas, la clé ne correspond plus, sans
+   erreur : la pastille de 64 px recharge alors la photo de 900 px (le gain de poids disparaît). */
+const lotFull = import.meta.glob<string>(
+  ["/src/assets/flowers/*-real.jpg", "/src/assets/resins/*-real.jpg", "/src/assets/resins/*-premium.jpg", "/src/assets/resins/piatella.jpg"],
+  { query: "?w=900&quality=82&format=webp", import: "default", eager: true },
+);
+const lotThumb = import.meta.glob<string>(
+  ["/src/assets/flowers/*-real.jpg", "/src/assets/resins/*-real.jpg", "/src/assets/resins/*-premium.jpg", "/src/assets/resins/piatella.jpg"],
+  { query: "?w=192&quality=82&format=webp", import: "default", eager: true },
+);
+const LOT_THUMBS = new Map(Object.keys(lotFull).map((k) => [lotFull[k], lotThumb[k]]));
+const lotSrcSet = (src: string) => {
+  const thumb = LOT_THUMBS.get(src);
+  return thumb ? `${thumb} 192w, ${src} 900w` : responsiveProductSrcSet(src);
+};
 
 /** Feux tricolores du stock (décor) : rouge, orange, vert. */
 const Feu = () => (
@@ -251,6 +272,10 @@ const CommercialCataloguePage = () => {
                 <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={p.image}
+                    srcSet={lotSrcSet(p.image)}
+                    sizes="64px"
+                    width={64}
+                    height={64}
                     alt={`Photo de la variété ${p.name}`}
                     loading="lazy"
                     decoding="async"

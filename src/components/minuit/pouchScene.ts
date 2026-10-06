@@ -55,18 +55,26 @@ export function createPouchScene(card: HTMLElement, canvas: HTMLCanvasElement, f
 
   const ro = new ResizeObserver(() => { fit(); draw(); }); ro.observe(card);
   const down = (e: PointerEvent) => { drag = { x: e.clientX, r: rotY }; card.setPointerCapture(e.pointerId); };
-  const move = (e: PointerEvent) => { if (drag) { rotY = drag.r + (e.clientX - drag.x) * 0.012; draw(); } };
+  // boucle en cours : elle dessine déjà à chaque image, inutile de rendre une seconde fois par mouvement du doigt
+  const move = (e: PointerEvent) => { if (drag) { rotY = drag.r + (e.clientX - drag.x) * 0.012; if (!raf) draw(); } };
   const up = () => { drag = null; };
   card.addEventListener("pointerdown", down); card.addEventListener("pointermove", move);
   card.addEventListener("pointerup", up); card.addEventListener("pointercancel", up);
   const loop = () => { raf = 0; if (disposed || !visible || document.hidden) return; if (!drag && !REDUCE) rotY += 0.0035; draw(); raf = requestAnimationFrame(loop); };
-  const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) raf = requestAnimationFrame(loop); });
+  // mouvement réduit : l'image ne change qu'au chargement, au redimensionnement et au doigt, pas de boucle
+  const wake = () => { if (!disposed && visible && !document.hidden && !raf && !REDUCE) raf = requestAnimationFrame(loop); };
+  const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; wake(); });
   io.observe(card);
+  // retour sur l'onglet : la boucle s'était arrêtée, on la relance (sinon le pochon restait figé)
+  document.addEventListener("visibilitychange", wake);
 
   return () => {
     disposed = true; cancelAnimationFrame(raf); io.disconnect(); ro.disconnect();
+    document.removeEventListener("visibilitychange", wake);
     card.removeEventListener("pointerdown", down); card.removeEventListener("pointermove", move);
     card.removeEventListener("pointerup", up); card.removeEventListener("pointercancel", up);
     renderer.dispose(); pmrem.dispose();
+    // carte retirée du DOM : contexte WebGL rendu tout de suite (sinon il attend le ramasse-miettes)
+    if (!canvas.isConnected) renderer.forceContextLoss();
   };
 }

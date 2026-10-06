@@ -39,10 +39,11 @@
 
 /* ---------- 6. barre de progression dorée ---------- */
 .fx-progress{position:fixed;left:0;right:0;top:0;height:2px;z-index:9998;pointer-events:none;transform-origin:0 50%;transform:scaleX(0);
-  background:linear-gradient(90deg,#8a6a2c,#f2dc9c 60%,#fff3cf);box-shadow:0 0 10px rgba(242,220,156,.6)}
+  background:linear-gradient(90deg,#8a6a2c,#f2dc9c 60%,#fff3cf);box-shadow:0 0 10px rgba(242,220,156,.6);
+  will-change:transform /* bouge à chaque image de défilement : couche dédiée, la lueur n'est plus repeinte */}
 
 /* ---------- 7. curseur doré (souris seulement) ---------- */
-.fx-cursor-dot,.fx-cursor-ring{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;border-radius:50%;opacity:0;transition:opacity .3s}
+.fx-cursor-dot,.fx-cursor-ring{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;border-radius:50%;opacity:0;transition:opacity .3s;will-change:transform}
 .fx-cursor-dot{width:6px;height:6px;margin:-3px 0 0 -3px;background:#f2dc9c;box-shadow:0 0 10px #e2c06a}
 .fx-cursor-ring{width:34px;height:34px;margin:-17px 0 0 -17px;border:1px solid rgba(242,220,156,.7);transition:opacity .3s,border-color .3s,background .3s}
 .fx-cursor-ring.fx-press{background:rgba(212,175,55,.15);border-color:#fff1c2}
@@ -51,6 +52,12 @@
 
 /* ---------- 8. étincelles au clic ---------- */
 .fx-burst{position:fixed;inset:0;width:100vw;height:100vh;z-index:9997;pointer-events:none}
+
+/* ---------- 9. boucles décoratives de index.css ---------- */
+/* hors écran : figées (invisible, mais plus aucun travail du compositeur) */
+.fx-offscreen,.shimmer.fx-offscreen::after{animation-play-state:paused!important}
+/* téléphone modeste (html.hsb-lite, posé par hsb-fx.ts) : retirées, rendu statique */
+.hsb-lite .title-3d > span,.hsb-lite .shimmer::after{animation:none}
 
 /* ---------- coupe-circuits ---------- */
 .hsb-fx-off .fx-cursor-dot,.hsb-fx-off .fx-cursor-ring,.hsb-fx-off .fx-progress{display:none}

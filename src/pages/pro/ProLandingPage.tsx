@@ -7,7 +7,7 @@ import ProPartnerApplyForm from "@/components/pro/ProPartnerApplyForm";
 import { Package, ShieldCheck, Gift, Leaf, FlaskConical, Truck } from "lucide-react";
 import { useMinuitSkin } from "@/components/minuit/useMinuitSkin";
 import ProMemberCard from "@/components/minuit/areas/pro/ProMemberCard";
-import { ProReveal, ProVelvetRope } from "@/components/minuit/areas/pro/ProDecor";
+import { ProNeonSign, ProReveal, ProVelvetRope } from "@/components/minuit/areas/pro/ProDecor";
 import "@/components/minuit/areas/pro/pro.css";
 
 const arguments_ = [
@@ -68,9 +68,7 @@ const ProLandingPage = () => {
       <section className="pr-hero" aria-labelledby="pr-hero-t">
         <div className="pr-hero-grid">
           <div className="pr-hero-copy">
-            <span className="pr-neon-sign" aria-hidden="true">
-              High Society
-            </span>
+            <ProNeonSign>High Society</ProNeonSign>
             <p className="pr-kicker">Partenaires revendeurs</p>
             <h1 id="pr-hero-t">
               L'espace professionnel{" "}

@@ -320,6 +320,28 @@ html.mn-coffre .cf-hero[data-seen] .cf-hero-txt { animation-duration: .7s; anima
 html.mn-coffre .cf-hero[data-seen] .cf-cue { animation-duration: .6s; animation-delay: .5s; }
 html.mn-coffre .cf-hero[data-seen] .cf-neon { animation-duration: .8s, 6s; animation-delay: 0s, 3s; }
 
+/* ---------- fin de séquence (data-done, posé par CoffreVault quand toutes les animations finies sont terminées) ----------
+   L'état de repos de chaque élément EST l'état final de ses keyframes : retirer ces animations ne change aucun pixel,
+   mais elles cessent d'être « en vigueur » (fill both) et d'être réévaluées, et leurs calques disparaissent
+   (halo 2,2 × la porte, sol, projecteurs, 12 pênes… : plusieurs Mo de mémoire graphique en moins sur téléphone).
+   Gardées en vigueur, comme avant : le titre et le voile des rayons (sans leur calque, l'anticrénelage du titre
+   bougeait d'un demi-pixel), et l'enseigne, le texte et le repère, posés au-dessus de la porte : sans calque propre,
+   ils entraînaient la page entière dans un calque de recouvrement. Restent les boucles volontaires sous [data-on].
+   À RESPECTER pour toute nouvelle animation finie dans .cf-hero : CoffreVault relève les animations finies UNE fois,
+   à la première image où il y en a ; elle doit donc exister dès cette image (jamais conditionnée par [data-on] ni
+   ajoutée plus tard), sinon data-done la couperait avant sa fin. Ne l'ajouter à la liste ci-dessous que si son état
+   de repos est exactement sa dernière image clé. (Une animation annulée en cours, par exemple mouvement réduit activé
+   pendant l'intro, avance aussi data-done : sans effet, puisque tout est alors coupé.) */
+html.mn-coffre .cf-hero[data-done] .cf-spots i,
+html.mn-coffre .cf-hero[data-done] .cf-flood,
+html.mn-coffre .cf-hero[data-done] .cf-floor,
+html.mn-coffre .cf-hero[data-done] .cf-asm::after,
+html.mn-coffre .cf-hero[data-done] .cf-inside::after,
+html.mn-coffre .cf-hero[data-done] .cf-t-sheen,
+html.mn-coffre .cf-hero[data-done] .cf-door,
+html.mn-coffre .cf-hero[data-done] .cf-door > .cf-wheel,
+html.mn-coffre .cf-hero[data-done] .cf-bolt { animation: none; }
+
 /* ==========================================================================
    2. LES CASIERS : console de recherche, tri, grille
    ========================================================================== */
@@ -464,7 +486,15 @@ html.mn-coffre .cf-list { display: flex; flex-direction: column; gap: 16px; }
    3. LE CASIER
    ========================================================================== */
 html.mn-coffre .cf-lk { position: relative; min-width: 0; perspective: 1100px; }
+/* entrée : le casier bascule et monte en fondu dès qu'il entre à l'écran (data-in, posé par useRevealOnce).
+   Mêmes valeurs, durée, courbe et décalage que l'ancienne animation framer-motion, mais jouée par le compositeur.
+   fill backwards : une fois finie, l'animation s'efface et le casier revient à transform: none (identique à l'œil). */
+@media (prefers-reduced-motion: no-preference) {
+  html.mn-coffre .cf-lk:not([data-in]) { opacity: 0; transform: perspective(900px) translateY(34px) rotateX(9deg); }
+  html.mn-coffre .cf-lk[data-in] { animation: cf-lk-in .65s cubic-bezier(.22, 1, .36, 1) var(--lk-d, 0s) backwards; }
+}
 html.mn-coffre .cf-lk-body {
+  contain: layout style; /* pas de paint : l'ombre portée et le halo du survol débordent du casier */
   position: relative; height: 100%; display: flex; flex-direction: column; padding: 12px;
   border: 1px solid rgba(201, 162, 74, .2); border-radius: 3px;
   background:
@@ -532,6 +562,11 @@ html.mn-coffre .cf-lk-link:focus-visible { outline: 2px solid var(--mn-or-clair)
 html.mn-coffre .cf-niche {
   position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 1 / .9; border-radius: 2px;
   container-type: inline-size;
+  /* confinement : la niche est déjà rognée (overflow: hidden) et isolée, rien n'en déborde ; sa mise en page,
+     ses styles et sa peinture restent chez elle. Pas de content-visibility: auto : mesuré (téléphone, CPU ÷4),
+     elle ne gagnait rien au chargement et reportait la mise en page des niches pendant le défilement
+     (3 fois plus de passes de mise en page, images plus irrégulières). */
+  contain: layout paint style;
   background: radial-gradient(ellipse 70% 52% at 50% 80%, #2c2112, #120e0b 60%, #060508);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .85);
 }
@@ -763,6 +798,29 @@ html.mn-coffre .cf-tab:focus-visible, html.mn-coffre .cf-knob:focus-visible, htm
 /* téléphone modeste : pas d'ombres lourdes sur la porte, pas de rayons */
 html.mn-coffre .cf-lite .cf-rays, html.mn-coffre .cf-lite .cf-spots { display: none; }
 html.mn-coffre .cf-lite .cf-lot img.cut { filter: none; }
+/* …et une poussière d'or figée au lieu du canvas redessiné à chaque image : le canvas est masqué (son observateur
+   le voit hors écran, la boucle ne démarre pas) et la même poussière est peinte une seule fois en dégradés :
+   12 grains (le nombre du canvas sur téléphone), même or hsl(43 70% 55%), rayons 0,9 à 2,6 px, opacités .3 à .85,
+   sous le même voile .65 de .cf-lk-fx. Mouvement réduit : le canvas ne dessine rien, la version figée non plus. */
+html.mn-coffre .cf-lite .cf-lk-fx > canvas { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  html.mn-coffre .cf-lite .cf-lk-fx::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(221, 175, 60, .75) 0 1.4px, rgba(221, 175, 60, 0) 2px),
+      radial-gradient(circle at 78% 9%, rgba(221, 175, 60, .45) 0 2.2px, rgba(221, 175, 60, 0) 2.8px),
+      radial-gradient(circle at 41% 31%, rgba(221, 175, 60, .6) 0 1px, rgba(221, 175, 60, 0) 1.6px),
+      radial-gradient(circle at 88% 37%, rgba(221, 175, 60, .8) 0 1.6px, rgba(221, 175, 60, 0) 2.2px),
+      radial-gradient(circle at 23% 52%, rgba(221, 175, 60, .3) 0 2.6px, rgba(221, 175, 60, 0) 3.2px),
+      radial-gradient(circle at 63% 47%, rgba(221, 175, 60, .7) 0 1.2px, rgba(221, 175, 60, 0) 1.8px),
+      radial-gradient(circle at 7% 71%, rgba(221, 175, 60, .55) 0 1.8px, rgba(221, 175, 60, 0) 2.4px),
+      radial-gradient(circle at 52% 66%, rgba(221, 175, 60, .85) 0 .9px, rgba(221, 175, 60, 0) 1.5px),
+      radial-gradient(circle at 92% 74%, rgba(221, 175, 60, .35) 0 2.4px, rgba(221, 175, 60, 0) 3px),
+      radial-gradient(circle at 31% 86%, rgba(221, 175, 60, .65) 0 1.5px, rgba(221, 175, 60, 0) 2.1px),
+      radial-gradient(circle at 71% 91%, rgba(221, 175, 60, .5) 0 1.1px, rgba(221, 175, 60, 0) 1.7px),
+      radial-gradient(circle at 47% 6%, rgba(221, 175, 60, .4) 0 2px, rgba(221, 175, 60, 0) 2.6px);
+  }
+}
 /* …et pas de séquence 3D : la porte est déjà ouverte (état de repos), seuls le titre et le texte apparaissent en fondu */
 html.mn-coffre .cf-lite .cf-door, html.mn-coffre .cf-lite .cf-wheel, html.mn-coffre .cf-lite .cf-bolt,
 html.mn-coffre .cf-lite .cf-inside::after, html.mn-coffre .cf-lite .cf-asm::after,
@@ -793,6 +851,10 @@ html.mn-coffre .cf-lite .cf-cue { animation-delay: .6s; }
 @keyframes cf-spin { to { transform: rotate(360deg); } }
 @keyframes cf-cue { 0% { transform: scaleY(0); opacity: 1; } 55% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
 @keyframes cf-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes cf-lk-in {
+  from { opacity: 0; transform: perspective(900px) translateY(34px) rotateX(9deg); }
+  to { opacity: 1; transform: perspective(900px) translateY(0) rotateX(0deg); }
+}
 
 /* mouvement réduit : porte déjà ouverte, titre en place, rien ne bouge */
 @media (prefers-reduced-motion: reduce) {

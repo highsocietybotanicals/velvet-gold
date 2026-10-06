@@ -4,6 +4,7 @@ import { Plus, Minus, ShoppingCart, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart, Accessory } from "@/contexts/CartContext";
 import { calculateAccessoryPrice, ACCESSORY_BULK_THRESHOLD } from "@/lib/pricing";
+import { accessorySrcSet } from "@/data/accessories";
 
 interface AccessoryCardProps {
   accessory: Accessory;
@@ -38,8 +39,13 @@ const AccessoryCard = ({ accessory, index }: AccessoryCardProps) => {
       <Link to={`/accessoire/${accessory.id}`} className="block relative aspect-square overflow-hidden bg-carbon-deep group/img">
         <img
           src={accessory.image}
+          srcSet={accessorySrcSet[accessory.image]}
+          sizes="(min-width: 768px) 190px, 46vw"
+          width={600}
+          height={600}
           alt={accessory.name}
           loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110"
           onError={(e) => {
             e.currentTarget.src = "/placeholder.svg";

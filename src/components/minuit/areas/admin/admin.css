@@ -158,14 +158,32 @@ html.mn-admin .adm-no {
   font-family: var(--mn-mono); font-stretch: normal; font-weight: 400; font-size: 10px; letter-spacing: .14em; color: var(--mn-ivoire-2);
 }
 html.mn-admin .adm-title {
-  margin-top: 6px; padding-right: .1em;
+  /* isolation : les deux copies de gravure (z-index -1) restent sous la feuille d'or, pendant comme après l'entrée */
+  position: relative; isolation: isolate; margin-top: 6px;
   font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(27px, 3.3vw, 46px); line-height: 1.04; letter-spacing: -.012em;
-  background: var(--mn-foil); background-size: 220% 100%; background-position: 18% 0;
-  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
-  /* gravure : ombre dure en dessous, liseré clair au-dessus */
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .9)) drop-shadow(0 -1px 0 rgba(255, 236, 180, .1));
   animation: adm-rise .8s var(--mn-ease) .08s backwards;
 }
+/* la feuille d'or (même boîte que l'ancien titre : padding compris, donc même étirement du dégradé) */
+html.mn-admin .adm-title > span {
+  display: block; padding-right: .1em;
+  background: var(--mn-foil); background-size: 220% 100%; background-position: 18% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+}
+/* gravure sans filtre : avant, deux drop-shadow empilés (deux calques hors écran à chaque peinture).
+   Ce sont maintenant deux copies du texte, décalées d'un pixel, peintes sous l'or dans l'ordre où les ombres se
+   superposaient (liseré crème dessous, ombre noire dessus). Comparé pixel à pixel à l'ancien rendu : écart maximal
+   9/255 sur le bord des lettres, invisible. Texte alternatif vide : rien de plus pour les lecteurs d'écran. */
+html.mn-admin .adm-title::before,
+html.mn-admin .adm-title::after {
+  content: attr(data-text);
+  content: attr(data-text) / "";
+  position: absolute; z-index: -1; left: 0; right: 0; padding-right: .1em; pointer-events: none;
+  -webkit-text-fill-color: currentColor;
+}
+/* liseré clair au-dessus (ancien drop-shadow 0 -1px 0 crème 10 %) */
+html.mn-admin .adm-title::before { top: -1px; color: rgba(255, 236, 180, .1); }
+/* ombre dure en dessous (ancien drop-shadow 0 1px 0 noir 90 %) */
+html.mn-admin .adm-title::after { top: 1px; color: rgba(0, 0, 0, .9); }
 html.mn-admin .adm-sub {
   margin-top: 7px; font-family: var(--mn-mono); font-size: 11px; letter-spacing: .06em; color: var(--mn-ivoire-2);
   animation: adm-rise .8s var(--mn-ease) .16s backwards;
@@ -335,18 +353,26 @@ html.mn-admin .adm-main .adm-switch [role="tab"] {
   font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
 }
 html.mn-admin .adm-main .adm-switch [role="tab"] + [role="tab"] { border-left: 1px solid var(--mn-ligne); }
-html.mn-admin .adm-main .adm-switch [role="tab"]::before {
-  content: ""; position: absolute; left: 14px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%;
-  background: rgba(241, 232, 212, .16); transition: background-color .3s, box-shadow .3s;
+/* voyant : ::before = voyant éteint, ::after = voyant allumé pré-dessiné (lueur comprise) qui apparaît en fondu
+   d'opacité ; plus aucune transition de couleur ni d'ombre. Le voyant éteint reste affiché pendant le fondu (le point
+   se mélange alors exactement comme l'ancienne interpolation de couleur, sans creux) et ne s'efface qu'une fois le
+   voyant allumé opaque (0 s après 0,3 s) ; à l'extinction il réapparaît aussitôt, sous le voyant allumé qui s'efface */
+html.mn-admin .adm-main .adm-switch [role="tab"]::before,
+html.mn-admin .adm-main .adm-switch [role="tab"]::after {
+  content: ""; position: absolute; left: 14px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; pointer-events: none;
 }
+html.mn-admin .adm-main .adm-switch [role="tab"]::before { background: rgba(241, 232, 212, .16); }
+html.mn-admin .adm-main .adm-switch [role="tab"]::after {
+  background: #FFF6DC; box-shadow: 0 0 3px #FFE9A8, 0 0 9px #F4DC92, 0 0 16px rgba(201, 162, 74, .8);
+  opacity: 0; transition: opacity .3s;
+}
+html.mn-admin .adm-main .adm-switch [role="tab"][data-state="active"]::before { opacity: 0; transition: opacity 0s .3s; }
 html.mn-admin .adm-main .adm-switch [role="tab"][data-state="active"] {
   color: var(--mn-or-clair);
   background: linear-gradient(180deg, rgba(201, 162, 74, .17), rgba(201, 162, 74, .04));
   box-shadow: inset 0 -2px 0 var(--mn-or);
 }
-html.mn-admin .adm-main .adm-switch [role="tab"][data-state="active"]::before {
-  background: #FFF6DC; box-shadow: 0 0 3px #FFE9A8, 0 0 9px #F4DC92, 0 0 16px rgba(201, 162, 74, .8);
-}
+html.mn-admin .adm-main .adm-switch [role="tab"][data-state="active"]::after { opacity: 1; }
 @media (max-width: 559px) {
   /* téléphone : trois interrupteurs égaux, l'intitulé passe à la ligne au lieu de déborder */
   html.mn-admin .adm-main [role="tablist"].adm-switch { display: flex; width: 100%; overflow: visible; }
@@ -354,7 +380,8 @@ html.mn-admin .adm-main .adm-switch [role="tab"][data-state="active"]::before {
     flex: 1 1 0; min-width: 0; padding: 8px 6px 8px 17px; white-space: normal; line-height: 1.3; text-align: center;
     font-size: 10px; letter-spacing: .06em;
   }
-  html.mn-admin .adm-main .adm-switch [role="tab"]::before { left: 7px; width: 5px; height: 5px; margin-top: -2.5px; }
+  html.mn-admin .adm-main .adm-switch [role="tab"]::before,
+  html.mn-admin .adm-main .adm-switch [role="tab"]::after { left: 7px; width: 5px; height: 5px; margin-top: -2.5px; }
 }
 
 /* documents pro : rangée d'interrupteurs */
@@ -363,6 +390,14 @@ html.mn-admin .adm-main .adm-docs {
   background: linear-gradient(160deg, rgba(201, 162, 74, .06), rgba(6, 5, 8, .6) 50%);
 }
 html.mn-admin .adm-main .adm-docs .border-input { min-height: 42px; letter-spacing: .01em; }
+
+/* téléphones et tablettes : aucun flou d'arrière-plan dans l'administration (cartes de demandes pro en backdrop-blur).
+   Ces cartes ont un fond bg-card/50 (tailwind-merge remplace bg-card, l'habillage .border.bg-card ne s'y applique donc pas),
+   mais derrière il n'y a que le fond quasi uni de .adm-main (filets d'or à 3 % tous les 36 px, halo à 5 %) :
+   le flou n'y changeait rien de visible (écart de 2 à 3 niveaux sur 255) */
+@media (max-width: 899px) {
+  html.mn-admin .adm-main [class*="backdrop-blur"] { -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
 
 /* ---------------- clients : registre, interrupteurs de filtre, jetons ---------------- */
 html.mn-admin .adm-main .adm-head p { font-family: var(--mn-mono); font-size: 12px; letter-spacing: .04em; }
@@ -385,23 +420,32 @@ html.mn-admin .adm-main .adm-alert { border-color: rgba(201, 162, 74, .45); back
 html.mn-admin .adm-main .adm-filters button {
   position: relative; padding-left: 28px; border-radius: 2px; letter-spacing: .01em;
 }
-html.mn-admin .adm-main .adm-filters button::before {
-  content: ""; position: absolute; left: 12px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%;
-  background: rgba(241, 232, 212, .16); transition: background-color .3s, box-shadow .3s;
+/* même voyant en deux états : éteint (::before) et allumé pré-dessiné (::after) en fondu d'opacité,
+   voyant éteint gardé sous le fondu et effacé seulement une fois le voyant allumé opaque (même schéma que .adm-switch) */
+html.mn-admin .adm-main .adm-filters button::before,
+html.mn-admin .adm-main .adm-filters button::after {
+  content: ""; position: absolute; left: 12px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; pointer-events: none;
 }
+html.mn-admin .adm-main .adm-filters button::before { background: rgba(241, 232, 212, .16); }
+html.mn-admin .adm-main .adm-filters button::after {
+  background: #FFF6DC; box-shadow: 0 0 3px #FFE9A8, 0 0 9px #F4DC92, 0 0 16px rgba(201, 162, 74, .8);
+  opacity: 0; transition: opacity .3s;
+}
+html.mn-admin .adm-main .adm-filters button[aria-pressed="true"]::before { opacity: 0; transition: opacity 0s .3s; }
 html.mn-admin .adm-main .adm-filters button[aria-pressed="true"] {
   color: var(--mn-or-clair); border-color: var(--mn-or);
   background: linear-gradient(180deg, rgba(201, 162, 74, .18), rgba(201, 162, 74, .05));
 }
-html.mn-admin .adm-main .adm-filters button[aria-pressed="true"]::before {
-  background: #FFF6DC; box-shadow: 0 0 3px #FFE9A8, 0 0 9px #F4DC92, 0 0 16px rgba(201, 162, 74, .8);
-}
+html.mn-admin .adm-main .adm-filters button[aria-pressed="true"]::after { opacity: 1; }
 
 html.mn-admin .adm-main .adm-ledger { border-color: var(--mn-ligne); background: linear-gradient(180deg, rgba(13, 11, 16, .9), rgba(6, 5, 8, .95)); }
 html.mn-admin .adm-main .adm-ledger td .font-display { font-style: italic; color: var(--mn-or-clair); }
 html.mn-admin .adm-main .adm-tile {
   border-color: var(--mn-ligne);
   background: linear-gradient(160deg, rgba(201, 162, 74, .06), rgba(13, 11, 16, .92) 45%, rgba(6, 5, 8, .96));
+  /* volontairement sans content-visibility ni contain : mesuré sur 300 fiches (390 px, processeur /4),
+     content-visibility accélère l'affichage initial (652 → 102 ms) mais double le coût du défilement
+     (p95 5,2 → 15 ms, pics à 40 ms) et contain par fiche l'alourdit aussi ; la fluidité au défilement prime */
 }
 html.mn-admin .adm-main .adm-tile:hover { border-color: rgba(244, 220, 146, .5); }
 html.mn-admin .adm-main .adm-tile dt { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }

@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 
 interface TerpeneRadarProps {
   terpenes: {
@@ -113,11 +112,9 @@ const TerpeneRadar = ({ terpenes, size = 200 }: TerpeneRadarProps) => {
   }, [terpenes, size]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-      className="relative"
+    // Entrée (fondu + échelle .8 → 1, 0,5 s) jouée en CSS par le compositeur : classe mcp-radar-in (minuitProduct.css)
+    <div
+      className="relative mcp-radar-in"
       style={{ width: size, height: size }}
     >
       <canvas
@@ -150,7 +147,7 @@ const TerpeneRadar = ({ terpenes, size = 200 }: TerpeneRadarProps) => {
           </div>
         );
       })}
-    </motion.div>
+    </div>
   );
 };
 

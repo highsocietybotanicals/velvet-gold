@@ -15,7 +15,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ProTicker from "@/components/minuit/areas/pro/ProTicker";
-import { ProFlap } from "@/components/minuit/areas/pro/ProDecor";
+import { ProBoard, ProFlap, ProNeonSign } from "@/components/minuit/areas/pro/ProDecor";
+import { proThumbSrcSet } from "@/components/minuit/areas/pro/proThumb";
 
 const eur = (n: number) => `${n.toFixed(2)} €`;
 
@@ -109,9 +110,7 @@ const ProCataloguePage = () => {
           </span>
         </h1>
         <div className="pr-cote-side">
-          <span className="pr-neon-sign" aria-hidden="true">
-            Séance de nuit
-          </span>
+          <ProNeonSign>Séance de nuit</ProNeonSign>
           <p className="pr-seance">
             Séance du <b>{seanceDate()}</b> · prix <b>HT</b> au gramme
           </p>
@@ -152,7 +151,7 @@ const ProCataloguePage = () => {
           <span>N° · Référence · cote pro</span>
           <span>Formats · pochons · sous-total HT</span>
         </div>
-        <div className="pr-board">
+        <ProBoard>
           {products.map((p, i) => {
             const stock = stockMap?.get(p.id);
             const rupture = !!stock && stock.stock_grams <= 0;
@@ -176,8 +175,13 @@ const ProCataloguePage = () => {
                     <span className="pr-row-no" aria-hidden="true">
                       {String(i + 1).padStart(2, "0")}
                     </span>
+                    {/* vignette 56 px : webp 112/168 px au lieu de la photo source 1024 px (voir proThumb.ts) */}
                     <img
                       src={p.image}
+                      srcSet={proThumbSrcSet(p.image)}
+                      sizes="56px"
+                      width={56}
+                      height={56}
                       alt={`Pochon préconditionné ${p.name}`}
                       loading="lazy"
                       decoding="async"
@@ -245,7 +249,7 @@ const ProCataloguePage = () => {
               </Card>
             );
           })}
-        </div>
+        </ProBoard>
       </div>
 
       {/* Ticket de séance : place laissée au bouton du Sommelier (voir pro.css) */}

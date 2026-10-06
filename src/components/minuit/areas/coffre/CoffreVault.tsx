@@ -36,6 +36,38 @@ const CoffreVault = () => {
     }
   }, []);
 
+  // Fin de la séquence d'ouverture : quand toutes les animations à durée finie du hero sont terminées,
+  // data-done les retire (coffre.css). L'état de repos de chaque élément étant l'état final des keyframes,
+  // rien ne bouge à l'écran ; seules restent les boucles volontaires (rayons, néon, repère), en pause hors écran.
+  // Les animations n'existent qu'une fois html.mn-coffre posé par la page (son effet passe APRÈS celui-ci) :
+  // on les relève à l'image suivante, et tant qu'il n'y en a aucune (mouvement réduit…), on ne pose rien.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof el.getAnimations !== "function" || typeof Promise.allSettled !== "function") return;
+    let alive = true;
+    let raf = 0;
+    let tries = 0;
+    const arm = () => {
+      if (!alive) return;
+      const once = el.getAnimations({ subtree: true }).filter((a) => {
+        const t = a.effect?.getComputedTiming();
+        return !!t && t.iterations !== Infinity;
+      });
+      if (!once.length) {
+        if (++tries < 30) raf = requestAnimationFrame(arm);
+        return;
+      }
+      Promise.allSettled(once.map((a) => a.finished)).then(() => {
+        if (alive) el.setAttribute("data-done", "");
+      });
+    };
+    raf = requestAnimationFrame(arm);
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <section ref={ref} className="cf-hero" aria-labelledby="cf-title" data-seen={seen ? "" : undefined}>
       <div className="cf-wall" aria-hidden="true" />

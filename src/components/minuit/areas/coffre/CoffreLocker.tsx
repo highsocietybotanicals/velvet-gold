@@ -2,8 +2,8 @@
 // Le lot détouré flotte dans un faisceau de lumière. Données et prix : exactement les mêmes sources que la carte
 // produit du site (useProducts.getPrice, useProPrices.getProPrice, getLowestPricePerGram, calculatePrice),
 // mêmes liens vers la fiche, même aperçu vidéo au survol, même bandeau de rupture de stock.
-import { forwardRef, useMemo, useRef, useState, type CSSProperties } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { forwardRef, useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Crown, Gem, Sparkles, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,7 +14,7 @@ import { calculatePrice, getLowestPricePerGram } from "@/lib/pricing";
 import { responsiveProductSrcSet } from "@/lib/responsiveProductImage";
 import GoldParticles from "@/components/GoldParticles";
 import { LOT_ORDER, cutSources, edito, eur, typeLabel } from "@/components/minuit/minuitData";
-import { useInViewAttr } from "./useInViewAttr";
+import { useInViewAttr, useRevealOnce } from "./useInViewAttr";
 
 interface CoffreLockerProps {
   product: Product;
@@ -75,6 +75,19 @@ const CoffreLocker = forwardRef<HTMLElement, CoffreLockerProps>(({ product, inde
   const reduce = useReducedMotion();
   useInViewAttr(bodyRef);
 
+  // Entrée du casier (fondu + bascule) : même déclencheur que l'ancien whileInView, jouée en CSS (cf-lk-in).
+  // La référence transmise par AnimatePresence (popLayout) reste posée sur le même <article>.
+  const lkRef = useRef<HTMLElement | null>(null);
+  const setLkRef = useCallback(
+    (el: HTMLElement | null) => {
+      lkRef.current = el;
+      if (typeof ref === "function") ref(el);
+      else if (ref) ref.current = el;
+    },
+    [ref],
+  );
+  useRevealOnce(lkRef, !reduce);
+
   // mêmes calculs que la carte produit du site
   const basePrice = getPrice(product.id)?.price ?? product.price;
   const proPrice = getProPrice(product.id);
@@ -121,13 +134,9 @@ const CoffreLocker = forwardRef<HTMLElement, CoffreLockerProps>(({ product, inde
   ) : null;
 
   return (
-    <motion.article
-      ref={ref}
-      initial={reduce ? false : { opacity: 0, y: 34, rotateX: 9 }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.65, delay: (index % 4) * 0.07, ease: [0.22, 1, 0.36, 1] }}
-      style={{ transformPerspective: 900 }}
+    <article
+      ref={setLkRef}
+      style={{ "--lk-d": `${(index % 4) * 70}ms` } as CSSProperties}
       onMouseEnter={handlePreviewEnter}
       onMouseLeave={handlePreviewLeave}
       className={`cf-lk ${tone}${layout === "list" ? " is-list" : ""}${product.isOutOfStock ? " is-out" : ""}`}
@@ -227,7 +236,7 @@ const CoffreLocker = forwardRef<HTMLElement, CoffreLockerProps>(({ product, inde
           </Link>
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 });
 CoffreLocker.displayName = "CoffreLocker";

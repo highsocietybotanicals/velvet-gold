@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/logo.jpeg?w=512&quality=90&format=webp"; // affiché en 192-256 px
 
 interface AgeGateProps {
   onVerified: () => void;
@@ -78,6 +78,9 @@ const AgeGate = ({ onVerified }: AgeGateProps) => {
                 <img
                   src={logo}
                   alt="High Society Botanicals"
+                  width={256}
+                  height={256}
+                  decoding="async"
                   className="relative w-full h-full object-contain rounded-lg"
                 />
               </div>

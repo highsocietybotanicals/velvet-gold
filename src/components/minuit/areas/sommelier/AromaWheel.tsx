@@ -75,10 +75,6 @@ const AromaWheel = ({ intention, taste, product, caracs }: Props) => {
               <stop offset=".8" stopColor="#FBE7A6" />
               <stop offset="1" stopColor="#9C7A35" />
             </linearGradient>
-            <radialGradient id={`${uid}poly`} cx=".5" cy=".5" r=".5">
-              <stop offset="0" stopColor="#F4DC92" stopOpacity=".55" />
-              <stop offset="1" stopColor="#C9A24A" stopOpacity=".12" />
-            </radialGradient>
             {FAMILIES.map((fam, i) => (
               <path key={fam.key} id={`${uid}f${i}`} d={arc(146, i * 90 + 4, i * 90 + 86)} />
             ))}
@@ -117,26 +113,37 @@ const AromaWheel = ({ intention, taste, product, caracs }: Props) => {
           <circle className="sm-w-hair" cx={C} cy={C} r={166} />
           <circle className="sm-w-hair" cx={C} cy={C} r={134} />
           <circle className="sm-w-hair dim" cx={C} cy={C} r={104} />
-
-          {/* profil aromatique du lot recommandé (données du site) */}
-          <g className="sm-poly">
-            {[22, 44, 66].map((r) => (
-              <circle key={r} className="sm-poly-grid" cx={C} cy={C} r={r} />
-            ))}
-            {FAMILIES.map((fam, i) => {
-              const [x, y] = pt(66, i * 90 + 45);
-              return <line key={fam.key} className="sm-poly-grid" x1={C} y1={C} x2={f(x)} y2={f(y)} />;
-            })}
-            {poly.length > 0 && (
-              <>
-                <polygon className="sm-poly-shape" points={poly.map(([x, y]) => `${f(x)},${f(y)}`).join(" ")} fill={`url(#${uid}poly)`} />
-                {poly.map(([x, y], i) => (
-                  <circle key={i} className="sm-poly-dot" cx={f(x)} cy={f(y)} r={3.2} />
-                ))}
-              </>
-            )}
-          </g>
         </svg>
+
+        {/* profil aromatique du lot recommandé (données du site) : son propre calque, qui tourne avec les familles,
+            pour que son apparition (opacité + échelle) soit composée au lieu de repeindre toute la roue */}
+        <div className="sm-w-poly">
+          <svg viewBox="0 0 400 400" focusable="false">
+            <defs>
+              <radialGradient id={`${uid}poly`} cx=".5" cy=".5" r=".5">
+                <stop offset="0" stopColor="#F4DC92" stopOpacity=".55" />
+                <stop offset="1" stopColor="#C9A24A" stopOpacity=".12" />
+              </radialGradient>
+            </defs>
+            <g className="sm-poly">
+              {[22, 44, 66].map((r) => (
+                <circle key={r} className="sm-poly-grid" cx={C} cy={C} r={r} />
+              ))}
+              {FAMILIES.map((fam, i) => {
+                const [x, y] = pt(66, i * 90 + 45);
+                return <line key={fam.key} className="sm-poly-grid" x1={C} y1={C} x2={f(x)} y2={f(y)} />;
+              })}
+              {poly.length > 0 && (
+                <>
+                  <polygon className="sm-poly-shape" points={poly.map(([x, y]) => `${f(x)},${f(y)}`).join(" ")} fill={`url(#${uid}poly)`} />
+                  {poly.map(([x, y], i) => (
+                    <circle key={i} className="sm-poly-dot" cx={f(x)} cy={f(y)} r={3.2} />
+                  ))}
+                </>
+              )}
+            </g>
+          </svg>
+        </div>
       </div>
 
       {/* anneau intérieur : le caractère choisi au premier service */}

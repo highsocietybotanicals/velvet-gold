@@ -2,7 +2,7 @@
 // maison, preuves (pochon 3D), sommelier express. Panier, prix et catalogue = ceux du site.
 import { useCallback, useEffect, useMemo, useRef, useState, type ImgHTMLAttributes } from "react";
 import { Link } from "react-router-dom";
-import Lenis from "lenis";
+import type Lenis from "lenis";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/data/products";
@@ -131,10 +131,15 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
   };
 
   // ---- défilement : tunnel, boulevard épinglé, rideau de la maison ----
+  // Toutes les mesures d'abord, puis toutes les écritures : une écriture de style suivie d'une mesure
+  // forcerait un recalcul en plein défilement (mêmes valeurs qu'avant, seul l'ordre change).
   const onScroll = useCallback(() => {
-    const hero = heroRef.current;
-    if (hero) {
-      const r = hero.getBoundingClientRect(), p = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - window.innerHeight)));
+    const hero = heroRef.current, pin = pinRef.current, track = trackRef.current, m = maisonRef.current, arch = archRef.current;
+    const rHero = hero ? hero.getBoundingClientRect() : null;
+    const rPin = pin && track && pinMax.current ? pin.getBoundingClientRect() : null;
+    const rMaison = m && arch ? m.getBoundingClientRect() : null;
+    if (rHero) {
+      const r = rHero, p = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - window.innerHeight)));
       sceneRef.current?.setProgress(p);
       // pendant la porte, la feuille de style garde le slogan caché (aucun style en ligne)
       const fade = litRef.current ? String(1 - Math.min(1, p / 0.06)) : "";
@@ -143,16 +148,14 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
       setCapShow(p > 0.04);
       setStation(Math.min(2, Math.round(p * 2)));
     }
-    const pin = pinRef.current, track = trackRef.current;
-    if (pin && track && pinMax.current) {
-      const r = pin.getBoundingClientRect(), p = Math.min(1, Math.max(0, -r.top / (r.height - window.innerHeight)));
+    if (rPin && track) {
+      const r = rPin, p = Math.min(1, Math.max(0, -r.top / (r.height - window.innerHeight)));
       track.style.transform = `translate3d(${-p * pinMax.current}px,0,0)`;
       const w = waveRef.current;
       if (w) w.style.strokeDashoffset = String(Number(w.dataset.len || 0) * (1 - p));
     }
-    const m = maisonRef.current, arch = archRef.current;
-    if (m && arch) {
-      const r = m.getBoundingClientRect(), mp = Math.min(1, Math.max(0, (window.innerHeight * 0.55 - r.top) / (r.height * 0.8)));
+    if (rMaison && arch) {
+      const r = rMaison, mp = Math.min(1, Math.max(0, (window.innerHeight * 0.55 - r.top) / (r.height * 0.8)));
       arch.style.setProperty("--mp", prefersReduced() ? "1" : mp.toFixed(3));
     }
   }, []);
@@ -182,22 +185,38 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
     layoutPin();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", layoutPin);
-    let raf = 0;
+    let raf = 0, alive = true;
     if (window.matchMedia("(min-width: 900px)").matches && !prefersReduced()) {
-      const lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
-      lenisRef.current = lenis;
-      if (!readVerified()) lenis.stop();
-      const loop = (t: number) => { lenis.raf(t); raf = requestAnimationFrame(loop); };
-      raf = requestAnimationFrame(loop);
+      // Lenis ne sert qu'au bureau : chargé à part, il ne pèse plus sur le premier chargement des téléphones
+      import("lenis").then(({ default: LenisCtor }) => {
+        if (!alive) return;
+        const lenis = new LenisCtor({ lerp: 0.09, smoothWheel: true });
+        lenisRef.current = lenis;
+        if (!readVerified()) lenis.stop();
+        const loop = (t: number) => { lenis.raf(t); raf = requestAnimationFrame(loop); };
+        raf = requestAnimationFrame(loop);
+      }).catch(() => { /* défilement natif */ });
     }
     const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: 0.15 });
     rootRef.current?.querySelectorAll(".rv").forEach((el) => io.observe(el));
     return () => {
+      alive = false;
       window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", layoutPin);
       cancelAnimationFrame(raf); lenisRef.current?.destroy(); lenisRef.current = null; io.disconnect();
     };
   }, [layoutPin, onScroll]);
   useEffect(() => { layoutPin(); }, [filter, lots.length, lit, layoutPin]);
+
+  // ---- boucles décoratives (néon, feuille d'or, bandeau, flottement des lots) : en pause hors écran ----
+  // Par section et non par carte : les dix lots flottent en phase, ils doivent s'arrêter et repartir ensemble.
+  // La maison n'a pas de boucle : data-idle y rend seulement les couches GPU de l'arche quand elle est loin.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver((es) => es.forEach((e) => e.target.toggleAttribute("data-idle", !e.isIntersecting)), { rootMargin: "120px 0px" });
+    root.querySelectorAll(".hero, .band, .collection, .grille, .maison, .final").forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [lots.length]);
 
   // ---- pochon 3D ----
   const [pouchFail, setPouchFail] = useState(false);

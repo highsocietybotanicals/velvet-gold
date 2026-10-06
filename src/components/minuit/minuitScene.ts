@@ -29,6 +29,35 @@ const sstep = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
+/**
+ * Douglas-Peucker sur un contour fermé : retire les points situés à moins de `tol` (unités du SVG) de la
+ * ligne brisée conservée. Aucun point n'est ajouté ni déplacé, donc la silhouette ne s'écarte pas de plus
+ * de `tol` de l'actuelle, et les grandes courbes gardent leurs facettes.
+ */
+function simplifyRing(pts: THREE.Vector2[], tol: number): THREE.Vector2[] {
+  let n = pts.length;
+  if (n > 2 && pts[0].equals(pts[n - 1])) n--;
+  if (n < 5) return pts.slice(0, n);
+  const keep = new Uint8Array(n), t2 = tol * tol;
+  let far = 0, fd = -1;
+  for (let i = 1; i < n; i++) { const d = pts[i].distanceToSquared(pts[0]); if (d > fd) { fd = d; far = i; } }
+  keep[0] = keep[far] = 1;
+  const stack: [number, number][] = [[0, far], [far, n]];
+  while (stack.length) {
+    const [a, b] = stack.pop()!, A = pts[a], B = pts[b % n], dx = B.x - A.x, dy = B.y - A.y, L = dx * dx + dy * dy;
+    let mi = -1, md = t2;
+    for (let i = a + 1; i < b; i++) {
+      const P = pts[i], t = L > 0 ? Math.max(0, Math.min(1, ((P.x - A.x) * dx + (P.y - A.y) * dy) / L)) : 0;
+      const ex = A.x + t * dx - P.x, ey = A.y + t * dy - P.y, d = ex * ex + ey * ey;
+      if (d > md) { md = d; mi = i; }
+    }
+    if (mi >= 0) { keep[mi] = 1; stack.push([a, mi], [mi, b]); }
+  }
+  const out: THREE.Vector2[] = [];
+  for (let i = 0; i < n; i++) if (keep[i]) out.push(pts[i]);
+  return out.length >= 3 ? out : pts.slice(0, n);
+}
+
 /** Charge la première source qui répond (bucket, puis détourage du code, puis photo). */
 function loadFirst(loader: THREE.TextureLoader, srcs: string[], done: (t: THREE.Texture, i: number) => void, i = 0) {
   if (i >= srcs.length) return;
@@ -94,6 +123,20 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
   const mirrorRender = mirror.onBeforeRender.bind(mirror);
   let mirrorTick = 0;
   mirror.onBeforeRender = (...a: Parameters<typeof mirrorRender>) => { if (quality < 2 || mirrorTick++ % 2 === 0) mirrorRender(...a); };
+  // cran 3 sur téléphone ou tablette (lite compris : lite n'existe que sous 900 px) qui peine encore à
+  // résolution réduite : plus de second rendu de la scène, le sol devient un plan sombre et métallique qui
+  // garde l'éclat de l'envMap. Sur ordinateur, rien ne change : le miroir reste, une image sur deux dès le
+  // cran 2, comme avant.
+  let floorAlt: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial> | null = null;
+  if (MOBILE || o.lite) {
+    floorAlt = new THREE.Mesh(new THREE.PlaneGeometry(16, 150), new THREE.MeshStandardMaterial({ color: 0x0b0a0b, metalness: 0.9, roughness: 0.32, envMapIntensity: 0.45 }));
+    floorAlt.rotation.x = -Math.PI / 2; floorAlt.position.copy(mirror.position); floorAlt.visible = false; scene.add(floorAlt);
+  }
+  // la cible du reflet suit la taille du canevas et le DPR effectif (redimensionnement comme baisse de qualité)
+  const fitMirror = () => {
+    const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight, d = renderer.getPixelRatio();
+    mirror.getRenderTarget().setSize(Math.round(w * d * MIRROR_RES), Math.round(h * d * MIRROR_RES));
+  };
   const pc = document.createElement("canvas"); pc.width = pc.height = 512;
   const px = pc.getContext("2d")!;
   px.fillStyle = "#fff"; px.fillRect(0, 0, 512, 512);
@@ -183,15 +226,28 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
     emblemBase = Math.min(vh * (MOBILE ? 0.36 : 0.42), vw * 0.62);
     emblem.position.set(0, 0.25 + vh * (MOBILE ? 0.16 : 0.12), 4.15); emblem.scale.setScalar(emblemBase);
   };
-  try {
-    const data = new SVGLoader().parse(o.emblemSvg), shapes: THREE.Shape[] = [];
-    data.paths.forEach((p) => shapes.push(...SVGLoader.createShapes(p)));
-    const geo = new THREE.ExtrudeGeometry(shapes, { depth: 110, bevelEnabled: true, bevelThickness: 26, bevelSize: 16, bevelSegments: 2, curveSegments: MOBILE ? 4 : 6 });
-    geo.center(); geo.computeBoundingBox();
-    const bb = geo.boundingBox!, hgt = bb.max.y - bb.min.y || 1;
-    const m = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: 0xe0b95e, metalness: 1, roughness: 0.27, clearcoat: o.lite ? 0 : 0.5, clearcoatRoughness: 0.25, envMapIntensity: 1.5, side: THREE.DoubleSide }));
-    m.scale.set(1 / hgt, -1 / hgt, 1 / hgt); emblem.add(m); emblem.visible = true;
-  } catch { /* emblème absent : le rideau suffit */ }
+  const buildEmblem = () => {
+    try {
+      const data = new SVGLoader().parse(o.emblemSvg), shapes: THREE.Shape[] = [];
+      data.paths.forEach((p) => shapes.push(...SVGLoader.createShapes(p)));
+      // mêmes points de contour qu'avant (curveSegments 4 / 6), moins ceux qui s'écartent de moins de 8 unités
+      // (mobile) ou 1 unité (bureau) de la ligne conservée : l'emblème fait ≈ 3 400 unités pour 360 à 400 px
+      // physiques sur mobile (< 0,9 px) et jusqu'à 900 px sur bureau (< 0,3 px). Biseau inchangé.
+      // Sommets : 235 662 → 40 488 (mobile), 344 598 → 96 468 (bureau) ; rendu figé comparé au pixel :
+      // seuls des pixels de bord isolés diffèrent (crénelage), aucune facette ni silhouette visible.
+      const cs = MOBILE ? 4 : 6, tol = MOBILE ? 8 : 1;
+      const lean = shapes.map((s) => {
+        const { shape, holes } = s.extractPoints(cs), out = new THREE.Shape(simplifyRing(shape, tol));
+        out.holes = holes.map((h) => new THREE.Path(simplifyRing(h, tol)));
+        return out;
+      });
+      const geo = new THREE.ExtrudeGeometry(lean, { depth: 110, bevelEnabled: true, bevelThickness: 26, bevelSize: 16, bevelSegments: 2, curveSegments: cs });
+      geo.center(); geo.computeBoundingBox();
+      const bb = geo.boundingBox!, hgt = bb.max.y - bb.min.y || 1;
+      const m = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: 0xe0b95e, metalness: 1, roughness: 0.27, clearcoat: o.lite ? 0 : 0.5, clearcoatRoughness: 0.25, envMapIntensity: 1.5, side: THREE.DoubleSide }));
+      m.scale.set(1 / hgt, -1 / hgt, 1 / hgt); emblem.add(m); emblem.visible = true;
+    } catch { /* emblème absent : le rideau suffit */ }
+  };
 
   // post-traitement (bureau) : lueur faible sur l'emblème, pleine dans le tunnel
   let composer: EffectComposer | null = null, bloom: UnrealBloomPass | null = null;
@@ -206,7 +262,7 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
   const resize = () => {
     const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
-    composer?.setSize(w, h);
+    composer?.setSize(w, h); fitMirror();
     if (state.phase === "gate") fitEmblem();
   };
   const onMove = (e: PointerEvent) => { state.mx = e.clientX / window.innerWidth - 0.5; state.my = e.clientY / window.innerHeight - 0.5; };
@@ -224,11 +280,10 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
   let fpsAcc = 0, fpsN = 0, slow = 0, lastT = 0, odd = false, settleUntil = Infinity;
   const degrade = () => {
     quality++;
+    if (floorAlt && quality >= 3 && mirror.visible) { mirror.visible = false; floorAlt.visible = true; }
     const d = dprFor(quality);
     if (d === renderer.getPixelRatio()) return;
-    renderer.setPixelRatio(d); composer?.setPixelRatio(d); resize();
-    const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
-    mirror.getRenderTarget().setSize(Math.round(w * d * MIRROR_RES), Math.round(h * d * MIRROR_RES));
+    renderer.setPixelRatio(d); composer?.setPixelRatio(d); resize(); // resize() recale aussi la cible du reflet
     dustMat.uniforms.uPR.value = d;
   };
   const measure = (now: number) => {
@@ -298,7 +353,13 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
     ready = true; settleUntil = performance.now() + 2500;
     if (!raf) raf = requestAnimationFrame(frame);
   };
-  renderer.compileAsync(scene, camera).then(start, start);
+  // Porte déjà passée (session) : MinuitHome appelle lift(true) juste après la création, l'emblème ne
+  // serait jamais visible. On attend donc la fin de la tâche en cours pour décider de le construire.
+  Promise.resolve().then(() => {
+    if (disposed) return;
+    if (state.phase === "gate") buildEmblem();
+    renderer.compileAsync(scene, camera).then(start, start);
+  });
   setTimeout(start, 4000);
 
   return {
@@ -316,6 +377,10 @@ export function createMinuitScene(canvas: HTMLCanvasElement, o: MinuitSceneOptio
       window.removeEventListener("resize", resize); window.removeEventListener("pointermove", onMove);
       document.removeEventListener("visibilitychange", onVis);
       composer?.dispose(); renderer.dispose(); pmrem.dispose();
+      if (floorAlt) { floorAlt.geometry.dispose(); floorAlt.material.dispose(); }
+      // page quittée (canevas retiré du DOM) : le contexte WebGL et sa mémoire sont rendus tout de suite,
+      // sans attendre le ramasse-miettes. Canevas encore en place (rechargement à chaud) : on le garde.
+      if (!canvas.isConnected) renderer.forceContextLoss();
     },
   };
 }

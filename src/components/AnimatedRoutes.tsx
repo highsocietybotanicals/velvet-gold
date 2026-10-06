@@ -1,7 +1,6 @@
-import { lazy, Suspense } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import PageTransition from "./PageTransition";
+import { lazy, Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Routes, Route, useLocation, type Location } from "react-router-dom";
+import PageTransition, { PagePresenceContext } from "./PageTransition";
 import Index from "@/pages/Index";
 
 // Lazy load non-critical pages for faster initial load
@@ -56,12 +55,50 @@ const LazyFallback = () => (
   </div>
 );
 
+// Durée du fondu de sortie (.page-transition-exit dans index.css)
+const EXIT_MS = 400;
+
 const AnimatedRoutes = () => {
   const location = useLocation();
 
+  // Équivalent CSS d'AnimatePresence mode="wait" : à un changement de chemin, l'ancienne page reste
+  // affichée le temps de son fondu de sortie, puis la nouvelle est montée (avec son fondu d'entrée).
+  const [shown, setShown] = useState(location);
+  const latest = useRef(location);
+  latest.current = location;
+  const withExit = useRef(0); // nombre de PageTransition montées (les seules à avoir une sortie en fondu)
+  const exiting = shown.pathname !== location.pathname;
+  // même chemin (recherche, ancre…) : on suit sans transition, pour que la page qui s'efface garde ses paramètres exacts
+  if (!exiting && shown !== location) setShown(location);
+
+  const exitDone = useCallback(() => setShown(latest.current), []);
+  const register = useCallback(() => {
+    withExit.current += 1;
+    return () => { withExit.current -= 1; };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!exiting) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (withExit.current === 0 || reduce) { exitDone(); return; } // rien à faire disparaître : bascule immédiate
+    const t = window.setTimeout(exitDone, EXIT_MS + 100); // filet si animationend n'arrive jamais
+    return () => window.clearTimeout(t);
+  }, [exiting, exitDone]);
+
+  const presence = useMemo(() => ({ exiting, register, exitDone }), [exiting, register, exitDone]);
+  const current: Location = exiting ? shown : location;
+  // élément mémorisé : pendant la sortie, la page qui s'efface n'est pas re-rendue (seul son conteneur change de classe)
+  const routes = useMemo(() => renderRoutes(current), [current]);
+
   return (
     <Suspense fallback={<LazyFallback />}>
-      <AnimatePresence mode="wait">
+      <PagePresenceContext.Provider value={presence}>{routes}</PagePresenceContext.Provider>
+    </Suspense>
+  );
+};
+
+function renderRoutes(location: Location) {
+  return (
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
           <Route path="/catalogue" element={<PageTransition><CataloguePage /></PageTransition>} />
@@ -115,9 +152,7 @@ const AnimatedRoutes = () => {
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
 
         </Routes>
-      </AnimatePresence>
-    </Suspense>
   );
-};
+}
 
 export default AnimatedRoutes;

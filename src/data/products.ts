@@ -1,21 +1,23 @@
 // Images pour les 7 produits - Style Haute Joaillerie
+// Photos livrées en WebP 900 px (vite-imagetools, à la compilation) : même cadrage, 57 à 114 Ko
+// au lieu de 1,1 à 1,6 Mo (PNG déguisés en .jpg). Les fichiers sources restent intacts dans src/assets.
 // Fleurs Premium
-import blueMango from "@/assets/flowers/blue-mango-real.jpg";
-import nineOneOne from "@/assets/flowers/911-og-real.jpg";
-import mintKush from "@/assets/flowers/mint-kush-real.jpg";
-import platinumOG from "@/assets/flowers/platinum-og-real.jpg";
-import amnesiaOniria from "@/assets/flowers/amnesia-oniria-real.jpg";
-import mangoXIce from "@/assets/flowers/mango-x-ice-real.jpg";
+import blueMango from "@/assets/flowers/blue-mango-real.jpg?w=900&quality=82&format=webp";
+import nineOneOne from "@/assets/flowers/911-og-real.jpg?w=900&quality=82&format=webp";
+import mintKush from "@/assets/flowers/mint-kush-real.jpg?w=900&quality=82&format=webp";
+import platinumOG from "@/assets/flowers/platinum-og-real.jpg?w=900&quality=82&format=webp";
+import amnesiaOniria from "@/assets/flowers/amnesia-oniria-real.jpg?w=900&quality=82&format=webp";
+import mangoXIce from "@/assets/flowers/mango-x-ice-real.jpg?w=900&quality=82&format=webp";
 
 // Résines Premium
-import iceOLator from "@/assets/resins/ice-o-lator-real.jpg";
-import goldenCBN from "@/assets/resins/golden-cbn-real.jpg";
-import hariboPremium from "@/assets/resins/haribo-premium.jpg";
-import heisenbergPremium from "@/assets/resins/heisenberg-premium.jpg";
-import poussiereDorPremium from "@/assets/resins/poussiere-dor-premium.jpg";
-import piatellaImg from "@/assets/resins/piatella.jpg";
-import bhmImg from "@/assets/resins/bhm-real.jpg";
-import lemonPunchHashImg from "@/assets/resins/lemon-punch-hash-real.jpg";
+import iceOLator from "@/assets/resins/ice-o-lator-real.jpg?w=900&quality=82&format=webp";
+import goldenCBN from "@/assets/resins/golden-cbn-real.jpg?w=900&quality=82&format=webp";
+import hariboPremium from "@/assets/resins/haribo-premium.jpg?w=900&quality=82&format=webp";
+import heisenbergPremium from "@/assets/resins/heisenberg-premium.jpg?w=900&quality=82&format=webp";
+import poussiereDorPremium from "@/assets/resins/poussiere-dor-premium.jpg?w=900&quality=82&format=webp";
+import piatellaImg from "@/assets/resins/piatella.jpg?w=900&quality=82&format=webp";
+import bhmImg from "@/assets/resins/bhm-real.jpg?w=900&quality=82&format=webp";
+import lemonPunchHashImg from "@/assets/resins/lemon-punch-hash-real.jpg?w=900&quality=82&format=webp";
 import bhmVideo from "@/assets/videos/bubble-hash-maturer.mp4.asset.json";
 import lemonPunchHashVideo from "@/assets/videos/lemon-punch-hash.mp4.asset.json";
 

@@ -31,7 +31,7 @@ let drawnOnce = false;
 const prefersStill = () =>
   typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-/** Téléphone modeste : pas de balayage, un seul phare, pulsations figées. */
+/** Téléphone modeste : carte figée après son tracé — pas de balayage, aucun phare, pulsations immobiles. */
 const liteDevice = () =>
   typeof window !== "undefined" && !!window.matchMedia?.("(max-width: 899px)").matches && isLowEnd();
 
@@ -98,7 +98,10 @@ const RouteBand = ({ children }: { children: ReactNode }) => {
         const { move, fade, duration } = lightFrames(LIGHT_PATHS[i % LIGHT_PATHS.length], s);
         const delay = (first ? DRAW_END * 1000 : 700) + i * 2300;
         const opts: KeyframeAnimationOptions = { duration, delay, iterations: Infinity, easing: "linear" };
-        anims.push(el.animate(move, opts), el.animate(fade, opts));
+        // Une seule animation par phare : trajet (transform) et fondu (opacity) partagent le même
+        // minutage, donc mêmes images clés par propriété, fusionnées et triées par offset (tri stable).
+        const frames = [...move, ...fade].sort((a, b) => (a.offset ?? 0) - (b.offset ?? 0));
+        anims.push(el.animate(frames, opts));
       });
       if (!visible) anims.forEach((a) => a.pause());
     };
@@ -136,7 +139,7 @@ const RouteBand = ({ children }: { children: ReactNode }) => {
 
   const bandCls = ["cm-band", first && "is-first", off && "is-off"].filter(Boolean).join(" ");
   const mapCls = ["cm-map", first ? "is-drawing" : "is-ping", lite && "cm-lite"].filter(Boolean).join(" ");
-  const lightCount = lite ? 1 : LIGHT_PATHS.length;
+  const lightCount = lite ? 0 : LIGHT_PATHS.length;
   const pulseStart = first ? DRAW_END : 0;
 
   return (

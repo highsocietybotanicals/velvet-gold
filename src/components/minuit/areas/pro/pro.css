@@ -26,6 +26,8 @@ html.mn-pro .pr-neon-sign { font-family: var(--mn-neon); font-weight: 400; line-
 @keyframes pr-flick { 0% { opacity: 0 } 8% { opacity: .9 } 10% { opacity: .1 } 14% { opacity: 1 } 22% { opacity: .25 } 26% { opacity: 1 } 60% { opacity: .82 } 62%, 100% { opacity: 1 } }
 @media (hover: hover) and (min-width: 900px) {
   html.mn-pro .pr-neon-sign { animation: pr-flick 2.6s steps(1) .3s both, pr-hum 7s ease-in-out 3.2s infinite; }
+  /* hors écran (ProNeonSign) : seul le bourdonnement infini se met en pause, l'allumage n'est jamais retardé */
+  html.mn-pro .pr-neon-sign.is-off { animation-play-state: running, paused; }
 }
 @keyframes pr-hum { 0%, 100% { opacity: 1 } 48% { opacity: .94 } 50% { opacity: .8 } 52% { opacity: .97 } }
 
@@ -70,8 +72,12 @@ html.mn-pro .pr-brass-nav::-webkit-scrollbar { display: none; }
 html.mn-pro .pr-tab { position: relative; display: flex; align-items: center; gap: 8px; flex: none; padding: 7px 12px; border-radius: 2px; text-decoration: none; white-space: nowrap;
   font-family: var(--mn-neon); font-weight: 400; font-size: 17px; line-height: 1.2; letter-spacing: .03em; color: #120C03; text-shadow: 0 1px 0 rgba(255, 242, 205, .6);
   -webkit-text-stroke: .6px currentColor; /* Poiret One est filiforme : on épaissit la gravure pour la lisibilité */
-  transition: box-shadow .3s, color .3s; }
-html.mn-pro .pr-tab:hover { color: #000; box-shadow: inset 0 0 0 1px rgba(46, 32, 8, .4); }
+  transition: color .3s; }
+html.mn-pro .pr-tab:hover { color: #000; }
+/* filet de survol pré-dessiné sur un calque, fondu d'opacité (aucune ombre repeinte à chaque image) */
+html.mn-pro .pr-tab:not(.is-active)::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(46, 32, 8, .4); opacity: 0; transition: opacity .3s; }
+html.mn-pro .pr-tab:not(.is-active):hover::before { opacity: 1; }
 /* libellé du tube (icône, texte, compteur) : seule son opacité s'anime à l'allumage */
 html.mn-pro .pr-tab-l { display: inline-flex; align-items: center; gap: inherit; }
 /* onglet actif : couleur et lueur fixes ; isolation pour glisser le halo entre le fond et le libellé */
@@ -167,6 +173,8 @@ html.mn-pro .pr-card-glare { position: absolute; left: 20%; top: -30%; width: 60
   background: radial-gradient(closest-side, rgba(255, 244, 214, .2), transparent);
   transform: translate3d(calc(var(--px) * 55%), calc(var(--py) * 70%), 0); }
 html.mn-pro .pr-scene.is-on .pr-card-glare { opacity: 1; }
+/* l'éclat ne s'allume qu'au survol à la souris : ailleurs (tactile, pose fixe) il reste à 0 → on retire le calque */
+html.mn-pro .pr-scene:not(.is-hover) .pr-card-glare { display: none; }
 /* tactile : calque resserré (inset -20 %) en fusion normale, pour ne pas recomposer la carte à chaque image */
 html.mn-pro .pr-scene.is-auto .pr-card-holo { inset: -20%; mix-blend-mode: normal; opacity: .6;
   animation: pr-holo 7s ease-in-out infinite alternate; animation-play-state: paused; }
@@ -264,7 +272,12 @@ html.mn-pro .pr-rope-plate { position: absolute; left: 50%; bottom: 0; transform
   box-shadow: inset 0 1px 0 rgba(255, 248, 222, .7), 0 12px 24px -10px rgba(0, 0, 0, .9); }
 
 /* privilèges */
-html.mn-pro .pr-privs { max-width: 1240px; margin: 0 auto; padding: clamp(20px, 4vh, 50px) var(--mn-gut) clamp(60px, 10vh, 110px); }
+html.mn-pro .pr-privs { max-width: 1240px; margin: 0 auto; padding: clamp(20px, 4vh, 50px) var(--mn-gut) clamp(60px, 10vh, 110px);
+  /* sous la ligne de flottaison : ni mise en page ni peinture tant qu'elle n'approche pas de l'écran (rien ne déborde de la section).
+     Hauteurs de réserve = hauteurs réelles mesurées (390 px : 1576 · 320 px : 1759 · 640-1023 px : 956-998 · ≥ 1024 px : 767-774) */
+  content-visibility: auto; contain-intrinsic-size: auto 1600px; }
+@media (min-width: 640px) { html.mn-pro .pr-privs { contain-intrinsic-size: auto 980px; } }
+@media (min-width: 1024px) { html.mn-pro .pr-privs { contain-intrinsic-size: auto 775px; } }
 html.mn-pro .pr-sec-hd { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; margin-bottom: clamp(24px, 4vh, 42px); padding-bottom: 18px; border-bottom: 1px solid var(--mn-ligne); }
 html.mn-pro.mn-skin .pr-sec-hd h2 { margin: 8px 0 0; font-size: clamp(32px, 4.6vw, 60px); line-height: 1; color: var(--mn-ivoire); }
 html.mn-pro .pr-sec-hd .pr-sec-aside { max-width: 360px; font-size: 13px; line-height: 1.7; color: var(--mn-ivoire-2); }
@@ -273,7 +286,7 @@ html.mn-pro .pr-privs-grid { display: grid; grid-template-columns: repeat(3, min
 @media (max-width: 639px) { html.mn-pro .pr-privs-grid { grid-template-columns: minmax(0, 1fr); } }
 html.mn-pro.mn-skin .pr-priv { position: relative; overflow: hidden; border: 1px solid var(--mn-ligne); border-radius: 2px; color: var(--mn-ivoire);
   background-color: transparent; background-image: linear-gradient(165deg, rgba(201, 162, 74, .09), rgba(13, 11, 16, .96) 42%, #060508);
-  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .08); transition: transform .6s var(--mn-ease), border-color .4s; }
+  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .08); transition: transform .6s var(--mn-ease), border-color .4s; contain: layout paint style; }
 html.mn-pro .pr-priv::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--mn-or-clair), transparent); transform: scaleX(0); transition: transform .9s var(--mn-ease); }
 @media (hover: hover) {
   html.mn-pro.mn-skin .pr-priv:hover { transform: translateY(-4px); border-color: rgba(244, 220, 146, .45); }
@@ -308,7 +321,7 @@ html.mn-pro .pr-dossier-frame input, html.mn-pro .pr-dossier-frame textarea { fo
    ========================================================================== */
 html.mn-pro .pr-tier { position: relative; padding: 18px 20px; border: 1px solid rgba(201, 162, 74, .35); border-radius: 2px;
   background: linear-gradient(170deg, rgba(201, 162, 74, .1), rgba(10, 9, 12, .96) 45%, #060508);
-  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .1), 0 24px 50px -30px rgba(0, 0, 0, .9); }
+  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .1), 0 24px 50px -30px rgba(0, 0, 0, .9); contain: layout paint style; }
 html.mn-pro .pr-tier-ico { color: var(--mn-or); }
 html.mn-pro .pr-tier-g { font-family: var(--mn-mono); font-size: 22px; font-weight: 500; line-height: 1; white-space: nowrap; color: #FFF3D1; text-shadow: 0 0 8px rgba(244, 220, 146, .55); font-variant-numeric: tabular-nums; }
 html.mn-pro .pr-tier-lvl { font-family: var(--mn-mono); font-size: 11.5px; letter-spacing: .06em; color: var(--mn-ivoire-2); }
@@ -342,7 +355,7 @@ html.mn-pro .pr-seance b { color: var(--mn-or-clair); font-weight: 400; }
 @media (max-width: 1023px) { html.mn-pro .pr-cote-side { align-items: flex-start; text-align: left; } }
 
 /* bandeau défilant */
-html.mn-pro .pr-ticker { position: relative; display: flex; align-items: stretch; overflow: hidden; border-block: 1px solid var(--mn-ligne); background: #050407; }
+html.mn-pro .pr-ticker { position: relative; display: flex; align-items: stretch; overflow: hidden; border-block: 1px solid var(--mn-ligne); background: #050407; contain: layout paint style; }
 html.mn-pro .pr-ticker-lbl { position: relative; z-index: 1; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 14px;
   background: var(--pr-brosse), var(--pr-laiton); color: var(--pr-encre); text-shadow: 0 1px 0 rgba(255, 242, 205, .55);
   font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .26em; text-transform: uppercase; box-shadow: 8px 0 18px rgba(0, 0, 0, .8); }
@@ -352,6 +365,10 @@ html.mn-pro .pr-ticker-track { display: flex; width: max-content; animation: pr-
 html.mn-pro .pr-ticker.is-live .pr-ticker-track { animation-play-state: running; }
 @media (hover: hover) { html.mn-pro .pr-ticker:hover .pr-ticker-track { animation-play-state: paused; } }
 @keyframes pr-tick { to { transform: translate3d(-50%, 0, 0); } }
+/* téléphone modeste (ProTicker → .is-lite) : bandeau décoratif figé, défilable au doigt (même repli qu'en mouvement réduit) */
+html.mn-pro .pr-ticker.is-lite .pr-ticker-win { overflow-x: auto; scrollbar-width: none; }
+html.mn-pro .pr-ticker.is-lite .pr-ticker-win::-webkit-scrollbar { display: none; }
+html.mn-pro .pr-ticker.is-lite .pr-ticker-track { animation: none; }
 html.mn-pro .pr-ticker-it { display: inline-flex; align-items: baseline; gap: 10px; padding: 12px 22px; white-space: nowrap; border-right: 1px solid rgba(201, 162, 74, .14);
   font-family: var(--mn-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
 html.mn-pro .pr-ticker-it::before { content: "✦"; color: var(--mn-or); font-size: 9px; }
@@ -381,6 +398,9 @@ html.mn-pro.mn-skin main .pr-row.bg-card { position: relative; border: 0; border
   animation: pr-row-in .8s var(--mn-ease) calc(min(var(--i, 0), 12) * 60ms) backwards; transition: background-color .3s; }
 html.mn-pro.mn-skin main .pr-row.bg-card:last-child { border-bottom: 0; }
 @keyframes pr-row-in { from { opacity: 0; transform: translate3d(0, 16px, 0); } }
+/* ligne hors écran au premier affichage (ProBoard → [data-calm]) : entrée déjà jouée, état final immédiat
+   (retard négatif : l'animation naît terminée, sans calque ; rien ne redémarre quand l'attribut est retiré) */
+html.mn-pro.mn-skin main .pr-row.bg-card[data-calm], html.mn-pro .pr-row[data-calm] .pr-flap-c { animation-delay: -10s; }
 @media (hover: hover) { html.mn-pro.mn-skin main .pr-row.bg-card:hover { background-color: rgba(201, 162, 74, .04); } }
 html.mn-pro.mn-skin main .pr-row.bg-card:focus-within { background-color: rgba(201, 162, 74, .06); box-shadow: inset 2px 0 0 var(--mn-or); }
 html.mn-pro.mn-skin .pr-row-in { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: center; padding: 16px 18px; }
@@ -503,7 +523,9 @@ html.mn-pro .pr-plaque.is-sm .pr-plaque-t small { font-size: 7px; }
 /* registres : cartes noires, filets d'or, marge de grand livre */
 html.mn-pro.mn-skin main .pr-ledger.bg-card { position: relative; overflow: hidden; border: 1px solid rgba(201, 162, 74, .3); border-radius: 2px; color: var(--mn-ivoire);
   background-color: #070609; background-image: repeating-linear-gradient(180deg, transparent 0 39px, rgba(201, 162, 74, .035) 39px 40px);
-  box-shadow: 0 30px 60px -36px rgba(0, 0, 0, .95), inset 0 1px 0 rgba(244, 220, 146, .08); }
+  box-shadow: 0 30px 60px -36px rgba(0, 0, 0, .95), inset 0 1px 0 rgba(244, 220, 146, .08); contain: layout paint style; }
+/* registre des commandes (souvent long, sous la ligne de flottaison sur téléphone) : rendu différé jusqu'à l'approche de l'écran */
+html.mn-pro.mn-skin .pr-registre .pr-ledger.bg-card { content-visibility: auto; contain-intrinsic-size: auto 420px; }
 html.mn-pro .pr-ledger::before { content: ""; position: absolute; top: 0; bottom: 0; left: 14px; width: 4px; border-left: 1px solid rgba(201, 162, 74, .32); border-right: 1px solid rgba(201, 162, 74, .16); pointer-events: none; z-index: 1; }
 html.mn-pro.mn-skin .pr-ledger-hd { padding: 16px 20px 14px 30px; border-bottom: 1px solid rgba(201, 162, 74, .3); background: linear-gradient(90deg, rgba(201, 162, 74, .1), transparent 70%); }
 html.mn-pro.mn-skin .pr-ledger-hd h2, html.mn-pro.mn-skin .pr-ledger-hd h3 { margin: 0; font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: 22px; line-height: 1.1; letter-spacing: -.005em; color: var(--mn-or-clair); }
@@ -553,7 +575,7 @@ html.mn-pro .pr-perf::before { content: ""; position: absolute; left: 0; right: 
   background: radial-gradient(circle at 8px 6px, #060508 4.5px, transparent 5px) 0 0 / 16px 12px repeat-x; }
 html.mn-pro.mn-skin main .pr-arrete.bg-card, html.mn-pro.mn-skin main .pr-reglement.bg-card { position: relative; overflow: hidden; border: 1px solid rgba(201, 162, 74, .3); border-radius: 2px; color: var(--mn-ivoire);
   background-color: #08070A; background-image: radial-gradient(ellipse 80% 60% at 100% 0%, rgba(201, 162, 74, .08), transparent 70%);
-  box-shadow: 0 30px 60px -36px rgba(0, 0, 0, .95), inset 0 1px 0 rgba(244, 220, 146, .08); }
+  box-shadow: 0 30px 60px -36px rgba(0, 0, 0, .95), inset 0 1px 0 rgba(244, 220, 146, .08); contain: layout paint style; }
 /* en-tête de l'arrêté : titre à gauche, plaque de membre à droite (dans le flux, rien ne passe dessous ; repli à la ligne si étroit) */
 html.mn-pro.mn-skin .pr-arrete-hd { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; }
 html.mn-pro.mn-skin .pr-arrete-hd > * { margin-top: 0; }

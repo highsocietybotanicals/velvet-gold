@@ -24,6 +24,8 @@ html.mn-commercial .cm-root {
    ========================================================================== */
 html.mn-commercial .cm-band {
   position: relative; isolation: isolate; overflow: hidden;
+  /* perf : la carte (repeintures du tracé, cadrage JS) n'invalide rien hors du bandeau */
+  contain: layout paint style;
   background: radial-gradient(ellipse 55% 90% at 64% 38%, rgba(201, 162, 74, .1), transparent 72%), #060508;
   border-bottom: 1px solid var(--mn-ligne);
 }
@@ -40,7 +42,8 @@ html.mn-commercial .cm-band::after {
   }
 }
 
-html.mn-commercial .cm-map { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+/* contain: strict — sa taille vient de inset:0 (pas de ses enfants) et il est déjà rogné par le bandeau */
+html.mn-commercial .cm-map { position: absolute; inset: 0; z-index: -1; pointer-events: none; contain: strict; }
 /* la plaque garde le rapport 10/3 de la carte ; sa taille exacte et son cadrage sont posés en JS */
 html.mn-commercial .cm-plate {
   position: absolute; left: 0; top: 0;
@@ -133,11 +136,19 @@ html.mn-commercial .cm-light i::before {
 html.mn-commercial .cm-band.is-off [class*="cm-"],
 html.mn-commercial .cm-band.is-off [class*="cm-"]::before,
 html.mn-commercial .cm-band.is-off [class*="cm-"]::after { animation-play-state: paused !important; }
+/* hors écran : on rend aussi les calques composités (texture du balayage, phares) */
+html.mn-commercial .cm-band.is-off .cm-sweep,
+html.mn-commercial .cm-band.is-off .cm-light { will-change: auto; }
 
-/* téléphone modeste : pas de balayage, une seule pulsation */
-html.mn-commercial .cm-map.cm-lite .cm-sweep { display: none; }
+/* téléphone modeste : carte figée après son tracé (aucune boucle infinie) — pas de balayage,
+   pas de phare (RouteBand n'en crée aucun), pulsations immobiles ; la maison garde ses deux anneaux
+   dans l'état statique de « réduire les animations ». */
+html.mn-commercial .cm-map.cm-lite .cm-sweep,
+html.mn-commercial .cm-map.cm-lite .cm-light { display: none; }
 html.mn-commercial .cm-map.cm-lite .cm-node:not(.cm-node--hq)::before,
 html.mn-commercial .cm-map.cm-lite .cm-node:not(.cm-node--hq)::after { animation: none; opacity: .35; transform: scale(.5); }
+html.mn-commercial .cm-map.cm-lite .cm-node--hq::before { animation: none; opacity: .45; transform: scale(1.1); }
+html.mn-commercial .cm-map.cm-lite .cm-node--hq::after { animation: none; opacity: .2; transform: scale(1.8); }
 
 /* ---------- contenu du bandeau ---------- */
 html.mn-commercial .cm-band-in {
@@ -332,6 +343,21 @@ html.mn-commercial main .cm-page .border.bg-card {
   position: relative; border-radius: 2px; border-color: var(--cm-hair);
   background-image: linear-gradient(165deg, rgba(201, 162, 74, .065), rgba(13, 11, 16, .95) 38%, rgba(6, 5, 8, .98));
   box-shadow: inset 0 1px 0 rgba(244, 220, 146, .06), 0 26px 50px -38px rgba(0, 0, 0, .95);
+}
+/* perf : chaque feuillet est isolé (mise en page, peinture, compteurs). Rien n'y déborde (les menus
+   Radix sont rendus dans un portail) ; exception : la chemise de document, dont l'onglet dépasse au-dessus. */
+html.mn-commercial main .cm-page .border.bg-card:not(.cm-doc) { contain: layout paint style; }
+/* perf : listes longues (fiches de lot avec leur grille de prix, étapes de la tournée, journaux de
+   commissions) : hors écran, ni mise en page ni peinture. Largeur intrinsèque 0 (la grille impose la
+   largeur), hauteur estimée puis mémorisée dès le premier rendu (auto). */
+html.mn-commercial main .cm-page .border.bg-card.cm-lot {
+  content-visibility: auto; contain-intrinsic-size: 0 360px; contain-intrinsic-size: 0 auto 360px;
+}
+html.mn-commercial main .cm-page .border.bg-card.cm-etape {
+  content-visibility: auto; contain-intrinsic-size: 0 230px; contain-intrinsic-size: 0 auto 230px;
+}
+html.mn-commercial main .cm-page .border.bg-card:has(.cm-log--journal) {
+  content-visibility: auto; contain-intrinsic-size: 0 420px; contain-intrinsic-size: 0 auto 420px;
 }
 /* repères d'angle */
 html.mn-commercial main .cm-page .border.bg-card::before,

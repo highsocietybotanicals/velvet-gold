@@ -6,11 +6,12 @@ import cutBhm from "@/assets/cutouts/bhm.webp";
 import cutLemon from "@/assets/cutouts/lemon-punch-hash.webp";
 import cutMango from "@/assets/cutouts/mango-x-ice.webp";
 import cutPlatinum from "@/assets/cutouts/platinum-og.webp";
-import heroFlowers from "@/assets/hero-flowers-resin.jpg";
-import platinumPhoto from "@/assets/flowers/platinum-og-real.jpg";
-import amnesiaPhoto from "@/assets/flowers/amnesia-oniria-real.jpg";
-import mangoPhoto from "@/assets/flowers/mango-x-ice-real.jpg";
-import pochonPhoto from "@/assets/accessories/pochon-grand.jpg";
+// Replis WebP (vite-imagetools) : mêmes requêtes que products.ts / accessories.ts → même fichier, un seul téléchargement.
+import heroFlowers from "@/assets/hero-flowers-resin.jpg?w=1600&quality=78&format=webp";
+import platinumPhoto from "@/assets/flowers/platinum-og-real.jpg?w=900&quality=82&format=webp";
+import amnesiaPhoto from "@/assets/flowers/amnesia-oniria-real.jpg?w=900&quality=82&format=webp";
+import mangoPhoto from "@/assets/flowers/mango-x-ice-real.jpg?w=900&quality=82&format=webp";
+import pochonPhoto from "@/assets/accessories/pochon-grand.jpg?w=1200&quality=82&format=webp";
 
 /** Dossier public des visuels de la maquette (bucket social-media). Tant qu'un fichier n'y est pas, le repli s'affiche. */
 export const MEDIA = "https://pvwwxpcosiqetsflykmp.supabase.co/storage/v1/object/public/social-media/site-minuit/";

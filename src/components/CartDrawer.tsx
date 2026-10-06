@@ -497,6 +497,10 @@ const CartDrawer = () => {
                               <img
                                 src={item.product.image}
                                 alt={item.product.name}
+                                width={64}
+                                height={64}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-16 h-16 object-cover rounded-lg"
                                 onError={(e) => {
                                   e.currentTarget.src = '/placeholder.svg';
@@ -633,6 +637,10 @@ const CartDrawer = () => {
                               <img
                                 src={item.product.image}
                                 alt={item.product.name}
+                                width={40}
+                                height={40}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-10 h-10 object-cover rounded-lg"
                                 onError={(e) => {
                                   e.currentTarget.src = '/placeholder.svg';
@@ -692,6 +700,10 @@ const CartDrawer = () => {
                               <img
                                 src={item.accessory.image}
                                 alt={item.accessory.name}
+                                width={48}
+                                height={48}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-12 h-12 object-cover rounded-lg"
                                 onError={(e) => {
                                   e.currentTarget.src = '/placeholder.svg';

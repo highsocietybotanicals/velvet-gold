@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { isLowEnd } from "@/components/minuit/minuitData";
 
@@ -37,6 +37,8 @@ const sectionOf = (pathname: string) => {
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
+// Formateur créé une fois (même sortie que toLocaleDateString avec les mêmes options), pas un par tic.
+const DATE_FMT = new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short" });
 
 /*
  * Tracé d'oscilloscope : sinusoïde dont l'amplitude respire par salves.
@@ -57,35 +59,13 @@ const WAVE = (() => {
   return d;
 })();
 
-const AdminConsoleBar = ({ children }: { children?: ReactNode }) => {
-  const { pathname } = useLocation();
-  const sec = sectionOf(pathname);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  // Réglages lus une fois : petit écran ou mouvement réduit → heures et minutes seulement.
-  const [withSeconds] = useState(
-    () => typeof window !== "undefined" && !!window.matchMedia?.("(min-width: 640px) and (prefers-reduced-motion: no-preference)").matches
-  );
-  const [lite] = useState(() => isLowEnd());
-  const [inView, setInView] = useState(true);
-  const [pageVisible, setPageVisible] = useState(() => typeof document === "undefined" || !document.hidden);
+/*
+ * Horloge isolée : elle porte son propre état, si bien qu'à chaque tic seul ce petit composant se re-rend
+ * (le bandeau, la plaque gravée et l'oscilloscope ne sont plus recalculés chaque seconde).
+ * Même cadence qu'avant : calée sur la seconde (ou la minute), arrêtée hors écran et onglet caché.
+ */
+const AdminClock = memo(function AdminClock({ on, withSeconds }: { on: boolean; withSeconds: boolean }) {
   const [now, setNow] = useState(() => new Date());
-  const on = inView && pageVisible;
-
-  // L'horloge et l'oscilloscope ne tournent que si le bandeau est à l'écran et l'onglet visible.
-  useEffect(() => {
-    const el = rootRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting));
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const onVis = () => setPageVisible(!document.hidden);
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, []);
 
   useEffect(() => {
     if (!on) return;
@@ -103,7 +83,48 @@ const AdminConsoleBar = ({ children }: { children?: ReactNode }) => {
   const hh = pad(now.getHours());
   const mm = pad(now.getMinutes());
   const ss = pad(now.getSeconds());
-  const date = now.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+  const date = DATE_FMT.format(now);
+
+  return (
+    <div className="adm-clock" aria-hidden="true">
+      <span className="adm-time">
+        <span className="adm-lamp" />
+        {hh}:{mm}
+        {withSeconds && <small>:{ss}</small>}
+      </span>
+      <span className="adm-date">{date}</span>
+    </div>
+  );
+});
+
+const AdminConsoleBar = ({ children }: { children?: ReactNode }) => {
+  const { pathname } = useLocation();
+  const sec = sectionOf(pathname);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Réglages lus une fois : petit écran ou mouvement réduit → heures et minutes seulement.
+  const [withSeconds] = useState(
+    () => typeof window !== "undefined" && !!window.matchMedia?.("(min-width: 640px) and (prefers-reduced-motion: no-preference)").matches
+  );
+  const [lite] = useState(() => isLowEnd());
+  const [inView, setInView] = useState(true);
+  const [pageVisible, setPageVisible] = useState(() => typeof document === "undefined" || !document.hidden);
+  const on = inView && pageVisible;
+
+  // L'horloge et l'oscilloscope ne tournent que si le bandeau est à l'écran et l'onglet visible.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const onVis = () => setPageVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
 
   const cls = ["adm-band", !on && "is-idle", lite && "is-lite"].filter(Boolean).join(" ");
   // Clé d'affichage : à chaque nouvelle section, la plaque se regrave et un reflet glisse sur la laque.
@@ -120,7 +141,10 @@ const AdminConsoleBar = ({ children }: { children?: ReactNode }) => {
             <span>Administration</span>
             {sec.n > 0 && <span className="adm-no" aria-hidden="true">N° {pad(sec.n)}</span>}
           </p>
-          <p className="adm-title">{sec.title}</p>
+          {/* gravure sans filtre : data-text alimente deux copies du titre (ombre et liseré) peintes sous la feuille d'or */}
+          <p className="adm-title" data-text={sec.title}>
+            <span>{sec.title}</span>
+          </p>
           <p className="adm-sub">{sec.sub}</p>
           {sec.n > 0 && (
             <span className="adm-ghost" aria-hidden="true">
@@ -129,14 +153,7 @@ const AdminConsoleBar = ({ children }: { children?: ReactNode }) => {
           )}
         </div>
 
-        <div className="adm-clock" aria-hidden="true">
-          <span className="adm-time">
-            <span className="adm-lamp" />
-            {hh}:{mm}
-            {withSeconds && <small>:{ss}</small>}
-          </span>
-          <span className="adm-date">{date}</span>
-        </div>
+        <AdminClock on={on} withSeconds={withSeconds} />
       </div>
 
       <div className="adm-scope" aria-hidden="true">

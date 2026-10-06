@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { embStyle } from "./proEmblem";
 
 /* Décors de l'Espace Pro « Le salon privé ». Purement visuels : aucune donnée, aucun état métier. */
@@ -30,6 +30,57 @@ export const ProReveal = ({ className, children }: { className?: string; childre
   }, []);
   return (
     <div ref={ref} className={className}>
+      {children}
+    </div>
+  );
+};
+
+/**
+ * Enseigne au néon (décor, aria-hidden). Rendu identique à un simple span.pr-neon-sign ;
+ * hors écran, la classe .is-off met en pause son bourdonnement infini (voir pro.css).
+ */
+export const ProNeonSign = ({ children }: { children: ReactNode }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver(([e]) => el.classList.toggle("is-off", !e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <span ref={ref} className="pr-neon-sign" aria-hidden="true">
+      {children}
+    </span>
+  );
+};
+
+/**
+ * Tableau de cote (div.pr-board). Au premier affichage, les lignes hors de l'écran sautent leur entrée
+ * animée (ligne + palettes), qui se jouerait sans être vue : elles sont d'emblée dans leur état final,
+ * comme dans l'original une fois l'entrée terminée. Une seule lecture de géométrie, au montage.
+ * Passé ce délai, [data-calm] est retiré : les palettes rebasculent normalement quand une cote change.
+ */
+export const ProBoard = ({ children }: { children: ReactNode }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const board = ref.current;
+    if (!board) return;
+    const vh = window.innerHeight;
+    // + 16 px : la mesure peut inclure le décalage de départ de l'entrée (translate 16 px) ; seule une ligne
+    // sûrement hors de l'écran est concernée
+    const calm = Array.from(board.children).filter((row) => {
+      const r = row.getBoundingClientRect();
+      return r.top >= vh + 16 || r.bottom <= 0;
+    });
+    if (!calm.length) return;
+    calm.forEach((row) => row.setAttribute("data-calm", ""));
+    // 3 s : au-delà de la plus longue entrée (ligne 13+ : 0,72 s de retard + palettes ≈ 1,8 s)
+    const t = window.setTimeout(() => calm.forEach((row) => row.removeAttribute("data-calm")), 3000);
+    return () => window.clearTimeout(t);
+  }, []);
+  return (
+    <div ref={ref} className="pr-board">
       {children}
     </div>
   );
