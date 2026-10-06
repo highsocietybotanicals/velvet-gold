@@ -22,6 +22,13 @@
       "when": 1790881871445,
       "tag": "0002_customer_crm_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791330591491,
+      "tag": "0003_contacts_insert_checks",
+      "breakpoints": true
     }
   ]
 }
