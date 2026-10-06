@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { BANK_DETAILS } from "@/lib/bankDetails";
+import { ProPlaque } from "@/components/minuit/areas/pro/ProDecor";
 
 const eur = (n: number) => `${Number(n || 0).toFixed(2)} €`;
 const dt = (d?: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "—");
@@ -109,14 +110,28 @@ const ProOrdersPage = () => {
   });
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold gold-text">Mes commandes & devis</h1>
+    <div className="pr-registre space-y-8">
+      <div className="pr-doc-hd">
+        <div>
+          <p className="pr-kicker">Registre du salon · factures et devis</p>
+          <h1>Mes commandes & devis</h1>
+        </div>
+        <div className="pr-doc-side">
+          <p className="pr-doc-meta">
+            Commandes <b>{ordersLoading ? "—" : orders?.length ?? 0}</b>
+            <br />
+            Devis <b>{quotesLoading ? "—" : quotes?.length ?? 0}</b>
+          </p>
+          <ProPlaque />
+        </div>
+      </div>
 
-      <Card>
+      {/* Coordonnées de virement : plaque de laiton gravée */}
+      <Card className="pr-plate">
         <CardHeader>
-          <CardTitle className="text-base">Coordonnées de règlement par virement</CardTitle>
+          <h2>Coordonnées de règlement par virement</h2>
         </CardHeader>
-        <CardContent className="space-y-1 text-sm">
+        <CardContent className="pr-plate-in space-y-1 text-sm">
           <p><span className="text-muted-foreground">Titulaire :</span> {BANK_DETAILS.holder}</p>
           <p><span className="text-muted-foreground">IBAN :</span> {BANK_DETAILS.iban}</p>
           <p><span className="text-muted-foreground">BIC :</span> {BANK_DETAILS.bic}</p>
@@ -126,9 +141,11 @@ const ProOrdersPage = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Commandes professionnelles</CardTitle>
+      {/* Registre des factures : feuillets sur téléphone */}
+      <Card className="pr-ledger pr-slips">
+        <CardHeader className="pr-ledger-hd">
+          <p className="pr-kicker">Factures</p>
+          <h2>Commandes professionnelles</h2>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           {ordersLoading ? (
@@ -136,7 +153,7 @@ const ProOrdersPage = () => {
               <Loader2 className="h-5 w-5 animate-spin text-gold" />
             </div>
           ) : !orders?.length ? (
-            <p className="p-6 text-sm text-muted-foreground">Aucune commande pour le moment.</p>
+            <p className="pr-ledger-empty">Aucune commande pour le moment.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -153,16 +170,19 @@ const ProOrdersPage = () => {
               <TableBody>
                 {orders.map((o: any) => (
                   <TableRow key={o.id}>
-                    <TableCell className="font-medium">{o.display_order_number}</TableCell>
-                    <TableCell>{dt(o.created_at)}</TableCell>
-                    <TableCell>{o.total_flower_weight} g</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
+                    <TableCell className="pr-name pr-span font-medium">{o.display_order_number}</TableCell>
+                    <TableCell data-label="Date">{dt(o.created_at)}</TableCell>
+                    <TableCell data-label="Poids">{o.total_flower_weight} g</TableCell>
+                    <TableCell data-label="Statut">
+                      <Badge variant="secondary" data-status={o.status}>
                         {orderStatusLabel[o.status] ?? o.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant={o.payment_status === "paid" ? "default" : "outline"}>
+                    <TableCell data-label="Paiement" className="pr-span">
+                      <Badge
+                        variant={o.payment_status === "paid" ? "default" : "outline"}
+                        data-pay={o.payment_status === "paid" ? "paid" : "due"}
+                      >
                         {o.payment_status === "paid"
                           ? "Payée"
                           : o.payment_method === "physical"
@@ -170,11 +190,12 @@ const ProOrdersPage = () => {
                           : `Virement — libellé ${o.display_order_number}`}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{eur(o.total_amount)}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell data-label="Montant TTC" className="pr-strong text-right">{eur(o.total_amount)}</TableCell>
+                    <TableCell className="pr-act text-right">
                       <Button
                         variant="outline"
                         size="sm"
+                        aria-label={`PDF, facture de la commande ${o.display_order_number}`}
                         onClick={() => openInvoice(o.id)}
                         disabled={loadingInvoice === o.id}
                       >
@@ -195,9 +216,10 @@ const ProOrdersPage = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Demandes de devis</CardTitle>
+      <Card className="pr-ledger pr-slips">
+        <CardHeader className="pr-ledger-hd">
+          <p className="pr-kicker">Proformas</p>
+          <h2>Demandes de devis</h2>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           {quotesLoading ? (
@@ -205,7 +227,7 @@ const ProOrdersPage = () => {
               <Loader2 className="h-5 w-5 animate-spin text-gold" />
             </div>
           ) : !quotes?.length ? (
-            <p className="p-6 text-sm text-muted-foreground">Aucun devis en cours.</p>
+            <p className="pr-ledger-empty">Aucun devis en cours.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -220,15 +242,15 @@ const ProOrdersPage = () => {
               <TableBody>
                 {quotes.map((q) => (
                   <TableRow key={q.id}>
-                    <TableCell>{dt(q.created_at)}</TableCell>
-                    <TableCell>{q.total_weight_g} g</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
+                    <TableCell data-label="Date">{dt(q.created_at)}</TableCell>
+                    <TableCell data-label="Poids">{q.total_weight_g} g</TableCell>
+                    <TableCell data-label="Statut" className="pr-span">
+                      <Badge variant="secondary" data-status={q.status}>
                         {quoteStatusLabel[q.status] ?? q.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{eur(q.total_ht)}</TableCell>
-                    <TableCell className="text-right">{eur(q.total_ttc)}</TableCell>
+                    <TableCell data-label="Total HT" className="text-right">{eur(q.total_ht)}</TableCell>
+                    <TableCell data-label="Total TTC" className="pr-strong text-right">{eur(q.total_ttc)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

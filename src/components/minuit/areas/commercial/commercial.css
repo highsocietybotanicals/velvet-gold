@@ -1,0 +1,645 @@
+/* ==========================================================================
+   Espace commercial — « La feuille de route » (DA Minuit Carat).
+   Toutes les règles sont préfixées html.mn-commercial (classe posée par
+   useMinuitSkin("commercial")) : rien ne fuit vers le reste du site.
+   Mouvement : transform et opacity uniquement ; tout se met en pause hors écran
+   (classe is-off posée par un IntersectionObserver) et devient immobile avec
+   « réduire les animations ». Aucun backdrop-filter.
+   ========================================================================== */
+
+/* ---------- 0. racine ---------- */
+html.mn-commercial .cm-root {
+  --cm-ink: #08070A;
+  --cm-plate: #0D0B10;
+  --cm-hair: rgba(201, 162, 74, .2);
+  min-height: 100vh;
+  background: radial-gradient(ellipse 80% 40% at 70% 0%, rgba(201, 162, 74, .06), transparent 70%) no-repeat, var(--mn-nuit);
+  color: var(--mn-ivoire);
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+/* ==========================================================================
+   1. Bandeau : carte de nuit
+   ========================================================================== */
+html.mn-commercial .cm-band {
+  position: relative; isolation: isolate; overflow: hidden;
+  background: radial-gradient(ellipse 55% 90% at 64% 38%, rgba(201, 162, 74, .1), transparent 72%), #060508;
+  border-bottom: 1px solid var(--mn-ligne);
+}
+/* voile de lecture : texte à gauche, carte à droite */
+html.mn-commercial .cm-band::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(6, 5, 8, .94) 0%, rgba(6, 5, 8, .8) 30%, rgba(6, 5, 8, .14) 56%, rgba(6, 5, 8, 0) 70%),
+    linear-gradient(180deg, rgba(6, 5, 8, 0) 70%, rgba(6, 5, 8, .9));
+}
+@media (max-width: 899px) {
+  html.mn-commercial .cm-band::after {
+    background: linear-gradient(180deg, rgba(6, 5, 8, .62) 0%, rgba(6, 5, 8, 0) 15%, rgba(6, 5, 8, 0) 36%, rgba(6, 5, 8, .88) 58%, rgba(6, 5, 8, .97) 100%);
+  }
+}
+
+html.mn-commercial .cm-map { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+/* la plaque garde le rapport 10/3 de la carte ; sa taille exacte et son cadrage sont posés en JS */
+html.mn-commercial .cm-plate {
+  position: absolute; left: 0; top: 0;
+  width: max(100%, 1100px); aspect-ratio: 10 / 3;
+  transform-origin: 0 0;
+}
+html.mn-commercial .cm-plate > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* fond cartographique */
+html.mn-commercial .cm-topo path { fill: none; stroke: rgba(241, 232, 212, .07); stroke-width: 1; }
+html.mn-commercial .cm-rings circle { fill: none; stroke: rgba(201, 162, 74, .16); stroke-width: 1; stroke-dasharray: 2 7; }
+html.mn-commercial .cm-cross path { fill: none; stroke: rgba(201, 162, 74, .3); stroke-width: 1; }
+
+/* routes : halo fixe + filet fin, puis tracé d'or au-dessus */
+html.mn-commercial .cm-base polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+html.mn-commercial .cm-base-halo polyline { stroke: rgba(201, 162, 74, .09); stroke-width: 7; }
+html.mn-commercial .cm-base-halo polyline.is-link { stroke-width: 4; }
+html.mn-commercial .cm-base-thin polyline { stroke: rgba(201, 162, 74, .26); stroke-width: 1; }
+html.mn-commercial .cm-lit line { stroke-linecap: round; stroke-width: 1.8; }
+html.mn-commercial .cm-lit line.is-link { stroke-width: 1.1; opacity: .75; }
+html.mn-commercial .cm-dots circle { fill: #FFF3D1; }
+html.mn-commercial .cm-compass circle { fill: none; stroke: rgba(201, 162, 74, .35); stroke-width: 1; }
+html.mn-commercial .cm-compass path { fill: rgba(201, 162, 74, .55); }
+html.mn-commercial .cm-compass text { fill: var(--mn-or-clair); font-family: var(--mn-neon); font-size: 13px; }
+
+/* tracé : chaque tronçon grandit depuis son point de départ, dans l'ordre de la route */
+html.mn-commercial .cm-map.is-drawing .cm-lit line { animation: cm-seg var(--t) linear var(--d) backwards; }
+@keyframes cm-seg { from { transform: scale(0); opacity: 0; } 2% { opacity: 1; } to { transform: scale(1); opacity: 1; } }
+html.mn-commercial .cm-map.is-drawing .cm-dots circle { animation: cm-fade .5s ease-out var(--d) backwards; }
+html.mn-commercial .cm-map.is-drawing .cm-rings { animation: cm-fade 1.6s ease-out .2s backwards; }
+@keyframes cm-fade { from { opacity: 0; } }
+
+/* balayage de radar (calque composité : seule sa rotation bouge) */
+html.mn-commercial .cm-sweep {
+  position: absolute; border-radius: 50%; pointer-events: none; will-change: transform;
+  background: conic-gradient(from 0deg, rgba(244, 220, 146, 0) 0deg 292deg, rgba(244, 220, 146, .03) 306deg, rgba(244, 220, 146, .12) 346deg, rgba(255, 240, 200, .3) 359.4deg, rgba(244, 220, 146, 0) 360deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 52%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 52%, transparent 100%);
+  animation: cm-sweep 11s linear infinite;
+}
+html.mn-commercial .cm-map.is-drawing .cm-sweep { animation: cm-fade 1.2s ease-out .9s backwards, cm-sweep 11s linear infinite; }
+@keyframes cm-sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* nœuds qui pulsent */
+html.mn-commercial .cm-node { position: absolute; width: 0; height: 0; }
+html.mn-commercial .cm-node::before, html.mn-commercial .cm-node::after {
+  content: ""; position: absolute; left: -13px; top: -13px; width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid rgba(244, 220, 146, .8); opacity: 0;
+  animation: cm-pulse 3.8s cubic-bezier(.2, .7, .3, 1) infinite; animation-delay: var(--pd, 0s);
+}
+html.mn-commercial .cm-node::after { animation-delay: calc(var(--pd, 0s) + 1.3s); }
+html.mn-commercial .cm-node--hq::before, html.mn-commercial .cm-node--hq::after { left: -20px; top: -20px; width: 40px; height: 40px; border-color: #FFF3D1; }
+@keyframes cm-pulse { 0% { transform: scale(.2); opacity: .95; } 75%, 100% { transform: scale(2.3); opacity: 0; } }
+
+/* retour sur la carte (pages suivantes) : une seule onde depuis la maison */
+html.mn-commercial .cm-ping { position: absolute; border-radius: 50%; border: 1px solid rgba(244, 220, 146, .7); opacity: 0; pointer-events: none; }
+html.mn-commercial .cm-map.is-ping .cm-ping { animation: cm-ping 1.6s cubic-bezier(.2, .7, .3, 1) .1s; }
+@keyframes cm-ping { from { transform: scale(.05); opacity: .9; } to { transform: scale(1); opacity: 0; } }
+
+/* la maison : emblème à la feuille d'or */
+html.mn-commercial .cm-hq {
+  position: absolute; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transform: translate(-50%, -50%); pointer-events: none;
+}
+html.mn-commercial .cm-hq-emb {
+  width: 34px; height: 34px; padding: 5px; border-radius: 50%; color: var(--mn-or-clair);
+  background: radial-gradient(circle, #1a1510 0%, #060508 70%); box-shadow: 0 0 0 1px rgba(244, 220, 146, .7), 0 0 26px rgba(201, 162, 74, .55);
+}
+html.mn-commercial .cm-hq-emb svg { width: 100%; height: 100%; display: block; }
+html.mn-commercial .cm-hq-l {
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap;
+  padding: 3px 8px; background: rgba(6, 5, 8, .88); border: 1px solid rgba(201, 162, 74, .3);
+  font-family: var(--mn-mono); font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-ivoire-2);
+}
+html.mn-commercial .cm-hq-l b { color: var(--mn-or-clair); font-weight: 500; }
+html.mn-commercial .cm-map.is-drawing .cm-hq { animation: cm-fade .9s ease-out .15s backwards; }
+
+/* phares qui circulent (positions calculées en JS, animées par l'API Web Animations) */
+html.mn-commercial .cm-light { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; will-change: transform, opacity; pointer-events: none; }
+html.mn-commercial .cm-light i {
+  position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%;
+  background: #FFF6DC; box-shadow: 0 0 6px 2px rgba(244, 220, 146, .85), 0 0 18px 4px rgba(201, 162, 74, .45);
+}
+html.mn-commercial .cm-light i::before {
+  content: ""; position: absolute; right: 3px; top: 2px; width: 38px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, rgba(244, 220, 146, 0), rgba(244, 220, 146, .75));
+}
+
+/* pause hors écran */
+html.mn-commercial .cm-band.is-off [class*="cm-"],
+html.mn-commercial .cm-band.is-off [class*="cm-"]::before,
+html.mn-commercial .cm-band.is-off [class*="cm-"]::after { animation-play-state: paused !important; }
+
+/* téléphone modeste : pas de balayage, une seule pulsation */
+html.mn-commercial .cm-map.cm-lite .cm-sweep { display: none; }
+html.mn-commercial .cm-map.cm-lite .cm-node:not(.cm-node--hq)::before,
+html.mn-commercial .cm-map.cm-lite .cm-node:not(.cm-node--hq)::after { animation: none; opacity: .35; transform: scale(.5); }
+
+/* ---------- contenu du bandeau ---------- */
+html.mn-commercial .cm-band-in {
+  position: relative; max-width: 80rem; margin: 0 auto; min-height: 340px;
+  display: flex; flex-direction: column; padding: 16px 16px 26px;
+}
+@media (min-width: 640px) { html.mn-commercial .cm-band-in { padding-inline: 24px; } }
+html.mn-commercial .cm-brandrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+html.mn-commercial .cm-brand {
+  display: inline-flex; align-items: center; gap: 10px; padding: 9px 14px 9px 11px;
+  border: 1px solid rgba(201, 162, 74, .4); background: rgba(6, 5, 8, .78);
+  color: var(--mn-or-clair); text-decoration: none;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase;
+  transition: border-color .3s, color .3s;
+}
+html.mn-commercial .cm-brand svg { width: 16px; height: 16px; color: var(--mn-or); flex: none; }
+html.mn-commercial .cm-brand:hover { border-color: var(--mn-or-clair); color: #FFF6DC; }
+html.mn-commercial .cm-brand:focus-visible { outline: 2px solid var(--mn-or-clair); outline-offset: 3px; }
+
+/* plaque du commercial */
+html.mn-commercial .cm-rep {
+  display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; max-width: 100%;
+  padding: 7px 12px 7px 10px; border: 1px solid rgba(241, 232, 212, .16); background: rgba(13, 11, 16, .82);
+  font-family: var(--mn-mono); font-size: 11px; line-height: 1.5; letter-spacing: .02em; color: var(--mn-ivoire-2);
+}
+html.mn-commercial .cm-rep::before {
+  content: ""; width: 7px; height: 7px; flex: none; border-radius: 50%;
+  background: var(--mn-or-clair); box-shadow: 0 0 8px rgba(244, 220, 146, .8);
+}
+html.mn-commercial .cm-rep-n { color: var(--mn-ivoire); font-weight: 500; }
+
+html.mn-commercial .cm-hero { margin-top: auto; padding-top: 136px; max-width: 620px; }
+@media (min-width: 900px) { html.mn-commercial .cm-hero { padding-top: 48px; } }
+html.mn-commercial .cm-neon {
+  display: inline-block; font-family: var(--mn-neon); font-weight: 400; font-size: clamp(21px, 2.4vw, 28px); letter-spacing: .04em; color: #FFF3D1;
+  text-shadow: 0 0 2px #FFF6DC, 0 0 10px #F4DC92, 0 0 24px #C9A24A, 0 0 52px rgba(201, 162, 74, .6);
+}
+html.mn-commercial .cm-hero-t {
+  margin: 4px 0 0; padding-bottom: .06em;
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(42px, 6.4vw, 80px); line-height: .96; letter-spacing: -.015em;
+  background: var(--mn-foil); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html.mn-commercial .cm-hero-s {
+  margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px 0;
+  font-family: var(--mn-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--mn-ivoire-2);
+}
+html.mn-commercial .cm-hero-s span { white-space: nowrap; }
+html.mn-commercial .cm-hero-s span + span::before { content: "✦"; color: var(--mn-or); margin: 0 12px; }
+/* première arrivée : le néon s'allume, le titre monte */
+html.mn-commercial .cm-band.is-first .cm-neon { animation: cm-flick 1.9s linear .6s backwards; }
+html.mn-commercial .cm-band.is-first .cm-hero-t { animation: cm-rise 1.1s var(--mn-ease) .25s backwards; }
+html.mn-commercial .cm-band.is-first .cm-hero-s,
+html.mn-commercial .cm-band.is-first .cm-brandrow { animation: cm-fade 1s ease-out .5s backwards; }
+@keyframes cm-flick { 0% { opacity: 0; } 8% { opacity: .9; } 10% { opacity: .1; } 14% { opacity: 1; } 22% { opacity: .25; } 26% { opacity: 1; } 60% { opacity: .85; } 62%, 100% { opacity: 1; } }
+@keyframes cm-rise { from { opacity: 0; transform: translateY(18px); } }
+
+/* pages suivantes, sur téléphone : bandeau compact pour que l'outil reste au-dessus de la ligne de flottaison.
+   La maison se pose à droite du néon (cadrage dans RouteBand) et l'onde qui en part reste visible. */
+@media (max-width: 899px) {
+  html.mn-commercial .cm-band:not(.is-first) .cm-band-in { min-height: 0; padding-top: 12px; padding-bottom: 14px; }
+  html.mn-commercial .cm-band:not(.is-first) .cm-brandrow { row-gap: 8px; }
+  html.mn-commercial .cm-band:not(.is-first) .cm-hero { padding-top: 44px; }
+  html.mn-commercial .cm-band:not(.is-first) .cm-hero-t { font-size: clamp(30px, 8vw, 42px); }
+  html.mn-commercial .cm-band:not(.is-first) .cm-hero-s { display: none; }
+  /* voile : texte à gauche, la maison dégagée à droite du néon */
+  html.mn-commercial .cm-band:not(.is-first)::after {
+    background:
+      linear-gradient(90deg, rgba(6, 5, 8, .9) 0%, rgba(6, 5, 8, .7) 36%, rgba(6, 5, 8, .08) 58%, rgba(6, 5, 8, 0) 72%),
+      linear-gradient(180deg, rgba(6, 5, 8, .5) 0%, rgba(6, 5, 8, 0) 24%, rgba(6, 5, 8, 0) 62%, rgba(6, 5, 8, .7) 100%);
+  }
+  html.mn-commercial .cm-band:not(.is-first) + .cm-roadway .cm-signs { padding-top: 10px; padding-bottom: 18px; }
+}
+
+/* ==========================================================================
+   2. Navigation : panneaux de signalisation gravés
+   ========================================================================== */
+html.mn-commercial .cm-roadway { position: relative; background: linear-gradient(180deg, #0B0A0E, #060508); border-bottom: 1px solid var(--mn-ligne); }
+/* marquage au sol */
+html.mn-commercial .cm-roadway::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 9px; height: 2px; pointer-events: none; opacity: .5;
+  background: repeating-linear-gradient(90deg, rgba(201, 162, 74, .6) 0 22px, transparent 22px 40px);
+}
+html.mn-commercial .cm-signs {
+  max-width: 80rem; margin: 0 auto; display: flex; gap: 12px; overflow-x: auto;
+  padding: 16px 16px 24px; scroll-snap-type: x proximity; scroll-padding-inline: 16px;
+  scrollbar-width: thin; scrollbar-color: var(--mn-or-sombre) transparent;
+}
+@media (min-width: 640px) { html.mn-commercial .cm-signs { padding-inline: 24px; } }
+html.mn-commercial .cm-sign {
+  --cut: 15px;
+  position: relative; isolation: isolate; flex: none; scroll-snap-align: start;
+  display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 calc(var(--cut) + 14px) 0 12px;
+  color: var(--mn-or-clair); text-decoration: none;
+  transition: transform .45s var(--mn-ease), color .3s;
+}
+html.mn-commercial .cm-sign::before, html.mn-commercial .cm-sign::after {
+  content: ""; position: absolute; z-index: -1;
+  clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% 50%, calc(100% - var(--cut)) 100%, 0 100%);
+}
+html.mn-commercial .cm-sign::before { inset: 0; background: linear-gradient(180deg, rgba(244, 220, 146, .75), rgba(125, 105, 54, .55)); }
+html.mn-commercial .cm-sign::after { inset: 1px; background: linear-gradient(180deg, #19141E 0%, #0C0A0F 100%); }
+html.mn-commercial .cm-sign-no {
+  align-self: stretch; display: flex; align-items: center; padding-right: 10px; border-right: 1px solid rgba(201, 162, 74, .3);
+  font-family: var(--mn-mono); font-size: 10px; letter-spacing: .1em; color: var(--mn-or);
+}
+html.mn-commercial .cm-sign-ic { width: 16px; height: 16px; flex: none; }
+html.mn-commercial .cm-sign-l {
+  white-space: nowrap; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .9), 0 -1px 0 rgba(244, 220, 146, .1);
+}
+/* téléphone : panneaux compacts, le suivant dépasse au bord pour inviter à faire défiler */
+@media (max-width: 899px) {
+  html.mn-commercial .cm-signs { gap: 10px; }
+  html.mn-commercial .cm-sign { --cut: 12px; gap: 8px; min-height: 44px; padding: 0 calc(var(--cut) + 9px) 0 9px; }
+  html.mn-commercial .cm-sign-no { padding-right: 8px; }
+  html.mn-commercial .cm-sign-l { font-size: 10.5px; letter-spacing: .12em; }
+}
+/* ordinateur : panneaux plus serrés pour que les cinq tiennent sur la chaussée */
+@media (min-width: 900px) {
+  html.mn-commercial .cm-signs { gap: 8px; }
+  html.mn-commercial .cm-sign { --cut: 13px; gap: 8px; padding: 0 calc(var(--cut) + 10px) 0 10px; }
+  html.mn-commercial .cm-sign-no { padding-right: 8px; }
+  html.mn-commercial .cm-sign-l { font-size: 10px; letter-spacing: .13em; }
+}
+/* mât du panneau, planté sur la chaussée */
+html.mn-commercial .cm-sign-post {
+  position: absolute; left: 22px; top: 100%; width: 2px; height: 9px; z-index: -1;
+  background: linear-gradient(180deg, rgba(201, 162, 74, .7), rgba(201, 162, 74, .15));
+}
+html.mn-commercial .cm-sign:hover { transform: translateY(-2px); color: #FFF6DC; }
+html.mn-commercial .cm-sign:focus-visible { outline: 2px solid var(--mn-or-clair); outline-offset: 3px; }
+html.mn-commercial .cm-sign.is-on { color: #120E06; }
+html.mn-commercial .cm-sign.is-on::after { background: var(--mn-foil); background-size: 200% 100%; }
+html.mn-commercial .cm-sign.is-on::before { background: #FBE7A6; }
+html.mn-commercial .cm-sign.is-on .cm-sign-no { color: #120E06; border-color: rgba(18, 14, 6, .35); }
+html.mn-commercial .cm-sign.is-on .cm-sign-l { text-shadow: 0 1px 0 rgba(255, 246, 220, .5); }
+html.mn-commercial .cm-sign.is-on .cm-sign-post { background: linear-gradient(180deg, #F4DC92, rgba(201, 162, 74, .2)); box-shadow: 0 0 8px rgba(244, 220, 146, .5); }
+/* première arrivée : les panneaux basculent en place */
+html.mn-commercial .cm-band.is-first + .cm-roadway .cm-sign {
+  transform-origin: 50% 0; animation: cm-swing .9s var(--mn-ease) backwards; animation-delay: calc(1s + var(--i, 0) * 90ms);
+}
+@keyframes cm-swing { from { opacity: 0; transform: perspective(500px) rotateX(-75deg); } }
+
+/* ==========================================================================
+   3. Pages : carnet numéroté
+   ========================================================================== */
+html.mn-commercial .cm-main { padding-top: 34px; padding-bottom: 72px; }
+@media (min-width: 640px) { html.mn-commercial .cm-main { padding-inline: 24px; } }
+html.mn-commercial .cm-page { animation: cm-rise .6s var(--mn-ease) backwards; }
+
+html.mn-commercial .cm-loghead { position: relative; isolation: isolate; padding-top: 4px; }
+html.mn-commercial .cm-loghead-ghost {
+  position: absolute; z-index: -1; right: 12px; top: -22px; pointer-events: none; user-select: none;
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(92px, 15vw, 196px); line-height: 1;
+  color: transparent; -webkit-text-stroke: 1px rgba(201, 162, 74, .24);
+  animation: cm-ghost 1.3s var(--mn-ease) backwards;
+}
+@keyframes cm-ghost { from { opacity: 0; transform: translateX(28px); } }
+html.mn-commercial .cm-loghead-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; max-width: 720px; }
+html.mn-commercial .cm-loghead-k { display: flex; flex-direction: column; gap: 3px; margin: 0; }
+html.mn-commercial .cm-loghead-k b { font-family: var(--mn-mono); font-weight: 500; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--mn-or-clair); white-space: nowrap; }
+html.mn-commercial .cm-loghead-k span { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .28em; text-transform: uppercase; color: var(--mn-ivoire-2); white-space: nowrap; }
+/* règle graduée */
+html.mn-commercial .cm-loghead-rule {
+  flex: 1; min-width: 24px; height: 9px; transform-origin: 0 50%;
+  background:
+    linear-gradient(var(--mn-or), var(--mn-or)) 0 100% / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, rgba(201, 162, 74, .55) 0 1px, transparent 1px 12px) 0 100% / 100% 5px no-repeat,
+    repeating-linear-gradient(90deg, rgba(201, 162, 74, .8) 0 1px, transparent 1px 60px) 0 100% / 100% 9px no-repeat;
+  animation: cm-rule 1.2s var(--mn-ease) .15s backwards;
+}
+@keyframes cm-rule { from { transform: scaleX(0); } }
+
+/* tulipe de road-book */
+html.mn-commercial .cm-tulip { width: 46px; height: 46px; flex: none; border: 1px solid var(--mn-ligne); background: radial-gradient(circle at 50% 60%, rgba(201, 162, 74, .1), rgba(13, 11, 16, .92) 70%); }
+html.mn-commercial .cm-tulip path, html.mn-commercial .cm-tulip .cm-tu-ring { fill: none; stroke: var(--mn-or-clair); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+html.mn-commercial .cm-tulip .cm-tu-ghost path { stroke: rgba(201, 162, 74, .38); stroke-width: 1.2; }
+html.mn-commercial .cm-tulip .cm-tu-start { fill: var(--mn-or); }
+html.mn-commercial .cm-tulip .cm-tu-sq { fill: var(--mn-or-clair); }
+html.mn-commercial .cm-tulip .cm-tu-main { transform-origin: 24px 27px; animation: cm-tu .9s var(--mn-ease) .4s backwards; }
+@keyframes cm-tu { from { opacity: 0; transform: scale(.3); } }
+
+html.mn-commercial main .cm-h1 {
+  margin: 0; padding-bottom: .06em;
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(36px, 5.4vw, 62px); line-height: 1; letter-spacing: -.015em;
+  background: var(--mn-foil); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html.mn-commercial main .cm-lead { margin-top: 12px; max-width: 64ch; font-size: 14px; line-height: 1.65; color: var(--mn-ivoire-2); }
+
+/* ---------- cartes : feuillets du carnet ---------- */
+html.mn-commercial main .cm-page .border.bg-card {
+  position: relative; border-radius: 2px; border-color: var(--cm-hair);
+  background-image: linear-gradient(165deg, rgba(201, 162, 74, .065), rgba(13, 11, 16, .95) 38%, rgba(6, 5, 8, .98));
+  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .06), 0 26px 50px -38px rgba(0, 0, 0, .95);
+}
+/* repères d'angle */
+html.mn-commercial main .cm-page .border.bg-card::before,
+html.mn-commercial main .cm-page .border.bg-card::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; }
+html.mn-commercial main .cm-page .border.bg-card::before { left: 0; top: 0; border-left: 1px solid var(--mn-or); border-top: 1px solid var(--mn-or); }
+html.mn-commercial main .cm-page .border.bg-card::after { right: 0; bottom: 0; border-right: 1px solid var(--mn-or); border-bottom: 1px solid var(--mn-or); }
+html.mn-commercial main .cm-page h3 { font-size: 21px; font-weight: 400; line-height: 1.15; color: var(--mn-or-clair); }
+
+/* étiquette d'étape dans un en-tête de carte */
+html.mn-commercial main .cm-step {
+  display: inline-flex; align-items: center; gap: 8px; width: max-content;
+  font-family: var(--mn-mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--mn-or);
+}
+html.mn-commercial main .cm-step::after { content: ""; width: 36px; height: 1px; background: linear-gradient(90deg, var(--mn-or), transparent); }
+
+/* champs, libellés, listes déroulantes, boutons */
+html.mn-commercial main .cm-page label {
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 700; font-size: 10.5px; line-height: 1.4; letter-spacing: .14em; text-transform: uppercase; color: var(--mn-ivoire-2);
+}
+html.mn-commercial main .cm-page input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+html.mn-commercial main .cm-page textarea,
+html.mn-commercial main .cm-page button[role="combobox"] { border-radius: 2px; }
+html.mn-commercial main .cm-page label + input, html.mn-commercial main .cm-page label + textarea, html.mn-commercial main .cm-page label + button[role="combobox"] { margin-top: 6px; }
+html.mn-commercial main .cm-page button[role="combobox"] { background-color: rgba(6, 5, 8, .55); border-color: rgba(241, 232, 212, .14); }
+html.mn-commercial main .cm-page button[role="combobox"]:focus-visible,
+html.mn-commercial main .cm-page button[role="combobox"][data-state="open"] { outline: none; border-color: var(--mn-or-clair); box-shadow: 0 0 0 1px rgba(244, 220, 146, .35); }
+html.mn-commercial main .cm-page .cm-num { font-family: var(--mn-mono); letter-spacing: .02em; }
+html.mn-commercial main .cm-page button.bg-primary {
+  border-radius: 2px; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+}
+html.mn-commercial main .cm-page button.border-input, html.mn-commercial main .cm-page a.border-input {
+  border-radius: 2px; border-color: rgba(201, 162, 74, .42); background-color: rgba(6, 5, 8, .5); color: var(--mn-or-clair);
+}
+html.mn-commercial main .cm-page button.border-input:hover:not(:disabled), html.mn-commercial main .cm-page a.border-input:hover {
+  background-color: rgba(201, 162, 74, .1); border-color: var(--mn-or-clair); color: #FFF6DC;
+}
+html.mn-commercial main .cm-page .cm-tag { border-radius: 2px; font-family: var(--mn-mono); font-weight: 500; font-size: 10.5px; letter-spacing: .04em; }
+
+/* ---------- tableaux : carnet de bord ---------- */
+html.mn-commercial main .cm-log {
+  border: 1px solid rgba(201, 162, 74, .16);
+  background: repeating-linear-gradient(180deg, transparent 0 37px, rgba(201, 162, 74, .03) 37px 38px), rgba(6, 5, 8, .55);
+}
+html.mn-commercial main .cm-log thead tr { border-bottom: 0; }
+html.mn-commercial main .cm-log thead th {
+  padding: 11px 12px 9px; white-space: nowrap; color: var(--mn-or-clair);
+  background: linear-gradient(180deg, rgba(201, 162, 74, .11), rgba(201, 162, 74, .02));
+  border-bottom: 3px double rgba(201, 162, 74, .5);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .9), 0 -1px 0 rgba(244, 220, 146, .12);
+}
+html.mn-commercial main .cm-log td { padding: 9px 12px; }
+html.mn-commercial main .cm-log td.text-right, html.mn-commercial main .cm-log .cm-mono { font-family: var(--mn-mono); font-size: 12.5px; letter-spacing: -.01em; }
+html.mn-commercial main .cm-log td.text-right { white-space: nowrap; }
+html.mn-commercial main .cm-log--journal td:first-child { font-family: var(--mn-serif); font-style: italic; font-size: 15px; color: var(--mn-ivoire); white-space: nowrap; }
+
+/* ==========================================================================
+   4. Catalogue (carnet 01)
+   ========================================================================== */
+/* losange « route prioritaire » */
+html.mn-commercial main .cm-losange {
+  display: inline-grid; place-items: center; width: 30px; height: 30px; flex: none; margin: 4px 6px 4px 4px;
+  transform: rotate(45deg); border: 1px solid var(--mn-or-clair);
+  background: radial-gradient(circle, rgba(201, 162, 74, .3), rgba(6, 5, 8, .95) 75%);
+  box-shadow: 0 0 0 3px #060508, 0 0 0 4px rgba(201, 162, 74, .45), 0 0 18px rgba(201, 162, 74, .35);
+}
+html.mn-commercial main .cm-losange > svg { transform: rotate(-45deg); }
+html.mn-commercial main .cm-page .border.bg-card.cm-prio { border-color: rgba(201, 162, 74, .45); background-image: linear-gradient(110deg, rgba(201, 162, 74, .14), rgba(13, 11, 16, .95) 46%, rgba(6, 5, 8, .98)); }
+html.mn-commercial main .cm-prio-t { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 11px !important; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-or-clair); }
+/* bornes kilométriques */
+html.mn-commercial main .cm-bornes { gap: 12px !important; }
+html.mn-commercial main .cm-borne {
+  position: relative; overflow: hidden; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  min-width: 112px; max-width: 100%; padding: 15px 14px 9px;
+  border: 1px solid rgba(241, 232, 212, .16); border-radius: 20px 20px 2px 2px;
+  background: linear-gradient(180deg, #1A1520, #0B0A0E);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 12px 24px -16px rgba(0, 0, 0, .9);
+}
+html.mn-commercial main .cm-borne::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 7px; background: var(--mn-foil); }
+html.mn-commercial main .cm-borne-n { font-size: 12.5px; line-height: 1.3; color: var(--mn-ivoire); }
+html.mn-commercial main .cm-borne-g { font-family: var(--mn-mono); font-size: 13px; color: var(--mn-or-clair); }
+
+/* arguments : panneaux ronds d'indication */
+html.mn-commercial main .cm-arg { transition: transform .5s var(--mn-ease), border-color .3s; }
+html.mn-commercial main .cm-arg:hover { transform: translateY(-3px); border-color: rgba(244, 220, 146, .45); }
+html.mn-commercial main .cm-rond {
+  display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%;
+  border: 1px solid var(--mn-or-clair); color: var(--mn-or-clair);
+  background: radial-gradient(circle at 40% 35%, rgba(201, 162, 74, .28), rgba(6, 5, 8, .95) 70%);
+  box-shadow: 0 0 0 3px #0D0B10, 0 0 0 4px rgba(201, 162, 74, .35);
+}
+html.mn-commercial main .cm-arg-no { position: absolute; top: 12px; right: 14px; font-family: var(--mn-mono); font-size: 10px; letter-spacing: .18em; color: var(--mn-ivoire-2); }
+html.mn-commercial main .cm-arg-t { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 11px !important; letter-spacing: .16em; text-transform: uppercase; color: var(--mn-ivoire); }
+
+/* l'argument massue : plaque de laiton rivetée */
+html.mn-commercial main .cm-page .border.bg-card.cm-plaque {
+  border-color: rgba(201, 162, 74, .5);
+  background-image:
+    radial-gradient(circle at 14px 14px, #FFF2C2 0 1.5px, #9C7A35 2.5px, transparent 3.5px),
+    radial-gradient(circle at calc(100% - 14px) 14px, #FFF2C2 0 1.5px, #9C7A35 2.5px, transparent 3.5px),
+    radial-gradient(circle at 14px calc(100% - 14px), #FFF2C2 0 1.5px, #9C7A35 2.5px, transparent 3.5px),
+    radial-gradient(circle at calc(100% - 14px) calc(100% - 14px), #FFF2C2 0 1.5px, #9C7A35 2.5px, transparent 3.5px),
+    linear-gradient(160deg, rgba(201, 162, 74, .16), rgba(13, 11, 16, .96) 44%, rgba(6, 5, 8, .98));
+  box-shadow: inset 0 0 0 6px rgba(6, 5, 8, .6), inset 0 0 0 7px rgba(201, 162, 74, .22), 0 30px 60px -40px rgba(201, 162, 74, .45);
+}
+html.mn-commercial main .cm-page .cm-plaque h3 { font-size: clamp(24px, 3vw, 32px); background: var(--mn-foil); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .05em; }
+html.mn-commercial main .cm-plaque strong { color: var(--mn-or-clair); font-weight: 500; }
+
+/* recherche */
+html.mn-commercial main .cm-search { position: relative; max-width: 24rem; }
+html.mn-commercial main .cm-search > svg { position: absolute; left: 12px; top: 50%; width: 16px; height: 16px; margin-top: -8px; color: var(--mn-or); pointer-events: none; }
+html.mn-commercial main .cm-search input { padding-left: 38px; }
+
+/* fiche de lot */
+html.mn-commercial main .cm-lot { transition: border-color .3s, transform .5s var(--mn-ease); }
+html.mn-commercial main .cm-lot:hover { border-color: rgba(244, 220, 146, .4); }
+html.mn-commercial main .cm-lot-no {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%); padding: 3px 12px 4px; white-space: nowrap;
+  background: rgba(201, 162, 74, .12); border: 1px solid rgba(201, 162, 74, .28); border-top: 0;
+  font-family: var(--mn-mono); font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--mn-or);
+}
+html.mn-commercial main .cm-lot-img { border-radius: 50%; border: 1px solid rgba(244, 220, 146, .55); box-shadow: 0 0 0 3px #0D0B10, 0 0 0 4px rgba(201, 162, 74, .3), 0 10px 22px -10px rgba(0, 0, 0, .9); }
+html.mn-commercial main .cm-page .cm-lot h3 { font-size: 22px; }
+/* grille de prix du lot : carnet serré pour tenir dans la fiche */
+html.mn-commercial main .cm-lot .cm-log thead th { padding: 10px 7px 8px; font-size: 9px; letter-spacing: .12em; }
+html.mn-commercial main .cm-lot .cm-log td { padding: 8px 7px; }
+html.mn-commercial main .cm-lot .cm-log td.text-right, html.mn-commercial main .cm-lot .cm-log .cm-mono { font-size: 11.5px; }
+
+/* feux tricolores du stock */
+html.mn-commercial main .cm-feu { border-radius: 2px; gap: 7px; font-family: var(--mn-mono); font-weight: 500; font-size: 10.5px; white-space: nowrap; }
+@media (max-width: 479px) { html.mn-commercial main .cm-feu { font-size: 9.5px; gap: 5px; padding-inline: 6px; } }
+html.mn-commercial main .cm-feu-l { display: inline-flex; gap: 3px; padding: 2px 4px; border-radius: 6px; background: #050406; box-shadow: inset 0 0 0 1px rgba(241, 232, 212, .14); }
+html.mn-commercial main .cm-feu-l i { width: 6px; height: 6px; border-radius: 50%; background: rgba(241, 232, 212, .13); }
+html.mn-commercial main .cm-feu--rouge .cm-feu-l i:nth-child(1) { background: #FF5A4F; box-shadow: 0 0 6px #FF5A4F; }
+html.mn-commercial main .cm-feu--orange .cm-feu-l i:nth-child(2) { background: #FFB340; box-shadow: 0 0 6px #FFB340; }
+html.mn-commercial main .cm-feu--vert .cm-feu-l i:nth-child(3) { background: #48D597; box-shadow: 0 0 6px #48D597; }
+
+/* ==========================================================================
+   5. Prospects (carnet 02) : la tournée
+   ========================================================================== */
+html.mn-commercial main .cm-itin { position: relative; gap: 10px 8px !important; padding: 4px 0; }
+html.mn-commercial main .cm-stop {
+  gap: 8px; border-radius: 2px; padding: 6px 12px 6px 10px; border: 1px solid rgba(241, 232, 212, .1);
+  font-family: var(--mn-wide); font-stretch: 112%; font-weight: 700; font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  transition: transform .3s var(--mn-ease), border-color .3s;
+}
+html.mn-commercial main .cm-stop::before { content: ""; width: 7px; height: 7px; flex: none; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+html.mn-commercial main .cm-stop:hover { transform: translateY(-1px); border-color: rgba(244, 220, 146, .4); }
+html.mn-commercial main .cm-stop.is-on { border-color: var(--mn-or-clair); box-shadow: 0 0 0 1px rgba(244, 220, 146, .4), 0 0 18px -4px rgba(201, 162, 74, .6); }
+
+html.mn-commercial main .cm-page .border.bg-card.cm-etape { --cm-st: var(--mn-ivoire-2); transition: border-color .3s; }
+html.mn-commercial main .cm-page .border.bg-card.cm-etape:hover { border-color: rgba(244, 220, 146, .4); }
+html.mn-commercial main .cm-page .border.bg-card.cm-etape[data-status="visite"] { --cm-st: #93C5FD; }
+html.mn-commercial main .cm-page .border.bg-card.cm-etape[data-status="echantillon"] { --cm-st: #FCD34D; }
+html.mn-commercial main .cm-page .border.bg-card.cm-etape[data-status="negociation"] { --cm-st: #D8B4FE; }
+html.mn-commercial main .cm-page .border.bg-card.cm-etape[data-status="signe"] { --cm-st: #6EE7B7; }
+html.mn-commercial main .cm-page .border.bg-card.cm-etape[data-status="refuse"] { --cm-st: #FCA5A5; }
+/* rail de la tournée et repère d'étape */
+html.mn-commercial main .cm-page .border.bg-card.cm-etape::before { left: 18px; top: 0; bottom: 0; width: 0; height: auto; border: 0; border-left: 1px dashed rgba(201, 162, 74, .35); }
+html.mn-commercial main .cm-page .border.bg-card.cm-etape::after {
+  left: 13px; top: 24px; right: auto; bottom: auto; width: 11px; height: 11px; border: 0; border-radius: 50%;
+  background: var(--cm-st); box-shadow: 0 0 0 3px #0D0B10, 0 0 12px var(--cm-st);
+}
+html.mn-commercial main .cm-etape-in { padding-left: 40px; }
+html.mn-commercial main .cm-etape-no { display: block; margin-bottom: 4px; font-family: var(--mn-mono); font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--mn-or); }
+html.mn-commercial main .cm-etape-name { font-family: var(--mn-serif); font-style: italic; font-weight: 400 !important; font-size: 21px; line-height: 1.15; color: var(--mn-ivoire); }
+html.mn-commercial main .cm-etape-notes { font-family: var(--mn-serif); font-size: 13.5px; color: var(--mn-ivoire-2); border-left: 1px solid rgba(201, 162, 74, .3); padding-left: 10px; }
+html.mn-commercial main .cm-etape-f { border-top: 1px dashed rgba(201, 162, 74, .16); padding-top: 12px !important; flex-wrap: wrap; }
+html.mn-commercial main .cm-etape-f button[role="combobox"] { max-width: 100%; }
+
+html.mn-commercial main .cm-page .border.bg-card.cm-fiche { border-style: dashed; border-color: rgba(201, 162, 74, .35); }
+
+/* ==========================================================================
+   6. Facturation (carnet 03)
+   ========================================================================== */
+/* ticket de péage */
+html.mn-commercial main .cm-page .border.bg-card.cm-ticket {
+  border-color: rgba(201, 162, 74, .55);
+  background-image: linear-gradient(100deg, rgba(201, 162, 74, .16), rgba(13, 11, 16, .96) 52%, rgba(6, 5, 8, .98));
+  -webkit-mask: radial-gradient(circle 11px at 0 50%, transparent 97%, #000) left / 51% 100% no-repeat, radial-gradient(circle 11px at 100% 50%, transparent 97%, #000) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle 11px at 0 50%, transparent 97%, #000) left / 51% 100% no-repeat, radial-gradient(circle 11px at 100% 50%, transparent 97%, #000) right / 51% 100% no-repeat;
+}
+html.mn-commercial main .cm-ticket-k { flex-basis: 100%; padding-bottom: 10px; border-bottom: 1px dashed rgba(201, 162, 74, .3); font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .3em; text-transform: uppercase; color: var(--mn-or); }
+html.mn-commercial main .cm-ticket .text-gold { font-family: var(--mn-mono); letter-spacing: .06em; }
+
+html.mn-commercial main .cm-picker { border: 1px dashed rgba(201, 162, 74, .32) !important; border-radius: 2px !important; background: rgba(201, 162, 74, .04); }
+html.mn-commercial main .cm-picker button.border-input { min-width: 66px; }
+html.mn-commercial main .cm-picker button.border-input > span:first-child { font-family: var(--mn-mono); }
+
+/* lignes de facture numérotées */
+html.mn-commercial main .cm-lines { counter-reset: cmline; }
+html.mn-commercial main .cm-row { position: relative; counter-increment: cmline; padding-top: 24px; }
+html.mn-commercial main .cm-row::before {
+  content: "L" counter(cmline, decimal-leading-zero); position: absolute; left: 0; top: 2px;
+  font-family: var(--mn-mono); font-size: 10px; letter-spacing: .14em; color: var(--mn-or);
+}
+@media (min-width: 640px) {
+  html.mn-commercial main .cm-row { padding-top: 0; padding-left: 44px; }
+  html.mn-commercial main .cm-row::before { top: auto; bottom: 11px; padding: 2px 6px; border: 1px solid rgba(201, 162, 74, .3); }
+}
+
+/* compteur des totaux */
+html.mn-commercial main .cm-odo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 16px; border-top: 1px solid rgba(201, 162, 74, .22); }
+@media (max-width: 559px) {
+  html.mn-commercial main .cm-odo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html.mn-commercial main .cm-odo-cell:nth-child(3) { grid-column: 1 / -1; }
+}
+html.mn-commercial main .cm-odo-cell { margin: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid rgba(241, 232, 212, .1); background: var(--cm-ink); min-width: 0; }
+html.mn-commercial main .cm-odo-cell > span { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-ivoire-2); }
+html.mn-commercial main .cm-odo-cell > b { font-family: var(--mn-mono); font-weight: 500; font-size: 16px; color: var(--mn-ivoire); overflow-wrap: anywhere; }
+html.mn-commercial main .cm-odo-ttc { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; border-color: rgba(201, 162, 74, .45); background: linear-gradient(90deg, rgba(201, 162, 74, .13), rgba(8, 7, 10, .95) 62%); }
+html.mn-commercial main .cm-odo-ttc > span { color: var(--mn-or-clair); font-size: 10px; }
+/* tambours du compteur */
+html.mn-commercial main .cm-odo-ttc > b {
+  font-size: clamp(24px, 4vw, 34px); letter-spacing: 0; color: var(--mn-or-clair); padding: 2px 0;
+  background: repeating-linear-gradient(90deg, rgba(241, 232, 212, .05) 0 calc(1ch - 1px), rgba(6, 5, 8, .9) calc(1ch - 1px) 1ch);
+  text-shadow: 0 0 18px rgba(201, 162, 74, .35);
+}
+html.mn-commercial main .cm-send { align-items: center; gap: 14px; }
+html.mn-commercial main .cm-send-k { font-family: var(--mn-mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--mn-ivoire-2); }
+
+/* ==========================================================================
+   7. Commissions (carnet 04) : le compteur
+   ========================================================================== */
+html.mn-commercial main .cm-page .border.bg-card.cm-gauge {
+  background-image:
+    repeating-linear-gradient(90deg, rgba(201, 162, 74, .4) 0 1px, transparent 1px 10px),
+    linear-gradient(165deg, rgba(201, 162, 74, .06), rgba(13, 11, 16, .95) 40%, rgba(6, 5, 8, .98));
+  background-size: 100% 5px, auto; background-repeat: no-repeat; background-position: 0 0, 0 0;
+}
+html.mn-commercial main .cm-page .border.bg-card.cm-gauge--or { border-color: rgba(201, 162, 74, .5); }
+html.mn-commercial main .cm-gauge p:first-child { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-ivoire-2); }
+html.mn-commercial main .cm-gauge p.text-xl { margin-top: 8px; font-family: var(--mn-mono); font-weight: 500; font-size: clamp(18px, 2vw, 24px); letter-spacing: -.02em; overflow-wrap: anywhere; }
+html.mn-commercial main .cm-gauge p.text-xl:not([class*="text-emerald"]):not([class*="text-amber"]):not(.text-gold) { color: var(--mn-ivoire); }
+html.mn-commercial main .cm-gauge p.text-xs:last-child:not(:first-child) { font-family: var(--mn-mono); font-size: 11px; }
+
+html.mn-commercial main .cm-exits { gap: 10px !important; }
+html.mn-commercial main .cm-exit { position: relative; border-radius: 2px; padding: 6px 12px; font-family: var(--mn-mono); font-weight: 500; font-size: 11px; letter-spacing: .02em; border: 1px solid rgba(241, 232, 212, .12); }
+html.mn-commercial main .cm-exit.text-gold { box-shadow: 0 0 0 1px rgba(244, 220, 146, .3), 0 0 22px -6px rgba(201, 162, 74, .7); }
+
+/* la jauge devient une route : marquage au sol et repère du véhicule */
+html.mn-commercial main .cm-road [role="progressbar"] { height: 14px; border-radius: 0; background: linear-gradient(180deg, #131017, #09080B); box-shadow: inset 0 0 0 1px rgba(201, 162, 74, .25); }
+html.mn-commercial main .cm-road [role="progressbar"]::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; margin-top: -.5px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(241, 232, 212, .45) 0 9px, transparent 9px 19px);
+}
+html.mn-commercial main .cm-road [role="progressbar"] > div { position: relative; background: var(--mn-foil); background-size: 200% 100%; }
+html.mn-commercial main .cm-road [role="progressbar"] > div::after {
+  content: ""; position: absolute; right: 0; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%;
+  background: #FFF6DC; box-shadow: 0 0 10px 3px rgba(244, 220, 146, .75);
+}
+html.mn-commercial main .cm-road strong { font-family: var(--mn-mono); font-weight: 500; }
+
+/* ==========================================================================
+   8. Documents (carnet 05) : la boîte à gants
+   ========================================================================== */
+html.mn-commercial main .cm-docs { row-gap: 26px !important; padding-top: 12px; }
+html.mn-commercial main .cm-page .border.bg-card.cm-doc { transition: transform .5s var(--mn-ease), border-color .3s; }
+html.mn-commercial main .cm-page .border.bg-card.cm-doc:hover { transform: translateY(-3px); border-color: rgba(244, 220, 146, .45); }
+/* onglet de chemise */
+html.mn-commercial main .cm-page .border.bg-card.cm-doc::before {
+  left: 18px; top: -12px; width: 92px; height: 12px; border: 1px solid rgba(201, 162, 74, .35); border-bottom: 0; border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, #1A1520, #0D0B10);
+}
+html.mn-commercial main .cm-doc-ref { display: block; font-family: var(--mn-mono); font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--mn-or); }
+html.mn-commercial main .cm-doc-t { font-family: var(--mn-serif); font-style: italic; font-weight: 400 !important; font-size: 18px !important; line-height: 1.25; color: var(--mn-ivoire); }
+html.mn-commercial main .cm-doc .text-primary { color: var(--mn-or-clair); }
+
+/* télégramme */
+html.mn-commercial main .cm-telegram pre {
+  position: relative; margin: 0; padding: 4px 16px 6px 18px; border-left: 2px solid rgba(201, 162, 74, .45);
+  font-family: var(--mn-mono); font-size: 12.5px; line-height: 26px; color: var(--mn-ivoire-2);
+  background: repeating-linear-gradient(180deg, transparent 0 25px, rgba(201, 162, 74, .12) 25px 26px);
+  background-position: 0 4px;
+}
+html.mn-commercial main .cm-stamp {
+  width: 54px; height: 54px; flex: none; display: grid; place-items: center; border-radius: 50%; transform: rotate(-12deg); color: var(--mn-or);
+  border: 1px dashed rgba(201, 162, 74, .55); box-shadow: inset 0 0 0 4px rgba(6, 5, 8, .9), inset 0 0 0 5px rgba(201, 162, 74, .35);
+}
+html.mn-commercial main .cm-stamp svg { width: 26px; height: 26px; }
+
+/* ==========================================================================
+   9. Attente et accès réservé
+   ========================================================================== */
+html.mn-commercial .cm-radar { position: relative; display: grid; place-items: center; width: 132px; height: 132px; border-radius: 50%; border: 1px solid rgba(201, 162, 74, .35); background: repeating-radial-gradient(circle, transparent 0 21px, rgba(201, 162, 74, .14) 21px 22px), radial-gradient(circle, rgba(201, 162, 74, .1), transparent 70%); }
+html.mn-commercial .cm-radar-sw {
+  position: absolute; inset: 0; border-radius: 50%; will-change: transform;
+  background: conic-gradient(from 0deg, rgba(244, 220, 146, 0) 0deg 280deg, rgba(244, 220, 146, .35) 358deg, rgba(244, 220, 146, 0) 360deg);
+  animation: cm-sweep 2.6s linear infinite;
+}
+html.mn-commercial .cm-noentry {
+  display: grid; place-items: center; width: 104px; height: 104px; border-radius: 50%;
+  background: radial-gradient(circle, #120F15 0 58%, transparent 59%), var(--mn-foil);
+  box-shadow: 0 0 0 1px rgba(244, 220, 146, .5), 0 0 60px -10px rgba(201, 162, 74, .6);
+}
+html.mn-commercial .cm-gate-t { font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(30px, 6vw, 44px); line-height: 1.05; background: var(--mn-foil); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ==========================================================================
+   10. Réduire les animations : état final, immobile
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html.mn-commercial .cm-root [class*="cm-"],
+  html.mn-commercial .cm-root [class*="cm-"]::before,
+  html.mn-commercial .cm-root [class*="cm-"]::after,
+  html.mn-commercial .cm-root .cm-map line,
+  html.mn-commercial .cm-root .cm-map circle,
+  html.mn-commercial .cm-root .cm-tulip g { animation: none !important; transition: none !important; }
+  html.mn-commercial .cm-sweep, html.mn-commercial .cm-radar-sw { transform: rotate(48deg); }
+  html.mn-commercial .cm-node::before { opacity: .45; transform: scale(1.1); }
+  html.mn-commercial .cm-node::after { opacity: .2; transform: scale(1.8); }
+  html.mn-commercial .cm-light { display: none; }
+}

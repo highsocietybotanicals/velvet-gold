@@ -11,7 +11,7 @@ import MessageDialog from "@/components/admin/clients/MessageDialog";
 import PrivateNotes from "@/components/admin/clients/PrivateNotes";
 import { cn } from "@/lib/utils";
 
-const card = "rounded-xl border border-gold/25 p-5 sm:p-6";
+const card = "adm-panel rounded-xl border border-gold/25 p-5 sm:p-6";
 
 const ClientDetailPage = () => {
   const { key = "" } = useParams();
@@ -25,7 +25,7 @@ const ClientDetailPage = () => {
   );
 
   const back = (
-    <Link to="/admin/clients" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
+    <Link to="/admin/clients" className="adm-back inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
       <ArrowLeft className="h-4 w-4" /> Tous les clients
     </Link>
   );
@@ -52,7 +52,7 @@ const ClientDetailPage = () => {
         <div className="flex items-center gap-4">
           <Avatar name={c.name} size="lg" />
           <div>
-            <h1 className="font-display text-3xl gold-text">{c.name}</h1>
+            <h1 className="adm-dossier font-display text-3xl gold-text">{c.name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Client depuis le {fmtDate(c.firstOrderDate)} · {c.ordersCount} commande{c.ordersCount > 1 ? "s" : ""} · {c.deliveryHabit}
             </p>
@@ -76,7 +76,7 @@ const ClientDetailPage = () => {
       </header>
 
       {/* Hero */}
-      <section className={card}>
+      <section className={`${card} adm-screen`}>
         {c.ordersCount >= 2 ? (
           <>
             {c.overdueDays > 0 ? (
@@ -95,7 +95,7 @@ const ClientDetailPage = () => {
       </section>
 
       {/* KPIs */}
-      <section aria-label="Indicateurs" className="grid grid-cols-2 overflow-hidden rounded-xl border border-gold/25 lg:grid-cols-4">
+      <section aria-label="Indicateurs" className="adm-kpis grid grid-cols-2 overflow-hidden rounded-xl border border-gold/25 lg:grid-cols-4">
         {[
           ["Total dépensé", fmtEuro(c.totalSpent), `${(c.shareOfRevenue * 100).toFixed(1).replace(".", ",")} % de votre chiffre`],
           ["Panier moyen", fmtEuro(c.avgBasket), ""],

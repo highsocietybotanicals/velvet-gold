@@ -1,0 +1,462 @@
+/* ==========================================================================
+   Administration — « La salle de contrôle » (Minuit Carat)
+   Luxe sobre et lisible pour un outil de tous les jours : laque noire, rail d'or,
+   point néon, bandeau gravé avec horloge et oscilloscope, registre noir à filets d'or.
+   Tout est préfixé html.mn-admin (posé par useMinuitSkin("admin") dans AdminLayout).
+   Visuel uniquement : aucune logique. Seuls transform et opacity sont animés.
+   ========================================================================== */
+
+/* ---------------- page ---------------- */
+html.mn-admin .adm-root { background: var(--mn-nuit); }
+/* en bas de page, le pied de page passe devant la barre latérale fixe au lieu d'être recouvert */
+html.mn-admin .adm-root > footer { z-index: 11; background-color: var(--mn-nuit); }
+
+/* écran d'attente */
+html.mn-admin .adm-boot { background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(201, 162, 74, .08), transparent 70%), var(--mn-nuit); }
+html.mn-admin .adm-boot-txt { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9px; letter-spacing: .4em; text-transform: uppercase; color: var(--mn-or); }
+
+/* ==========================================================================
+   Barre latérale : laque noire, rail d'or, point néon sur l'entrée active
+   ========================================================================== */
+html.mn-admin .adm-rail { border-right-color: #000; }
+html.mn-admin [data-sidebar="sidebar"] {
+  background:
+    linear-gradient(112deg, transparent 36%, rgba(255, 246, 220, .035) 46%, transparent 56%),
+    radial-gradient(130% 34% at 0% 0%, rgba(201, 162, 74, .1), transparent 70%),
+    linear-gradient(180deg, #0C0A0F 0%, #070609 55%, #040305 100%);
+  color: var(--mn-ivoire-2);
+}
+/* bureau seulement : la version téléphone est un tiroir déjà positionné (fixed) */
+html.mn-admin [data-sidebar="sidebar"]:not([data-mobile]) { position: relative; }
+/* rail d'or : un filet vif et son double plus discret */
+html.mn-admin [data-sidebar="sidebar"]::after,
+html.mn-admin [data-sidebar="sidebar"]::before {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 1px; pointer-events: none;
+}
+html.mn-admin [data-sidebar="sidebar"]::after {
+  right: 0;
+  background: linear-gradient(180deg, rgba(201, 162, 74, 0), var(--mn-or) 12%, var(--mn-or-clair) 46%, var(--mn-or) 80%, rgba(201, 162, 74, .12));
+}
+html.mn-admin [data-sidebar="sidebar"]::before {
+  right: 4px;
+  background: linear-gradient(180deg, transparent, rgba(201, 162, 74, .22) 20%, rgba(201, 162, 74, .22) 80%, transparent);
+}
+
+/* sceau : emblème et enseigne néon */
+html.mn-admin .adm-seal {
+  display: flex; align-items: center; gap: 12px; flex: none;
+  margin: 0 10px; padding: 20px 6px 16px; border-bottom: 1px solid var(--mn-ligne);
+}
+html.mn-admin .adm-seal-emb { flex: none; width: 36px; height: 38px; color: var(--mn-or); filter: drop-shadow(0 0 9px rgba(201, 162, 74, .38)); }
+html.mn-admin .adm-seal-emb svg { display: block; width: 100%; height: 100%; }
+html.mn-admin .adm-seal-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+html.mn-admin .adm-seal-neon {
+  font-family: var(--mn-neon); font-size: 21px; color: #FFF3D1; white-space: nowrap;
+  text-shadow: 0 0 2px #FFF6DC, 0 0 8px #F4DC92, 0 0 18px #C9A24A, 0 0 38px rgba(201, 162, 74, .55);
+  animation: adm-hum 7s ease-in-out 1.2s infinite;
+}
+/* bourdonnement du néon : jamais sur téléphone (tiroir) ni sur un appareil modeste, l'enseigne reste allumée fixe */
+html.mn-admin .adm-seal.is-lite .adm-seal-neon { animation: none; }
+@media (max-width: 899px) { html.mn-admin .adm-seal-neon { animation: none; } }
+html.mn-admin .adm-seal-kick {
+  margin-top: 7px; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 8.5px;
+  letter-spacing: .3em; text-transform: uppercase; color: var(--mn-or); white-space: nowrap;
+}
+html.mn-admin .group[data-collapsible="icon"] .adm-seal { justify-content: center; margin: 0 6px; padding: 14px 0 12px; }
+html.mn-admin .group[data-collapsible="icon"] .adm-seal-emb { width: 24px; height: 26px; }
+html.mn-admin .group[data-collapsible="icon"] .adm-seal-txt { display: none; }
+
+/* intitulé du groupe : gravé, prolongé d'un filet */
+html.mn-admin .adm-glabel {
+  margin-top: 8px; gap: 10px; color: var(--mn-or);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase;
+}
+html.mn-admin .adm-glabel::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--mn-ligne), transparent); }
+html.mn-admin .adm-glabel svg { color: var(--mn-or-sombre); }
+
+/* entrées : numéro de canal à droite, point néon sur l'entrée active */
+html.mn-admin .adm-side [data-sidebar="menu"] { counter-reset: adm-ch; gap: 2px; }
+html.mn-admin .adm-side [data-sidebar="menu-item"] { counter-increment: adm-ch; }
+html.mn-admin .adm-side [data-sidebar="menu-item"]:last-child { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--mn-ligne); }
+html.mn-admin .adm-link {
+  position: relative; height: 38px; padding-left: 22px; padding-right: 12px; gap: 11px; border-radius: 2px;
+  color: var(--mn-ivoire-2); font-size: 13.5px; letter-spacing: .01em;
+  transition: background-color .3s, color .3s;
+}
+html.mn-admin .adm-link > svg { color: var(--mn-or-sombre); transition: color .3s; }
+html.mn-admin .adm-link > span { transition: transform .35s var(--mn-ease); }
+/* numéro de canal décoratif : la forme « / "" » lui donne un texte alternatif vide, il n'entre pas dans le nom
+   accessible du lien (la première déclaration sert de repli aux navigateurs qui ne la comprennent pas) */
+html.mn-admin .adm-link::after {
+  content: counter(adm-ch, decimal-leading-zero);
+  content: counter(adm-ch, decimal-leading-zero) / "";
+  margin-left: auto; padding-left: 8px; flex: none;
+  font-family: var(--mn-mono); font-size: 10px; letter-spacing: .08em; color: var(--mn-ivoire-2); font-variant-numeric: tabular-nums;
+  transition: color .3s;
+}
+html.mn-admin .adm-link[href="/commercial"]::after { content: "\2197"; content: "\2197" / ""; font-size: 12px; letter-spacing: 0; }
+html.mn-admin .adm-link:hover { background-color: rgba(241, 232, 212, .045); color: var(--mn-ivoire); }
+html.mn-admin .adm-link:hover > svg { color: var(--mn-or); }
+html.mn-admin .adm-link:hover > span { transform: translateX(3px); }
+html.mn-admin .adm-link:hover::after { color: var(--mn-or); }
+html.mn-admin .adm-link[data-active="true"] {
+  color: var(--mn-or-clair); font-weight: 500;
+  background: linear-gradient(90deg, rgba(201, 162, 74, .18), rgba(201, 162, 74, .045) 62%, transparent);
+  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .08), inset 0 -1px 0 rgba(0, 0, 0, .45);
+}
+html.mn-admin .adm-link[data-active="true"] > svg { color: var(--mn-or-clair); }
+html.mn-admin .adm-link[data-active="true"]::after { color: var(--mn-or); }
+html.mn-admin .adm-link[data-active="true"]::before {
+  content: ""; position: absolute; left: 8px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%;
+  background: #FFF6DC; box-shadow: 0 0 3px #FFE9A8, 0 0 9px #F4DC92, 0 0 18px rgba(201, 162, 74, .85);
+}
+html.mn-admin .adm-link:focus-visible { outline: 1px solid var(--mn-or-clair); outline-offset: -1px; }
+/* barre repliée en icônes : point en coin, pas de numéro */
+html.mn-admin .group[data-collapsible="icon"] .adm-link::after { display: none; }
+html.mn-admin .group[data-collapsible="icon"] .adm-link[data-active="true"]::before { left: auto; right: 3px; top: 3px; margin-top: 0; width: 5px; height: 5px; }
+html.mn-admin .group[data-collapsible="icon"] .adm-side [data-sidebar="menu-item"]:last-child { margin-top: 6px; padding-top: 6px; }
+
+/* ==========================================================================
+   Bandeau de la salle de contrôle
+   ========================================================================== */
+html.mn-admin .adm-band {
+  position: relative; isolation: isolate; overflow: hidden;
+  padding: 16px 16px 36px;
+  background:
+    linear-gradient(180deg, rgba(255, 246, 220, .045), rgba(255, 246, 220, 0) 38%),
+    radial-gradient(58% 120% at 0% 0%, rgba(201, 162, 74, .12), transparent 62%),
+    linear-gradient(180deg, #110E14 0%, #0A090C 70%, #08070A 100%);
+  border-bottom: 1px solid rgba(201, 162, 74, .3);
+  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .07), 0 22px 40px -34px #000;
+}
+@media (min-width: 768px) { html.mn-admin .adm-band { padding: 22px 24px 40px; } }
+/* reflet de lumière qui glisse une fois sur la laque à l'ouverture de chaque section */
+html.mn-admin .adm-band .adm-sheen {
+  position: absolute; z-index: 3; top: 0; bottom: 0; left: 0; width: 34%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 240, 200, .06) 42%, rgba(255, 240, 200, .11) 50%, rgba(255, 240, 200, .06) 58%, transparent);
+  transform: translateX(-110%);
+  animation: adm-sheen 1.9s var(--mn-ease) .25s backwards;
+}
+html.mn-admin .adm-band-row {
+  position: relative; z-index: 2; max-width: 80rem; margin: 0 auto;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px 18px;
+}
+
+/* bouton d'ouverture de la barre latérale */
+html.mn-admin .adm-trigger { border: 1px solid var(--mn-ligne); border-radius: 2px; color: var(--mn-or-clair); background: rgba(6, 5, 8, .55); }
+html.mn-admin .adm-trigger:hover { background: rgba(201, 162, 74, .12); color: #FFF3D1; border-color: rgba(244, 220, 146, .5); }
+
+/* plaque gravée */
+html.mn-admin .adm-plate { position: relative; min-width: 0; }
+html.mn-admin .adm-kick {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; color: var(--mn-or);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .3em; text-transform: uppercase;
+  animation: adm-rise .8s var(--mn-ease) backwards;
+}
+html.mn-admin .adm-no {
+  padding-left: 10px; border-left: 1px solid var(--mn-ligne);
+  font-family: var(--mn-mono); font-stretch: normal; font-weight: 400; font-size: 10px; letter-spacing: .14em; color: var(--mn-ivoire-2);
+}
+html.mn-admin .adm-title {
+  margin-top: 6px; padding-right: .1em;
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(27px, 3.3vw, 46px); line-height: 1.04; letter-spacing: -.012em;
+  background: var(--mn-foil); background-size: 220% 100%; background-position: 18% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+  /* gravure : ombre dure en dessous, liseré clair au-dessus */
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .9)) drop-shadow(0 -1px 0 rgba(255, 236, 180, .1));
+  animation: adm-rise .8s var(--mn-ease) .08s backwards;
+}
+html.mn-admin .adm-sub {
+  margin-top: 7px; font-family: var(--mn-mono); font-size: 11px; letter-spacing: .06em; color: var(--mn-ivoire-2);
+  animation: adm-rise .8s var(--mn-ease) .16s backwards;
+}
+html.mn-admin .adm-ghost {
+  position: absolute; z-index: -1; right: 0; top: 50%; transform: translateY(-50%);
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(96px, 9vw, 150px); line-height: 1;
+  color: transparent; -webkit-text-stroke: 1px rgba(201, 162, 74, .2); pointer-events: none; user-select: none;
+  animation: adm-ghost 1.3s var(--mn-ease) .1s backwards;
+}
+
+/* horloge */
+html.mn-admin .adm-clock { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; font-family: var(--mn-mono); }
+html.mn-admin .adm-time {
+  display: flex; align-items: center; gap: 10px; line-height: 1;
+  font-size: 22px; font-weight: 300; letter-spacing: .04em; color: var(--mn-ivoire); font-variant-numeric: tabular-nums;
+}
+html.mn-admin .adm-time small { margin-left: 1px; font-size: .62em; font-weight: 400; color: var(--mn-or); }
+html.mn-admin .adm-lamp {
+  flex: none; width: 7px; height: 7px; border-radius: 50%;
+  background: #FFF6DC; box-shadow: 0 0 3px #FFE9A8, 0 0 9px #F4DC92, 0 0 18px rgba(201, 162, 74, .8);
+  animation: adm-lamp 2.8s ease-in-out infinite;
+}
+html.mn-admin .adm-date { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-ivoire-2); white-space: nowrap; }
+
+/* oscilloscope : le tracé défile, la plume reste fixe */
+html.mn-admin .adm-scope { position: absolute; z-index: 1; left: 0; right: 0; bottom: 9px; height: 22px; overflow: hidden; pointer-events: none; }
+html.mn-admin .adm-wave { position: absolute; left: 0; top: 0; width: 200%; height: 100%; animation: adm-scope 28s linear infinite; }
+html.mn-admin .adm-wave path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+html.mn-admin .adm-wave .adm-glow { stroke: rgba(201, 162, 74, .2); stroke-width: 3.5; }
+html.mn-admin .adm-wave .adm-line { stroke: var(--mn-or); stroke-width: 1; opacity: .85; }
+html.mn-admin .adm-scope::before,
+html.mn-admin .adm-scope::after { content: ""; position: absolute; z-index: 1; top: 0; bottom: 0; }
+html.mn-admin .adm-scope::before { left: 0; width: 16%; background: linear-gradient(90deg, #08070A, rgba(8, 7, 10, 0)); }
+html.mn-admin .adm-scope::after { right: 0; width: 14%; background: linear-gradient(90deg, rgba(8, 7, 10, 0), #08070A 24%); }
+html.mn-admin .adm-pen {
+  position: absolute; z-index: 2; right: calc(14% - 3px); top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%;
+  background: #FFF6DC; box-shadow: 0 0 3px #FFE9A8, 0 0 10px #F4DC92, 0 0 20px rgba(201, 162, 74, .7);
+}
+html.mn-admin .adm-band.is-idle .adm-wave,
+html.mn-admin .adm-band.is-idle .adm-lamp { animation-play-state: paused; }
+/* appareils modestes : plus aucune boucle permanente dans le bandeau */
+html.mn-admin .adm-band.is-lite .adm-wave,
+html.mn-admin .adm-band.is-lite .adm-lamp { animation: none; }
+
+/* règle graduée sous le bandeau */
+html.mn-admin .adm-ruler {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 7px; pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(201, 162, 74, .6) 0 1px, transparent 1px 80px) 0 100% / 100% 7px no-repeat,
+    repeating-linear-gradient(90deg, rgba(201, 162, 74, .26) 0 1px, transparent 1px 10px) 0 100% / 100% 3px no-repeat;
+}
+
+@media (max-width: 639px) {
+  html.mn-admin .adm-band-row { gap: 10px 12px; }
+  html.mn-admin .adm-ghost, html.mn-admin .adm-date { display: none; }
+  html.mn-admin .adm-time { font-size: 15px; gap: 8px; }
+  html.mn-admin .adm-sub { font-size: 10.5px; letter-spacing: .03em; }
+  html.mn-admin .adm-kick { letter-spacing: .26em; }
+}
+
+/* ==========================================================================
+   Contenu : registre noir, filets d'or, chiffres alignés
+   ========================================================================== */
+html.mn-admin .adm-main {
+  position: relative; font-variant-numeric: tabular-nums;
+  background:
+    radial-gradient(55% 380px at 100% 0%, rgba(201, 162, 74, .05), transparent 70%),
+    repeating-linear-gradient(180deg, transparent 0 35px, rgba(201, 162, 74, .03) 35px 36px);
+}
+/* entrée de la page : « backwards » seulement, aucun transform ne reste posé une fois l'animation finie
+   (un transform résiduel ferait de la page le repère des éléments fixes et collants des outils) */
+html.mn-admin .adm-main > div > * { animation: adm-in .6s var(--mn-ease) backwards; }
+html.mn-admin .adm-main .rounded-xl,
+html.mn-admin .adm-main .rounded-lg { border-radius: 3px; }
+
+/* cartes : module d'instrument, équerres d'or en coin */
+html.mn-admin .adm-main .border.bg-card {
+  border-color: rgba(201, 162, 74, .2);
+  background-color: transparent;
+  background-image:
+    linear-gradient(rgba(244, 220, 146, .7), rgba(244, 220, 146, .7)), linear-gradient(rgba(244, 220, 146, .7), rgba(244, 220, 146, .7)),
+    linear-gradient(rgba(201, 162, 74, .5), rgba(201, 162, 74, .5)), linear-gradient(rgba(201, 162, 74, .5), rgba(201, 162, 74, .5)),
+    linear-gradient(160deg, rgba(201, 162, 74, .065), rgba(13, 11, 16, .94) 42%, rgba(6, 5, 8, .97));
+  background-size: 12px 1px, 1px 12px, 12px 1px, 1px 12px, 100% 100%;
+  background-position: 0 0, 0 0, 100% 100%, 100% 100%, 0 0;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .05), 0 24px 50px -40px #000;
+}
+html.mn-admin .adm-main .bg-card h3:not(.text-muted-foreground) { color: var(--mn-ivoire); }
+html.mn-admin .adm-main .bg-card h3 > svg { color: var(--mn-or); }
+
+/* étiquettes gravées et grands chiffres */
+html.mn-admin .adm-main p.uppercase.text-xs,
+html.mn-admin .adm-main p.uppercase.text-\[10px\] {
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .14em; color: var(--mn-ivoire-2);
+}
+html.mn-admin .adm-main p.uppercase.text-\[10px\] { font-size: 10px; letter-spacing: .1em; }
+html.mn-admin .adm-main .bg-card p.text-2xl.font-bold,
+html.mn-admin .adm-main .bg-card p.text-lg.font-bold {
+  font-family: var(--mn-serif); font-weight: 500; letter-spacing: -.01em; font-variant-numeric: lining-nums tabular-nums;
+}
+html.mn-admin .adm-main .bg-card p.text-2xl.font-bold { font-size: 1.95rem; line-height: 1.15; }
+html.mn-admin .adm-main p.font-bold.text-gold,
+html.mn-admin .adm-main p.font-bold.text-primary { color: var(--mn-or-clair); }
+
+/* tableaux : registre */
+html.mn-admin .adm-main table thead tr { border-bottom: 1px solid rgba(201, 162, 74, .38); background: rgba(201, 162, 74, .035); }
+html.mn-admin .adm-main table tbody tr:nth-child(even) { background-color: rgba(241, 232, 212, .018); }
+html.mn-admin .adm-main table tbody tr:hover { background-color: rgba(201, 162, 74, .06); }
+html.mn-admin .adm-main table td.text-right { font-family: var(--mn-mono); font-size: .92em; letter-spacing: .01em; }
+/* en-tête collant (comptabilité) : fond plein pour rester lisible au défilement */
+html.mn-admin .adm-main thead.sticky { background: #0E0C11; box-shadow: 0 1px 0 rgba(201, 162, 74, .38); }
+
+/* fenêtres ouvertes depuis l'administration : liseré d'or en tête */
+html.mn-admin.mn-skin [role="dialog"].bg-background,
+html.mn-admin.mn-skin [role="alertdialog"].bg-background {
+  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .45), 0 0 0 1px rgba(201, 162, 74, .28), 0 40px 120px -30px rgba(0, 0, 0, .95);
+}
+
+/* boutons contour et listes déroulantes */
+html.mn-admin .adm-main button.border-input,
+html.mn-admin .adm-main a.border-input {
+  background-color: rgba(6, 5, 8, .45); border-color: rgba(201, 162, 74, .3); color: var(--mn-ivoire);
+  transition: background-color .3s, border-color .3s, color .3s;
+}
+html.mn-admin .adm-main button.border-input:hover:not(:disabled),
+html.mn-admin .adm-main a.border-input:hover { background-color: rgba(201, 162, 74, .09); border-color: var(--mn-or); color: var(--mn-or-clair); }
+html.mn-admin .adm-main button.border-input > svg,
+html.mn-admin .adm-main a.border-input > svg { color: var(--mn-or); }
+html.mn-admin .adm-main button[role="combobox"] { background-color: rgba(6, 5, 8, .55); border-color: rgba(241, 232, 212, .14); }
+html.mn-admin .adm-main button[role="combobox"]:focus-visible { border-color: var(--mn-or-clair); }
+
+/* graphiques */
+html.mn-admin .adm-main .recharts-cartesian-grid line { stroke: rgba(201, 162, 74, .16); }
+html.mn-admin .adm-main .recharts-cartesian-axis-tick-value { font-family: var(--mn-mono); }
+html.mn-admin .adm-main .recharts-default-tooltip {
+  background: linear-gradient(170deg, #15121A, #0D0B10 60%, #060508) !important;
+  border: 1px solid rgba(201, 162, 74, .4) !important; border-radius: 2px !important;
+  box-shadow: 0 18px 40px -16px #000;
+}
+
+/* note de service sous le titre (inventaire, produits, rentabilité) */
+html.mn-admin .adm-main .adm-note {
+  max-width: 76ch; padding: 12px 16px 13px 18px;
+  border-left: 1px solid var(--mn-or);
+  background: linear-gradient(90deg, rgba(201, 162, 74, .08), rgba(201, 162, 74, 0) 85%);
+  font-size: 13px; line-height: 1.65; color: var(--mn-ivoire-2);
+}
+html.mn-admin .adm-main .adm-note::before {
+  content: "Note"; content: "Note" / ""; display: block; margin-bottom: 4px; color: var(--mn-or);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .26em; text-transform: uppercase;
+}
+html.mn-admin .adm-main .adm-kicker {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px; color: var(--mn-or);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase;
+}
+html.mn-admin .adm-main .adm-kicker::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--mn-ligne), transparent); }
+
+/* sélecteur d'onglets façon console (rentabilité) */
+html.mn-admin .adm-main [role="tablist"].adm-switch {
+  display: inline-flex; max-width: 100%; height: auto; padding: 0; overflow-x: auto; border-radius: 2px;
+  border: 1px solid var(--mn-ligne); background: rgba(6, 5, 8, .6); box-shadow: inset 0 1px 0 rgba(244, 220, 146, .05);
+}
+html.mn-admin .adm-main .adm-switch [role="tab"] {
+  position: relative; min-height: 44px; padding: 10px 18px 10px 30px; border-radius: 0; color: var(--mn-ivoire-2);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+}
+html.mn-admin .adm-main .adm-switch [role="tab"] + [role="tab"] { border-left: 1px solid var(--mn-ligne); }
+html.mn-admin .adm-main .adm-switch [role="tab"]::before {
+  content: ""; position: absolute; left: 14px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%;
+  background: rgba(241, 232, 212, .16); transition: background-color .3s, box-shadow .3s;
+}
+html.mn-admin .adm-main .adm-switch [role="tab"][data-state="active"] {
+  color: var(--mn-or-clair);
+  background: linear-gradient(180deg, rgba(201, 162, 74, .17), rgba(201, 162, 74, .04));
+  box-shadow: inset 0 -2px 0 var(--mn-or);
+}
+html.mn-admin .adm-main .adm-switch [role="tab"][data-state="active"]::before {
+  background: #FFF6DC; box-shadow: 0 0 3px #FFE9A8, 0 0 9px #F4DC92, 0 0 16px rgba(201, 162, 74, .8);
+}
+@media (max-width: 559px) {
+  /* téléphone : trois interrupteurs égaux, l'intitulé passe à la ligne au lieu de déborder */
+  html.mn-admin .adm-main [role="tablist"].adm-switch { display: flex; width: 100%; overflow: visible; }
+  html.mn-admin .adm-main .adm-switch [role="tab"] {
+    flex: 1 1 0; min-width: 0; padding: 8px 6px 8px 17px; white-space: normal; line-height: 1.3; text-align: center;
+    font-size: 10px; letter-spacing: .06em;
+  }
+  html.mn-admin .adm-main .adm-switch [role="tab"]::before { left: 7px; width: 5px; height: 5px; margin-top: -2.5px; }
+}
+
+/* documents pro : rangée d'interrupteurs */
+html.mn-admin .adm-main .adm-docs {
+  padding: 18px 18px 20px; border: 1px solid var(--mn-ligne); border-radius: 3px;
+  background: linear-gradient(160deg, rgba(201, 162, 74, .06), rgba(6, 5, 8, .6) 50%);
+}
+html.mn-admin .adm-main .adm-docs .border-input { min-height: 42px; letter-spacing: .01em; }
+
+/* ---------------- clients : registre, interrupteurs de filtre, jetons ---------------- */
+html.mn-admin .adm-main .adm-head p { font-family: var(--mn-mono); font-size: 12px; letter-spacing: .04em; }
+html.mn-admin .adm-main .adm-kpis {
+  border-color: var(--mn-ligne);
+  background: linear-gradient(180deg, rgba(201, 162, 74, .06), rgba(6, 5, 8, .55));
+  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .06);
+}
+html.mn-admin .adm-main .adm-kpis > div { position: relative; }
+html.mn-admin .adm-main .adm-kpis > div::after {
+  content: ""; position: absolute; left: 20px; right: 20px; bottom: 0; height: 4px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(201, 162, 74, .3) 0 1px, transparent 1px 8px);
+}
+html.mn-admin .adm-main .adm-kpis .font-display,
+html.mn-admin .adm-main .adm-kpis p.text-gold {
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; color: var(--mn-or-clair); font-variant-numeric: lining-nums tabular-nums;
+}
+html.mn-admin .adm-main .adm-alert { border-color: rgba(201, 162, 74, .45); background: linear-gradient(90deg, rgba(201, 162, 74, .1), rgba(201, 162, 74, .02)); }
+
+html.mn-admin .adm-main .adm-filters button {
+  position: relative; padding-left: 28px; border-radius: 2px; letter-spacing: .01em;
+}
+html.mn-admin .adm-main .adm-filters button::before {
+  content: ""; position: absolute; left: 12px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%;
+  background: rgba(241, 232, 212, .16); transition: background-color .3s, box-shadow .3s;
+}
+html.mn-admin .adm-main .adm-filters button[aria-pressed="true"] {
+  color: var(--mn-or-clair); border-color: var(--mn-or);
+  background: linear-gradient(180deg, rgba(201, 162, 74, .18), rgba(201, 162, 74, .05));
+}
+html.mn-admin .adm-main .adm-filters button[aria-pressed="true"]::before {
+  background: #FFF6DC; box-shadow: 0 0 3px #FFE9A8, 0 0 9px #F4DC92, 0 0 16px rgba(201, 162, 74, .8);
+}
+
+html.mn-admin .adm-main .adm-ledger { border-color: var(--mn-ligne); background: linear-gradient(180deg, rgba(13, 11, 16, .9), rgba(6, 5, 8, .95)); }
+html.mn-admin .adm-main .adm-ledger td .font-display { font-style: italic; color: var(--mn-or-clair); }
+html.mn-admin .adm-main .adm-tile {
+  border-color: var(--mn-ligne);
+  background: linear-gradient(160deg, rgba(201, 162, 74, .06), rgba(13, 11, 16, .92) 45%, rgba(6, 5, 8, .96));
+}
+html.mn-admin .adm-main .adm-tile:hover { border-color: rgba(244, 220, 146, .5); }
+html.mn-admin .adm-main .adm-tile dt { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+html.mn-admin .adm-main .adm-tile dd.font-display { font-style: italic; color: var(--mn-or-clair); }
+html.mn-admin .adm-main .adm-empty { border-style: dashed; border-color: var(--mn-ligne); font-family: var(--mn-mono); letter-spacing: .04em; }
+
+/* monogrammes clients : jetons d'or */
+html.mn-admin .adm-main span[aria-hidden="true"].rounded-full.font-display {
+  border-color: transparent; color: #1A1306; font-style: italic; font-weight: 500;
+  background: radial-gradient(circle at 32% 28%, #FFF2C2 0%, #E9C977 22%, #B8913E 52%, #7D6936 78%, #C9A24A 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 240, 200, .5), inset -4px -6px 10px rgba(60, 40, 10, .45), 0 8px 20px -8px rgba(201, 162, 74, .6);
+}
+
+/* fiche client : dossier */
+html.mn-admin .adm-main .adm-back {
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+}
+html.mn-admin .adm-main h1.adm-dossier {
+  font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; padding-right: .1em;
+  background: var(--mn-foil); background-size: 220% 100%; background-position: 18% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+}
+html.mn-admin .adm-main .adm-panel {
+  border-color: var(--mn-ligne);
+  background: linear-gradient(160deg, rgba(201, 162, 74, .055), rgba(13, 11, 16, .92) 40%, rgba(6, 5, 8, .96));
+  box-shadow: inset 0 1px 0 rgba(244, 220, 146, .05);
+}
+/* frise des commandes sur un écran quadrillé d'oscilloscope */
+html.mn-admin .adm-main .adm-panel.adm-screen {
+  background:
+    repeating-linear-gradient(90deg, rgba(201, 162, 74, .055) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(180deg, rgba(201, 162, 74, .04) 0 1px, transparent 1px 48px),
+    radial-gradient(ellipse 80% 90% at 50% 60%, rgba(201, 162, 74, .07), transparent 70%),
+    linear-gradient(180deg, #0D0B10, #060508);
+}
+
+/* ---------------- animations ---------------- */
+@keyframes adm-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes adm-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes adm-sheen { from { transform: translateX(-110%); } to { transform: translateX(320%); } }
+@keyframes adm-ghost { from { opacity: 0; transform: translate(18px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+@keyframes adm-scope { to { transform: translateX(-50%); } }
+@keyframes adm-lamp { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+@keyframes adm-hum { 0%, 100% { opacity: 1; } 47% { opacity: .94; } 50% { opacity: .78; } 53% { opacity: .96; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html.mn-admin .adm-band .adm-sheen { animation: none; opacity: 0; }
+  html.mn-admin .adm-kick, html.mn-admin .adm-title, html.mn-admin .adm-sub, html.mn-admin .adm-ghost,
+  html.mn-admin .adm-wave, html.mn-admin .adm-lamp, html.mn-admin .adm-seal-neon,
+  html.mn-admin .adm-main > div > * { animation: none; }
+  html.mn-admin .adm-link, html.mn-admin .adm-link > span, html.mn-admin .adm-link > svg { transition: none; }
+  html.mn-admin .adm-link:hover > span { transform: none; }
+}
+
+@media print {
+  html.mn-admin .adm-band, html.mn-admin [data-sidebar="sidebar"] { display: none; }
+  html.mn-admin .adm-main { background: none; }
+}

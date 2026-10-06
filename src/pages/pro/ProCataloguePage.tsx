@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { useProCart } from "@/contexts/ProCartContext";
 import { useProCartTotals } from "@/hooks/useProCartTotals";
@@ -13,6 +14,8 @@ import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import ProTicker from "@/components/minuit/areas/pro/ProTicker";
+import { ProFlap } from "@/components/minuit/areas/pro/ProDecor";
 
 const eur = (n: number) => `${n.toFixed(2)} €`;
 
@@ -43,27 +46,31 @@ const useProStock = () =>
     },
   });
 
+// Voyants de stock de la cote (habillage « Minuit Carat » : voir areas/pro/pro.css)
 const StockBadge = ({ stock }: { stock?: StockRow }) => {
   if (!stock) return null;
   if (stock.stock_grams <= 0)
     return (
-      <Badge className="bg-red-900/40 text-red-300 border border-red-700/50 gap-1">
-        <XCircle className="h-3 w-3" /> Rupture
+      <Badge className="pr-led is-out gap-1">
+        <XCircle className="h-3 w-3" aria-hidden="true" /> Rupture
       </Badge>
     );
   if (stock.stock_grams <= stock.low_stock_threshold_g)
     return (
-      <Badge className="bg-amber-600/20 text-amber-300 border border-amber-500/50 gap-1">
-        <AlertTriangle className="h-3 w-3" /> Stock faible — {stock.stock_grams} g
+      <Badge className="pr-led is-low gap-1">
+        <AlertTriangle className="h-3 w-3" aria-hidden="true" /> Stock faible — {stock.stock_grams} g
       </Badge>
     );
   return (
-    <Badge className="bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 gap-1">
-      <Package className="h-3 w-3" /> {stock.stock_grams} g en stock
+    <Badge className="pr-led is-ok gap-1">
+      <Package className="h-3 w-3" aria-hidden="true" /> {stock.stock_grams} g en stock
     </Badge>
   );
 };
 
+// Date de la séance (affichage seul)
+const seanceDate = () =>
+  new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
 const ProCataloguePage = () => {
   const { setUnits, getUnits } = useProCart();
@@ -73,17 +80,48 @@ const ProCataloguePage = () => {
 
   if (isLoading) {
     return (
-      <div className="py-24 flex justify-center">
+      <div className="py-24 flex flex-col items-center gap-4">
         <Loader2 className="h-6 w-6 animate-spin text-gold" />
+        <p className="pr-seance" aria-hidden="true">Ouverture de la séance…</p>
       </div>
     );
   }
 
+  // Bandeau défilant : doublon visuel des références et de leur prix pro « dès » (même calcul que chaque ligne)
+  const tickerItems = products.map((p) => {
+    const stock = stockMap?.get(p.id);
+    const info = { price: p.price, priceGroup: p.priceGroup };
+    return {
+      id: p.id,
+      name: p.name,
+      cote: `dès ${eur(proPricePerGram(tiers, p.id, totals.totalWeightG, 10, info))}`,
+      out: !!stock && stock.stock_grams <= 0,
+    };
+  });
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold gold-text">Catalogue professionnel</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="pr-cote space-y-6">
+      <div className="pr-cote-hd">
+        <h1>
+          <span className="k">Catalogue professionnel</span>
+          <span className="m">
+            La cote <span className="pr-foil">du jour</span>
+          </span>
+        </h1>
+        <div className="pr-cote-side">
+          <span className="pr-neon-sign" aria-hidden="true">
+            Séance de nuit
+          </span>
+          <p className="pr-seance">
+            Séance du <b>{seanceDate()}</b> · prix <b>HT</b> au gramme
+          </p>
+        </div>
+      </div>
+
+      <ProTicker items={tickerItems} />
+
+      <div className="pr-notice">
+        <p>
           Tous les prix sont <strong>HT</strong> (hors TVA 20 %), par gramme, positionnés à
           exactement <strong>50 % du prix public HT</strong> — identiques quel que soit le format,
           pochon aluminium, Boveda 62 % et étiquette inclus sans supplément. Remise dégressive
@@ -94,9 +132,7 @@ const ProCataloguePage = () => {
           10 g, en revendant aux <strong>mêmes prix que le site</strong> — coefficient calculé{" "}
           <strong>HT/HT</strong>, TVA collectée déjà déduite. Le gain HT par pochon est indiqué sous
           chaque format. Saisis le nombre de pochons par format.
-
         </p>
-
       </div>
 
       <ProTierBar
@@ -110,96 +146,116 @@ const ProCataloguePage = () => {
         resellerMarginTotal={totals.resellerMarginTotal}
       />
 
-      <div className="space-y-3">
-        {products.map((p) => {
-          const stock = stockMap?.get(p.id);
-          const rupture = !!stock && stock.stock_grams <= 0;
-          const info = { price: p.price, priceGroup: p.priceGroup };
-          const basePpg = proPricePerGram(tiers, p.id, totals.totalWeightG, 10, info);
-          const productSubtotal = PRO_FORMATS.reduce(
-            (s, f) =>
-              s +
-              f * getUnits(p.id, f) * proPricePerGram(tiers, p.id, totals.totalWeightG, f, info),
-            0
-          );
+      {/* Tableau de cote : une ligne par référence */}
+      <div className="pr-board-wrap">
+        <div className="pr-board-hd" aria-hidden="true">
+          <span>N° · Référence · cote pro</span>
+          <span>Formats · pochons · sous-total HT</span>
+        </div>
+        <div className="pr-board">
+          {products.map((p, i) => {
+            const stock = stockMap?.get(p.id);
+            const rupture = !!stock && stock.stock_grams <= 0;
+            const info = { price: p.price, priceGroup: p.priceGroup };
+            const basePpg = proPricePerGram(tiers, p.id, totals.totalWeightG, 10, info);
+            const productSubtotal = PRO_FORMATS.reduce(
+              (s, f) =>
+                s +
+                f * getUnits(p.id, f) * proPricePerGram(tiers, p.id, totals.totalWeightG, f, info),
+              0
+            );
 
-
-          return (
-            <Card
-              key={p.id}
-              className={`bg-card/60 border-border/50 ${rupture ? "opacity-60" : ""}`}
-            >
-              <CardContent className="p-4 grid gap-4 md:grid-cols-[1fr_auto] items-center">
-                <div className="flex items-center gap-3 min-w-0">
-                  <img
-                    src={p.image}
-                    alt={`Pochon préconditionné ${p.name}`}
-                    loading="lazy"
-                    className="h-14 w-14 rounded object-cover shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      PV public conseillé : {eur(p.price)} /g TTC · Prix pro dès{" "}
-                      <span className="text-gold font-medium">{eur(basePpg)} /g HT</span>
-                    </p>
-                    <div className="mt-1">
-                      <StockBadge stock={stock} />
+            return (
+              <Card
+                key={p.id}
+                className={`pr-row ${rupture ? "opacity-60" : ""}`}
+                style={{ "--i": i } as CSSProperties}
+              >
+                <CardContent className="pr-row-in">
+                  <div className="pr-row-id">
+                    <span className="pr-row-no" aria-hidden="true">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <img
+                      src={p.image}
+                      alt={`Pochon préconditionné ${p.name}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="pr-row-img"
+                    />
+                    <div className="min-w-0">
+                      <p className="pr-row-name truncate">{p.name}</p>
+                      <p className="pr-row-meta">
+                        <span>PV public conseillé : {eur(p.price)} /g TTC</span>
+                        <span className="sep" aria-hidden="true">
+                          ·
+                        </span>
+                        <span>
+                          Prix pro dès <ProFlap text={eur(basePpg)} className="pr-cote-v" /> /g HT
+                        </span>
+                      </p>
+                      <div className="mt-2">
+                        <StockBadge stock={stock} />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {PRO_FORMATS.map((f) => {
-                    const ppgF = proPricePerGram(tiers, p.id, totals.totalWeightG, f, info);
-                    const retailF = calculateItemPrice(p.price, f, p.priceGroup, p.id).finalPrice;
-                    // Le buraliste revend au MÊME prix public que le site : son
-                    // encaissement réel est HT (TVA reversée), d'où le coef HT/HT.
-                    const coefF = ppgF > 0 ? retailF / 1.2 / f / ppgF : 0;
-                    // Gain HT par pochon : prix public HT du format - achat HT du pochon
-                    const gainF = retailF / 1.2 - ppgF * f;
-                    return (
-                      <div key={f} className="w-24">
-                        <label className="text-[11px] text-muted-foreground block mb-1">
-                          {f} g · {eur(ppgF)}/g
-                          <span className="block text-gold">x{coefF.toFixed(2)}</span>
-                          <span className="block text-gold-light">
-                            +{gainF.toFixed(2)} €/pochon
-                          </span>
-                        </label>
+                  <div className="pr-formats">
+                    {PRO_FORMATS.map((f) => {
+                      const ppgF = proPricePerGram(tiers, p.id, totals.totalWeightG, f, info);
+                      const retailF = calculateItemPrice(p.price, f, p.priceGroup, p.id).finalPrice;
+                      // Le buraliste revend au MÊME prix public que le site : son
+                      // encaissement réel est HT (TVA reversée), d'où le coef HT/HT.
+                      const coefF = ppgF > 0 ? retailF / 1.2 / f / ppgF : 0;
+                      // Gain HT par pochon : prix public HT du format - achat HT du pochon
+                      const gainF = retailF / 1.2 - ppgF * f;
+                      const fieldId = `pr-q-${p.id}-${f}`;
+                      return (
+                        <div key={f} className="pr-fmt">
+                          <label htmlFor={fieldId} className="pr-fmt-l">
+                            <span className="pr-fmt-f">{f} g</span>
+                            <span className="pr-fmt-sep"> · </span>
+                            {eur(ppgF)}/g
+                            <span className="pr-fmt-coef block">x{coefF.toFixed(2)}</span>
+                            <span className="pr-fmt-gain block">
+                              +{gainF.toFixed(2)} €/pochon
+                            </span>
+                          </label>
 
-                        <Input
-                          type="number"
-                          min={0}
-                          inputMode="numeric"
-                          value={getUnits(p.id, f) || ""}
-                          placeholder="0"
-                          disabled={rupture}
-                          onChange={(e) => setUnits(p.id, p.name, f, Number(e.target.value))}
-                          className="h-9"
-                        />
-                      </div>
-                    );
-                  })}
-                  <div className="w-24 self-end text-right">
-                    <p className="text-[11px] text-muted-foreground">Sous-total</p>
-                    <p className="text-sm font-medium">{eur(productSubtotal)}</p>
+                          <Input
+                            id={fieldId}
+                            type="number"
+                            min={0}
+                            inputMode="numeric"
+                            value={getUnits(p.id, f) || ""}
+                            placeholder="0"
+                            disabled={rupture}
+                            onChange={(e) => setUnits(p.id, p.name, f, Number(e.target.value))}
+                            className="pr-qty h-10"
+                          />
+                        </div>
+                      );
+                    })}
+                    <div className="pr-fmt-sub">
+                      <p>Sous-total</p>
+                      <p>{eur(productSubtotal)}</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
-
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur border-t border-border/40 py-3 flex items-center justify-between gap-4 flex-wrap">
-        <div className="text-sm">
-          <span className="text-muted-foreground">Total </span>
+      {/* Ticket de séance : place laissée au bouton du Sommelier (voir pro.css) */}
+      <div className="pr-ticket sticky bottom-0 flex items-center justify-between gap-4 flex-wrap">
+        <div className="pr-ticket-sum">
+          <span className="l">Total</span>
           <strong>{totals.totalWeightG} g</strong>
-          <span className="text-muted-foreground"> · </span>
-          <strong>{eur(totals.totalHT)} HT</strong>
-          <span className="text-muted-foreground"> ({eur(totals.totalTTC)} TTC)</span>
+          <span className="ttc"> · </span>
+          <strong className="ht">{eur(totals.totalHT)} HT</strong>
+          <span className="ttc"> ({eur(totals.totalTTC)} TTC)</span>
         </div>
         <Button asChild disabled={totals.totalWeightG === 0}>
           <Link to="/pro/panier">Voir mon panier</Link>

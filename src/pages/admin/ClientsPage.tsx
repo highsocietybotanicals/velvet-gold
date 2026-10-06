@@ -89,9 +89,10 @@ const ClientsPage = () => {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="adm-head flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl gold-text">Clients</h1>
+          {/* titre visible dans le bandeau gravé de la salle de contrôle */}
+          <h1 className="sr-only">Clients</h1>
           {isLoading ? <Skeleton className="mt-2 h-4 w-56" /> : (
             <p className="mt-1 text-sm text-muted-foreground">
               {kpis.clients} clients identifiés depuis{" "}
@@ -105,7 +106,7 @@ const ClientsPage = () => {
       </header>
 
       {/* KPI band */}
-      <section aria-label="Indicateurs" className="grid grid-cols-2 overflow-hidden rounded-xl border border-gold/25 lg:grid-cols-4">
+      <section aria-label="Indicateurs" className="adm-kpis grid grid-cols-2 overflow-hidden rounded-xl border border-gold/25 lg:grid-cols-4">
         {isLoading ? [0, 1, 2, 3].map((i) => <div key={i} className="p-5"><Skeleton className="h-16" /></div>) : [
           [`${kpis.loyal} fidèles`, `Ils ont passé ${kpis.loyalOrders} des ${kpis.totalOrders} commandes.`],
           [`${Math.round(kpis.top2Share * 100)} %`, "du chiffre d'affaires vient de vos 2 meilleurs clients."],
@@ -121,7 +122,7 @@ const ClientsPage = () => {
 
       {/* Duplicates */}
       {duplicates.map(({ a, b, id }) => (
-        <div key={id} className="flex flex-col gap-3 rounded-xl border border-gold/30 bg-gold/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div key={id} className="adm-alert flex flex-col gap-3 rounded-xl border border-gold/30 bg-gold/5 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm">
             <strong>{a.name}</strong> apparaît sous deux identifiants ({a.ordersCount} + {b.ordersCount} commandes,{" "}
             {fmtEuro(a.totalSpent + b.totalSpent)} au total).
@@ -150,7 +151,7 @@ const ClientsPage = () => {
             </select>
           </label>
         </div>
-        <div role="group" aria-label="Filtrer par statut" className="flex gap-2 overflow-x-auto pb-1">
+        <div role="group" aria-label="Filtrer par statut" className="adm-filters flex gap-2 overflow-x-auto pb-1">
           {FILTERS.map((f) => (
             <button
               key={f.value}
@@ -171,11 +172,11 @@ const ClientsPage = () => {
       {isLoading ? (
         <div className="space-y-2">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-16" />)}</div>
       ) : list.length === 0 ? (
-        <p className="rounded-xl border border-gold/20 p-10 text-center text-sm text-muted-foreground">Aucun client dans cette catégorie.</p>
+        <p className="adm-empty rounded-xl border border-gold/20 p-10 text-center text-sm text-muted-foreground">Aucun client dans cette catégorie.</p>
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-x-auto rounded-xl border border-gold/20 md:block">
+          <div className="adm-ledger hidden overflow-x-auto rounded-xl border border-gold/20 md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gold/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -217,7 +218,7 @@ const ClientsPage = () => {
           <ul className="space-y-3 md:hidden">
             {list.map((c) => (
               <li key={c.key}>
-                <Link to={detailPath(c)} className="block rounded-xl border border-gold/20 p-4 transition-colors hover:bg-gold/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Link to={detailPath(c)} className="adm-tile block rounded-xl border border-gold/20 p-4 transition-colors hover:bg-gold/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <div className="flex items-center gap-3">
                     <Avatar name={c.name} />
                     <div className="min-w-0 flex-1">

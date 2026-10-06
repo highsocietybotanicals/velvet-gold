@@ -8,10 +8,15 @@ import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { downloadProOrderForm, downloadProClientForm } from "@/lib/proFormsPdf";
 import { downloadProPriceGrid, downloadProCatalogue, downloadProGuide, type DocProduct } from "@/lib/proDocsPdf";
 import { proFormatPrices } from "@/lib/proPricing";
+import emblemSvg from "@/assets/brand/hsb-emblem.svg?raw";
+import LogHead from "@/components/minuit/areas/commercial/LogHead";
+
+/** Référence de pièce dans la boîte à gants (décor). */
+const pieceRef = (n: number) => `Pièce ${String(n).padStart(2, "0")}`;
 
 const PITCH = `Bonjour,
 
-Je suis commercial pour High Society Botanicals, une marque française de CBD haut de gamme (100 % indoor, analyses laboratoire pour chaque lot, THC < 0,3 %).
+Je suis commercial pour High Society Botanicals, une marque française de CBD haut de gamme (100 % indoor, sélection à la main, THC < 0,3 %, analyse laboratoire disponible sur demande).
 
 Nous proposons aux buralistes une gamme préconditionnée prête à vendre : pochons 1 g, 2,5 g, 5 g et 10 g, humidité maîtrisée par Boveda 62 %, briquet BIC et feuilles slim offerts dans les 10 g.
 
@@ -98,21 +103,24 @@ const CommercialDocumentsPage = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold gold-text">Documents & pitch</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+    <div className="cm-page space-y-6">
+      <LogHead no="05" etape="La boîte à gants" turn="arrivee">
+        <h1 className="cm-h1">Documents & pitch</h1>
+        <p className="cm-lead">
           À envoyer par mail ou à présenter sur tablette pendant la visite. Les documents sont générés à jour à chaque téléchargement.
         </p>
-      </div>
+      </LogHead>
 
       {/* Formulaires à imprimer */}
-      <div className="grid gap-3 md:grid-cols-2">
-        <Card>
+      <div className="cm-docs grid gap-3 md:grid-cols-2">
+        <Card className="cm-doc">
           <CardContent className="pt-5 space-y-3">
+            <span className="cm-doc-ref" aria-hidden="true">
+              {pieceRef(1)} · à imprimer
+            </span>
             <div className="flex items-center gap-2">
               <Printer className="h-4 w-4 text-primary" />
-              <p className="font-medium text-sm">Bon de commande papier (A4)</p>
+              <p className="cm-doc-t font-medium text-sm">Bon de commande papier (A4)</p>
             </div>
             <p className="text-xs text-muted-foreground">
               À imprimer et remplir au stylo pendant la visite. Prix pro HT fixés par variété,
@@ -123,11 +131,14 @@ const CommercialDocumentsPage = () => {
             </Button>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cm-doc">
           <CardContent className="pt-5 space-y-3">
+            <span className="cm-doc-ref" aria-hidden="true">
+              {pieceRef(2)} · à imprimer
+            </span>
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
-              <p className="font-medium text-sm">Fiche nouveau client pro (A4)</p>
+              <p className="cm-doc-t font-medium text-sm">Fiche nouveau client pro (A4)</p>
             </div>
             <p className="text-xs text-muted-foreground">
               Toutes les informations nécessaires pour créer le compte pro en back-office.
@@ -147,11 +158,14 @@ const CommercialDocumentsPage = () => {
         </Card>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        {GENERATED_DOCS.map((d) => (
-          <Card key={d.key}>
+      <div className="cm-docs grid gap-3 md:grid-cols-2">
+        {GENERATED_DOCS.map((d, i) => (
+          <Card key={d.key} className="cm-doc">
             <CardContent className="pt-5 space-y-3">
-              <p className="font-medium text-sm">{d.name}</p>
+              <span className="cm-doc-ref" aria-hidden="true">
+                {pieceRef(i + 3)} · générée à jour
+              </span>
+              <p className="cm-doc-t font-medium text-sm">{d.name}</p>
               <p className="text-xs text-muted-foreground">{d.desc}</p>
               <Button variant="outline" size="sm" onClick={d.action} disabled={busy !== null}>
                 {busy === d.key ? (
@@ -164,9 +178,12 @@ const CommercialDocumentsPage = () => {
             </CardContent>
           </Card>
         ))}
-        <Card>
+        <Card className="cm-doc">
           <CardContent className="pt-5 space-y-3">
-            <p className="font-medium text-sm">RIB — High Society Botanicals</p>
+            <span className="cm-doc-ref" aria-hidden="true">
+              {pieceRef(GENERATED_DOCS.length + 3)} · officielle
+            </span>
+            <p className="cm-doc-t font-medium text-sm">RIB — High Society Botanicals</p>
             <p className="text-xs text-muted-foreground">
               Coordonnées bancaires officielles à transmettre aux clients réglant par virement.
             </p>
@@ -179,9 +196,17 @@ const CommercialDocumentsPage = () => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <CardTitle className="text-base">Pitch mail prêt à envoyer</CardTitle>
+      <Card className="cm-telegram">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="cm-stamp" aria-hidden="true" dangerouslySetInnerHTML={{ __html: emblemSvg }} />
+            <div className="min-w-0">
+              <span className="cm-step" aria-hidden="true">
+                Télégramme
+              </span>
+              <CardTitle className="text-base">Pitch mail prêt à envoyer</CardTitle>
+            </div>
+          </div>
           <Button size="sm" variant="outline" onClick={copy}>
             {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
             Copier

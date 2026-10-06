@@ -36,52 +36,53 @@ const ProTierBar = ({
   const coef = hasData && totalHT > 0 ? retailTotalHT / totalHT : 0;
   const marginPct = retailTotalHT > 0 ? (resellerMarginTotal / retailTotalHT) * 100 : 0;
 
+  // Habillage « Minuit Carat » (jauge de palier, registre de rentabilité) : voir areas/pro/pro.css
   return (
-    <div className="rounded-lg border border-gold/30 bg-card/60 p-4 grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
-      <div className="space-y-2 min-w-0">
+    <div className="pr-tier grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+      <div className="pr-tier-gauge space-y-2 min-w-0">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 text-sm">
-            <TrendingUp className="h-4 w-4 text-gold" />
-            <span className="font-medium">{totalWeightG} g</span>
-            <span className="text-muted-foreground">
+          <div className="pr-tier-now flex items-center gap-2 text-sm">
+            <TrendingUp className="pr-tier-ico h-4 w-4" />
+            <span className="pr-tier-g">{totalWeightG} g</span>
+            <span className="pr-tier-lvl">
               — palier actuel : {tierLabel(currentTierMaxG)}
             </span>
           </div>
           {gramsToNextTier !== null && nextTierSavingPerGram !== null && nextTierSavingPerGram > 0 && (
-            <span className="text-sm text-gold">
+            <span className="pr-tier-next text-sm">
               Encore {gramsToNextTier} g pour économiser {nextTierSavingPerGram.toFixed(2)} €/g
             </span>
           )}
         </div>
-        <Progress value={pct} className="h-2" />
+        <Progress value={pct} className="pr-tier-bar h-2" />
       </div>
 
-      <div className="md:border-l md:border-border/50 md:pl-4 md:min-w-[15rem]">
-        <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5">
-          <PiggyBank className="h-3.5 w-3.5 text-gold" />
+      <div className="pr-tier-ledger md:pl-5 md:min-w-[15rem]">
+        <p className="pr-tier-k flex items-center gap-1.5 mb-1.5">
+          <PiggyBank className="h-3.5 w-3.5" />
           Ta rentabilité
         </p>
         <div className="space-y-1 text-sm">
-          <div className="flex justify-between gap-4">
-            <span className="text-muted-foreground">Prix public TTC</span>
+          <div className="pr-tier-row flex justify-between gap-4">
+            <span className="pr-tier-l">Prix public TTC</span>
             <span>{hasData ? eur(retailTotalTTC) : "—"}</span>
           </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-muted-foreground">Encaissé HT (TVA déduite)</span>
+          <div className="pr-tier-row flex justify-between gap-4">
+            <span className="pr-tier-l">Encaissé HT (TVA déduite)</span>
             <span>{hasData ? eur(retailTotalHT) : "—"}</span>
           </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-muted-foreground">Ton achat HT</span>
+          <div className="pr-tier-row flex justify-between gap-4">
+            <span className="pr-tier-l">Ton achat HT</span>
             <span>{hasData ? eur(totalHT) : "—"}</span>
           </div>
-          <div className="flex justify-between gap-4 font-medium">
-            <span className="text-muted-foreground">Marge revendeur</span>
-            <span className="text-gold">
+          <div className="pr-tier-row is-margin flex justify-between gap-4">
+            <span className="pr-tier-l">Marge revendeur</span>
+            <span className="pr-tier-m">
               {hasData ? eur(resellerMarginTotal) : "—"}
             </span>
           </div>
           {hasData && (
-            <p className="text-[11px] text-muted-foreground pt-0.5">
+            <p className="pr-tier-coef pt-0.5">
               Coefficient ×{coef.toFixed(2)} · {marginPct.toFixed(0)} % de marge sur le prix public
             </p>
           )}

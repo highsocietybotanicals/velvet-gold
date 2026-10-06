@@ -1,6 +1,5 @@
 import { Outlet, NavLink, Navigate, Link } from "react-router-dom";
 import {
-  Loader2,
   ShieldAlert,
   BookOpen,
   Users,
@@ -14,6 +13,10 @@ import { useMyRep } from "@/hooks/useCommercial";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
+import { useMinuitSkin } from "@/components/minuit/useMinuitSkin";
+import RouteBand from "@/components/minuit/areas/commercial/RouteBand";
+import SignRow from "@/components/minuit/areas/commercial/SignRow";
+import "@/components/minuit/areas/commercial/commercial.css";
 
 const links = [
   { to: "/commercial/catalogue", label: "Catalogue & argumentaire", icon: BookOpen },
@@ -25,13 +28,18 @@ const links = [
 
 
 const CommercialLayout = () => {
+  // Habillage « Minuit Carat » de l'espace commercial : la feuille de route (visuel uniquement).
+  useMinuitSkin("commercial");
   const { user, isAdmin, isCommercial, loading } = useAuth();
   const { data: rep, isLoading: repLoading } = useMyRep();
 
   if (loading || repLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gold" />
+      <div className="cm-root min-h-screen bg-background flex items-center justify-center" data-fx-off="">
+        <div className="cm-radar" role="status" aria-label="Chargement de l'espace commercial">
+          <span className="cm-radar-sw" aria-hidden="true" />
+          <span className="cm-radar-dot" aria-hidden="true" />
+        </div>
       </div>
     );
   }
@@ -40,61 +48,81 @@ const CommercialLayout = () => {
 
   if (!isAdmin && !isCommercial) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center gap-4">
-        <ShieldAlert className="h-10 w-10 text-gold" />
-        <h1 className="text-xl font-semibold gold-text">Espace commercial réservé</h1>
+      <main
+        className="cm-root cm-gate min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center gap-4"
+        data-fx-off=""
+      >
+        <span className="cm-noentry" aria-hidden="true">
+          <ShieldAlert className="h-10 w-10 text-gold" />
+        </span>
+        <h1 className="cm-gate-t">Espace commercial réservé</h1>
         <p className="text-sm text-muted-foreground max-w-md">
-          Cet espace est réservé aux commerciaux terrain High Society Botanicals. Contacte-nous si
-          tu souhaites rejoindre l'équipe.
+          Cet espace est réservé aux commerciaux terrain High Society Botanicals. Contactez-nous si
+          vous souhaitez rejoindre l'équipe.
         </p>
         <Button asChild>
           <Link to="/">Retour au site</Link>
         </Button>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border/50 bg-card/40 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
-          <Link to="/" className="flex items-center gap-2 text-gold font-semibold">
-            <Briefcase className="h-5 w-5" />
-            Espace Commercial
-          </Link>
-          <div className="text-xs text-muted-foreground">
-            {rep ? (
-              <>
-                {rep.full_name} · Commission {Number(rep.commission_percent)} % du CA HT
-                {rep.zone ? ` · ${rep.zone}` : ""}
-              </>
-            ) : (
-              "Accès administrateur"
-            )}
+    // data-fx-off : la feuille de route gère ses propres animations (le kit hsb-fx ne découpe ni n'anime rien ici)
+    <div className="cm-root min-h-screen bg-background flex flex-col" data-fx-off="">
+      <header className="cm-head">
+        <RouteBand>
+          <div className="cm-brandrow">
+            <Link to="/" className="cm-brand">
+              <Briefcase aria-hidden="true" />
+              Espace Commercial
+            </Link>
+            <div className="cm-rep">
+              <span>
+                {rep ? (
+                  <>
+                    <span className="cm-rep-n">{rep.full_name}</span> · Commission{" "}
+                    {Number(rep.commission_percent)} % du CA HT
+                    {rep.zone ? ` · ${rep.zone}` : ""}
+                  </>
+                ) : (
+                  "Accès administrateur"
+                )}
+              </span>
+            </div>
           </div>
-        </div>
-        <nav className="max-w-7xl mx-auto px-4 pb-2 flex gap-1 overflow-x-auto">
-          {links.map((l) => (
+          <div className="cm-hero">
+            <span className="cm-neon" aria-hidden="true">
+              High Society
+            </span>
+            <p className="cm-hero-t">La feuille de route</p>
+            <p className="cm-hero-s">
+              <span>Tournées terrain</span>
+              <span>Collection N° 26</span>
+              <span>Départ Abbaretz · 44</span>
+            </p>
+          </div>
+        </RouteBand>
+        <SignRow>
+          {links.map((l, i) => (
             <NavLink
               key={l.to}
               to={l.to}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors",
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )
-              }
+              style={{ ["--i" as string]: i }}
+              className={({ isActive }) => cn("cm-sign", isActive && "is-on")}
             >
-              <l.icon className="h-4 w-4" />
-              {l.label}
+              <span className="cm-sign-no" aria-hidden="true">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <l.icon className="cm-sign-ic" aria-hidden="true" />
+              <span className="cm-sign-l">{l.label}</span>
+              <span className="cm-sign-post" aria-hidden="true" />
             </NavLink>
           ))}
-        </nav>
+        </SignRow>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6">
+      <main className="cm-main flex-1 w-full max-w-7xl mx-auto px-4">
         <Outlet />
       </main>
       <Footer />

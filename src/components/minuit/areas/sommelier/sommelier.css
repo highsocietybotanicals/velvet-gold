@@ -1,0 +1,538 @@
+/* ==========================================================================
+   « La cave du Sommelier » — espace /sommelier, DA Minuit Carat.
+   Cave voûtée à la bougie, roue des arômes dorée, carte des vins, décantation du lot.
+   Toutes les règles sont préfixées html.mn-sommelier (posé par useMinuitSkin("sommelier")).
+   Mouvement : transform et opacity uniquement ; boucles en pause hors écran (.is-live),
+   figées sur téléphone modeste (.lite) et supprimées en mouvement réduit (état final statique).
+   ========================================================================== */
+
+html.mn-sommelier main { background: var(--mn-nuit); }
+
+/* ---------------- la cave ---------------- */
+html.mn-sommelier .sm-cave {
+  --sm-ambre: #E3A04E; --sm-flamme: #FFD58A;
+  position: relative; isolation: isolate; overflow: hidden; overflow: clip;
+  min-height: calc(100vh - 80px);
+  padding: clamp(36px, 7vh, 84px) var(--mn-gut) clamp(96px, 12vh, 140px);
+  background:
+    radial-gradient(ellipse 70% 42% at 50% 0%, rgba(227, 160, 78, .15), transparent 70%),
+    radial-gradient(ellipse 90% 50% at 50% 100%, rgba(120, 70, 20, .2), transparent 70%),
+    linear-gradient(180deg, #0B0809 0%, #070507 55%, #050405 100%);
+  color: var(--mn-ivoire); font-family: var(--mn-mono); font-weight: 300; font-size: 15px; line-height: 1.6;
+}
+html.mn-sommelier .sm-cave *, html.mn-sommelier .sm-cave *::before, html.mn-sommelier .sm-cave *::after { box-sizing: border-box; }
+html.mn-sommelier .sm-cave a:focus-visible, html.mn-sommelier .sm-cave button:focus-visible { outline: 1px solid var(--mn-or-clair); outline-offset: 4px; }
+
+html.mn-sommelier .sm-decor { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+
+/* voûtes en enfilade vers le fond de la cave */
+html.mn-sommelier .sm-vaults { position: absolute; left: 50%; bottom: 12%; width: min(1500px, 175vw); height: 94%; transform: translateX(-50%); }
+html.mn-sommelier .sm-vaults i {
+  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  border: 1px solid rgba(201, 162, 74, .14); border-bottom: 0; border-radius: 50% 50% 0 0 / 62% 62% 0 0;
+  box-shadow: inset 0 0 0 12px rgba(18, 13, 10, .55), inset 0 0 0 13px rgba(201, 162, 74, .07);
+}
+html.mn-sommelier .sm-vaults i:nth-child(1) {
+  width: 100%; height: 100%;
+  background:
+    repeating-linear-gradient(180deg, rgba(255, 236, 200, .018) 0 1px, transparent 1px 36px),
+    linear-gradient(180deg, rgba(255, 214, 150, .03), transparent 55%);
+}
+html.mn-sommelier .sm-vaults i:nth-child(2) { width: 79%; height: 85%; border-color: rgba(201, 162, 74, .12); }
+html.mn-sommelier .sm-vaults i:nth-child(3) { width: 60%; height: 70%; border-color: rgba(201, 162, 74, .1); }
+html.mn-sommelier .sm-vaults i:nth-child(4) { width: 43%; height: 55%; border-color: rgba(201, 162, 74, .08); }
+html.mn-sommelier .sm-vaults i:nth-child(5) {
+  width: 28%; height: 41%; border-color: rgba(201, 162, 74, .07);
+  background: radial-gradient(ellipse 60% 70% at 50% 100%, rgba(227, 160, 78, .1), rgba(4, 3, 4, .6) 70%);
+}
+
+/* casiers à bouteilles, culs de bouteilles en quinconce */
+html.mn-sommelier .sm-racks {
+  position: absolute; top: 16%; bottom: 14%; width: min(24vw, 320px); opacity: .55;
+  background:
+    radial-gradient(circle at 50% 50%, #050304 0 6px, rgba(201, 162, 74, .3) 6.5px 7.5px, #1b130d 8px 10px, transparent 10.5px) 0 0 / 26px 26px,
+    radial-gradient(circle at 50% 50%, #050304 0 6px, rgba(201, 162, 74, .22) 6.5px 7.5px, #1b130d 8px 10px, transparent 10.5px) 13px 13px / 26px 26px;
+}
+html.mn-sommelier .sm-racks.l { left: 0; -webkit-mask-image: radial-gradient(ellipse 100% 62% at 0% 50%, #000 25%, transparent 78%); mask-image: radial-gradient(ellipse 100% 62% at 0% 50%, #000 25%, transparent 78%); }
+html.mn-sommelier .sm-racks.r { right: 0; -webkit-mask-image: radial-gradient(ellipse 100% 62% at 100% 50%, #000 25%, transparent 78%); mask-image: radial-gradient(ellipse 100% 62% at 100% 50%, #000 25%, transparent 78%); }
+
+/* halo ambré de la cave, qui vacille doucement */
+html.mn-sommelier .sm-glow {
+  position: absolute; left: 50%; top: 2%; width: min(1150px, 150vw); height: 72%; margin-left: max(-575px, -75vw);
+  background: radial-gradient(ellipse 50% 50% at 50% 42%, rgba(227, 160, 78, .2), rgba(227, 160, 78, .055) 46%, transparent 70%);
+  animation: sm-flicker 5.2s ease-in-out infinite;
+}
+html.mn-sommelier .sm-floor {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 28%;
+  background: radial-gradient(ellipse 46% 55% at 50% 0%, rgba(227, 160, 78, .1), transparent 70%), linear-gradient(180deg, transparent, rgba(0, 0, 0, .55));
+}
+html.mn-sommelier .sm-motes { display: none; }
+@media (min-width: 900px) {
+  html.mn-sommelier .sm-motes { display: block; position: absolute; inset: 0; }
+  html.mn-sommelier .sm-motes i {
+    position: absolute; left: var(--l); bottom: -8px; width: 3px; height: 3px; border-radius: 50%;
+    background: #F4DC92; box-shadow: 0 0 6px 1px rgba(244, 220, 146, .55); opacity: 0;
+    animation: sm-mote var(--d) linear var(--dl) infinite;
+  }
+}
+@keyframes sm-mote { 0% { transform: translate3d(0, 0, 0); opacity: 0 } 12% { opacity: .7 } 85% { opacity: .45 } 100% { transform: translate3d(var(--dx), -88vh, 0); opacity: 0 } }
+@keyframes sm-flicker { 0%, 100% { opacity: .92 } 17% { opacity: .78 } 21% { opacity: .96 } 46% { opacity: .84 } 51% { opacity: 1 } 74% { opacity: .86 } 79% { opacity: .97 } }
+
+/* ---------------- enseigne ---------------- */
+html.mn-sommelier .sm-inner { position: relative; max-width: 1280px; margin: 0 auto; }
+html.mn-sommelier .sm-head { text-align: center; max-width: 780px; margin: 0 auto clamp(30px, 5vh, 60px); }
+html.mn-sommelier .sm-kick {
+  margin: 0; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px;
+  letter-spacing: .34em; text-transform: uppercase; color: var(--mn-or);
+}
+html.mn-sommelier .sm-cave h1.sm-title { margin: 16px 0 0; display: flex; flex-direction: column; align-items: center; gap: .08em; font-weight: 400; line-height: .95; }
+html.mn-sommelier .sm-title-neon {
+  font-family: var(--mn-neon); font-style: normal; font-weight: 400; font-size: clamp(22px, 3.2vw, 36px); letter-spacing: .16em;
+  color: #FFF3D1; text-shadow: 0 0 2px #FFF6DC, 0 0 10px #F4DC92, 0 0 24px #E3A04E, 0 0 52px rgba(227, 160, 78, .6);
+  animation: sm-neon-on 2.2s steps(1) .3s both, sm-hum 7s ease-in-out 3s infinite;
+}
+html.mn-sommelier .sm-title-foil {
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(54px, 10vw, 128px); letter-spacing: -.02em;
+  padding: 0 .1em .08em; background: var(--mn-foil); background-size: 220% 100%; background-position: 18% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 10px 30px rgba(201, 162, 74, .25));
+}
+html.mn-sommelier .sm-rule { position: relative; display: block; width: 200px; max-width: 60%; height: 1px; margin: 18px auto 20px; background: linear-gradient(90deg, transparent, var(--mn-or), transparent); }
+html.mn-sommelier .sm-rule i { position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; transform: rotate(45deg); background: var(--mn-or-clair); box-shadow: 0 0 12px rgba(244, 220, 146, .7); }
+html.mn-sommelier .sm-lead { margin: 0 auto; max-width: 620px; font-family: var(--mn-serif); font-style: italic; font-size: clamp(17px, 1.8vw, 21px); line-height: 1.55; color: var(--mn-ivoire-2); }
+
+html.mn-sommelier .sm-up { animation: sm-up .9s var(--mn-ease) both; }
+html.mn-sommelier .sm-d1 { animation-delay: .15s; }
+html.mn-sommelier .sm-d2 { animation-delay: .3s; }
+html.mn-sommelier .sm-d3 { animation-delay: .45s; }
+@keyframes sm-up { from { opacity: 0; transform: translateY(18px); } }
+@keyframes sm-neon-on { 0% { opacity: 0 } 8% { opacity: .9 } 10% { opacity: .15 } 15% { opacity: 1 } 24% { opacity: .3 } 28%, 100% { opacity: 1 } }
+@keyframes sm-hum { 0%, 100% { opacity: 1 } 47% { opacity: .9 } 49% { opacity: .72 } 51% { opacity: .96 } }
+
+/* ---------------- scène : roue + carte ---------------- */
+html.mn-sommelier .sm-stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(30px, 4vw, 64px); align-items: start; }
+@media (min-width: 1024px) {
+  html.mn-sommelier .sm-stage { grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); }
+  html.mn-sommelier .sm-wheel-col { position: sticky; top: 112px; }
+}
+html.mn-sommelier .sm-wheel-col { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 18px 0 4px; min-width: 0; }
+/* téléphone et tablette : la carte d'abord (son sceau montre la roue qui tourne et s'allume),
+   la grande roue devient le tableau final sous la carte. Ordre visuel seulement : la roue est décorative (aria-hidden). */
+@media (max-width: 1023px) {
+  html.mn-sommelier .sm-carte { order: 1; }
+  html.mn-sommelier .sm-wheel-col { order: 2; }
+  html.mn-sommelier .sm-head { margin-bottom: clamp(40px, 5vh, 60px); } /* place pour le sceau accroché au-dessus de la carte */
+}
+/* (enseigne et en-tête de carte compactés sur téléphone : voir la section « téléphone » en fin de fichier) */
+
+/* ---------------- roue des arômes ---------------- */
+html.mn-sommelier .sm-wheel {
+  position: relative; width: min(100%, 500px); border-radius: 50%;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 18%, rgba(255, 214, 150, .07), transparent 70%),
+    radial-gradient(circle closest-side, #120E0D 0, #0B0809 88%, #08060A 100%);
+  box-shadow: 0 0 0 1px rgba(201, 162, 74, .3), 0 40px 90px -30px rgba(0, 0, 0, .95), 0 0 110px -20px rgba(227, 160, 78, .28);
+}
+html.mn-sommelier .sm-wheel::before { content: ""; display: block; padding-top: 100%; }
+@media (max-width: 1023px) { html.mn-sommelier .sm-wheel { width: min(84vw, 420px); } }
+
+html.mn-sommelier .sm-w-layer { position: absolute; inset: 0; }
+html.mn-sommelier .sm-w-layer svg { display: block; width: 100%; height: 100%; overflow: visible; }
+html.mn-sommelier .sm-w-halo {
+  position: absolute; inset: -12%; border-radius: 50%; z-index: -1;
+  background: radial-gradient(circle closest-side, rgba(227, 160, 78, .22) 55%, rgba(227, 160, 78, .07) 75%, transparent 100%);
+  animation: sm-flicker 4.6s ease-in-out infinite;
+}
+html.mn-sommelier .sm-w-ticks { will-change: transform; animation: sm-spin 160s linear infinite; }
+@keyframes sm-spin { to { transform: rotate(360deg); } }
+html.mn-sommelier .sm-w-fam { transform: rotate(var(--rf, 0deg)); transition: transform 2.1s cubic-bezier(.3, .05, .15, 1); }
+html.mn-sommelier .sm-w-car { transform: rotate(var(--rc, 0deg)); transition: transform 1.7s cubic-bezier(.3, .05, .15, 1); }
+
+html.mn-sommelier .sm-w-hair { fill: none; stroke: rgba(201, 162, 74, .55); stroke-width: .8; }
+html.mn-sommelier .sm-w-hair.dim { stroke: rgba(201, 162, 74, .24); }
+html.mn-sommelier .sm-w-tick { fill: none; stroke: rgba(244, 220, 146, .55); stroke-width: .9; }
+html.mn-sommelier .sm-w-engr { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 8px; fill: rgba(201, 162, 74, .72); }
+
+html.mn-sommelier .sm-seg { fill: rgba(255, 236, 200, .025); stroke: rgba(201, 162, 74, .35); stroke-width: .7; }
+html.mn-sommelier .sm-seg-lit { opacity: 0; transition: opacity .9s ease .7s; }
+html.mn-sommelier .sm-fam.on .sm-seg-lit { opacity: 1; }
+html.mn-sommelier .sm-fam-l { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 11px; letter-spacing: 3px; fill: var(--mn-ivoire); transition: fill .6s ease .7s; }
+html.mn-sommelier .sm-fam.on .sm-fam-l { fill: #120E06; }
+html.mn-sommelier .sm-sub { fill: transparent; stroke: rgba(201, 162, 74, .16); stroke-width: .6; transition: fill .8s ease .9s; }
+html.mn-sommelier .sm-fam.on .sm-sub { fill: rgba(244, 220, 146, .12); }
+html.mn-sommelier .sm-sub-l { font-family: var(--mn-serif); font-style: italic; font-size: 10.5px; fill: var(--mn-ivoire-3); transition: fill .6s ease .9s; }
+html.mn-sommelier .sm-fam.on .sm-sub-l { fill: var(--mn-or-clair); }
+
+html.mn-sommelier .sm-car .sm-seg-lit { fill: rgba(244, 220, 146, .16); stroke: none; transition-delay: .5s; }
+html.mn-sommelier .sm-car.on .sm-seg-lit { opacity: 1; }
+html.mn-sommelier .sm-car-l { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 8.4px; letter-spacing: 2.2px; fill: var(--mn-ivoire-3); transition: fill .6s ease .5s; }
+html.mn-sommelier .sm-car.on .sm-car-l { fill: var(--mn-or-clair); }
+
+html.mn-sommelier .sm-poly { opacity: 0; transform: scale(.35); transform-box: view-box; transform-origin: 50% 50%; transition: opacity .8s ease 1.5s, transform 1.2s var(--mn-ease) 1.5s; }
+html.mn-sommelier .has-lot .sm-poly { opacity: 1; transform: none; }
+html.mn-sommelier .sm-poly-grid { fill: none; stroke: rgba(201, 162, 74, .24); stroke-width: .6; stroke-dasharray: 2 3; }
+html.mn-sommelier .sm-poly-shape { stroke: #F4DC92; stroke-width: 1.4; stroke-linejoin: round; }
+html.mn-sommelier .sm-poly-dot { fill: #F4DC92; stroke: #0B0809; stroke-width: 1.2; }
+
+html.mn-sommelier .sm-w-core {
+  position: absolute; inset: 38.5%; display: grid; place-items: center; color: var(--mn-or-clair); opacity: .92;
+  transition: opacity .7s ease 1.1s, transform 1s var(--mn-ease) 1.1s;
+}
+html.mn-sommelier .sm-w-core svg { width: 76%; height: 76%; overflow: visible; filter: drop-shadow(0 0 8px rgba(244, 220, 146, .35)); }
+html.mn-sommelier .has-lot .sm-w-core { opacity: 0; transform: scale(.7); }
+
+html.mn-sommelier .sm-w-needle { position: absolute; left: 50%; top: -5%; width: 5.4%; height: 9%; transform: translateX(-50%); overflow: visible; filter: drop-shadow(0 0 6px rgba(244, 220, 146, .55)); }
+html.mn-sommelier .sm-w-needle path { fill: none; stroke: #F4DC92; stroke-width: 1.4; }
+html.mn-sommelier .sm-w-needle .tip { fill: #E9C977; stroke: #FBE7A6; stroke-width: .8; }
+
+/* bougies */
+html.mn-sommelier .sm-candle { position: absolute; bottom: 1%; width: 4.4%; height: 17%; }
+html.mn-sommelier .sm-candle.l { left: -4%; }
+html.mn-sommelier .sm-candle.r { right: -4%; }
+html.mn-sommelier .sm-candle .wax {
+  position: absolute; left: 0; right: 0; bottom: 0; top: 30%; border-radius: 3px 3px 2px 2px;
+  background: linear-gradient(90deg, #7E6A4C, #F1E3C2 38%, #D2BE96 68%, #5F5039);
+  box-shadow: 0 -2px 14px rgba(255, 200, 120, .3);
+}
+html.mn-sommelier .sm-candle .wax::after { content: ""; position: absolute; left: 50%; top: -9%; width: 1.5px; height: 10%; margin-left: -.75px; background: #2A1D10; }
+html.mn-sommelier .sm-candle.r .wax { top: 46%; }
+html.mn-sommelier .sm-candle .flame {
+  position: absolute; left: -10%; right: -10%; top: 3%; height: 26%; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: radial-gradient(ellipse 50% 60% at 50% 70%, #FFFFFF 0 16%, #FFE3A1 34%, #F3A84A 66%, rgba(243, 168, 74, 0) 72%);
+  transform-origin: 50% 100%; animation: sm-flame 2.6s ease-in-out infinite;
+}
+html.mn-sommelier .sm-candle.r .flame { top: 19%; animation-duration: 3.1s; animation-delay: -1.2s; }
+html.mn-sommelier .sm-candle .glow {
+  position: absolute; left: 50%; top: 14%; width: 1000%; height: 260%; margin: -130% 0 0 -500%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 200, 110, .26), rgba(255, 200, 110, .07) 45%, transparent 100%);
+  animation: sm-flicker 3.3s ease-in-out infinite;
+}
+html.mn-sommelier .sm-candle.r .glow { top: 30%; animation-duration: 3.9s; }
+@keyframes sm-flame {
+  0%, 100% { transform: scale(1, 1) rotate(-1deg); opacity: 1 }
+  20% { transform: scale(.94, 1.07) rotate(1.5deg) }
+  40% { transform: scale(1.04, .95) rotate(-2deg); opacity: .9 }
+  60% { transform: scale(.97, 1.08) rotate(1deg) }
+  80% { transform: scale(1.02, .96) rotate(-1deg); opacity: .96 }
+}
+
+html.mn-sommelier .sm-wheel-cap {
+  margin: 6px 0 0; text-align: center; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800;
+  font-size: 9.5px; letter-spacing: .3em; text-transform: uppercase; color: var(--mn-ivoire-2);
+}
+html.mn-sommelier .sm-wheel-cap b { color: var(--mn-or-clair); font-weight: 800; }
+
+/* ---------------- la carte ---------------- */
+html.mn-sommelier .sm-carte {
+  position: relative; min-width: 0;
+  padding: clamp(26px, 4vw, 52px) clamp(18px, 4vw, 52px) clamp(28px, 4vw, 46px);
+  background:
+    radial-gradient(ellipse 80% 36% at 50% 0%, rgba(227, 160, 78, .09), transparent 70%),
+    linear-gradient(180deg, #141016 0%, #0C0A0E 60%, #09070A 100%);
+  border: 1px solid rgba(201, 162, 74, .5);
+  box-shadow: 0 0 0 5px #0A080B, 0 0 0 6px rgba(201, 162, 74, .2), 0 50px 110px -40px rgba(0, 0, 0, .95), 0 0 140px -50px rgba(227, 160, 78, .35);
+}
+html.mn-sommelier .sm-carte::before { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(201, 162, 74, .16); pointer-events: none; }
+html.mn-sommelier .sm-corner { position: absolute; width: 14px; height: 14px; display: grid; place-items: center; color: var(--mn-or); font-size: 10px; line-height: 1; pointer-events: none; }
+html.mn-sommelier .sm-corner::before { content: "✦"; }
+html.mn-sommelier .sm-corner.tl { left: 2px; top: 2px; }
+html.mn-sommelier .sm-corner.tr { right: 2px; top: 2px; }
+html.mn-sommelier .sm-corner.bl { left: 2px; bottom: 2px; }
+html.mn-sommelier .sm-corner.br { right: 2px; bottom: 2px; }
+
+/* sceau de la carte : la roue en réduction, visible quand la grande roue n'est plus à côté (< 1024 px) */
+html.mn-sommelier .sm-seal-w { display: none; }
+@media (max-width: 1023px) {
+  html.mn-sommelier .sm-seal-w {
+    display: block; position: absolute; z-index: 2; top: -32px; right: clamp(10px, 3vw, 24px); width: 74px; height: 74px;
+    border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle at 50% 32%, #1C1612, #0A080B 72%);
+    box-shadow: 0 0 0 1px rgba(201, 162, 74, .6), 0 0 0 4px #0A080B, 0 0 0 5px rgba(201, 162, 74, .22), 0 14px 30px -10px rgba(0, 0, 0, .9);
+  }
+  html.mn-sommelier .sm-seal-w::before {
+    content: ""; position: absolute; inset: -40%; z-index: -1; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(227, 160, 78, .42), rgba(227, 160, 78, .1) 55%, transparent 100%);
+    opacity: .45; transition: opacity 1s ease .6s;
+  }
+  html.mn-sommelier .sm-seal-w.has-car::before { opacity: .7; }
+  html.mn-sommelier .sm-seal-w.has-nez::before { opacity: 1; }
+  html.mn-sommelier .sm-seal-w svg { position: relative; display: block; width: 100%; height: 100%; overflow: visible; }
+}
+@media (max-width: 359px) {
+  html.mn-sommelier .sm-seal-w { width: 62px; height: 62px; top: -28px; }
+}
+html.mn-sommelier .sm-sw-hair { fill: none; stroke: rgba(201, 162, 74, .6); stroke-width: 3; }
+html.mn-sommelier .sm-sw-tick { fill: none; stroke: rgba(244, 220, 146, .6); stroke-width: 4; }
+html.mn-sommelier .sm-sw-fam, html.mn-sommelier .sm-sw-car, html.mn-sommelier .sm-sw-star { transform-box: view-box; transform-origin: 50% 50%; }
+html.mn-sommelier .sm-sw-fam { transform: rotate(var(--rf, 0deg)); transition: transform 2.1s cubic-bezier(.3, .05, .15, 1); }
+html.mn-sommelier .sm-sw-car { transform: rotate(var(--rc, 0deg)); transition: transform 1.7s cubic-bezier(.3, .05, .15, 1); }
+html.mn-sommelier .sm-sw-seg { fill: rgba(255, 236, 200, .035); stroke: rgba(201, 162, 74, .5); stroke-width: 3; }
+html.mn-sommelier .sm-sw-lit { opacity: 0; transition: opacity .9s ease .7s; }
+html.mn-sommelier .sm-sw-car .sm-sw-lit { fill: rgba(244, 220, 146, .34); transition-delay: .5s; }
+html.mn-sommelier .sm-seal-w .on .sm-sw-lit { opacity: 1; }
+html.mn-sommelier .sm-sw-star { fill: #F4DC92; transition: transform 1.2s var(--mn-ease) 1.4s; }
+html.mn-sommelier .sm-seal-w.has-lot .sm-sw-star { transform: rotate(45deg) scale(1.2); }
+html.mn-sommelier .sm-sw-needle { fill: #F4DC92; stroke: #0A080B; stroke-width: 5; stroke-linejoin: round; }
+
+html.mn-sommelier .sm-carte-head { text-align: center; padding-bottom: 18px; margin-bottom: clamp(18px, 3vw, 28px); border-bottom: 1px solid rgba(201, 162, 74, .2); }
+html.mn-sommelier .sm-carte-t {
+  margin: 0; font-family: var(--mn-neon); font-size: clamp(28px, 3vw, 36px); line-height: 1.1; letter-spacing: .14em; color: #FFF3D1;
+  text-shadow: 0 0 10px rgba(244, 220, 146, .6), 0 0 26px rgba(227, 160, 78, .4);
+}
+html.mn-sommelier .sm-carte-sub { margin: 6px 0 0; font-size: 10.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--mn-ivoire-2); }
+html.mn-sommelier .sm-services { list-style: none; margin: 18px 0 0; padding: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px clamp(14px, 3vw, 30px); }
+html.mn-sommelier .sm-services li {
+  position: relative; display: flex; align-items: baseline; gap: 8px; padding-bottom: 7px;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--mn-ivoire-2); transition: color .5s;
+}
+html.mn-sommelier .sm-services li .n { font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: 16px; letter-spacing: 0; text-transform: none; }
+html.mn-sommelier .sm-services li::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--mn-or);
+  transform: scaleX(0); transform-origin: left; transition: transform .7s var(--mn-ease), opacity .5s;
+}
+html.mn-sommelier .sm-services li.done { color: var(--mn-ivoire); }
+html.mn-sommelier .sm-services li.done::after { transform: scaleX(1); opacity: .35; }
+html.mn-sommelier .sm-services li.on { color: var(--mn-or-clair); }
+html.mn-sommelier .sm-services li.on::after { transform: scaleX(1); }
+@media (max-width: 560px) { html.mn-sommelier .sm-services li:not(.on) .l { display: none; } }
+
+/* un service de la carte */
+html.mn-sommelier .sm-course { text-align: center; }
+html.mn-sommelier .sm-course-k { margin: 0; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .32em; text-transform: uppercase; color: var(--mn-or); }
+html.mn-sommelier .sm-cave h2.sm-q { margin: 8px 0 clamp(18px, 3vw, 28px); font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.1; color: var(--mn-ivoire); }
+html.mn-sommelier .sm-recall { margin: -10px 0 20px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-ivoire-2); }
+html.mn-sommelier .sm-recall b { color: var(--mn-or-clair); font-weight: 400; }
+html.mn-sommelier .sm-menu { display: flex; flex-direction: column; text-align: left; border-top: 1px solid rgba(201, 162, 74, .16); }
+
+html.mn-sommelier .sm-dish {
+  position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) 40px; align-items: center; gap: 0 14px;
+  width: 100%; padding: 18px 8px 18px 2px; margin: 0; text-align: left; font: inherit; color: var(--mn-ivoire);
+  background: transparent; border: 0; border-bottom: 1px solid rgba(201, 162, 74, .16); border-radius: 0; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: background-color .4s;
+}
+html.mn-sommelier .sm-dish::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--mn-or-clair), transparent);
+  transform: scaleX(0); transition: transform .7s var(--mn-ease);
+}
+html.mn-sommelier .sm-dish:hover { background-color: rgba(244, 220, 146, .035); }
+html.mn-sommelier .sm-dish:hover::after, html.mn-sommelier .sm-dish:focus-visible::after, html.mn-sommelier .sm-dish.is-sel::after { transform: scaleX(1); }
+html.mn-sommelier .sm-dish:focus-visible { outline-offset: 2px; }
+html.mn-sommelier .sm-dish-no { font-family: var(--mn-serif); font-style: italic; font-size: 20px; line-height: 1; color: var(--mn-or); text-align: center; }
+html.mn-sommelier .sm-dish-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+/* filet : si l'accord ne tient pas sur la ligne (colonne étroite), il passe dessous, calé à droite */
+html.mn-sommelier .sm-dish-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+html.mn-sommelier .sm-dish-name {
+  flex: none; font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(22px, 2.4vw, 30px); line-height: 1.1;
+  color: var(--mn-ivoire); white-space: nowrap; transition: color .4s;
+}
+html.mn-sommelier .sm-dish-dots { flex: 1 1 auto; min-width: 12px; border-bottom: 1px dotted rgba(201, 162, 74, .45); transform: translateY(-5px); }
+html.mn-sommelier .sm-dish-acc { flex: none; margin-left: auto; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--mn-or); white-space: nowrap; }
+html.mn-sommelier .sm-dish-desc { font-size: 12.5px; line-height: 1.55; color: var(--mn-ivoire-2); }
+html.mn-sommelier .sm-dish-ico {
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--mn-or);
+  border: 1px solid rgba(201, 162, 74, .35); background: radial-gradient(circle at 35% 30%, rgba(244, 220, 146, .12), transparent 70%);
+  transition: color .4s, border-color .4s, transform .6s var(--mn-ease);
+}
+html.mn-sommelier .sm-dish-ico svg { width: 18px; height: 18px; stroke-width: 1.4; }
+html.mn-sommelier .sm-dish:hover .sm-dish-name { color: var(--mn-or-clair); }
+html.mn-sommelier .sm-dish:hover .sm-dish-ico { transform: rotate(-12deg); color: var(--mn-or-clair); border-color: var(--mn-or-clair); }
+html.mn-sommelier .sm-dish.is-sel .sm-dish-name { color: var(--mn-or-clair); }
+html.mn-sommelier .sm-dish.is-sel .sm-dish-ico { background: var(--mn-foil); background-size: 200% 100%; color: #120E06; border-color: transparent; }
+@media (max-width: 600px) {
+  html.mn-sommelier .sm-dish-acc { display: none; }
+  html.mn-sommelier .sm-dish-name { white-space: normal; flex: 1 1 auto; }
+  html.mn-sommelier .sm-dish-dots { display: none; }
+}
+@media (max-width: 480px) {
+  html.mn-sommelier .sm-dish { grid-template-columns: 22px minmax(0, 1fr) 32px; gap: 0 10px; padding: 16px 2px; }
+  html.mn-sommelier .sm-dish-ico { width: 32px; height: 32px; }
+  html.mn-sommelier .sm-dish-ico svg { width: 15px; height: 15px; }
+}
+
+html.mn-sommelier .sm-back {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 2px; margin: -6px 0 6px; background: none; border: 0; cursor: pointer;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .26em; text-transform: uppercase;
+  color: var(--mn-ivoire-2); transition: color .3s;
+}
+html.mn-sommelier .sm-back:hover { color: var(--mn-or-clair); }
+html.mn-sommelier .sm-course > .sm-back { display: flex; margin-right: auto; }
+
+/* ---------------- recommandation : décantation + fiche ---------------- */
+html.mn-sommelier .sm-result { text-align: left; }
+html.mn-sommelier .sm-seal {
+  display: flex; width: fit-content; align-items: center; gap: 8px; margin: 0 auto 24px; padding: 8px 16px;
+  border: 1px solid rgba(201, 162, 74, .5); border-radius: 999px; background: rgba(201, 162, 74, .08); color: var(--mn-or-clair);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .26em; text-transform: uppercase;
+}
+html.mn-sommelier .sm-res-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: center; }
+@media (min-width: 640px) and (max-width: 1023px), (min-width: 1180px) {
+  html.mn-sommelier .sm-res-grid { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); }
+}
+
+/* la niche où l'on décante */
+html.mn-sommelier .sm-decant { display: flex; justify-content: center; }
+html.mn-sommelier .sm-niche {
+  position: relative; width: min(100%, 300px); isolation: isolate; overflow: hidden;
+  border: 1px solid rgba(201, 162, 74, .45); border-radius: 50% 50% 0 0 / 34% 34% 0 0;
+  background: radial-gradient(ellipse 70% 45% at 50% 80%, #2C2112 0%, #120E0B 55%, #070507 100%);
+  box-shadow: 0 0 0 6px #0A080B, 0 0 0 7px rgba(201, 162, 74, .18), 0 40px 90px -40px rgba(227, 160, 78, .5);
+}
+html.mn-sommelier .sm-niche::before { content: ""; display: block; padding-top: 125%; }
+html.mn-sommelier .sm-niche::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: 16%; height: 1px; background: linear-gradient(90deg, transparent, var(--mn-or), transparent); box-shadow: 0 0 14px rgba(244, 220, 146, .55); }
+html.mn-sommelier .sm-niche-beam {
+  position: absolute; left: 50%; top: -4%; width: 130%; height: 90%; margin-left: -65%; z-index: -1;
+  background: linear-gradient(180deg, rgba(255, 226, 160, .22), rgba(255, 226, 160, .04) 65%, transparent 92%);
+  clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+}
+html.mn-sommelier .sm-niche-num {
+  position: absolute; top: 6%; left: 0; right: 0; z-index: -1; text-align: center; user-select: none;
+  font-family: var(--mn-serif); font-style: italic; font-size: clamp(110px, 15vw, 170px); line-height: 1;
+  color: transparent; -webkit-text-stroke: 1px rgba(201, 162, 74, .28);
+  animation: sm-fade-in .8s ease .2s both;
+}
+/* lot hors collection : une étoile gravée, sans numéro */
+html.mn-sommelier .sm-niche-num.is-star { top: 9%; font-family: var(--mn-wide); font-style: normal; font-size: clamp(76px, 10vw, 112px); }
+
+html.mn-sommelier .sm-carafe { position: absolute; left: 22%; bottom: 14%; width: 56%; height: auto; overflow: visible; animation: sm-carafe-out .7s var(--mn-ease) 1.9s both; }
+html.mn-sommelier .sm-glass { fill: none; stroke: rgba(244, 220, 146, .78); stroke-width: 1.6; }
+html.mn-sommelier .sm-glass-fill { fill: rgba(255, 240, 210, .05); }
+html.mn-sommelier .sm-glint { fill: none; stroke: rgba(255, 255, 255, .32); stroke-width: 2.4; stroke-linecap: round; }
+html.mn-sommelier .sm-glint.thin { stroke-width: 1.3; opacity: .5; }
+html.mn-sommelier .sm-liquid { transform-box: fill-box; transform-origin: 50% 100%; animation: sm-fill 1.5s cubic-bezier(.45, .05, .3, 1) .35s both; }
+html.mn-sommelier .sm-surface { animation: sm-rise 1.5s cubic-bezier(.45, .05, .3, 1) .35s both; }
+html.mn-sommelier .sm-wave { animation: sm-wave 1.1s linear .35s 3; }
+html.mn-sommelier .sm-stream { transform-box: fill-box; transform-origin: 50% 0; animation: sm-stream 1.75s ease-out .1s both; }
+html.mn-sommelier .sm-bub { fill: rgba(255, 248, 225, .85); animation: sm-bub 1.2s ease-out .75s 2 both; }
+html.mn-sommelier .sm-bub.b2 { animation-delay: .95s; }
+html.mn-sommelier .sm-bub.b3 { animation-delay: 1.15s; }
+/* l'éclat qui révèle le lot : centré sur la panse de la carafe, au-dessus du lot le temps du flash */
+html.mn-sommelier .sm-burst {
+  position: absolute; z-index: 1; left: 4%; top: 70%; width: 92%; height: 0; padding-top: 92%; margin-top: -46%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 244, 214, .9) 0%, rgba(244, 220, 146, .5) 26%, rgba(227, 160, 78, .16) 55%, transparent 100%);
+  animation: sm-burst 1.1s ease-out 1.8s both;
+}
+html.mn-sommelier .sm-lot {
+  position: absolute; left: 10%; right: 10%; top: 15%; bottom: 17%; display: flex; align-items: flex-end; justify-content: center;
+  animation: sm-lot-in 1s var(--mn-ease) 2s both;
+}
+html.mn-sommelier .sm-lot img { display: block; }
+html.mn-sommelier .sm-lot img.cut { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 26px 24px rgba(0, 0, 0, .65)); animation: sm-float 6s ease-in-out 3.2s infinite; }
+html.mn-sommelier .sm-lot img.ph {
+  align-self: center; width: 78%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 50%;
+  border: 1px solid rgba(244, 220, 146, .6); box-shadow: 0 0 0 6px rgba(10, 8, 11, .9), 0 0 0 7px rgba(201, 162, 74, .3), 0 30px 60px -20px rgba(0, 0, 0, .9);
+}
+html.mn-sommelier .sm-lot-ring {
+  position: absolute; left: 21%; right: 21%; bottom: 12.5%; height: 8%; border-radius: 50%; pointer-events: none;
+  border: 1px solid rgba(244, 198, 106, .7); box-shadow: 0 0 22px rgba(244, 198, 106, .35), inset 0 0 16px rgba(244, 198, 106, .16);
+  animation: sm-fade-in 1s ease 2.2s both;
+}
+@keyframes sm-fill { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes sm-rise { from { transform: translateY(116px); } to { transform: translateY(0); } }
+@keyframes sm-wave { to { transform: translateX(-50px); } }
+@keyframes sm-stream { 0% { transform: scaleY(0); opacity: 1 } 22% { transform: scaleY(1); opacity: 1 } 78% { opacity: 1 } 100% { transform: scaleY(1); opacity: 0 } }
+@keyframes sm-bub { 0% { transform: translateY(0); opacity: 0 } 30% { opacity: .9 } 100% { transform: translateY(-80px); opacity: 0 } }
+@keyframes sm-carafe-out { to { opacity: 0; transform: translateY(-8px) scale(1.06); } }
+@keyframes sm-burst { 0% { opacity: 0; transform: scale(.3) } 30% { opacity: 1 } 100% { opacity: 0; transform: scale(1.5) } }
+@keyframes sm-lot-in { from { opacity: 0; transform: translateY(28px) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes sm-float { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+@keyframes sm-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* fiche de dégustation */
+html.mn-sommelier .sm-fiche { min-width: 0; }
+html.mn-sommelier .sm-fiche-k { margin: 0; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--mn-or); }
+html.mn-sommelier .sm-cave h2.sm-fiche-name {
+  margin: 10px 0; font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(34px, 4vw, 52px); line-height: 1.02; overflow-wrap: anywhere;
+  background: var(--mn-foil); background-size: 220% 100%; background-position: 18% 0; -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html.mn-sommelier .sm-accord { margin: 0; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--mn-ivoire-2); }
+html.mn-sommelier .sm-accord b { color: var(--mn-or-clair); font-weight: 400; }
+html.mn-sommelier .sm-fiche-notes { margin: 14px 0 0; font-family: var(--mn-serif); font-size: clamp(16px, 1.5vw, 19px); line-height: 1.55; color: var(--mn-ivoire); }
+html.mn-sommelier .sm-nez {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 22px; margin: 20px 0 0; padding: 16px 0;
+  border-top: 1px solid var(--mn-ligne); border-bottom: 1px solid var(--mn-ligne);
+}
+html.mn-sommelier .sm-nez div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+html.mn-sommelier .sm-nez dt { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9px; letter-spacing: .24em; text-transform: uppercase; color: var(--mn-ivoire-2); }
+html.mn-sommelier .sm-nez dd { margin: 0; display: flex; align-items: center; gap: 10px; }
+html.mn-sommelier .sm-nez .g { position: relative; flex: 1 1 auto; height: 2px; overflow: hidden; background: rgba(241, 232, 212, .1); }
+html.mn-sommelier .sm-nez .g::after {
+  content: ""; position: absolute; inset: 0; background: var(--mn-foil); transform-origin: left center;
+  transform: scaleX(var(--v, 0)); animation: sm-gauge 1.2s var(--mn-ease) 1s both;
+}
+@keyframes sm-gauge { from { transform: scaleX(0); } }
+html.mn-sommelier .sm-nez .w { flex: none; min-width: 4.6em; font-family: var(--mn-serif); font-style: italic; font-size: 13px; color: var(--mn-or-clair); }
+html.mn-sommelier .sm-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+html.mn-sommelier .sm-chips span { padding: 7px 11px; border: 1px solid rgba(241, 232, 212, .16); border-radius: 2px; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-ivoire-2); max-width: 100%; overflow-wrap: anywhere; }
+html.mn-sommelier .sm-chips span.or { color: #120E06; background: var(--mn-or-clair); border-color: var(--mn-or-clair); }
+html.mn-sommelier .sm-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 22px; }
+html.mn-sommelier .sm-actions .sm-btn { flex: 1 1 auto; min-height: 50px; padding: 0 22px; font-size: 10.5px; letter-spacing: .2em; white-space: nowrap; }
+html.mn-sommelier .sm-actions .btn-luxury-outline.sm-btn:hover { background: rgba(201, 162, 74, .1); }
+html.mn-sommelier .sm-reset {
+  flex: 1 1 100%; min-height: 44px; padding: 6px 0; background: none; border: 0; cursor: pointer;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .26em; text-transform: uppercase;
+  color: var(--mn-ivoire-2); transition: color .3s;
+}
+html.mn-sommelier .sm-reset:hover { color: var(--mn-or-clair); }
+html.mn-sommelier .sm-fine { margin: 10px 0 0; font-size: 11px; line-height: 1.7; color: var(--mn-ivoire-2); }
+
+/* ---------------- plaque de la maison ---------------- */
+html.mn-sommelier .sm-trust {
+  list-style: none; margin: clamp(44px, 7vh, 76px) auto 0; padding: 20px 0 0; max-width: 1100px;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 26px; border-top: 1px solid var(--mn-ligne);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--mn-ivoire-2);
+}
+html.mn-sommelier .sm-trust li { display: flex; align-items: center; gap: 10px; }
+html.mn-sommelier .sm-trust li::before { content: "✦"; color: var(--mn-or); }
+
+/* ---------------- téléphone ---------------- */
+@media (max-width: 899px) {
+  html.mn-sommelier .sm-racks { width: 30vw; opacity: .3; }
+  html.mn-sommelier .sm-vaults { bottom: 30%; height: 70%; }
+}
+/* enseigne et en-tête de carte plus compacts : la première ligne de la carte est visible dès l'arrivée */
+@media (max-width: 640px) {
+  html.mn-sommelier .sm-cave { padding-top: 20px; }
+  html.mn-sommelier .sm-kick { font-size: 9.5px; letter-spacing: .26em; line-height: 1.5; }
+  html.mn-sommelier .sm-cave h1.sm-title { margin-top: 12px; }
+  html.mn-sommelier .sm-rule { margin: 14px auto; }
+  html.mn-sommelier .sm-lead { font-size: 16px; line-height: 1.5; }
+  html.mn-sommelier .sm-carte-head { padding-bottom: 14px; margin-bottom: 16px; }
+  html.mn-sommelier .sm-carte-t { font-size: 26px; }
+  html.mn-sommelier .sm-services { margin-top: 12px; }
+  html.mn-sommelier .sm-cave h2.sm-q { font-size: 26px; margin-bottom: 16px; }
+}
+@media (max-width: 480px) {
+  html.mn-sommelier .sm-lead-more { display: none; }
+  html.mn-sommelier .sm-trust { justify-content: flex-start; gap: 8px 18px; font-size: 9px; letter-spacing: .16em; }
+  html.mn-sommelier .sm-nez { gap: 12px 16px; }
+}
+
+/* ---------------- boucles : en pause hors écran, figées sur téléphone modeste ---------------- */
+html.mn-sommelier .sm-cave:not(.is-live) .sm-title-neon,
+html.mn-sommelier .sm-cave:not(.is-live) .sm-glow,
+html.mn-sommelier .sm-cave:not(.is-live) .sm-motes i,
+html.mn-sommelier .sm-cave:not(.is-live) .sm-w-halo,
+html.mn-sommelier .sm-cave:not(.is-live) .sm-w-ticks,
+html.mn-sommelier .sm-cave:not(.is-live) .sm-candle .flame,
+html.mn-sommelier .sm-cave:not(.is-live) .sm-candle .glow,
+html.mn-sommelier .sm-cave:not(.is-live) .sm-lot img.cut { animation-play-state: paused; }
+
+html.mn-sommelier .sm-cave.lite .sm-glow,
+html.mn-sommelier .sm-cave.lite .sm-w-halo,
+html.mn-sommelier .sm-cave.lite .sm-w-ticks,
+html.mn-sommelier .sm-cave.lite .sm-candle .flame,
+html.mn-sommelier .sm-cave.lite .sm-candle .glow,
+html.mn-sommelier .sm-cave.lite .sm-lot img.cut { animation: none; will-change: auto; }
+html.mn-sommelier .sm-cave.lite .sm-title-neon { animation: sm-neon-on 2.2s steps(1) .3s both; }
+html.mn-sommelier .sm-cave.lite .sm-motes { display: none; }
+
+/* ---------------- mouvement réduit : état final, sans animation ---------------- */
+@media (prefers-reduced-motion: reduce) {
+  html.mn-sommelier .sm-cave *, html.mn-sommelier .sm-cave *::before, html.mn-sommelier .sm-cave *::after {
+    animation: none !important; transition: none !important;
+  }
+  html.mn-sommelier .sm-motes, html.mn-sommelier .sm-carafe, html.mn-sommelier .sm-burst { display: none; }
+  html.mn-sommelier .sm-w-ticks { will-change: auto; }
+}

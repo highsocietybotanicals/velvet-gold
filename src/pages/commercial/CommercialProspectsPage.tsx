@@ -22,6 +22,7 @@ import {
   ProspectStatus,
 } from "@/hooks/useCommercial";
 import { useAuth } from "@/contexts/AuthContext";
+import LogHead from "@/components/minuit/areas/commercial/LogHead";
 
 const emptyForm = {
   business_name: "",
@@ -111,16 +112,16 @@ const CommercialProspectsPage = () => {
 
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold gold-text">
+    <div className="cm-page space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <LogHead no="02" etape="La tournée" turn="droite" className="min-w-0 flex-[1_1_22rem]">
+          <h1 className="cm-h1">
             {rep ? "Mes prospects" : "Prospects"}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="cm-lead">
             Suivi du démarchage terrain : bureaux de tabac, CBD shops, épiceries fines.
           </p>
-        </div>
+        </LogHead>
         <Button onClick={() => setOpen((v) => !v)} disabled={!canCreate}>
           <Plus className="h-4 w-4 mr-2" /> Nouveau prospect
         </Button>
@@ -132,7 +133,7 @@ const CommercialProspectsPage = () => {
             <Label>Commercial concerné</Label>
             {allReps.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Aucun commercial enregistré : crée-le d'abord dans Admin → Commerciaux.
+                Aucun commercial enregistré : créez-le d'abord dans Admin → Commerciaux.
               </p>
             ) : (
               <Select value={selectedRepId} onValueChange={setSelectedRepId}>
@@ -155,16 +156,16 @@ const CommercialProspectsPage = () => {
       {!rep && !isAdmin && (
         <Card>
           <CardContent className="pt-6 text-sm text-muted-foreground">
-            Aucune fiche commerciale n'est rattachée à ton compte : un administrateur doit la créer
+            Aucune fiche commerciale n'est rattachée à votre compte : un administrateur doit la créer
             avant de pouvoir enregistrer des prospects.
           </CardContent>
         </Card>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="cm-itin flex flex-wrap gap-2">
         <Badge
           onClick={() => setFilter("all")}
-          className="cursor-pointer bg-primary/15 text-primary"
+          className={`cm-stop cursor-pointer bg-primary/15 text-primary${filter === "all" ? " is-on" : ""}`}
         >
           Tous ({prospects.length})
         </Badge>
@@ -172,7 +173,7 @@ const CommercialProspectsPage = () => {
           <Badge
             key={s.value}
             onClick={() => setFilter(s.value)}
-            className={`cursor-pointer ${statusColor[s.value]}`}
+            className={`cm-stop cursor-pointer ${statusColor[s.value]}${filter === s.value ? " is-on" : ""}`}
           >
             {s.label} ({counts[s.value] ?? 0})
           </Badge>
@@ -180,8 +181,11 @@ const CommercialProspectsPage = () => {
       </div>
 
       {open && canCreate && (
-        <Card>
+        <Card className="cm-fiche">
           <CardHeader>
+            <span className="cm-step" aria-hidden="true">
+              Nouvelle étape de la tournée
+            </span>
             <CardTitle className="text-base">Ajouter un prospect</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -320,12 +324,15 @@ const CommercialProspectsPage = () => {
         <p className="text-sm text-muted-foreground">Aucun prospect pour ce filtre.</p>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
-          {filtered.map((p) => (
-            <Card key={p.id}>
-              <CardContent className="pt-5 space-y-2">
+          {filtered.map((p, idx) => (
+            <Card key={p.id} className="cm-etape" data-status={p.status}>
+              <CardContent className="cm-etape-in pt-5 space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium">{p.business_name}</p>
+                  <div className="min-w-0">
+                    <span className="cm-etape-no" aria-hidden="true">
+                      Étape {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <p className="cm-etape-name font-medium">{p.business_name}</p>
                     {p.contact_name && (
                       <p className="text-xs text-muted-foreground">{p.contact_name}</p>
                     )}
@@ -362,10 +369,10 @@ const CommercialProspectsPage = () => {
                     </p>
                   )}
                   {p.next_followup && <p>Relance : {new Date(p.next_followup).toLocaleDateString("fr-FR")}</p>}
-                  {p.notes && <p className="italic">{p.notes}</p>}
+                  {p.notes && <p className="cm-etape-notes italic">{p.notes}</p>}
                 </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <Badge className={statusColor[p.status]}>{prospectStatusLabel(p.status)}</Badge>
+                <div className="cm-etape-f flex items-center gap-2 pt-1">
+                  <Badge className={`cm-tag ${statusColor[p.status]}`}>{prospectStatusLabel(p.status)}</Badge>
                   <Select
                     value={p.status}
                     onValueChange={(v) => updateProspect.mutate({ id: p.id, status: v as ProspectStatus })}

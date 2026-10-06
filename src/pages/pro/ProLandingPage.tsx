@@ -1,10 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ProPartnerApplyForm from "@/components/pro/ProPartnerApplyForm";
 import { Package, ShieldCheck, Gift, Leaf, FlaskConical, Truck } from "lucide-react";
+import { useMinuitSkin } from "@/components/minuit/useMinuitSkin";
+import ProMemberCard from "@/components/minuit/areas/pro/ProMemberCard";
+import { ProReveal, ProVelvetRope } from "@/components/minuit/areas/pro/ProDecor";
+import "@/components/minuit/areas/pro/pro.css";
 
 const arguments_ = [
   {
@@ -24,8 +28,9 @@ const arguments_ = [
   },
   {
     icon: ShieldCheck,
-    title: "100 % légal, dossier complet",
-    text: "Analyses laboratoire, traçabilité et documents à jour fournis avec chaque commande.",
+    // Texte d'origine reformulé pour la conformité (pas d'affirmation absolue ; analyses sur demande) : à valider par la cliente.
+    title: "Conforme, dossier complet",
+    text: "THC < 0,3 %. Analyses laboratoire, traçabilité et documents à jour disponibles sur demande.",
   },
   {
     icon: FlaskConical,
@@ -40,6 +45,8 @@ const arguments_ = [
 ];
 
 const ProLandingPage = () => {
+  // Habillage « Minuit Carat » de l'espace pro : le salon privé (visuel uniquement).
+  useMinuitSkin("pro");
   const { isPro, isProValidated, profile, isAdmin, isCommercial } = useAuth();
   const hasAccess =
     isAdmin || isCommercial || (isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated);
@@ -55,49 +62,99 @@ const ProLandingPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    // data-fx-off : le salon privé gère ses propres animations (le kit hsb-fx ne découpe ni n'anime rien ici)
+    <main className="pr-salon min-h-screen" data-fx-off="">
+      {/* Le salon privé : enseigne au néon, carte de membre en métal noir sous le projecteur */}
+      <section className="pr-hero" aria-labelledby="pr-hero-t">
+        <div className="pr-hero-grid">
+          <div className="pr-hero-copy">
+            <span className="pr-neon-sign" aria-hidden="true">
+              High Society
+            </span>
+            <p className="pr-kicker">Partenaires revendeurs</p>
+            <h1 id="pr-hero-t">
+              L'espace professionnel{" "}
+              <span className="pr-h1-brand pr-foil">High Society Botanicals</span>
+            </h1>
+            <p className="pr-lead">
+              Un catalogue dédié, des tarifs au gramme dégressifs selon le volume, et des
+              préconditionnés prêts à poser en vitrine. Réservé aux professionnels disposant d'un SIRET
+              et d'un numéro de TVA intracommunautaire.
+            </p>
+            <div className="pr-cta">
+              {hasAccess ? (
+                <Button asChild size="lg">
+                  <Link to="/pro/catalogue">Accéder au catalogue pro</Link>
+                </Button>
+              ) : (
+                <Button asChild size="lg">
+                  <a href="#dossier">Devenir partenaire</a>
+                </Button>
+              )}
+            </div>
+            <p className="pr-hero-note">
+              Maison française · <b>Abbaretz, Loire-Atlantique</b> · Sélection à la main ·{" "}
+              <b>THC &lt; 0,3 %</b>
+            </p>
+          </div>
 
-
-      <section className="max-w-5xl mx-auto px-4 pt-24 pb-12 text-center">
-        <p className="text-xs tracking-[0.3em] text-gold uppercase mb-4">Partenaires revendeurs</p>
-        <h1 className="text-3xl md:text-5xl font-bold gold-text mb-5">
-          L'espace professionnel High Society Botanicals
-        </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Un catalogue dédié, des tarifs au gramme dégressifs selon le volume, et des
-          préconditionnés prêts à poser en vitrine. Réservé aux professionnels disposant d'un SIRET
-          et d'un numéro de TVA intracommunautaire.
-        </p>
-        <div className="mt-8 flex justify-center gap-3">
-          {hasAccess ? (
-            <Button asChild size="lg">
-              <Link to="/pro/catalogue">Accéder au catalogue pro</Link>
-            </Button>
-          ) : (
-            <Button asChild size="lg">
-              <a href="#dossier">Devenir partenaire</a>
-            </Button>
-          )}
+          <div className="pr-hero-card">
+            <ProMemberCard holder={hasAccess ? profile?.company_name : null} />
+            <p className="pr-hero-cap" aria-hidden="true">
+              Carte de membre · <b>Salon privé</b>
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 pb-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {arguments_.map((a) => (
-          <Card key={a.title} className="bg-card/60 border-border/50">
-            <CardContent className="pt-6 space-y-2">
-              <a.icon className="h-5 w-5 text-gold" />
-              <h2 className="font-semibold text-sm">{a.title}</h2>
-              <p className="text-sm text-muted-foreground">{a.text}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <ProVelvetRope label="Sur dossier · Professionnels" />
+
+      {/* Les privilèges du salon */}
+      <section className="pr-privs" aria-labelledby="pr-privs-t">
+        <ProReveal>
+          <div className="pr-sec-hd" data-pr-reveal="">
+            <div>
+              <p className="pr-kicker">Les privilèges du salon</p>
+              <h2 id="pr-privs-t">Ce que la maison met en vitrine</h2>
+            </div>
+            <p className="pr-sec-aside">
+              Des pochons prêts à poser, une sélection faite à la main à Abbaretz, une grille
+              tarifaire lisible au gramme.
+            </p>
+          </div>
+          <div className="pr-privs-grid">
+            {arguments_.map((a, i) => (
+              <Card
+                key={a.title}
+                className="pr-priv"
+                data-pr-reveal=""
+                style={{ "--i": i % 3 } as CSSProperties}
+              >
+                <CardContent className="pr-priv-in">
+                  <span className="pr-priv-no" aria-hidden="true">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="pr-coin" aria-hidden="true">
+                    <a.icon className="h-5 w-5" />
+                  </span>
+                  <h3>{a.title}</h3>
+                  <p>{a.text}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </ProReveal>
       </section>
 
-      <section id="dossier" className="max-w-3xl mx-auto px-4 pb-24">
-        <h2 className="text-xl font-semibold gold-text mb-4">Ouvrir un compte partenaire</h2>
-        <ProPartnerApplyForm />
+      {/* Dossier d'admission */}
+      <section id="dossier" className="pr-dossier" aria-labelledby="pr-dossier-t">
+        <div className="pr-dossier-frame">
+          <p className="pr-kicker">Admission au salon</p>
+          <h2 id="pr-dossier-t">Ouvrir un compte partenaire</h2>
+          <ProPartnerApplyForm />
+        </div>
       </section>
-    </div>
+    </main>
   );
 };
 

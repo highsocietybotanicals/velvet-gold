@@ -5,12 +5,13 @@ import OrderMarginTable from "@/components/admin/OrderMarginTable";
 
 const RentabilitePage = () => (
   <div>
-    <h1 className="text-2xl font-bold gold-text mb-2">Rentabilité</h1>
-    <p className="text-sm text-muted-foreground mb-6">
-      Saisis tes coûts, simule tes marges et vois le bénéfice réel de chaque commande.
+    {/* titre visible dans le bandeau gravé de la salle de contrôle */}
+    <h1 className="sr-only">Rentabilité</h1>
+    <p className="adm-note mb-6 text-sm text-muted-foreground">
+      Saisissez vos coûts, simulez vos marges et voyez le bénéfice réel de chaque commande.
     </p>
     <Tabs defaultValue="costs" className="w-full">
-      <TabsList>
+      <TabsList className="adm-switch">
         <TabsTrigger value="costs">Coûts</TabsTrigger>
         <TabsTrigger value="simulator">Simulateur</TabsTrigger>
         <TabsTrigger value="orders">Marge / commande</TabsTrigger>

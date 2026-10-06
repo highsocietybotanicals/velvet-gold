@@ -15,7 +15,20 @@ import { generateBarcodeSheet } from "@/lib/barcodeSheetPdf";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, AlertTriangle, XCircle, Flame } from "lucide-react";
+import { Flame, Search } from "lucide-react";
+import LogHead from "@/components/minuit/areas/commercial/LogHead";
+import { typeLabel } from "@/components/minuit/minuitData";
+
+/** Feux tricolores du stock (décor) : rouge, orange, vert. */
+const Feu = () => (
+  <span className="cm-feu-l" aria-hidden="true">
+    <i />
+    <i />
+    <i />
+  </span>
+);
+
+const two = (n: number) => String(n).padStart(2, "0");
 
 interface StockRow {
   product_id: string;
@@ -48,19 +61,19 @@ const StockBadge = ({ stock }: { stock?: StockRow }) => {
   if (!stock) return null;
   if (stock.stock_grams <= 0)
     return (
-      <Badge className="bg-red-900/40 text-red-300 border border-red-700/50 gap-1">
-        <XCircle className="h-3 w-3" /> Rupture
+      <Badge className="cm-feu cm-feu--rouge bg-red-900/40 text-red-300 border border-red-700/50 gap-1">
+        <Feu /> Rupture
       </Badge>
     );
   if (stock.stock_grams <= stock.low_stock_threshold_g)
     return (
-      <Badge className="bg-amber-600/20 text-amber-300 border border-amber-500/50 gap-1">
-        <AlertTriangle className="h-3 w-3" /> Stock faible — {stock.stock_grams} g
+      <Badge className="cm-feu cm-feu--orange bg-amber-600/20 text-amber-300 border border-amber-500/50 gap-1">
+        <Feu /> Stock faible — {stock.stock_grams} g
       </Badge>
     );
   return (
-    <Badge className="bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 gap-1">
-      <Package className="h-3 w-3" /> {stock.stock_grams} g en stock
+    <Badge className="cm-feu cm-feu--vert bg-emerald-600/20 text-emerald-300 border border-emerald-500/50 gap-1">
+      <Feu /> {stock.stock_grams} g en stock
     </Badge>
   );
 };
@@ -70,7 +83,7 @@ const euro = (n: number) =>
 
 const ARGUMENTS_CLES = [
   { icon: Leaf, title: "100 % Indoor", text: "Cultures indoor sélectionnées, jamais de CBD industriel bas de gamme." },
-  { icon: FlaskConical, title: "Analyses laboratoire", text: "Chaque lot est testé : THC < 0,3 %, taux de CBD certifié, papiers fournis." },
+  { icon: FlaskConical, title: "Analyses laboratoire", text: "THC < 0,3 %. Analyse laboratoire disponible sur demande, papiers fournis." },
   { icon: ShieldCheck, title: "Préconditionné pro", text: "Pochons 1 g / 2,5 g / 5 g / 10 g avec Boveda 62 %, prêts à vendre en rayon." },
   { icon: Sparkles, title: "Cadeaux clients", text: "Briquet BIC + feuilles slim offerts dans les pochons 10 g : le client revient." },
 ];
@@ -132,15 +145,15 @@ const CommercialCataloguePage = () => {
     });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold gold-text">Catalogue & argumentaire</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+    <div className="cm-page space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <LogHead no="01" etape="Départ · le catalogue" turn="droit" className="min-w-0 flex-[1_1_22rem]">
+          <h1 className="cm-h1">Catalogue & argumentaire</h1>
+          <p className="cm-lead">
             Tout ce qu'il faut pour convaincre un buraliste : prix pro HT par format, prix public
             conseillé, marge réelle du revendeur et code-barres prêt pour la caisse.
           </p>
-        </div>
+        </LogHead>
         <Button
           variant="outline"
           className="gap-2 border-gold/40 text-gold hover:bg-gold/10"
@@ -152,23 +165,22 @@ const CommercialCataloguePage = () => {
       </div>
 
       {priority.length > 0 && (
-        <Card className="border-gold/40 bg-gold/5">
+        <Card className="cm-prio border-gold/40">
           <CardContent className="pt-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Flame className="h-4 w-4 text-gold" />
-              <p className="font-medium text-sm">À vendre en priorité</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-3">
+              <span className="cm-losange" aria-hidden="true">
+                <Flame className="h-4 w-4 text-gold" />
+              </span>
+              <p className="cm-prio-t font-medium text-sm">À vendre en priorité</p>
               <p className="text-xs text-muted-foreground">
                 — les variétés avec le plus de stock à écouler
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="cm-bornes flex flex-wrap gap-2">
               {priority.map(({ p, stock }) => (
-                <span
-                  key={p.id}
-                  className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-background/60 px-3 py-1 text-xs"
-                >
-                  <span className="font-medium">{p.name}</span>
-                  <span className="text-gold font-semibold">{stock!.stock_grams} g</span>
+                <span key={p.id} className="cm-borne">
+                  <span className="cm-borne-n font-medium">{p.name}</span>
+                  <span className="cm-borne-g text-gold font-semibold">{stock!.stock_grams} g</span>
                 </span>
               ))}
             </div>
@@ -177,19 +189,27 @@ const CommercialCataloguePage = () => {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {ARGUMENTS_CLES.map((a) => (
-          <Card key={a.title} className="bg-card/50">
+        {ARGUMENTS_CLES.map((a, i) => (
+          <Card key={a.title} className="cm-arg">
             <CardContent className="pt-5 space-y-2">
-              <a.icon className="h-5 w-5 text-gold" />
-              <p className="font-medium text-sm">{a.title}</p>
+              <span className="cm-arg-no" aria-hidden="true">
+                {two(i + 1)}
+              </span>
+              <span className="cm-rond" aria-hidden="true">
+                <a.icon className="h-5 w-5 text-gold" />
+              </span>
+              <p className="cm-arg-t font-medium text-sm">{a.title}</p>
               <p className="text-xs text-muted-foreground">{a.text}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card className="border-gold/30">
+      <Card className="cm-plaque">
         <CardHeader>
+          <span className="cm-step" aria-hidden="true">
+            Plaque de la maison
+          </span>
           <CardTitle className="text-base">L'argument massue</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
@@ -207,19 +227,25 @@ const CommercialCataloguePage = () => {
         </CardContent>
       </Card>
 
-      <Input
-        placeholder="Rechercher une variété…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="cm-search">
+        <Search aria-hidden="true" />
+        <Input
+          placeholder="Rechercher une variété…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {products.map((p) => {
+        {products.map((p, idx) => {
           const stock = stockMap?.get(p.id);
           const outOfStock = !!stock && stock.stock_grams <= 0;
           return (
-          <Card key={p.id} className={`overflow-hidden ${outOfStock ? "opacity-50" : ""}`}>
+          <Card key={p.id} className={`cm-lot overflow-hidden ${outOfStock ? "opacity-50" : ""}`}>
+            <span className="cm-lot-no" aria-hidden="true">
+              Lot {two(idx + 1)} · {typeLabel(p)}
+            </span>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -227,13 +253,14 @@ const CommercialCataloguePage = () => {
                     src={p.image}
                     alt={`Photo de la variété ${p.name}`}
                     loading="lazy"
-                    className="h-16 w-16 rounded-md object-cover border border-gold/20 shrink-0"
+                    decoding="async"
+                    className="cm-lot-img h-16 w-16 rounded-md object-cover border border-gold/20 shrink-0"
                   />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
                       <CardTitle className="text-base truncate">{p.name}</CardTitle>
                       {p.molecule && (
-                        <span className="shrink-0 rounded-full border border-gold/50 bg-background/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold">
+                        <span className="cm-tag shrink-0 rounded-full border border-gold/50 bg-background/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold">
                           {p.molecule}
                         </span>
                       )}
@@ -245,12 +272,12 @@ const CommercialCataloguePage = () => {
                 <div className="flex flex-col items-end gap-1">
                   <StockBadge stock={stock} />
                   {p.isExotique && (
-                    <Badge className="bg-purple-600/20 text-purple-300 border border-purple-500/50">
+                    <Badge className="cm-tag bg-purple-600/20 text-purple-300 border border-purple-500/50">
                       Exotique
                     </Badge>
                   )}
                   {p.isForceNoire && !p.isExotique && (
-                    <Badge className="bg-red-900/40 text-red-300 border border-red-700/50">
+                    <Badge className="cm-tag bg-red-900/40 text-red-300 border border-red-700/50">
                       <Zap className="h-3 w-3 mr-1" /> Force Noire
                     </Badge>
                   )}
@@ -320,7 +347,7 @@ const CommercialCataloguePage = () => {
             <CardContent className="space-y-3">
               <p className="text-xs text-muted-foreground line-clamp-3">{p.description}</p>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs">
+                <table className="cm-log w-full text-xs">
                   <thead className="text-muted-foreground">
                     <tr className="border-b border-border/50">
                       <th className="text-left py-1">Format</th>
@@ -345,7 +372,7 @@ const CommercialCataloguePage = () => {
                       const ean = barcodes[p.id]?.[wKey(f)];
                       return (
                         <tr key={f} className="border-b border-border/30 last:border-0">
-                          <td className="py-1.5">{f} g</td>
+                          <td className="cm-mono py-1.5">{f} g</td>
                           <td className="py-1.5 text-right">{euro(proHT)}</td>
                           <td className="py-1.5 text-right">{euro(retailTTC)}</td>
                           <td className="py-1.5 text-right text-emerald-400">+{euro(gain)}</td>

@@ -1,0 +1,116 @@
+/* ==========================================================================
+   « Minuit Carat » pour tout le site.
+   1. Jetons --mn-* communs (utilisables partout, sans dépendre de .mc).
+   2. Jetons shadcn alignés sur la nuit Minuit Carat (fond, cartes, or, rayon).
+   3. html.mn-skin : habillage des espaces (pro, profil, commercial, administration…),
+      posé par le hook useMinuitSkin(). Visuel uniquement : aucune logique touchée.
+   ========================================================================== */
+:root {
+  --mn-nuit: #060508; --mn-surface: #0D0B10; --mn-surface-2: #15121A;
+  --mn-or: #C9A24A; --mn-or-clair: #F4DC92; --mn-or-sombre: #7D6936;
+  --mn-ivoire: #F1E8D4; --mn-ivoire-2: #B9AE98; --mn-ivoire-3: #7E7666;
+  --mn-exo: #B061D6;
+  --mn-ligne: rgba(201, 162, 74, .22);
+  --mn-foil: linear-gradient(100deg, #7D6936 0%, #C9A24A 16%, #F4DC92 30%, #B8913E 44%, #FBE7A6 56%, #9C7A35 70%, #E9C977 84%, #7D6936 100%);
+  --mn-serif: 'Bodoni Moda', Didot, 'Times New Roman', serif;
+  --mn-wide: 'Archivo', 'Arial Black', sans-serif;
+  --mn-neon: 'Poiret One', sans-serif;
+  --mn-mono: 'Geist Mono', ui-monospace, Consolas, monospace;
+  --mn-ease: cubic-bezier(.22, 1, .36, 1);
+  --mn-gut: clamp(16px, 4vw, 56px);
+
+  /* shadcn : même nuit, même or, angles vifs */
+  --background: 260 23% 3%;
+  --foreground: 41 51% 89%;
+  --card: 264 19% 5%;
+  --card-foreground: 41 51% 89%;
+  --popover: 263 18% 9%;
+  --popover-foreground: 41 51% 89%;
+  --primary: 42 54% 54%;
+  --primary-foreground: 260 23% 3%;
+  --muted: 264 12% 10%;
+  --muted-foreground: 40 19% 66%;
+  --border: 42 30% 19%;
+  --input: 264 12% 12%;
+  --ring: 42 54% 54%;
+  --radius: 2px;
+  --sidebar-background: 260 23% 3%;
+  --sidebar-border: 42 30% 19%;
+}
+::selection { background: rgba(201, 162, 74, .38); color: #fff; }
+
+/* boutons de marque du site : feuille d'or Minuit Carat */
+.btn-luxury {
+  background: var(--mn-foil); background-size: 200% 100%; color: #120E06; border-radius: 2px;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; letter-spacing: .2em;
+  box-shadow: 0 0 0 1px rgba(244, 220, 146, .4), 0 18px 40px -18px rgba(201, 162, 74, .8);
+  transition: background-position .9s var(--mn-ease), box-shadow .4s, transform .4s var(--mn-ease);
+}
+.btn-luxury:hover { background-position: -100% 0; box-shadow: 0 0 0 1px rgba(244, 220, 146, .7), 0 0 46px rgba(201, 162, 74, .45); }
+.btn-luxury-outline { border-radius: 2px; border-color: var(--mn-or); color: var(--mn-or-clair); font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; letter-spacing: .2em; }
+
+/* ---------------- habillage des espaces ---------------- */
+html.mn-skin { scrollbar-color: var(--mn-or-sombre) transparent; }
+html.mn-skin body { background: radial-gradient(ellipse 90% 40% at 50% 0%, rgba(201, 162, 74, .07), transparent 70%) no-repeat, var(--mn-nuit); }
+
+/* titres éditoriaux */
+html.mn-skin main h1, html.mn-skin main h2, html.mn-skin main .font-display,
+html.mn-skin [role="dialog"] h2 {
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; letter-spacing: -.01em;
+}
+html.mn-skin main h3 { font-family: var(--mn-serif); font-style: italic; font-weight: 500; letter-spacing: -.005em; }
+
+/* boutons pleins : feuille d'or */
+html.mn-skin main button.bg-primary, html.mn-skin main a.bg-primary,
+html.mn-skin [role="dialog"] button.bg-primary, html.mn-skin [role="alertdialog"] button.bg-primary {
+  background-image: var(--mn-foil); background-size: 200% 100%; color: #120E06;
+  box-shadow: 0 0 0 1px rgba(244, 220, 146, .35), 0 12px 28px -16px rgba(201, 162, 74, .8);
+  transition: background-position .8s var(--mn-ease), box-shadow .3s;
+}
+html.mn-skin main button.bg-primary:hover:not(:disabled), html.mn-skin main a.bg-primary:hover,
+html.mn-skin [role="dialog"] button.bg-primary:hover:not(:disabled) { background-position: -100% 0; }
+
+/* cartes : registre noir, filet d'or */
+html.mn-skin main .bg-card, html.mn-skin [role="dialog"] .bg-card {
+  background-color: transparent;
+  background-image: linear-gradient(160deg, rgba(201, 162, 74, .07), rgba(13, 11, 16, .94) 42%, rgba(6, 5, 8, .97));
+}
+html.mn-skin main .border.bg-card { border-color: var(--mn-ligne); box-shadow: inset 0 1px 0 rgba(244, 220, 146, .06); }
+
+/* tableaux : en-têtes gravés, chiffres alignés */
+html.mn-skin main table thead th {
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--mn-or);
+}
+html.mn-skin main table td { font-variant-numeric: tabular-nums; }
+html.mn-skin main table tbody tr { border-color: rgba(201, 162, 74, .1); }
+html.mn-skin main table tbody tr:hover { background-color: rgba(201, 162, 74, .05); }
+
+/* onglets : soulignement d'or */
+html.mn-skin main [role="tablist"] { background: transparent; border-radius: 0; box-shadow: inset 0 -1px 0 var(--mn-ligne); }
+html.mn-skin main [role="tab"] { border-radius: 0; letter-spacing: .06em; }
+html.mn-skin main [role="tab"][data-state="active"] { background: transparent; color: var(--mn-or-clair); box-shadow: inset 0 -2px 0 var(--mn-or); }
+
+/* champs */
+html.mn-skin main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+html.mn-skin main textarea, html.mn-skin main select,
+html.mn-skin [role="dialog"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+html.mn-skin [role="dialog"] textarea {
+  background-color: rgba(6, 5, 8, .55); border-color: rgba(241, 232, 212, .14);
+}
+html.mn-skin main input:focus-visible, html.mn-skin main textarea:focus-visible, html.mn-skin main select:focus-visible,
+html.mn-skin [role="dialog"] input:focus-visible, html.mn-skin [role="dialog"] textarea:focus-visible {
+  outline: none; border-color: var(--mn-or-clair); box-shadow: 0 0 0 1px rgba(244, 220, 146, .35);
+}
+
+/* fenêtres et menus déroulants */
+html.mn-skin [role="dialog"], html.mn-skin [role="alertdialog"], html.mn-skin [role="menu"], html.mn-skin [role="listbox"] {
+  border-color: var(--mn-ligne);
+}
+html.mn-skin [role="dialog"].bg-background, html.mn-skin [role="alertdialog"].bg-background {
+  background: linear-gradient(170deg, #15121A, #0D0B10 40%, #060508);
+  box-shadow: 0 0 0 1px rgba(201, 162, 74, .25), 0 40px 120px -30px rgba(0, 0, 0, .95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.mn-skin main button.bg-primary, html.mn-skin main a.bg-primary { transition: none; }
+}

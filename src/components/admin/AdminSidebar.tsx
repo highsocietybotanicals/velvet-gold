@@ -25,6 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import AdminSeal from "@/components/minuit/areas/admin/AdminSeal";
 
 const items = [
   { title: "Tableau de bord", url: "/admin/tableau-de-bord", icon: LayoutDashboard },
@@ -48,10 +49,12 @@ export function AdminSidebar() {
   const { pathname } = useLocation();
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
+    // top-20 / h-auto : la barre commence sous l'en-tête fixe du site (80 px) au lieu de passer dessous
+    <Sidebar collapsible="icon" className="adm-rail top-20 h-auto">
+      <SidebarContent className="adm-side">
+        <AdminSeal />
         <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2 text-gold">
+          <SidebarGroupLabel className="adm-glabel flex items-center gap-2 text-gold">
             <Shield className="h-4 w-4" />
             {!collapsed && <span>Administration</span>}
           </SidebarGroupLabel>
@@ -62,7 +65,7 @@ export function AdminSidebar() {
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={active}>
-                      <NavLink to={item.url} className="flex items-center gap-2 hover:bg-muted/50">
+                      <NavLink to={item.url} className="adm-link flex items-center gap-2">
                         <item.icon className="h-4 w-4" />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>

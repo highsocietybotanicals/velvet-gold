@@ -20,6 +20,7 @@ import { VAT_RATE, PRO_FORMATS, proPricePerGram } from "@/lib/proPricing";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { useProPriceTiers } from "@/hooks/useProPriceTiers";
 import { BANK_DETAILS } from "@/lib/bankDetails";
+import LogHead from "@/components/minuit/areas/commercial/LogHead";
 
 interface Line {
   designation: string;
@@ -182,18 +183,21 @@ const CommercialFacturationPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold gold-text">Facturation partenaire</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Émets une facture pro : le PDF part par email et s'affiche dans l'espace pro du buraliste,
+    <div className="cm-page space-y-6">
+      <LogHead no="03" etape="Le péage" turn="gauche">
+        <h1 className="cm-h1">Facturation partenaire</h1>
+        <p className="cm-lead">
+          Émettez une facture pro : le PDF part par email et s'affiche dans l'espace pro du buraliste,
           payable par virement avec le numéro de facture en libellé.
         </p>
-      </div>
+      </LogHead>
 
       {result && (
-        <Card className="border-primary/40">
+        <Card className="cm-ticket border-primary/40">
           <CardContent className="pt-6 flex flex-wrap items-center gap-4">
+            <p className="cm-ticket-k" aria-hidden="true">
+              Ticket de sortie · facture émise
+            </p>
             <FileText className="h-5 w-5 text-gold" />
             <div className="text-sm">
               <p className="font-medium">Facture {result.orderNumber}</p>
@@ -215,6 +219,9 @@ const CommercialFacturationPage = () => {
 
       <Card>
         <CardHeader>
+          <span className="cm-step" aria-hidden="true">
+            Étape 1
+          </span>
           <CardTitle className="text-base">Client professionnel</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -275,10 +282,13 @@ const CommercialFacturationPage = () => {
 
       <Card>
         <CardHeader>
+          <span className="cm-step" aria-hidden="true">
+            Étape 2
+          </span>
           <CardTitle className="text-base">Lignes de facture (prix HT au gramme)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="rounded-lg border border-border/50 p-3 space-y-3">
+          <div className="cm-picker rounded-lg border border-border/50 p-3 space-y-3">
             <Label className="text-xs">Ajouter depuis le catalogue</Label>
             <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
               <Select value={pickedProduct} onValueChange={setPickedProduct}>
@@ -325,8 +335,9 @@ const CommercialFacturationPage = () => {
             </p>
           </div>
 
+          <div className="cm-lines space-y-3">
           {lines.map((l, i) => (
-            <div key={i} className="grid gap-2 sm:grid-cols-12 items-end">
+            <div key={i} className="cm-row grid gap-2 sm:grid-cols-12 items-end">
               <div className="sm:col-span-5">
                 <Label className="text-xs">Désignation</Label>
                 <Input
@@ -372,21 +383,38 @@ const CommercialFacturationPage = () => {
               </div>
             </div>
           ))}
+          </div>
           <Button variant="outline" size="sm" onClick={() => setLines((ls) => [...ls, { ...emptyLine }])}>
             <Plus className="h-4 w-4 mr-2" /> Ajouter une ligne
           </Button>
 
-          <div className="border-t border-border/50 pt-3 text-sm space-y-1">
-            <p className="text-muted-foreground">Poids total : {totals.grams} g</p>
-            <p>Total HT : {eur(totals.ht)}</p>
-            <p className="text-muted-foreground">TVA {VAT_RATE} % : {eur(totals.tva)}</p>
-            <p className="text-lg font-semibold gold-text">Total TTC : {eur(totals.ttc)}</p>
+          {/* compteur de la tournée : mêmes valeurs (totals), présentées en cadrans */}
+          <div className="cm-odo text-sm">
+            <p className="cm-odo-cell">
+              <span>Poids total</span>
+              <b>{totals.grams} g</b>
+            </p>
+            <p className="cm-odo-cell">
+              <span>Total HT</span>
+              <b>{eur(totals.ht)}</b>
+            </p>
+            <p className="cm-odo-cell">
+              <span>TVA {(VAT_RATE * 100).toLocaleString("fr-FR")} %</span>
+              <b>{eur(totals.tva)}</b>
+            </p>
+            <p className="cm-odo-cell cm-odo-ttc">
+              <span>Total TTC</span>
+              <b>{eur(totals.ttc)}</b>
+            </p>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
+          <span className="cm-step" aria-hidden="true">
+            Étape 3
+          </span>
           <CardTitle className="text-base">Coordonnées bancaires (virement)</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3">
@@ -417,7 +445,10 @@ const CommercialFacturationPage = () => {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="cm-send flex flex-wrap justify-end">
+        <span className="cm-send-k" aria-hidden="true">
+          Fin de l'étape
+        </span>
         <Button onClick={submit} disabled={sending}>
           {sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           Émettre et envoyer la facture

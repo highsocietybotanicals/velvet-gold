@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { History, ChevronDown, ChevronUp, Package, FileDown, Loader2 } from "lucide-react";
+import { History, ChevronDown, ChevronUp, FileDown, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Order, ORDER_STATUS } from "@/hooks/useOrders";
 import { format } from "date-fns";
@@ -7,6 +7,10 @@ import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { InkStamp } from "@/components/minuit/areas/profil/InkStamp";
+
+// Habillage « carnet du membre » (espace Mon profil) : registre des commandes en tampons d'encre dorée.
+// Styles dans src/components/minuit/areas/profil/profil.css. Téléchargement de facture et dépliage d'origine conservés.
 
 interface OrderHistoryProps {
   orders: Order[];
@@ -52,33 +56,37 @@ const OrderHistoryItem = ({ order }: { order: Order }) => {
   };
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
+    <div className="pf-order" data-open={expanded ? "" : undefined}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+        className="pf-order-btn"
+        aria-expanded={expanded}
       >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-            <Package className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <div className="text-left">
-            <p className="font-medium text-foreground">Commande {order.display_order_number || `#${order.order_number}`}</p>
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(order.created_at), "d MMMM yyyy", { locale: fr })}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="font-medium text-primary">{order.total_amount.toFixed(2)}€</p>
-            <p className={`text-sm ${statusInfo.color}`}>{statusInfo.label}</p>
-          </div>
-          {expanded ? (
-            <ChevronUp className="w-5 h-5 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-muted-foreground" />
-          )}
-        </div>
+        <InkStamp
+          seed={order.id}
+          day={format(new Date(order.created_at), "d MMM", { locale: fr })}
+          year={format(new Date(order.created_at), "yyyy", { locale: fr })}
+          amount={`${order.total_amount.toFixed(2)}€`}
+          status={statusInfo.label}
+          statusKey={order.status}
+        />
+        <span className="pf-order-info">
+          <span className="pf-order-k">Commande</span>
+          <span className="pf-order-n">{order.display_order_number || `#${order.order_number}`}</span>
+          <span className="pf-order-date">
+            {format(new Date(order.created_at), "d MMMM yyyy", { locale: fr })}
+          </span>
+          <span className="pf-order-st" data-status={order.status}>{statusInfo.label}</span>
+          <span className="sr-only">{order.total_amount.toFixed(2)}€</span>
+          <span className="pf-order-more" aria-hidden="true">
+            {expanded ? "Refermer" : "Voir le détail"}
+            {expanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </span>
+        </span>
       </button>
 
       <AnimatePresence>
@@ -90,32 +98,33 @@ const OrderHistoryItem = ({ order }: { order: Order }) => {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="p-4 pt-0 border-t border-border bg-muted/30">
-              <h4 className="text-sm font-medium text-foreground mb-3">Détail de la commande</h4>
+            <div className="pf-ledger">
+              <h3 className="pf-ledger-t">Détail de la commande</h3>
               {order.order_items && order.order_items.length > 0 ? (
-                <div className="space-y-2">
+                <div className="pf-ledger-lines">
                   {order.order_items.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
+                    <div key={item.id} className="pf-ledger-line">
+                      <span className="pf-ledger-name">
                         {item.product_name}
                         {item.weight && ` (${item.weight}g)`}
                         {item.quantity && item.quantity > 1 && ` x${item.quantity}`}
                       </span>
-                      <span className="text-foreground">{item.total_price.toFixed(2)}€</span>
+                      <span className="pf-ledger-dots" aria-hidden="true" />
+                      <span className="pf-ledger-px">{item.total_price.toFixed(2)}€</span>
                     </div>
                   ))}
-                  <div className="pt-2 border-t border-border flex justify-between font-medium">
-                    <span className="text-foreground">Total</span>
-                    <span className="text-primary">{order.total_amount.toFixed(2)}€</span>
+                  <div className="pf-ledger-total">
+                    <span>Total</span>
+                    <span className="pf-ledger-sum">{order.total_amount.toFixed(2)}€</span>
                   </div>
                   {order.payment_status === "paid" && (
-                    <div className="pt-3">
+                    <div className="pf-ledger-act">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleDownloadInvoice}
                         disabled={downloading}
-                        className="border-primary/30 text-primary hover:bg-primary/10 w-full"
+                        className="pf-btn-line pf-btn-wide"
                       >
                         {downloading ? (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -128,7 +137,7 @@ const OrderHistoryItem = ({ order }: { order: Order }) => {
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Aucun détail disponible</p>
+                <p className="pf-ledger-empty">Aucun détail disponible</p>
               )}
             </div>
           </motion.div>
@@ -141,31 +150,37 @@ const OrderHistoryItem = ({ order }: { order: Order }) => {
 const OrderHistory = ({ orders }: OrderHistoryProps) => {
   if (orders.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <History className="w-5 h-5 text-primary" />
-          <h2 className="font-display text-lg text-foreground">Historique des Commandes</h2>
-        </div>
-        <p className="text-muted-foreground text-center py-8">
+      <section className="pf-page pf-registre" data-pf-reveal="" aria-labelledby="pf-reg-t">
+        <header className="pf-page-head">
+          <p className="pf-kick">
+            <History className="w-4 h-4" aria-hidden="true" />
+            <span>Registre</span>
+          </p>
+          <h2 id="pf-reg-t" className="pf-h2">Historique des Commandes</h2>
+        </header>
+        <p className="pf-reg-empty">
           Aucune commande passée pour le moment
         </p>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <History className="w-5 h-5 text-primary" />
-        <h2 className="font-display text-lg text-foreground">Historique des Commandes</h2>
-      </div>
+    <section className="pf-page pf-registre" data-pf-reveal="" aria-labelledby="pf-reg-t">
+      <header className="pf-page-head">
+        <p className="pf-kick">
+          <History className="w-4 h-4" aria-hidden="true" />
+          <span>Registre</span>
+        </p>
+        <h2 id="pf-reg-t" className="pf-h2">Historique des Commandes</h2>
+      </header>
 
-      <div className="space-y-3">
+      <div className="pf-orders">
         {orders.map((order) => (
           <OrderHistoryItem key={order.id} order={order} />
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 

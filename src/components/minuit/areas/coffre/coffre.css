@@ -1,0 +1,804 @@
+/* ==========================================================================
+   Le Coffre (catalogue) : « La salle des coffres ».
+   Toutes les règles sont préfixées html.mn-coffre (posé par useMinuitSkin("coffre")).
+   Mouvement : uniquement transform et opacity. L'état de repos de chaque élément est
+   l'état FINAL (porte ouverte, titre visible) : sans animation, tout est déjà en place.
+   Les boucles (lot qui flotte, rayons, néon) ne tournent que sous [data-on],
+   posé par un IntersectionObserver (useInViewAttr) et jamais sur téléphone modeste.
+   ========================================================================== */
+
+html.mn-coffre .cf-page {
+  --cf-st0: #0b0a0d; --cf-st1: #16151a; --cf-st2: #24232a; --cf-st3: #3a3841; --cf-st4: #5b5862;
+  --cf-brush: repeating-linear-gradient(90deg, rgba(255, 255, 255, .022) 0 1px, transparent 1px 3px);
+  --cf-steel: conic-gradient(from 200deg, #26252b, #57545d 10%, #2b2a30 22%, #45434b 36%, #1f1e23 50%, #4d4a53 64%, #232227 78%, #3d3b43 90%, #26252b);
+  --cf-gold-bar: linear-gradient(90deg, #5a4519, #c9a24a 22%, #f4dc92 42%, #c9a24a 62%, #6b5420);
+  background: var(--mn-nuit); color: var(--mn-ivoire); overflow-x: clip;
+}
+html.mn-coffre .cf-main { padding-top: 80px; } /* Header fixe : 80 px */
+
+/* ---------- typographie commune ---------- */
+html.mn-coffre .cf-kicker {
+  margin: 0; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px;
+  letter-spacing: .32em; text-transform: uppercase; color: var(--mn-or);
+}
+
+/* ==========================================================================
+   1. EN-TÊTE : la porte du coffre
+   ========================================================================== */
+html.mn-coffre .cf-hero {
+  --sz: clamp(250px, min(84vw, 54vh), 540px);
+  position: relative; isolation: isolate; overflow: hidden;
+  min-height: calc(100vh - 80px); min-height: calc(100svh - 80px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: clamp(26px, 5vh, 56px) var(--mn-gut) clamp(70px, 10vh, 104px);
+  text-align: center;
+}
+
+/* mur de coffres individuels, très sombre, éclairé au centre */
+html.mn-coffre .cf-wall {
+  position: absolute; inset: 0; z-index: -2; pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(201, 162, 74, .16) 0 1.6px, transparent 2.4px) 0 0 / 132px 70px,
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .03) 0 1px, transparent 1px 132px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 70px),
+    radial-gradient(ellipse 70% 55% at 50% 44%, rgba(201, 162, 74, .09), transparent 70%),
+    linear-gradient(180deg, #0c0b0f, #060508 72%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, #000 35%, transparent 92%);
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, #000 35%, transparent 92%);
+}
+/* projecteurs du plafond */
+html.mn-coffre .cf-spots { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+html.mn-coffre .cf-spots i {
+  position: absolute; top: -6%; width: 46%; height: 112%; opacity: .85;
+  background: linear-gradient(180deg, rgba(255, 236, 190, .17), rgba(255, 236, 190, .04) 58%, transparent 82%);
+  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+  transform-origin: 50% 0;
+  animation: cf-spot 1.1s .15s both;
+}
+html.mn-coffre .cf-spots i:first-child { left: 0; transform: rotate(-20deg); }
+html.mn-coffre .cf-spots i:last-child { right: 0; transform: rotate(20deg); animation-delay: .32s; }
+
+/* enseigne néon */
+html.mn-coffre .cf-neon {
+  position: relative; z-index: 3; margin: 0 0 clamp(10px, 2.4vh, 26px);
+  font-family: var(--mn-neon); font-weight: 400; font-size: clamp(24px, 3.6vw, 44px); line-height: 1.1; letter-spacing: .1em;
+  color: #FFF3D1;
+  text-shadow: 0 0 2px #fff6dc, 0 0 10px #F4DC92, 0 0 24px #C9A24A, 0 0 52px rgba(201, 162, 74, .6);
+  animation: cf-flick 1.4s .4s both;
+}
+html.mn-coffre .cf-hero[data-on] .cf-neon { animation: cf-flick 1.4s .4s both, cf-hum 6s 3s infinite; }
+
+/* ---------- l'ensemble porte + dormant ---------- */
+html.mn-coffre .cf-vault { position: relative; z-index: 2; width: var(--sz); height: var(--sz); flex: none; }
+html.mn-coffre .cf-flood {
+  position: absolute; inset: -60%; z-index: 0; pointer-events: none;
+  background: radial-gradient(circle closest-side, rgba(255, 214, 130, .34), rgba(201, 162, 74, .14) 34%, rgba(201, 162, 74, .04) 60%, transparent 76%);
+  animation: cf-flood 1.6s 1.45s var(--mn-ease) both;
+}
+html.mn-coffre .cf-floor {
+  position: absolute; left: -45%; right: -45%; top: 86%; height: 42%; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse 50% 46% at 50% 8%, rgba(244, 200, 110, .26), rgba(201, 162, 74, .07) 55%, transparent 75%);
+  animation: cf-flood 1.6s 1.6s var(--mn-ease) both;
+}
+html.mn-coffre .cf-asm {
+  position: absolute; inset: 0; z-index: 1;
+  perspective: calc(var(--sz) * 3.2); perspective-origin: 50% 50%;
+}
+/* ombre portée du dormant sur le mur */
+html.mn-coffre .cf-asm::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; z-index: 0;
+  box-shadow: 0 calc(var(--sz) * .07) calc(var(--sz) * .16) calc(var(--sz) * -.04) rgba(0, 0, 0, .95), 0 0 0 1px rgba(201, 162, 74, .22);
+}
+/* lèvre d'or que la lumière intérieure accroche */
+html.mn-coffre .cf-asm::after {
+  content: ""; position: absolute; inset: 10.7%; border-radius: 50%; z-index: 4; pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(244, 220, 146, .6), 0 0 22px rgba(244, 220, 146, .3), inset 0 0 18px rgba(244, 220, 146, .25);
+  animation: cf-fade 1.4s 1.55s both;
+}
+
+/* l'intérieur : rangées de casiers dans la lumière d'or */
+html.mn-coffre .cf-inside {
+  position: absolute; inset: 10.4%; z-index: 1; border-radius: 50%; overflow: hidden; isolation: isolate;
+  background:
+    radial-gradient(ellipse 62% 36% at 50% 4%, rgba(255, 240, 196, .95), rgba(244, 204, 120, .5) 34%, transparent 72%),
+    radial-gradient(circle closest-side at 50% 54%, rgba(14, 9, 3, .55), rgba(14, 9, 3, .2) 55%, rgba(0, 0, 0, .6) 100%),
+    radial-gradient(circle at 50% 50%, rgba(255, 226, 150, .55) 0 1.5px, transparent 2.3px) 50% 50% / 16.66% 12.5%,
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .55) 0 2px, rgba(255, 220, 150, .1) 2px 3px, transparent 3px 16.66%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .55) 0 2px, rgba(255, 220, 150, .08) 2px 3px, transparent 3px 12.5%),
+    linear-gradient(180deg, #6b4f22, #3a2810 42%, #1a1106 100%);
+  box-shadow: inset 0 0 0 calc(var(--sz) * .012) #0c0b0e, inset 0 calc(var(--sz) * .03) calc(var(--sz) * .08) rgba(0, 0, 0, .85);
+}
+/* pénombre avant l'ouverture : la lumière « s'allume » quand la porte pivote */
+html.mn-coffre .cf-inside::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; background: #050304; opacity: 0;
+  animation: cf-dark 1.2s 1.45s both;
+}
+html.mn-coffre .cf-rays { position: absolute; inset: -30%; z-index: 1; pointer-events: none; }
+html.mn-coffre .cf-rays::before {
+  content: ""; position: absolute; inset: 0;
+  background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 232, 170, .13) 0 3.5deg, transparent 3.5deg 15deg);
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 10%, #000 40%, transparent 95%);
+  mask-image: radial-gradient(circle closest-side, transparent 10%, #000 40%, transparent 95%);
+  animation: cf-fade 1.6s 1.9s both;
+}
+html.mn-coffre .cf-hero[data-on] .cf-rays { animation: cf-spin 90s linear infinite; }
+
+/* le titre révélé par la lumière */
+html.mn-coffre .cf-title {
+  position: absolute; inset: 12%; z-index: 2; margin: 0; overflow: hidden; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  line-height: .9; letter-spacing: 0; text-align: center; font-style: normal;
+  animation: cf-title 1s 1.7s var(--mn-ease) both;
+}
+html.mn-coffre .cf-t-le {
+  display: block; font-family: var(--mn-serif); font-style: italic; font-weight: 400;
+  font-size: calc(var(--sz) * .115); color: #FFF3D1; margin-bottom: calc(var(--sz) * .008);
+  text-shadow: 0 2px 0 rgba(20, 12, 2, .7), 0 0 22px rgba(255, 226, 150, .55);
+}
+html.mn-coffre .cf-t-cf {
+  display: block; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 900; font-style: normal;
+  font-size: calc(var(--sz) * .118); letter-spacing: .01em; text-transform: uppercase; line-height: 1;
+  background: var(--mn-foil); background-size: 220% 100%; background-position: 30% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(12, 7, 0, .9)) drop-shadow(0 0 16px rgba(8, 5, 0, .75));
+}
+html.mn-coffre .cf-t-sheen {
+  position: absolute; inset: 22% -20%; pointer-events: none; opacity: 0;
+  background: linear-gradient(100deg, transparent 40%, rgba(255, 246, 220, .3) 50%, transparent 60%);
+  animation: cf-sheen 1.6s 2.6s ease-in-out both;
+}
+
+/* dormant : anneau d'acier, rivets, gâches */
+html.mn-coffre .cf-jamb {
+  position: absolute; inset: 0; z-index: 3; border-radius: 50%; pointer-events: none;
+  background:
+    radial-gradient(circle closest-side, transparent 0 79.6%, rgba(0, 0, 0, .55) 80.4%, transparent 83%),
+    radial-gradient(circle closest-side, transparent 0 96%, rgba(255, 255, 255, .14) 97.5%, rgba(0, 0, 0, .7) 99.5%),
+    repeating-radial-gradient(circle closest-side, rgba(255, 255, 255, .03) 0 1px, transparent 1px 3px),
+    var(--cf-steel);
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 78.3%, #000 78.7%);
+  mask-image: radial-gradient(circle closest-side, transparent 78.3%, #000 78.7%);
+}
+html.mn-coffre .cf-jamb svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+html.mn-coffre .cf-jamb-rim { fill: none; stroke: rgba(244, 220, 146, .3); stroke-width: 1.1; }
+html.mn-coffre .cf-jamb-rivets { fill: none; stroke: #8f8b95; stroke-width: 3.4; stroke-linecap: round; stroke-dasharray: 0 15.315; }
+html.mn-coffre .cf-jamb-notch { fill: #040305; stroke: rgba(201, 162, 74, .5); stroke-width: .7; }
+html.mn-coffre .cf-jamb-lip { fill: none; stroke: var(--mn-or); stroke-width: 1.1; opacity: .75; }
+
+/* charnières */
+html.mn-coffre .cf-hinge {
+  position: absolute; z-index: 4; left: calc(50% - var(--sz) * .472); width: calc(var(--sz) * .046); height: calc(var(--sz) * .14);
+  border-radius: calc(var(--sz) * .02);
+  background: linear-gradient(90deg, #121115, #6d6a73 38%, #2b2a30 66%, #0d0c0f);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), 0 calc(var(--sz) * .02) calc(var(--sz) * .03) rgba(0, 0, 0, .7);
+}
+html.mn-coffre .cf-hinge::before, html.mn-coffre .cf-hinge::after {
+  content: ""; position: absolute; left: -8%; right: -8%; height: 8%; border-radius: 2px; background: var(--cf-gold-bar);
+}
+html.mn-coffre .cf-hinge::before { top: 6%; }
+html.mn-coffre .cf-hinge::after { bottom: 6%; }
+html.mn-coffre .cf-hinge.t { top: 25%; }
+html.mn-coffre .cf-hinge.b { bottom: 25%; }
+
+/* ---------- la porte ---------- */
+html.mn-coffre .cf-door {
+  --d: calc(var(--sz) * .81);
+  --wz: calc(var(--sz) * .036);
+  --retract: calc(var(--d) * .1);
+  position: absolute; left: 9.5%; top: 9.5%; width: 81%; height: 81%; z-index: 5;
+  transform-style: preserve-3d; transform-origin: -5.25% 50%;
+  transform: rotateY(-102deg) translateZ(0px);
+  animation: cf-door 1.5s 1.3s cubic-bezier(.55, 0, .2, 1) both;
+}
+html.mn-coffre .cf-door > span { position: absolute; border-radius: 50%; }
+html.mn-coffre .cf-slab, html.mn-coffre .cf-back { inset: 0; }
+html.mn-coffre .cf-slab { background: radial-gradient(circle closest-side, #1a191e 0 90%, #0b0a0d 100%); box-shadow: inset 0 0 0 1px rgba(201, 162, 74, .2); }
+html.mn-coffre .cf-slab.s1 { transform: translateZ(calc(var(--d) * -.019)); }
+html.mn-coffre .cf-slab.s2 { transform: translateZ(calc(var(--d) * -.038)); }
+html.mn-coffre .cf-slab.s3 { transform: translateZ(calc(var(--d) * -.056)); }
+/* dos de la porte : la mécanique des pênes, en laiton */
+html.mn-coffre .cf-back {
+  transform: translateZ(calc(var(--d) * -.075));
+  background:
+    radial-gradient(circle closest-side, #1b1a1f 0 26%, rgba(201, 162, 74, .55) 26.5%, #121115 28%, transparent 28.5%),
+    radial-gradient(circle closest-side, transparent 0 84%, rgba(201, 162, 74, .4) 84.5%, transparent 86%),
+    repeating-conic-gradient(from -1.2deg, rgba(201, 162, 74, .42) 0 2.4deg, transparent 2.4deg 30deg),
+    radial-gradient(circle closest-side, #24232a 0 93%, #0c0b0e 94%, #2e2c33 97%, #0c0b0e 100%);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 74, .3);
+}
+/* couronne de 12 pênes dorés */
+html.mn-coffre .cf-bolts { inset: 0; border-radius: 0; transform: translateZ(-1px); }
+html.mn-coffre .cf-arm { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: rotate(calc(var(--i) * 30deg)); }
+html.mn-coffre .cf-bolt {
+  position: absolute; left: calc(var(--d) * -.019); top: calc(var(--d) * -.548);
+  width: calc(var(--d) * .038); height: calc(var(--d) * .12); border-radius: 2px 2px 1px 1px;
+  background: var(--cf-gold-bar);
+  box-shadow: 0 0 0 1px rgba(30, 20, 4, .7), 0 0 8px rgba(244, 220, 146, .35);
+  transform: translateY(var(--retract));
+  animation: cf-bolt .4s calc(.8s + var(--i) * 28ms) cubic-bezier(.5, 0, .3, 1) both;
+}
+/* face avant : acier brossé en anneaux concentriques + gravure */
+html.mn-coffre .cf-face {
+  inset: 0; transform: translateZ(0px); overflow: hidden;
+  background:
+    radial-gradient(circle closest-side, transparent 0 70.4%, rgba(0, 0, 0, .6) 71%, rgba(255, 255, 255, .13) 72.2%, transparent 73.4%),
+    radial-gradient(circle closest-side, transparent 0 91.4%, rgba(0, 0, 0, .55) 92%, rgba(255, 255, 255, .12) 93%, transparent 94%),
+    radial-gradient(circle closest-side, transparent 0 96.5%, rgba(255, 255, 255, .2) 97.6%, rgba(0, 0, 0, .7) 99.4%),
+    radial-gradient(circle closest-side at 50% 54%, rgba(0, 0, 0, .45), transparent 60%),
+    repeating-radial-gradient(circle closest-side, rgba(255, 255, 255, .032) 0 1px, transparent 1px 3px),
+    var(--cf-steel);
+  box-shadow: inset 0 calc(var(--d) * -.02) calc(var(--d) * .06) rgba(0, 0, 0, .5), 0 0 0 1px #0a090c;
+}
+html.mn-coffre .cf-engrave { position: absolute; inset: 0; width: 100%; height: 100%; }
+html.mn-coffre .cf-eg-line { fill: none; stroke: rgba(244, 220, 146, .22); stroke-width: .7; }
+html.mn-coffre .cf-eg-text, html.mn-coffre .cf-eg-shade {
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 8.6px; letter-spacing: .4px;
+}
+html.mn-coffre .cf-eg-text { fill: #d9be74; }
+html.mn-coffre .cf-eg-shade { fill: rgba(0, 0, 0, .75); transform: translate(.55px, .75px); }
+html.mn-coffre .cf-core {
+  position: absolute; left: 50%; top: 50%; width: 52%; height: 52%; border-radius: 50%; transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle closest-side, transparent 0 84%, rgba(201, 162, 74, .5) 85%, transparent 87%),
+    repeating-radial-gradient(circle closest-side, rgba(255, 255, 255, .03) 0 1px, transparent 1px 3px),
+    radial-gradient(circle closest-side, #1d1c21, #121115 100%);
+  box-shadow: inset 0 calc(var(--d) * .01) calc(var(--d) * .03) rgba(0, 0, 0, .9), 0 0 0 1px rgba(201, 162, 74, .35);
+}
+html.mn-coffre .cf-spindle {
+  left: 50%; top: 50%; width: 15%; height: 15%; margin: -7.5% 0 0 -7.5%;
+  transform: translateZ(calc(var(--wz) * .5));
+  background: radial-gradient(circle at 40% 35%, #67646d, #1a191e 72%);
+  box-shadow: 0 0 0 1px rgba(201, 162, 74, .45), 0 calc(var(--d) * .015) calc(var(--d) * .03) rgba(0, 0, 0, .8);
+}
+/* volant à trois branches */
+html.mn-coffre .cf-door > .cf-wheel {
+  inset: 0; border-radius: 0;
+  transform: translateZ(var(--wz)) rotate(0deg);
+  animation: cf-wheel 1s .2s cubic-bezier(.6, 0, .25, 1) both;
+}
+html.mn-coffre .cf-spoke {
+  position: absolute; left: 50%; top: 50%; width: 6.4%; height: 37%; margin-left: -3.2%;
+  transform-origin: 50% 0; transform: rotate(calc(var(--k) * 120deg + 180deg));
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, #1c1b20, #a29ea8 38%, #4a4850 66%, #151418);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .55);
+}
+html.mn-coffre .cf-spoke::after {
+  content: ""; position: absolute; left: 50%; bottom: -14%; width: 205%; aspect-ratio: 1; border-radius: 50%; transform: translateX(-50%);
+  background: radial-gradient(circle at 34% 30%, #fff1c4, #e9c977 22%, #b8913e 52%, #5a4519 100%);
+  box-shadow: 0 0 0 1px rgba(30, 20, 4, .7), 0 4px 10px rgba(0, 0, 0, .6);
+}
+html.mn-coffre .cf-hub {
+  position: absolute; left: 50%; top: 50%; width: 25%; height: 25%; border-radius: 50%; transform: translate(-50%, -50%);
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 34% 28%, #fff1c4, #e9c977 18%, #c9a24a 42%, #7d6936 76%, #3d3115);
+  box-shadow: 0 0 0 2px #121116, 0 0 0 3px rgba(244, 220, 146, .55), 0 calc(var(--d) * .02) calc(var(--d) * .04) rgba(0, 0, 0, .75);
+}
+html.mn-coffre .cf-emb { display: block; width: 62%; height: 62%; color: #1d1608; }
+html.mn-coffre .cf-emb svg { display: block; width: 100%; height: 100%; }
+
+/* ---------- textes sous la porte ---------- */
+html.mn-coffre .cf-hero-txt {
+  position: relative; z-index: 3; max-width: 640px; margin-top: clamp(20px, 3.4vh, 38px);
+  animation: cf-rise .9s 1.6s var(--mn-ease) both;
+}
+html.mn-coffre .cf-lead {
+  margin: 10px auto 0; max-width: 54ch;
+  font-family: var(--mn-serif); font-size: clamp(16px, 1.55vw, 19px); line-height: 1.55; color: var(--mn-ivoire-2);
+}
+html.mn-coffre .cf-facts { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+html.mn-coffre .cf-facts li {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px;
+  font-family: var(--mn-mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--mn-ivoire-2);
+  border: 1px solid rgba(201, 162, 74, .26); background: rgba(6, 5, 8, .6); border-radius: 2px;
+}
+html.mn-coffre .cf-facts li::before { content: ""; width: 5px; height: 5px; transform: rotate(45deg); background: var(--mn-or); flex: none; }
+html.mn-coffre .cf-cue {
+  position: absolute; left: 50%; bottom: clamp(14px, 2.6vh, 26px); z-index: 3; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  font-family: var(--mn-mono); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--mn-ivoire-3);
+  animation: cf-fade 1s 2.2s both;
+}
+html.mn-coffre .cf-cue i { display: block; width: 1px; height: 30px; background: linear-gradient(180deg, var(--mn-or), transparent); transform-origin: 50% 0; }
+html.mn-coffre .cf-hero[data-on] .cf-cue i { animation: cf-cue 2.4s 3s ease-in-out infinite; }
+
+/* ---------- visites suivantes (data-seen, posé par CoffreVault via sessionStorage) ----------
+   Séquence abrégée à environ 0,8 s : le volant et les pênes sont déjà en place, la porte pivote
+   d'un geste et le titre arrive aussitôt. Uniquement des propriétés longues (durée, délai) :
+   l'arrêt des animations sur téléphone modeste (.cf-lite, plus bas) reste prioritaire. */
+html.mn-coffre .cf-hero[data-seen] .cf-wheel,
+html.mn-coffre .cf-hero[data-seen] .cf-bolt { animation: none; }
+html.mn-coffre .cf-hero[data-seen] .cf-door { animation-duration: .85s; animation-delay: 0s; }
+html.mn-coffre .cf-hero[data-seen] .cf-inside::after { animation-duration: .6s; animation-delay: .1s; }
+html.mn-coffre .cf-hero[data-seen] .cf-flood,
+html.mn-coffre .cf-hero[data-seen] .cf-floor { animation-duration: .9s; animation-delay: .15s; }
+html.mn-coffre .cf-hero[data-seen] .cf-asm::after { animation-duration: .8s; animation-delay: .2s; }
+html.mn-coffre .cf-hero[data-seen] .cf-rays::before { animation-duration: .9s; animation-delay: .3s; }
+html.mn-coffre .cf-hero[data-seen] .cf-title { animation-duration: .7s; animation-delay: .15s; }
+html.mn-coffre .cf-hero[data-seen] .cf-t-sheen { animation-duration: 1.2s; animation-delay: .7s; }
+html.mn-coffre .cf-hero[data-seen] .cf-hero-txt { animation-duration: .7s; animation-delay: .1s; }
+html.mn-coffre .cf-hero[data-seen] .cf-cue { animation-duration: .6s; animation-delay: .5s; }
+html.mn-coffre .cf-hero[data-seen] .cf-neon { animation-duration: .8s, 6s; animation-delay: 0s, 3s; }
+
+/* ==========================================================================
+   2. LES CASIERS : console de recherche, tri, grille
+   ========================================================================== */
+html.mn-coffre .cf-wrap {
+  position: relative; max-width: 1440px; margin: 0 auto;
+  padding: clamp(44px, 7vh, 84px) var(--mn-gut) clamp(70px, 10vh, 120px);
+}
+html.mn-coffre .cf-wrap::before {
+  content: ""; position: absolute; left: var(--mn-gut); right: var(--mn-gut); top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 162, 74, .5), transparent);
+}
+html.mn-coffre .cf-sec-hd {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 40px;
+  margin-bottom: clamp(20px, 3.6vh, 34px);
+}
+html.mn-coffre .cf-h2 { margin: 8px 0 0; font-size: clamp(42px, 6.4vw, 88px); line-height: .92; font-style: normal; }
+html.mn-coffre .cf-h2 .a { font-family: var(--mn-serif); font-style: italic; font-weight: 400; color: var(--mn-ivoire); }
+html.mn-coffre .cf-h2 .b {
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 900; font-style: normal; text-transform: uppercase; font-size: .8em; letter-spacing: -.005em;
+  background: var(--mn-foil); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html.mn-coffre .cf-sec-lead { margin: 0; max-width: 380px; font-size: 14px; line-height: 1.6; color: var(--mn-ivoire-2); }
+
+/* console : plaque d'acier, cadran de recherche, sélecteurs en laiton, molettes */
+html.mn-coffre .cf-console {
+  position: relative; display: grid; gap: 10px;
+  grid-template-columns: minmax(0, 1fr); grid-template-areas: "search" "tabs" "knobs";
+  padding: 12px; border: 1px solid rgba(201, 162, 74, .24); border-radius: 3px;
+  background: var(--cf-brush), linear-gradient(180deg, #1a191e, #0f0e12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), inset 0 0 0 3px rgba(0, 0, 0, .3), 0 24px 50px -30px #000;
+}
+html.mn-coffre .cf-console::before, html.mn-coffre .cf-console::after {
+  content: ""; position: absolute; top: 5px; width: 5px; height: 5px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #a7a3ad, #3a3940 70%); pointer-events: none;
+}
+html.mn-coffre .cf-console::before { left: 5px; }
+html.mn-coffre .cf-console::after { right: 5px; }
+@media (min-width: 560px) {
+  html.mn-coffre .cf-console { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "search knobs" "tabs tabs"; align-items: center; }
+}
+@media (min-width: 1100px) {
+  html.mn-coffre .cf-console { grid-template-columns: minmax(200px, 1fr) auto auto; grid-template-areas: "search tabs knobs"; gap: 14px; padding: 14px; }
+}
+html.mn-coffre .cf-search { grid-area: search; position: relative; min-width: 0; }
+html.mn-coffre .cf-search-ico {
+  position: absolute; left: 16px; top: 50%; z-index: 1; width: 18px; height: 18px; transform: translateY(-50%);
+  color: var(--mn-or); pointer-events: none;
+}
+html.mn-coffre.mn-skin main .cf-console .cf-search input.cf-in[type="text"] {
+  display: block; width: 100%; height: 48px; padding: 0 16px 0 46px; margin: 0;
+  font-family: var(--mn-mono); font-size: 16px; letter-spacing: .02em; color: var(--mn-ivoire);
+  background-color: #08070a; border: 1px solid rgba(241, 232, 212, .16); border-radius: 2px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, .8);
+}
+html.mn-coffre.mn-skin main .cf-console .cf-search input.cf-in[type="text"]::placeholder { color: var(--mn-ivoire-3); opacity: 1; }
+html.mn-coffre.mn-skin main .cf-console .cf-search input.cf-in[type="text"]:focus-visible {
+  outline: none; border-color: var(--mn-or-clair); box-shadow: inset 0 2px 8px rgba(0, 0, 0, .8), 0 0 0 2px rgba(244, 220, 146, .35);
+}
+
+html.mn-coffre .cf-tabs {
+  grid-area: tabs; display: flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%;
+  overflow-x: auto; scrollbar-width: none; padding: 4px;
+  border: 1px solid rgba(241, 232, 212, .1); border-radius: 2px; background: rgba(6, 5, 8, .65);
+}
+html.mn-coffre .cf-tabs::-webkit-scrollbar { display: none; }
+html.mn-coffre .cf-tab {
+  position: relative; isolation: isolate; flex: none; min-height: 40px; padding: 0 14px; border-radius: 2px;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; white-space: nowrap;
+  color: var(--mn-ivoire-2); background: transparent; cursor: pointer;
+}
+html.mn-coffre .cf-tab::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 2px;
+  background: var(--mn-foil); background-size: 220% 100%; background-position: 30% 0;
+  box-shadow: inset 0 1px 0 rgba(255, 250, 220, .6), 0 6px 16px -8px rgba(201, 162, 74, .8);
+  opacity: 0; transform: scaleX(.86); transition: opacity .35s var(--mn-ease), transform .45s var(--mn-ease);
+}
+html.mn-coffre .cf-tab:hover { color: var(--mn-ivoire); }
+html.mn-coffre .cf-tab.is-on { color: #120E06; }
+html.mn-coffre .cf-tab.is-on::before { opacity: 1; transform: none; }
+
+html.mn-coffre .cf-knobs { grid-area: knobs; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+html.mn-coffre .cf-knobs::before { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(201, 162, 74, .3)); }
+@media (min-width: 560px) { html.mn-coffre .cf-knobs::before { display: none; } }
+html.mn-coffre .cf-knob {
+  position: relative; isolation: isolate; flex: none; width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center; color: var(--mn-ivoire-2); cursor: pointer;
+  background: radial-gradient(circle at 35% 28%, #4c4a52, #1d1c21 58%, #0e0d11);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 0 0 1px rgba(201, 162, 74, .3), 0 6px 14px -6px #000;
+}
+/* moletage */
+html.mn-coffre .cf-knob::before {
+  content: ""; position: absolute; inset: 3px; z-index: -1; border-radius: 50%;
+  background: repeating-conic-gradient(rgba(255, 255, 255, .1) 0 4deg, transparent 4deg 12deg);
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 78%, #000 80%);
+  mask-image: radial-gradient(circle closest-side, transparent 78%, #000 80%);
+}
+html.mn-coffre .cf-knob::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #fff1c4, #e9c977 22%, #c9a24a 52%, #7d6936 100%);
+  box-shadow: 0 0 18px rgba(201, 162, 74, .45);
+  opacity: 0; transform: scale(.7); transition: opacity .35s var(--mn-ease), transform .45s var(--mn-ease);
+}
+html.mn-coffre .cf-knob svg { width: 18px; height: 18px; transition: transform .5s var(--mn-ease); }
+html.mn-coffre .cf-knob:hover svg { transform: rotate(-30deg); }
+html.mn-coffre .cf-knob[aria-pressed="true"] { color: #120E06; }
+html.mn-coffre .cf-knob[aria-pressed="true"]::after { opacity: 1; transform: none; }
+
+/* tiroir de tri */
+html.mn-coffre .cf-drawer { overflow: hidden; }
+html.mn-coffre .cf-drawer-in {
+  margin-top: 10px; padding: 16px 18px;
+  border: 1px solid rgba(201, 162, 74, .24); border-top-color: rgba(201, 162, 74, .5); border-radius: 0 0 3px 3px;
+  background: var(--cf-brush), linear-gradient(180deg, #131217, #0a090c);
+  box-shadow: inset 0 10px 18px -12px #000;
+}
+html.mn-coffre .cf-drawer-row { display: flex; flex-wrap: wrap; gap: 20px; }
+html.mn-coffre .cf-drawer-row > div { min-width: 0; max-width: 100%; }
+html.mn-coffre .cf-sort-label {
+  display: block; margin-bottom: 8px;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .28em; text-transform: uppercase; color: var(--mn-or);
+}
+html.mn-coffre .cf-drawer select.cf-sort {
+  display: block; width: 260px; max-width: 100%; height: 46px; padding: 0 14px;
+  font-family: var(--mn-mono); font-size: 15px; color: var(--mn-ivoire); color-scheme: dark;
+  background-color: #08070a; border: 1px solid rgba(241, 232, 212, .18); border-radius: 2px; cursor: pointer;
+}
+html.mn-coffre .cf-drawer select.cf-sort:focus-visible { outline: 2px solid var(--mn-or-clair); outline-offset: 2px; border-color: var(--mn-or); box-shadow: none; }
+
+html.mn-coffre .cf-count {
+  margin: 18px 0; font-family: var(--mn-mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-ivoire-2);
+}
+html.mn-coffre .cf-count::before { content: ""; display: inline-block; width: 22px; height: 1px; margin-right: 12px; vertical-align: middle; background: var(--mn-or); }
+
+/* grille et liste */
+html.mn-coffre .cf-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(16px, 2vw, 26px); }
+@media (min-width: 600px) { html.mn-coffre .cf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { html.mn-coffre .cf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1320px) { html.mn-coffre .cf-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+html.mn-coffre .cf-list { display: flex; flex-direction: column; gap: 16px; }
+
+/* ==========================================================================
+   3. LE CASIER
+   ========================================================================== */
+html.mn-coffre .cf-lk { position: relative; min-width: 0; perspective: 1100px; }
+html.mn-coffre .cf-lk-body {
+  position: relative; height: 100%; display: flex; flex-direction: column; padding: 12px;
+  border: 1px solid rgba(201, 162, 74, .2); border-radius: 3px;
+  background:
+    radial-gradient(circle at 7px 7px, #9a96a0 0 1.4px, #26252b 2.2px, transparent 2.8px),
+    radial-gradient(circle at calc(100% - 7px) 7px, #9a96a0 0 1.4px, #26252b 2.2px, transparent 2.8px),
+    radial-gradient(circle at 7px calc(100% - 7px), #9a96a0 0 1.4px, #26252b 2.2px, transparent 2.8px),
+    radial-gradient(circle at calc(100% - 7px) calc(100% - 7px), #9a96a0 0 1.4px, #26252b 2.2px, transparent 2.8px),
+    var(--cf-brush),
+    linear-gradient(165deg, #232228, #141317 46%, #0c0b0e);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), inset 0 0 0 4px rgba(0, 0, 0, .28), 0 22px 44px -26px #000;
+  transition: transform .6s var(--mn-ease);
+}
+/* halo d'or au survol (opacité seulement) */
+html.mn-coffre .cf-lk-body::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 3px; pointer-events: none; z-index: 3;
+  box-shadow: 0 0 0 1px rgba(244, 220, 146, .55), 0 30px 60px -22px rgba(201, 162, 74, .5);
+  opacity: 0; transition: opacity .5s var(--mn-ease);
+}
+html.mn-coffre .cf-lk-fx { position: absolute; inset: 0; z-index: 0; opacity: .65; pointer-events: none; overflow: hidden; border-radius: 3px; }
+html.mn-coffre .cf-lk-head, html.mn-coffre .cf-lk-link, html.mn-coffre .cf-lk-foot { position: relative; z-index: 1; }
+
+/* tête : plaque de laiton, nature du lot, serrure à cadran */
+html.mn-coffre .cf-lk-head { display: flex; align-items: center; gap: 10px; padding: 0 0 10px; min-width: 0; }
+html.mn-coffre .cf-plate {
+  position: relative; flex: none; display: inline-flex; flex-direction: column; align-items: flex-start;
+  padding: 4px 14px 5px; border-radius: 2px; color: #22190a;
+  background: linear-gradient(180deg, #f1d991, #c9a24a 48%, #9c7a35);
+  box-shadow: inset 0 1px 0 rgba(255, 250, 220, .7), inset 0 -1px 0 rgba(0, 0, 0, .3), 0 3px 8px -3px #000;
+}
+html.mn-coffre .cf-plate::before, html.mn-coffre .cf-plate::after {
+  content: ""; position: absolute; top: 50%; width: 4px; height: 4px; margin-top: -2px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3cf, #6b5420 80%);
+}
+html.mn-coffre .cf-plate::before { left: 4px; }
+html.mn-coffre .cf-plate::after { right: 4px; }
+html.mn-coffre .cf-plate small {
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 7.5px; letter-spacing: .3em; text-transform: uppercase; line-height: 1.3;
+}
+html.mn-coffre .cf-plate b {
+  font-family: var(--mn-serif); font-style: italic; font-weight: 500; font-size: 18px; line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 244, 205, .55);
+}
+html.mn-coffre .cf-kind {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--mn-mono); font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--mn-ivoire-2);
+}
+html.mn-coffre .cf-dial {
+  flex: none; margin-left: auto; width: 42px; height: 42px; border-radius: 50%; display: block;
+  background: radial-gradient(circle at 35% 28%, #3d3b42, #141317 70%);
+  box-shadow: 0 0 0 1px rgba(201, 162, 74, .38), inset 0 1px 0 rgba(255, 255, 255, .1), 0 4px 10px -4px #000;
+}
+html.mn-coffre .cf-dial svg { display: block; width: 100%; height: 100%; }
+html.mn-coffre .cf-dial .tk { transform-box: view-box; transform-origin: 50% 50%; transition: transform .8s var(--mn-ease); }
+html.mn-coffre .cf-dial .tk circle { fill: none; stroke: rgba(241, 232, 212, .42); stroke-width: 1.6; stroke-dasharray: .5 2.233; }
+html.mn-coffre .cf-dial .ix { fill: var(--mn-or-clair); }
+html.mn-coffre .cf-dial .ax { fill: none; stroke: rgba(241, 232, 212, .14); stroke-width: .5; }
+html.mn-coffre .cf-dial .pg { fill: rgba(201, 162, 74, .3); stroke: var(--mn-or-clair); stroke-width: .9; stroke-linejoin: round; }
+html.mn-coffre .cf-dial .pin { fill: var(--mn-or-clair); }
+
+/* lien vers la fiche : la niche et les informations */
+html.mn-coffre .cf-lk-link { display: block; color: inherit; text-decoration: none; border-radius: 2px; }
+html.mn-coffre .cf-lk-link:focus-visible { outline: 2px solid var(--mn-or-clair); outline-offset: 3px; }
+
+/* la niche : compartiment ouvert, faisceau, lot en lévitation */
+html.mn-coffre .cf-niche {
+  position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 1 / .9; border-radius: 2px;
+  container-type: inline-size;
+  background: radial-gradient(ellipse 70% 52% at 50% 80%, #2c2112, #120e0b 60%, #060508);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .85);
+}
+@media (max-width: 599px) { html.mn-coffre .cf-niche { aspect-ratio: 1 / .8; } }
+/* biseau du compartiment */
+html.mn-coffre .cf-niche::after {
+  content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 74, .26), inset 0 16px 28px -10px rgba(0, 0, 0, .95), inset 0 -12px 24px -12px rgba(0, 0, 0, .9), inset 10px 0 20px -14px #000, inset -10px 0 20px -14px #000;
+}
+html.mn-coffre .cf-wallg {
+  position: absolute; inset: 0; z-index: -1;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .022) 0 1px, transparent 1px 4px), linear-gradient(180deg, rgba(255, 255, 255, .035), transparent 45%);
+}
+html.mn-coffre .cf-numbg {
+  position: absolute; left: 0; right: 0; top: 2%; z-index: 0; text-align: center; user-select: none; pointer-events: none;
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; line-height: 1;
+  font-size: 140px; font-size: 64cqw;
+  color: transparent; -webkit-text-stroke: 1px rgba(201, 162, 74, .26);
+}
+html.mn-coffre .cf-beam {
+  position: absolute; left: 50%; top: -4%; z-index: 1; width: 96%; height: 100%; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 236, 190, .34), rgba(255, 224, 160, .12) 55%, transparent 90%);
+  clip-path: polygon(41% 0, 59% 0, 100% 100%, 0 100%);
+  opacity: .55; transform: translateX(-50%); transform-origin: 50% 0;
+  transition: opacity .6s var(--mn-ease), transform .7s var(--mn-ease);
+}
+html.mn-coffre .cf-beam::before {
+  content: ""; position: absolute; left: 41%; right: 41%; top: 3%; height: 3px; border-radius: 50%;
+  background: #fff4d6; box-shadow: 0 0 12px 3px rgba(255, 230, 170, .7);
+}
+html.mn-coffre .cf-lot { position: absolute; left: 12%; right: 12%; top: 15%; bottom: 17%; z-index: 2; display: grid; place-items: end center; }
+html.mn-coffre .cf-lot img { display: block; transition: transform .7s var(--mn-ease); }
+html.mn-coffre .cf-lot img.cut {
+  max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;
+  filter: drop-shadow(0 18px 16px rgba(0, 0, 0, .72));
+}
+html.mn-coffre .cf-niche.is-ph .cf-lot { inset: 0; }
+html.mn-coffre .cf-lot img.ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+html.mn-coffre .cf-niche.is-ph .cf-numbg, html.mn-coffre .cf-niche.is-ph .cf-ring { display: none; }
+html.mn-coffre .cf-niche.is-ph .cf-beam { z-index: 3; opacity: .35; }
+html.mn-coffre .cf-lk-body[data-on] .cf-niche:not(.is-ph) .cf-lot { animation: cf-float 6.5s ease-in-out infinite; animation-delay: calc(var(--n, 0) * -.9s); }
+html.mn-coffre .cf-ring {
+  position: absolute; left: 50%; bottom: 12%; z-index: 1; width: 62%; height: 9%; border-radius: 50%; transform: translateX(-50%); pointer-events: none;
+  border: 1px solid rgba(244, 198, 106, .62);
+  box-shadow: 0 0 18px rgba(244, 198, 106, .3), inset 0 0 14px rgba(244, 198, 106, .14);
+}
+html.mn-coffre .cf-haze { position: absolute; left: 0; right: 0; bottom: 0; height: 38%; z-index: 3; pointer-events: none; background: linear-gradient(0deg, rgba(6, 5, 8, .85), transparent); }
+html.mn-coffre .cf-vid { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; transition: opacity .5s; display: none; }
+@media (min-width: 768px) { html.mn-coffre .cf-vid { display: block; } }
+
+/* étiquettes : une rangée partagée (gamme et molécule à gauche, taux à droite), sans chevauchement possible */
+html.mn-coffre .cf-tags {
+  position: absolute; top: 10px; left: 10px; right: 10px; z-index: 6; pointer-events: none;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 6px;
+}
+html.mn-coffre .cf-badges { flex: 0 1 auto; min-width: 0; max-width: 58%; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+html.mn-coffre .cf-pill {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 9px; border-radius: 2px;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9px; line-height: 1.25; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--mn-or-clair); background: rgba(6, 5, 8, .88); border: 1px solid rgba(201, 162, 74, .5);
+}
+html.mn-coffre .cf-pill svg { width: 11px; height: 11px; flex: none; }
+html.mn-coffre .cf-pill.or { color: #120E06; background: var(--mn-foil); background-size: 220% 100%; background-position: 30% 0; border-color: rgba(244, 220, 146, .6); }
+html.mn-coffre .cf-pill.exo { color: #DDB0F2; border-color: rgba(176, 97, 214, .65); }
+html.mn-coffre .cf-pill.noire { color: #F2A99B; border-color: rgba(190, 60, 46, .6); }
+html.mn-coffre .cf-pill.mol { font-family: var(--mn-mono); font-weight: 500; letter-spacing: .14em; font-size: 10px; }
+html.mn-coffre .cf-cbd {
+  position: relative; flex: 0 1 auto; min-width: 0; max-width: 46%; margin-left: auto; padding: 5px 9px; border-radius: 2px; overflow-wrap: anywhere;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .1em; text-align: right;
+  color: #120E06; background: var(--mn-foil); background-size: 220% 100%; background-position: 30% 0;
+  box-shadow: 0 0 0 1px rgba(244, 220, 146, .5), 0 6px 14px -6px #000;
+}
+
+/* rupture : casier scellé */
+html.mn-coffre .cf-seal {
+  position: absolute; inset: 0; z-index: 7; display: grid; place-items: center;
+  background: repeating-linear-gradient(135deg, rgba(6, 5, 8, .84) 0 14px, rgba(22, 19, 26, .84) 14px 28px);
+}
+html.mn-coffre .cf-seal-in {
+  margin: 0 14px; padding: 13px 18px; text-align: center;
+  border: 1px solid rgba(201, 162, 74, .6); background: rgba(6, 5, 8, .94);
+  box-shadow: 0 0 0 4px rgba(6, 5, 8, .8), 0 0 0 5px rgba(201, 162, 74, .25);
+}
+html.mn-coffre .cf-seal-in .k { display: block; font-family: var(--mn-mono); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--mn-or); }
+html.mn-coffre .cf-seal-in .t { display: block; margin-top: 4px; font-family: var(--mn-serif); font-style: italic; font-size: 19px; color: var(--mn-or-clair); }
+html.mn-coffre .cf-lk.is-out .cf-lot img { filter: grayscale(.5) brightness(.8); }
+
+/* informations et prix */
+html.mn-coffre .cf-info { padding: 14px 2px 2px; }
+html.mn-coffre .cf-info h3 {
+  margin: 0; font-family: var(--mn-serif); font-style: italic; font-weight: 400; letter-spacing: -.005em;
+  font-size: clamp(22px, 2vw, 27px); line-height: 1.1; color: var(--mn-ivoire);
+}
+html.mn-coffre .cf-sub { margin: 4px 0 0; font-size: 12.5px; font-style: italic; color: var(--mn-ivoire-2); }
+html.mn-coffre .cf-notes { margin: 8px 0 0; max-width: 62ch; font-size: 13.5px; line-height: 1.55; color: var(--mn-ivoire-2); }
+html.mn-coffre .cf-px { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+html.mn-coffre .cf-px > span {
+  display: flex; flex-direction: column; min-width: 0; padding: 8px 10px 9px; border-radius: 2px;
+  border: 1px solid rgba(241, 232, 212, .1); background: rgba(6, 5, 8, .55);
+}
+html.mn-coffre .cf-px small { font-family: var(--mn-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-ivoire-2); }
+html.mn-coffre .cf-px b {
+  margin-top: 2px; font-family: var(--mn-serif); font-weight: 500; font-size: 21px; line-height: 1.1; color: var(--mn-ivoire);
+  font-variant-numeric: lining-nums tabular-nums; white-space: nowrap;
+}
+html.mn-coffre .cf-px em {
+  margin-top: 3px; font-style: normal; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 8.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--mn-or);
+}
+html.mn-coffre .cf-px > span.hi { border-color: rgba(201, 162, 74, .45); background: linear-gradient(160deg, rgba(201, 162, 74, .14), rgba(6, 5, 8, .6)); }
+html.mn-coffre .cf-px > span.hi b { color: var(--mn-or-clair); }
+html.mn-coffre .cf-px > span.from {
+  grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 2px 2px 0;
+  border: 0; background: none; font-size: 12px; color: var(--mn-ivoire-2);
+}
+html.mn-coffre .cf-px > span.from b { margin: 0; font-size: 15px; color: var(--mn-or-clair); }
+html.mn-coffre .cf-px.pro { grid-template-columns: minmax(0, 1fr); }
+
+/* pied : la serrure, vers la fiche */
+html.mn-coffre .cf-lk-foot { margin-top: auto; padding-top: 12px; }
+html.mn-coffre .cf-cta {
+  position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 46px; padding: 0 16px 0 34px; border-radius: 2px; text-align: center; text-decoration: none;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--mn-or-clair); border: 1px solid rgba(201, 162, 74, .55); background: rgba(6, 5, 8, .45);
+}
+html.mn-coffre .cf-cta::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--mn-foil); background-size: 220% 100%; background-position: 30% 0;
+  opacity: 0; transform: scaleX(.94); transition: opacity .4s var(--mn-ease), transform .5s var(--mn-ease);
+}
+/* entrée de serrure */
+html.mn-coffre .cf-cta::after {
+  content: ""; position: absolute; left: 16px; top: 50%; width: 9px; height: 14px; margin-top: -7px;
+  background:
+    radial-gradient(circle at 50% 30%, currentColor 0 2.8px, transparent 3.3px),
+    linear-gradient(currentColor, currentColor) 50% 100% / 3px 8px no-repeat;
+}
+html.mn-coffre .cf-cta:focus-visible { outline: 2px solid var(--mn-or-clair); outline-offset: 3px; }
+
+/* ---------- survol (souris) : le casier avance, le faisceau s'intensifie ---------- */
+@media (hover: hover) and (pointer: fine) {
+  html.mn-coffre .cf-lk:hover .cf-lk-body { transform: translateZ(28px); }
+  html.mn-coffre .cf-lk:hover .cf-lk-body::after { opacity: 1; }
+  html.mn-coffre .cf-lk:hover .cf-beam { opacity: 1; transform: translateX(-50%) scaleX(1.14); }
+  html.mn-coffre .cf-lk:hover .cf-lot img.cut { transform: translateY(-7px) scale(1.05); }
+  html.mn-coffre .cf-lk:hover .cf-lot img.ph { transform: scale(1.06); }
+  html.mn-coffre .cf-lk:hover .cf-dial .tk { transform: rotate(72deg); }
+  html.mn-coffre .cf-lk:hover .cf-vid { opacity: 1; }
+  html.mn-coffre .cf-cta:hover { color: #120E06; }
+  html.mn-coffre .cf-cta:hover::before { opacity: 1; transform: none; }
+}
+html.mn-coffre .cf-lk:focus-within .cf-beam { opacity: 1; }
+html.mn-coffre .cf-cta:focus-visible { color: #120E06; }
+html.mn-coffre .cf-cta:focus-visible::before { opacity: 1; transform: none; }
+
+/* ---------- tons des gammes ---------- */
+html.mn-coffre .cf-lk.exo .cf-lk-body { border-color: rgba(176, 97, 214, .32); }
+html.mn-coffre .cf-lk.exo .cf-niche { background: radial-gradient(ellipse 70% 52% at 50% 80%, #26152d, #100b12 60%, #060508); }
+html.mn-coffre .cf-lk.exo .cf-beam { background: linear-gradient(180deg, rgba(232, 196, 250, .34), rgba(176, 97, 214, .14) 55%, transparent 90%); }
+html.mn-coffre .cf-lk.exo .cf-ring { border-color: rgba(217, 165, 240, .6); box-shadow: 0 0 18px rgba(176, 97, 214, .4), inset 0 0 14px rgba(176, 97, 214, .2); }
+html.mn-coffre .cf-lk.exo .cf-numbg { -webkit-text-stroke-color: rgba(176, 97, 214, .3); }
+html.mn-coffre .cf-lk.exo .cf-lk-body::after { box-shadow: 0 0 0 1px rgba(217, 165, 240, .55), 0 30px 60px -22px rgba(176, 97, 214, .5); }
+html.mn-coffre .cf-lk.noire .cf-lk-body { border-color: rgba(150, 40, 32, .4); }
+html.mn-coffre .cf-lk.noire .cf-niche { background: radial-gradient(ellipse 70% 52% at 50% 80%, #2a1210, #110a0a 60%, #060508); }
+html.mn-coffre .cf-lk.noire .cf-beam { background: linear-gradient(180deg, rgba(255, 214, 200, .3), rgba(200, 70, 50, .12) 55%, transparent 90%); }
+html.mn-coffre .cf-lk.noire .cf-ring { border-color: rgba(230, 120, 96, .55); box-shadow: 0 0 18px rgba(190, 60, 46, .35), inset 0 0 14px rgba(190, 60, 46, .18); }
+html.mn-coffre .cf-lk.noire .cf-numbg { -webkit-text-stroke-color: rgba(190, 60, 46, .3); }
+html.mn-coffre .cf-lk.nectar .cf-lk-body { border-color: rgba(201, 162, 74, .5); }
+html.mn-coffre .cf-lk.nectar .cf-beam { opacity: .75; }
+
+/* ---------- mode liste ---------- */
+@media (min-width: 768px) {
+  html.mn-coffre .cf-lk.is-list .cf-lk-link { display: grid; grid-template-columns: minmax(220px, 34%) minmax(0, 1fr); gap: 0 clamp(20px, 3vw, 40px); align-items: center; }
+  html.mn-coffre .cf-lk.is-list .cf-niche { aspect-ratio: 4 / 3; }
+  html.mn-coffre .cf-lk.is-list .cf-info { padding: 6px 4px; }
+  html.mn-coffre .cf-lk.is-list .cf-info h3 { font-size: clamp(26px, 2.6vw, 36px); }
+  html.mn-coffre .cf-lk.is-list .cf-px { grid-template-columns: repeat(2, minmax(0, 170px)); }
+  html.mn-coffre .cf-lk.is-list .cf-px.pro { grid-template-columns: minmax(0, 220px); }
+  html.mn-coffre .cf-lk.is-list .cf-lk-foot { display: flex; justify-content: flex-end; }
+  html.mn-coffre .cf-lk.is-list .cf-cta { width: auto; min-width: 280px; }
+}
+@media (hover: hover) and (pointer: fine) {
+  html.mn-coffre .cf-lk.is-list:hover .cf-lk-body { transform: translateZ(16px); }
+}
+
+/* ---------- aucun résultat : un casier vide ---------- */
+html.mn-coffre .cf-empty { padding: clamp(50px, 9vh, 90px) 0; text-align: center; }
+html.mn-coffre .cf-empty-box {
+  position: relative; display: block; width: 128px; height: 100px; margin: 0 auto 24px; perspective: 420px;
+  border: 1px solid rgba(201, 162, 74, .3); border-radius: 2px;
+  background: radial-gradient(ellipse 70% 60% at 50% 85%, #2c2112, #0c0a0b 70%);
+  box-shadow: inset 0 12px 24px rgba(0, 0, 0, .9), 0 20px 40px -20px #000;
+}
+html.mn-coffre .cf-empty-box .lamp { position: absolute; inset: 0; display: block; background: radial-gradient(ellipse 55% 45% at 50% 12%, rgba(244, 220, 146, .3), transparent 70%); }
+html.mn-coffre .cf-empty-box .door {
+  position: absolute; inset: -1px; display: block; border: 1px solid rgba(201, 162, 74, .35); border-radius: 2px;
+  background: var(--cf-brush), linear-gradient(165deg, #2a2930, #141317);
+  transform-origin: 0 50%; transform: rotateY(-64deg);
+}
+html.mn-coffre .cf-empty-box .door::after {
+  content: ""; position: absolute; right: 12px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%;
+  border: 1px solid rgba(201, 162, 74, .6); background: radial-gradient(circle, var(--mn-or) 0 2px, transparent 2.5px);
+}
+html.mn-coffre .cf-empty-t { margin: 0; font-family: var(--mn-serif); font-style: italic; font-size: clamp(22px, 2.6vw, 30px); color: var(--mn-ivoire); }
+html.mn-coffre .cf-reset {
+  position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 18px; min-height: 46px; padding: 0 24px; border-radius: 2px; cursor: pointer;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--mn-or-clair); border: 1px solid var(--mn-or); background: transparent;
+}
+html.mn-coffre .cf-reset::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; background: var(--mn-foil); background-size: 220% 100%;
+  opacity: 0; transition: opacity .4s var(--mn-ease);
+}
+html.mn-coffre .cf-reset:hover, html.mn-coffre .cf-reset:focus-visible { color: #120E06; }
+html.mn-coffre .cf-reset:hover::before, html.mn-coffre .cf-reset:focus-visible::before { opacity: 1; }
+html.mn-coffre .cf-tab:focus-visible, html.mn-coffre .cf-knob:focus-visible, html.mn-coffre .cf-reset:focus-visible {
+  outline: 2px solid var(--mn-or-clair); outline-offset: 3px;
+}
+
+/* ---------- téléphones ---------- */
+@media (max-width: 599px) {
+  /* pas de hero plein écran sur téléphone : la console de recherche affleure plus tôt */
+  html.mn-coffre .cf-hero { min-height: auto; padding-bottom: 76px; }
+  html.mn-coffre .cf-facts li { font-size: 9.5px; letter-spacing: .12em; padding: 6px 10px; }
+  html.mn-coffre .cf-lk-body { padding: 10px; }
+  html.mn-coffre .cf-px b { font-size: 19px; }
+}
+/* téléphone modeste : pas d'ombres lourdes sur la porte, pas de rayons */
+html.mn-coffre .cf-lite .cf-rays, html.mn-coffre .cf-lite .cf-spots { display: none; }
+html.mn-coffre .cf-lite .cf-lot img.cut { filter: none; }
+/* …et pas de séquence 3D : la porte est déjà ouverte (état de repos), seuls le titre et le texte apparaissent en fondu */
+html.mn-coffre .cf-lite .cf-door, html.mn-coffre .cf-lite .cf-wheel, html.mn-coffre .cf-lite .cf-bolt,
+html.mn-coffre .cf-lite .cf-inside::after, html.mn-coffre .cf-lite .cf-asm::after,
+html.mn-coffre .cf-lite .cf-flood, html.mn-coffre .cf-lite .cf-floor, html.mn-coffre .cf-lite .cf-t-sheen { animation: none; }
+html.mn-coffre .cf-lite .cf-title { animation-duration: .8s; animation-delay: .15s; }
+html.mn-coffre .cf-lite .cf-hero-txt { animation-duration: .8s; animation-delay: .2s; }
+html.mn-coffre .cf-lite .cf-cue { animation-delay: .6s; }
+
+/* ==========================================================================
+   Animations (transform et opacité uniquement)
+   ========================================================================== */
+@keyframes cf-spot { 0% { opacity: 0 } 18% { opacity: .55 } 24% { opacity: .08 } 38% { opacity: .85 } 46% { opacity: .4 } 60%, 100% { opacity: .85 } }
+@keyframes cf-flick { 0% { opacity: 0 } 8% { opacity: .9 } 11% { opacity: .1 } 16% { opacity: 1 } 24% { opacity: .25 } 30% { opacity: 1 } 62% { opacity: .85 } 66%, 100% { opacity: 1 } }
+@keyframes cf-hum { 0%, 100% { opacity: 1 } 47% { opacity: .94 } 50% { opacity: .78 } 53% { opacity: .97 } }
+@keyframes cf-wheel { from { transform: translateZ(var(--wz)) rotate(-360deg); } to { transform: translateZ(var(--wz)) rotate(0deg); } }
+@keyframes cf-bolt { from { transform: translateY(0); } to { transform: translateY(var(--retract)); } }
+@keyframes cf-door {
+  0% { transform: rotateY(0deg) translateZ(0px); }
+  12% { transform: rotateY(-2deg) translateZ(calc(var(--sz) * .03)); }
+  100% { transform: rotateY(-102deg) translateZ(0px); }
+}
+@keyframes cf-dark { from { opacity: 1; } to { opacity: 0; } }
+@keyframes cf-fade { from { opacity: 0; } }
+@keyframes cf-flood { from { opacity: 0; transform: scale(.55); } to { opacity: 1; transform: none; } }
+@keyframes cf-title { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: none; } }
+@keyframes cf-sheen { 0% { opacity: 0; transform: translateX(-55%); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateX(55%); } }
+@keyframes cf-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes cf-spin { to { transform: rotate(360deg); } }
+@keyframes cf-cue { 0% { transform: scaleY(0); opacity: 1; } 55% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+@keyframes cf-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+
+/* mouvement réduit : porte déjà ouverte, titre en place, rien ne bouge */
+@media (prefers-reduced-motion: reduce) {
+  html.mn-coffre .cf-page *, html.mn-coffre .cf-page *::before, html.mn-coffre .cf-page *::after {
+    animation: none !important; transition: none !important;
+  }
+  html.mn-coffre .cf-lk:hover .cf-lk-body, html.mn-coffre .cf-lk.is-list:hover .cf-lk-body,
+  html.mn-coffre .cf-lk:hover .cf-lot img.cut, html.mn-coffre .cf-lk:hover .cf-lot img.ph { transform: none; }
+}

@@ -12,6 +12,7 @@ import {
   nextTier,
   saleTypeLabel,
 } from "@/hooks/useCommercial";
+import LogHead from "@/components/minuit/areas/commercial/LogHead";
 
 const euro = (n: number) =>
   n.toLocaleString("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
@@ -49,19 +50,19 @@ const CommercialCommissionsPage = () => {
   }, [commissions, months]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold gold-text">Mes commissions</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+    <div className="cm-page space-y-6">
+      <LogHead no="04" etape="Le compteur" turn="rond-point">
+        <h1 className="cm-h1">Mes commissions</h1>
+        <p className="cm-lead">
           {rep
             ? "Nouveaux clients : barème par tranche sur le cumul du mois — 10 % jusqu'à 5 000 € HT, 12 % de 5 000 à 10 000 €, 15 % au-delà. Réassorts : 10 % fixe. Plus 50 € de prime par nouveau client pro signé."
             : "Aucune fiche commerciale rattachée à ce compte."}
         </p>
-      </div>
+      </LogHead>
 
       {currentMonth && (
         <div className="grid gap-3 sm:grid-cols-3">
-          <Card className="border-gold/30">
+          <Card className="cm-gauge cm-gauge--or border-gold/30">
             <CardContent className="pt-5">
               <p className="text-xs text-muted-foreground">Nouveaux clients ce mois</p>
               <p className="text-xl font-semibold">{euro(currentMonth.newClientRevenue)} HT</p>
@@ -71,7 +72,7 @@ const CommercialCommissionsPage = () => {
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="cm-gauge">
             <CardContent className="pt-5">
               <p className="text-xs text-muted-foreground">Réassorts ce mois</p>
               <p className="text-xl font-semibold">{euro(currentMonth.reassortRevenue)} HT</p>
@@ -80,7 +81,7 @@ const CommercialCommissionsPage = () => {
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="cm-gauge cm-gauge--or">
             <CardContent className="pt-5">
               <p className="text-xs text-muted-foreground">Total dû ce mois</p>
               <p className="text-xl font-semibold text-emerald-400">
@@ -95,24 +96,27 @@ const CommercialCommissionsPage = () => {
         </div>
       )}
 
-      <Card className="border-gold/30">
+      <Card className="cm-road border-gold/30">
         <CardHeader className="pb-3">
+          <span className="cm-step" aria-hidden="true">
+            Sorties du barème
+          </span>
           <CardTitle className="text-base flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-gold" /> Paliers nouveaux clients
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+          <div className="cm-exits flex flex-wrap gap-2">
             {[...tiers]
               .sort((a, b) => a.min_revenue_ht - b.min_revenue_ht)
               .map((t) => (
                 <Badge
                   key={t.min_revenue_ht}
-                  className={
+                  className={`cm-exit ${
                     t.commission_percent === currentTier.commission_percent
                       ? "bg-gold/20 text-gold border border-gold/50"
                       : "bg-muted text-muted-foreground"
-                  }
+                  }`}
                 >
                   {t.min_revenue_ht === 0
                     ? `Jusqu'à ${euro(
@@ -124,7 +128,7 @@ const CommercialCommissionsPage = () => {
           </div>
 
           <div>
-            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+            <div className="cm-road-l flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
               <span className="capitalize">
                 {monthLabel(currentKey)} · nouveaux clients {euro(newRevenue)} HT · tranche
                 atteinte <strong className="text-gold">{currentTier.commission_percent} %</strong>
@@ -149,20 +153,20 @@ const CommercialCommissionsPage = () => {
         </CardContent>
       </Card>
 
-      <div className="grid gap-3 sm:grid-cols-4">
-        <Card>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="cm-gauge">
           <CardContent className="pt-5">
             <p className="text-xs text-muted-foreground">CA HT apporté</p>
             <p className="text-xl font-semibold">{euro(totals.revenue)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cm-gauge">
           <CardContent className="pt-5">
             <p className="text-xs text-muted-foreground">Commissions à percevoir</p>
             <p className="text-xl font-semibold text-amber-300">{euro(totals.pending)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cm-gauge">
           <CardContent className="pt-5">
             <p className="text-xs text-muted-foreground">
               Primes nouveaux clients ({totals.bonusCount})
@@ -170,7 +174,7 @@ const CommercialCommissionsPage = () => {
             <p className="text-xl font-semibold text-gold">{euro(totals.bonus)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cm-gauge">
           <CardContent className="pt-5">
             <p className="text-xs text-muted-foreground">Commissions versées</p>
             <p className="text-xl font-semibold text-emerald-400">{euro(totals.paid)}</p>
@@ -180,6 +184,9 @@ const CommercialCommissionsPage = () => {
 
       <Card>
         <CardHeader>
+          <span className="cm-step" aria-hidden="true">
+            Journal de bord
+          </span>
           <CardTitle className="text-base">Récapitulatif mois par mois</CardTitle>
         </CardHeader>
         <CardContent>
@@ -191,7 +198,7 @@ const CommercialCommissionsPage = () => {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="cm-log cm-log--journal w-full text-sm">
                 <thead className="text-xs text-muted-foreground">
                   <tr className="border-b border-border/50">
                     <th className="text-left py-2">Mois</th>
@@ -236,6 +243,9 @@ const CommercialCommissionsPage = () => {
 
       <Card>
         <CardHeader>
+          <span className="cm-step" aria-hidden="true">
+            Relevé des étapes
+          </span>
           <CardTitle className="text-base">Détail par client</CardTitle>
         </CardHeader>
         <CardContent>
@@ -243,7 +253,7 @@ const CommercialCommissionsPage = () => {
             <p className="text-sm text-muted-foreground">Aucune ligne pour le moment.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="cm-log cm-log--journal w-full text-sm">
                 <thead className="text-xs text-muted-foreground">
                   <tr className="border-b border-border/50">
                     <th className="text-left py-2">Période</th>
@@ -262,11 +272,11 @@ const CommercialCommissionsPage = () => {
                       <td className="py-2">{c.client_label}</td>
                       <td className="py-2">
                         <Badge
-                          className={
+                          className={`cm-tag ${
                             c.sale_type === "new"
                               ? "bg-gold/15 text-gold"
                               : "bg-muted text-muted-foreground"
-                          }
+                          }`}
                         >
                           {saleTypeLabel(c.sale_type)}
                         </Badge>
@@ -278,11 +288,11 @@ const CommercialCommissionsPage = () => {
                       </td>
                       <td className="py-2 text-right">
                         <Badge
-                          className={
+                          className={`cm-tag ${
                             c.status === "paid"
                               ? "bg-emerald-500/15 text-emerald-300"
                               : "bg-amber-500/15 text-amber-300"
-                          }
+                          }`}
                         >
                           {c.status === "paid" ? "Versée" : "En attente"}
                         </Badge>

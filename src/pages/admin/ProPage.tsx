@@ -58,59 +58,66 @@ const ProPage = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold gold-text">Pro & Facturation</h1>
+    <div>
+      {/* titre visible dans le bandeau gravé de la salle de contrôle */}
+      <h1 className="sr-only">Pro & Facturation</h1>
 
-      <div className="flex gap-3 flex-wrap">
-        <Button variant="outline" size="sm" onClick={handleOrderForm}>
-          <Printer className="h-4 w-4 mr-2" /> Bon de commande papier
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            downloadProClientForm();
-            toast({ title: "Fiche client téléchargée" });
-          }}
-        >
-          <FileText className="h-4 w-4 mr-2" /> Fiche nouveau client pro
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy !== null}
-          onClick={() => run("grille", () => downloadProPriceGrid(toDocProducts(), tiers), "Grille tarifaire")}
-        >
-          {busy === "grille" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-          Grille tarifaire pro
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy !== null}
-          onClick={() => run("catalogue", () => downloadProCatalogue(toDocProducts(), tiers), "Catalogue pro")}
-        >
-          {busy === "catalogue" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-          Catalogue pro
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy !== null}
-          onClick={() => run("guide", () => downloadProGuide(), "Guide commercial")}
-        >
-          {busy === "guide" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-          Guide commercial
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <a href="/documents/HSB-RIB.pdf" target="_blank" rel="noopener noreferrer">
-            <Landmark className="h-4 w-4 mr-2" /> RIB High Society Botanicals
-          </a>
-        </Button>
+      <div className="space-y-8">
+        {/* rangée d'interrupteurs « documents » (enveloppe purement visuelle) */}
+        <div className="adm-docs">
+          <p className="adm-kicker">Documents professionnels</p>
+          <div className="flex gap-3 flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleOrderForm}>
+              <Printer className="h-4 w-4 mr-2" /> Bon de commande papier
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                downloadProClientForm();
+                toast({ title: "Fiche client téléchargée" });
+              }}
+            >
+              <FileText className="h-4 w-4 mr-2" /> Fiche nouveau client pro
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy !== null}
+              onClick={() => run("grille", () => downloadProPriceGrid(toDocProducts(), tiers), "Grille tarifaire")}
+            >
+              {busy === "grille" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+              Grille tarifaire pro
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy !== null}
+              onClick={() => run("catalogue", () => downloadProCatalogue(toDocProducts(), tiers), "Catalogue pro")}
+            >
+              {busy === "catalogue" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+              Catalogue pro
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy !== null}
+              onClick={() => run("guide", () => downloadProGuide(), "Guide commercial")}
+            >
+              {busy === "guide" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+              Guide commercial
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <a href="/documents/HSB-RIB.pdf" target="_blank" rel="noopener noreferrer">
+                <Landmark className="h-4 w-4 mr-2" /> RIB High Society Botanicals
+              </a>
+            </Button>
+          </div>
+        </div>
+
+        <ProRequestsSection />
+        <ProInvoicingManager />
       </div>
-
-      <ProRequestsSection />
-      <ProInvoicingManager />
     </div>
   );
 };

@@ -1,0 +1,644 @@
+/* ==========================================================================
+   Mon profil — « Le carnet du membre » (DA Minuit Carat)
+   Un carnet relié de cuir noir s'ouvre sur la page de garde (nom gravé à l'or),
+   les commandes s'impriment en tampons d'encre dorée, les coordonnées s'écrivent
+   sur papier noir réglé. Toutes les règles sont préfixées html.mn-profil
+   (classe posée par useMinuitSkin("profil")). Visuel uniquement.
+   Animations : transform et opacity seulement ; état final immobile si
+   « réduire les animations » est demandé.
+   ========================================================================== */
+
+html.mn-profil .pf-root { background: var(--mn-nuit); color: var(--mn-ivoire); }
+
+html.mn-profil .pf-main {
+  --pf-paper: #0c0b0e;
+  --pf-mute: #A39985; /* petits textes utiles : contraste > 6:1 sur le papier noir */
+  --pf-bw: min(420px, calc(100vw - 2 * var(--mn-gut)));
+  position: relative;
+  padding: calc(80px + clamp(4px, 2vh, 24px)) var(--mn-gut) clamp(64px, 10vh, 120px);
+  font-family: var(--mn-mono); font-weight: 300; font-size: 14px; line-height: 1.6; color: var(--mn-ivoire);
+}
+html.mn-profil .pf-carnet { max-width: 1040px; margin: 0 auto; counter-reset: pf-folio 1; }
+
+/* ---------------------------------------------------------------- le carnet */
+html.mn-profil .pf-hero {
+  position: relative; overflow: hidden; text-align: center;
+  margin: 0 calc(-1 * var(--mn-gut)) clamp(30px, 6vh, 72px); padding: 0 var(--mn-gut);
+}
+/* projecteur au plafond qui s'allume */
+html.mn-profil .pf-beam {
+  position: absolute; left: 50%; top: 0; width: min(980px, 160%); height: 94%; pointer-events: none;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(255, 232, 170, .17), rgba(255, 232, 170, .035) 58%, transparent 92%);
+  clip-path: polygon(45% 0, 55% 0, 100% 100%, 0 100%);
+  animation: pf-fade 1.6s .1s both;
+}
+html.mn-profil .pf-stage {
+  position: relative; display: flex; justify-content: center;
+  padding: clamp(26px, 5vh, 56px) 0 clamp(70px, 10vh, 96px);
+  perspective: 2200px; perspective-origin: 50% 35%;
+}
+html.mn-profil .pf-floor {
+  position: absolute; left: 50%; bottom: clamp(44px, 7vh, 66px); width: min(820px, 96%); height: 56px; pointer-events: none;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(201, 162, 74, .26), transparent 72%);
+}
+html.mn-profil .pf-book { position: relative; z-index: 1; width: var(--pf-bw); transform-style: preserve-3d; }
+/* ordinateur : le carnet glisse pour centrer la double page pendant que la couverture s'ouvre */
+@media (min-width: 960px) {
+  html.mn-profil .pf-main { --pf-bw: 420px; }
+  html.mn-profil .pf-book { transform: translateX(50%); animation: pf-book-center 1.9s .95s cubic-bezier(.62, .04, .24, 1) both; }
+}
+
+/* bloc de pages : page de garde, tranche dorée à droite et en pied */
+html.mn-profil .pf-block {
+  position: relative; display: flex; min-height: 500px; border-radius: 2px 6px 6px 2px;
+  border: 1px solid rgba(201, 162, 74, .24);
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, .6), transparent 36px),
+    radial-gradient(ellipse 80% 55% at 50% 26%, rgba(201, 162, 74, .09), transparent 70%),
+    linear-gradient(170deg, #151318, #0c0b0e 55%, #09080b);
+  box-shadow: 0 46px 80px -34px rgba(0, 0, 0, .95), 0 0 70px -24px rgba(201, 162, 74, .22);
+}
+@media (min-width: 960px) { html.mn-profil .pf-block { min-height: 580px; } }
+html.mn-profil .pf-block::after {
+  content: ""; position: absolute; top: 3px; bottom: 1px; right: -7px; width: 6px; border-radius: 0 3px 3px 0;
+  background: repeating-linear-gradient(180deg, #E9C977 0 1px, #7D6936 1px 2px, #C9A24A 2px 3px);
+  box-shadow: 0 0 12px rgba(201, 162, 74, .3);
+}
+html.mn-profil .pf-block::before {
+  content: ""; position: absolute; left: 4px; right: -5px; bottom: -6px; height: 5px; border-radius: 0 0 3px 3px;
+  background: repeating-linear-gradient(90deg, #E9C977 0 1px, #7D6936 1px 2px, #C9A24A 2px 3px);
+}
+
+html.mn-profil .pf-garde {
+  position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
+  padding: 44px clamp(22px, 7%, 42px) 34px; text-align: center;
+}
+html.mn-profil .pf-garde::before {
+  content: ""; position: absolute; inset: 14px; pointer-events: none;
+  border: 1px solid rgba(201, 162, 74, .3); outline: 1px solid rgba(201, 162, 74, .12); outline-offset: -6px;
+}
+html.mn-profil .pf-garde-emb { width: 62px; height: auto; margin: auto 0 18px; filter: drop-shadow(0 6px 16px rgba(201, 162, 74, .35)); }
+html.mn-profil .pf-h1 {
+  margin: 0 0 14px; padding-left: .42em;
+  font-family: var(--mn-wide); font-style: normal; font-stretch: 125%; font-weight: 800; font-size: 10.5px; line-height: 1.4;
+  letter-spacing: .42em; text-transform: uppercase; color: var(--mn-or);
+}
+
+/* nom gravé à la feuille d'or, lettre à lettre */
+html.mn-profil .pf-name {
+  position: relative; max-width: 100%; margin: 0;
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; line-height: 1.06; letter-spacing: -.01em;
+}
+html.mn-profil .pf-name-l { font-size: clamp(36px, 10vw, 58px); }
+html.mn-profil .pf-name-m { font-size: clamp(30px, 8vw, 48px); }
+html.mn-profil .pf-name-s { font-size: clamp(24px, 6.2vw, 38px); }
+html.mn-profil .pf-name-xs { font-size: clamp(19px, 4.8vw, 28px); }
+@media (min-width: 900px) {
+  html.mn-profil .pf-name { filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .85)) drop-shadow(0 0 20px rgba(201, 162, 74, .22)); }
+}
+html.mn-profil .pf-word { display: inline-block; max-width: 100%; white-space: nowrap; }
+html.mn-profil .pf-name-xs .pf-word { white-space: normal; } /* mot très long : coupure de secours, jamais de débordement */
+html.mn-profil .pf-ch {
+  display: inline-block; padding: .1em .14em; margin: -.1em -.14em;
+  color: transparent; background-image: var(--mn-foil); background-size: var(--fs, 100%) 100%; background-position: var(--p, 50%) 0;
+  -webkit-background-clip: text; background-clip: text;
+  animation: pf-engrave .62s calc(2.2s + var(--i, 0) * 42ms) cubic-bezier(.2, .8, .3, 1) both;
+}
+html.mn-profil .pf-name-rule {
+  display: block; width: min(180px, 60%); height: 1px; margin: 16px auto 0;
+  background: linear-gradient(90deg, transparent, var(--mn-or-clair), transparent); transform-origin: 0 50%;
+  animation: pf-draw 1s calc(2.3s + var(--n, 10) * 42ms) var(--mn-ease) both;
+}
+html.mn-profil .pf-email { margin: 14px 0 0; font-size: 12px; letter-spacing: .04em; color: var(--mn-ivoire-2); overflow-wrap: anywhere; }
+html.mn-profil .pf-since { margin: 4px 0 0; font-family: var(--mn-serif); font-style: italic; font-size: 15px; color: var(--mn-ivoire); }
+html.mn-profil .pf-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+html.mn-profil .pf-badges:empty { display: none; }
+html.mn-profil .pf-badge {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 10px; border-radius: 999px;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase;
+}
+html.mn-profil .pf-badge-pro { color: #120E06; background: var(--mn-foil); background-size: 200% 100%; box-shadow: 0 0 0 1px rgba(244, 220, 146, .45), 0 10px 26px -12px rgba(201, 162, 74, .8); }
+html.mn-profil .pf-badge-wait { color: var(--mn-or-clair); border: 1px dashed rgba(244, 220, 146, .55); }
+html.mn-profil .pf-garde-foot {
+  margin: auto 0 0; padding-top: 24px;
+  font-size: 9.5px; letter-spacing: .32em; text-transform: uppercase; color: var(--mn-ivoire-3);
+}
+
+/* signet de satin violet glissé entre les pages : il ne dépasse qu'en pied du carnet */
+html.mn-profil .pf-signet {
+  position: absolute; right: 24%; top: calc(100% - 3px); width: 13px; height: 52px; pointer-events: none;
+  transform-origin: 50% 0; box-shadow: 0 6px 14px -6px rgba(0, 0, 0, .8);
+  background: linear-gradient(90deg, #2c1338, #6d3388 42%, #B061D6 52%, #4d2361);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 9px), 0 100%);
+  animation: pf-swing 2.6s 2.6s ease-in-out both;
+}
+
+/* couverture : cuir noir, filets dorés à chaud, verso guilloché */
+html.mn-profil .pf-cover {
+  position: absolute; inset: 0; pointer-events: none;
+  transform-origin: 0 50%; transform-style: preserve-3d; transform: translateZ(2px) rotateY(-180deg);
+  animation: pf-open 1.9s .95s both;
+}
+html.mn-profil .pf-face {
+  position: absolute; inset: 0; overflow: hidden;
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+}
+html.mn-profil .pf-front {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  padding: 40px 30px 40px 44px; border-radius: 2px 7px 7px 2px; border: 1px solid rgba(201, 162, 74, .3);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 42%, rgba(201, 162, 74, .11), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .92 0 0 0 0 .78 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(160deg, #1b181d, #0e0c10 55%, #070608);
+  box-shadow: inset 0 0 70px rgba(0, 0, 0, .75), 0 30px 60px -24px rgba(0, 0, 0, .9);
+}
+html.mn-profil .pf-spine {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 20px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, .65), rgba(255, 255, 255, .05) 62%, rgba(0, 0, 0, .55));
+  border-right: 1px solid rgba(201, 162, 74, .2);
+}
+html.mn-profil .pf-tool { position: absolute; inset: 16px 16px 16px 32px; border: 1px solid rgba(201, 162, 74, .6); }
+html.mn-profil .pf-tool::after { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(201, 162, 74, .25); }
+html.mn-profil .pf-corner { position: absolute; font-size: 11px; line-height: 1; color: var(--mn-or); }
+html.mn-profil .pf-corner.tl { top: 28px; left: 44px; }
+html.mn-profil .pf-corner.tr { top: 28px; right: 28px; }
+html.mn-profil .pf-corner.bl { bottom: 28px; left: 44px; }
+html.mn-profil .pf-corner.br { bottom: 28px; right: 28px; }
+html.mn-profil .pf-cv-top,
+html.mn-profil .pf-cv-title {
+  background: var(--mn-foil); background-size: 200% 100%; background-position: 20% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html.mn-profil .pf-cv-top { font-family: var(--mn-neon); font-size: clamp(24px, 6.6vw, 32px); line-height: 1.1; letter-spacing: .06em; }
+html.mn-profil .pf-cv-emb { width: 38%; max-width: 150px; height: auto; margin: 22px 0 20px; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .9)) drop-shadow(0 0 18px rgba(201, 162, 74, .25)); }
+html.mn-profil .pf-cv-title { font-family: var(--mn-serif); font-style: italic; font-size: clamp(27px, 7.4vw, 38px); line-height: 1.05; }
+html.mn-profil .pf-cv-sub {
+  margin-top: 14px; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9px;
+  letter-spacing: .36em; text-transform: uppercase; color: var(--mn-or);
+}
+html.mn-profil .pf-back {
+  transform: rotateY(180deg); border-radius: 7px 2px 2px 7px; border: 1px solid rgba(201, 162, 74, .26);
+  background:
+    radial-gradient(ellipse 58% 44% at 50% 50%, rgba(6, 5, 8, .94) 0 52%, transparent 76%),
+    repeating-radial-gradient(circle at 0% 0%, transparent 0 7px, rgba(201, 162, 74, .14) 7px 8px),
+    repeating-radial-gradient(circle at 100% 100%, transparent 0 7px, rgba(201, 162, 74, .11) 7px 8px),
+    #0a090c;
+  box-shadow: inset -36px 0 44px -24px rgba(0, 0, 0, .85);
+}
+html.mn-profil .pf-exlibris {
+  position: absolute; left: 50%; top: 50%; width: 64%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 26px 18px 22px; text-align: center;
+  border: 1px solid rgba(201, 162, 74, .5); outline: 1px solid rgba(201, 162, 74, .2); outline-offset: 4px;
+  background: linear-gradient(170deg, #16131a, #0b0a0d);
+}
+html.mn-profil .pf-ex-k { font-family: var(--mn-serif); font-style: italic; font-size: 24px; line-height: 1; color: var(--mn-or-clair); }
+html.mn-profil .pf-ex-emb { width: 54px; height: auto; }
+html.mn-profil .pf-ex-t { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 8.5px; letter-spacing: .28em; text-transform: uppercase; color: var(--mn-ivoire); }
+html.mn-profil .pf-ex-s { font-size: 10px; letter-spacing: .06em; color: var(--pf-mute); }
+/* téléphone : la couverture s'ouvre et sort du cadre, la page de garde reste seule */
+@media (max-width: 959px) { html.mn-profil .pf-back { display: none; } }
+
+/* élastique doré qui glisse avant l'ouverture */
+html.mn-profil .pf-band {
+  position: absolute; top: -8px; bottom: -8px; right: 30px; width: 11px; border-radius: 3px; pointer-events: none;
+  transform: translateZ(5px); opacity: 0;
+  background: linear-gradient(90deg, #4d3d1a, #C9A24A 35%, #F4DC92 50%, #9C7A35 70%, #3d3015);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .4), 5px 0 12px rgba(0, 0, 0, .6);
+  animation: pf-band .75s .3s cubic-bezier(.55, 0, .75, .2) both;
+}
+
+html.mn-profil .pf-hint {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; margin: -30px 0 0;
+  font-size: 9.5px; letter-spacing: .4em; padding-left: .4em; text-transform: uppercase; color: var(--mn-ivoire-3);
+  animation: pf-fade 1s 3.3s both;
+}
+html.mn-profil .pf-hint i {
+  display: block; width: 1px; height: 34px; background: linear-gradient(var(--mn-or), transparent);
+  transform-origin: 50% 0; animation: pf-drip 2.4s ease-in-out 3.5s 6 both;
+}
+
+/* ---------------------------------------------------------------- pages du carnet */
+html.mn-profil .pf-page,
+html.mn-profil .pf-colophon { max-width: 760px; margin-left: auto; margin-right: auto; }
+html.mn-profil .pf-page {
+  --pf-mg: clamp(34px, 7vw, 72px);
+  counter-increment: pf-folio;
+  position: relative; margin-bottom: clamp(24px, 4vh, 38px); border-radius: 2px;
+  padding: clamp(26px, 4vw, 42px) clamp(18px, 4vw, 46px) clamp(38px, 5vw, 52px) var(--pf-mg);
+  border: 1px solid rgba(201, 162, 74, .16);
+  background:
+    linear-gradient(90deg,
+      transparent calc(var(--pf-mg) - 15px), rgba(201, 162, 74, .36) calc(var(--pf-mg) - 15px),
+      rgba(201, 162, 74, .36) calc(var(--pf-mg) - 14px), transparent calc(var(--pf-mg) - 14px),
+      transparent calc(var(--pf-mg) - 11px), rgba(201, 162, 74, .16) calc(var(--pf-mg) - 11px),
+      rgba(201, 162, 74, .16) calc(var(--pf-mg) - 10px), transparent calc(var(--pf-mg) - 10px)),
+    repeating-linear-gradient(180deg, transparent 0 33px, rgba(241, 232, 212, .05) 33px 34px),
+    radial-gradient(ellipse 90% 50% at 30% 0%, rgba(201, 162, 74, .06), transparent 70%),
+    linear-gradient(176deg, #131116, #0c0b0e 50%, #09080b);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 220, 146, .05),
+    0 3px 0 -1px #100e12, 0 3px 0 0 rgba(201, 162, 74, .1),
+    0 6px 0 -2px #0b0a0d, 0 6px 0 -1px rgba(201, 162, 74, .07),
+    0 36px 60px -36px rgba(0, 0, 0, .95);
+}
+/* coin corné */
+html.mn-profil .pf-page::before {
+  content: ""; position: absolute; top: -1px; right: -1px; width: 26px; height: 26px; pointer-events: none;
+  background: linear-gradient(225deg, var(--mn-nuit) 50%, #2b251a 50%, #141109 100%);
+}
+/* folio en pied de page */
+html.mn-profil .pf-page::after {
+  content: counter(pf-folio, upper-roman); position: absolute; right: clamp(18px, 3vw, 30px); bottom: 12px;
+  font-family: var(--mn-serif); font-style: italic; font-size: 13px; letter-spacing: .08em; color: var(--pf-mute);
+}
+
+html.mn-profil .pf-page-head { margin-bottom: clamp(20px, 3vw, 30px); padding-bottom: 14px; border-bottom: 1px solid var(--mn-ligne); }
+html.mn-profil .pf-kick {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 10px;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; line-height: 1.3; letter-spacing: .28em; text-transform: uppercase; color: var(--mn-or);
+}
+html.mn-profil .pf-kick::before {
+  content: "Folio " counter(pf-folio, upper-roman);
+  padding-right: 10px; border-right: 1px solid var(--mn-ligne); color: var(--pf-mute);
+}
+html.mn-profil .pf-h2 {
+  margin: 0; font-family: var(--mn-serif); font-style: italic; font-weight: 400;
+  font-size: clamp(30px, 5.4vw, 46px); line-height: 1.04; letter-spacing: -.015em; color: var(--mn-ivoire);
+}
+
+/* champs : écriture à la plume sur les lignes du papier */
+html.mn-profil .pf-grid2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px 28px; }
+html.mn-profil .pf-grid2.pf-grid2-keep { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 20px 18px; }
+@media (min-width: 640px) { html.mn-profil .pf-grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+html.mn-profil .pf-stack { display: flex; flex-direction: column; gap: 20px; }
+html.mn-profil .pf-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+html.mn-profil .pf-field > label {
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; line-height: 1.4;
+  letter-spacing: .24em; text-transform: uppercase; color: var(--mn-ivoire-2);
+}
+html.mn-profil main .pf-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]) {
+  height: 44px; padding: 0 2px; border: 0; border-bottom: 1px solid rgba(241, 232, 212, .24); border-radius: 0;
+  background: transparent; box-shadow: none;
+  font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: 19px; color: var(--mn-ivoire);
+  transition: border-color .3s, box-shadow .3s, background-color .3s;
+}
+html.mn-profil main .pf-input.pf-input-ico:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]) { padding-left: 28px; }
+/* indication lisible (≈ 4,8:1 sur le papier noir) tout en restant nettement plus pâle que l'ivoire saisi */
+html.mn-profil main .pf-input::placeholder { color: rgba(185, 174, 152, .7); font-style: italic; opacity: 1; }
+html.mn-profil main .pf-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus-visible {
+  outline: none; border-bottom-color: var(--mn-or-clair); background-color: rgba(201, 162, 74, .05);
+  box-shadow: 0 1px 0 var(--mn-or-clair), 0 14px 18px -16px rgba(244, 220, 146, .55);
+}
+html.mn-profil .pf-in-ico { position: absolute; left: 2px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: var(--mn-or); pointer-events: none; }
+html.mn-profil .pf-orn { display: flex; align-items: center; gap: 14px; margin: 30px 0 22px; font-size: 11px; color: var(--mn-or); }
+html.mn-profil .pf-orn::before,
+html.mn-profil .pf-orn::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(201, 162, 74, .35)); }
+html.mn-profil .pf-orn::after { background: linear-gradient(270deg, transparent, rgba(201, 162, 74, .35)); }
+html.mn-profil .pf-subhead { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; color: var(--mn-or); }
+html.mn-profil .pf-subhead h3 { margin: 0; font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: 22px; line-height: 1.2; color: var(--mn-ivoire); }
+html.mn-profil .pf-lede { margin: 0; font-family: var(--mn-serif); font-style: italic; font-size: 17px; line-height: 1.5; color: var(--mn-ivoire); }
+html.mn-profil .pf-help { margin: 4px 0 0; font-size: 11.5px; color: var(--pf-mute); }
+html.mn-profil .pf-opt { font-family: var(--mn-mono); font-stretch: 100%; font-weight: 400; font-size: 10.5px; letter-spacing: .04em; text-transform: none; color: var(--pf-mute); }
+html.mn-profil .pf-err { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; font-size: 12.5px; color: #E8907F; }
+html.mn-profil .pf-inline { display: flex; align-items: flex-end; gap: 12px; }
+html.mn-profil .pf-inline > input { flex: 1; min-width: 0; }
+
+/* boutons */
+html.mn-profil main .pf-save { min-height: 50px; padding: 0 32px; font-size: 11px; }
+@media (max-width: 639px) { html.mn-profil main .pf-save { width: 100%; } }
+html.mn-profil main .pf-btn-line {
+  min-height: 44px; height: auto; padding: 10px 18px; white-space: normal; line-height: 1.3; text-align: center;
+  border: 1px solid rgba(201, 162, 74, .6); border-radius: 2px; background: transparent;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--mn-or-clair); transition: background-color .3s, border-color .3s, color .3s;
+}
+html.mn-profil main .pf-btn-line:hover:not(:disabled) { background: rgba(201, 162, 74, .12); border-color: var(--mn-or-clair); color: #FFF6DC; }
+html.mn-profil main .pf-btn-line:focus-visible,
+html.mn-profil main .pf-save:focus-visible,
+html.mn-profil main .pf-signout:focus-visible { outline: 1px solid var(--mn-or-clair); outline-offset: 3px; box-shadow: none; }
+html.mn-profil main .pf-btn-wide { width: 100%; }
+@media (max-width: 420px) { html.mn-profil main .pf-btn-line { padding-left: 12px; padding-right: 12px; letter-spacing: .14em; } }
+@media (min-width: 640px) { html.mn-profil main .pf-pro .pf-btn-wide { width: auto; align-self: flex-start; } }
+
+/* ---------------------------------------------------------------- fidélité : carte poinçonnée */
+html.mn-profil .pf-voucher {
+  position: relative; display: flex; align-items: center; gap: 16px; margin-bottom: 22px; padding: 18px 24px;
+  border: 1px dashed rgba(244, 220, 146, .55);
+  background: linear-gradient(110deg, rgba(201, 162, 74, .17), rgba(201, 162, 74, .04));
+}
+html.mn-profil .pf-voucher::before,
+html.mn-profil .pf-voucher::after {
+  content: ""; position: absolute; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 50%;
+  background: var(--pf-paper); border: 1px dashed rgba(244, 220, 146, .55);
+}
+html.mn-profil .pf-voucher::before { left: -10px; }
+html.mn-profil .pf-voucher::after { right: -10px; }
+html.mn-profil .pf-voucher-seal,
+html.mn-profil .pf-punches li.on .pf-hole,
+html.mn-profil .pf-wax {
+  color: #1A1306;
+  background: radial-gradient(circle at 32% 28%, #FFF2C2 0%, #E9C977 22%, #B8913E 52%, #7D6936 78%, #C9A24A 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 240, 200, .5), inset -4px -6px 10px rgba(60, 40, 10, .45), 0 8px 22px -8px rgba(201, 162, 74, .7);
+}
+html.mn-profil .pf-voucher-seal { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; }
+html.mn-profil .pf-voucher-seal svg { fill: currentColor; }
+html.mn-profil .pf-voucher-t { margin: 0; font-family: var(--mn-serif); font-style: italic; font-size: 21px; line-height: 1.2; color: var(--mn-or-clair); }
+html.mn-profil .pf-voucher-s { margin: 2px 0 0; font-size: 12px; color: var(--mn-ivoire-2); }
+
+html.mn-profil .pf-punchcard {
+  padding: 18px clamp(14px, 3vw, 24px); border: 1px solid var(--mn-ligne);
+  background: radial-gradient(ellipse 80% 70% at 50% 0%, rgba(201, 162, 74, .07), transparent 70%), rgba(6, 5, 8, .35);
+}
+html.mn-profil .pf-punch-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+html.mn-profil .pf-punch-k { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--mn-ivoire-2); }
+html.mn-profil .pf-punch-n { font-family: var(--mn-serif); font-style: italic; font-size: 20px; color: var(--mn-or-clair); white-space: nowrap; }
+html.mn-profil .pf-punches {
+  list-style: none; margin: 0; padding: 0; display: grid; justify-items: center; gap: 12px 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (min-width: 640px) { html.mn-profil .pf-punches { grid-template-columns: repeat(10, minmax(0, 1fr)); } }
+html.mn-profil .pf-hole {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  border: 1px dashed rgba(241, 232, 212, .24); background: radial-gradient(circle, rgba(0, 0, 0, .55), transparent 72%);
+  font-size: 11px; color: var(--pf-mute);
+}
+html.mn-profil .pf-punches li.on .pf-hole { border: 0; font-size: 15px; }
+html.mn-profil .pf-thread { position: relative; height: 2px; margin: 18px 0 14px; overflow: hidden; background: rgba(241, 232, 212, .1); }
+html.mn-profil .pf-thread-fill { position: absolute; inset: 0; transform-origin: 0 50%; background: var(--mn-foil); }
+html.mn-profil .pf-punch-msg { margin: 0; text-align: center; font-size: 13px; color: var(--mn-ivoire-2); }
+html.mn-profil .pf-punch-msg b { font-weight: 500; color: var(--mn-or-clair); }
+html.mn-profil .pf-punch-done { font-family: var(--mn-serif); font-style: italic; font-size: 17px; color: var(--mn-or-clair); }
+html.mn-profil .pf-loyal-info { margin: 14px 0 0; text-align: center; font-size: 11.5px; color: var(--pf-mute); }
+
+/* ---------------------------------------------------------------- encres par statut */
+html.mn-profil [data-status] { --pf-ink: var(--mn-or); }
+html.mn-profil [data-status="pending"] { --pf-ink: #B9AE98; }
+html.mn-profil [data-status="preparing"] { --pf-ink: #C9A24A; }
+html.mn-profil [data-status="shipped"],
+html.mn-profil [data-status="in_delivery"] { --pf-ink: #E9C977; }
+html.mn-profil [data-status="delivered"] { --pf-ink: #F4DC92; }
+html.mn-profil [data-status="cancelled"] { --pf-ink: #B87A6D; }
+
+/* ---------------------------------------------------------------- commande en cours : bordereau */
+html.mn-profil .pf-track-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px 18px; }
+html.mn-profil .pf-docket {
+  flex: none; padding: 8px 12px; transform: rotate(1.5deg);
+  border: 1px solid rgba(201, 162, 74, .5); background: rgba(201, 162, 74, .05);
+  font-size: 12px; letter-spacing: .12em; color: var(--mn-or-clair);
+}
+html.mn-profil .pf-track-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 6px; }
+html.mn-profil .pf-st {
+  padding: 5px 11px; border: 1px solid var(--pf-ink); border-radius: 999px; color: var(--pf-ink);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase;
+}
+html.mn-profil .pf-track-date { font-size: 12.5px; color: var(--mn-ivoire-2); }
+html.mn-profil .pf-route { position: relative; margin: 28px 0 4px; }
+html.mn-profil .pf-route-base { position: absolute; top: 21px; left: 10%; right: 10%; border-top: 1px dashed rgba(241, 232, 212, .24); }
+html.mn-profil .pf-route-fill {
+  position: absolute; top: 20px; left: 10%; width: 80%; height: 2px; transform-origin: 0 50%;
+  background: var(--mn-foil); box-shadow: 0 0 10px rgba(244, 220, 146, .45);
+}
+html.mn-profil .pf-steps { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+html.mn-profil .pf-step { display: flex; flex-direction: column; align-items: center; min-width: 0; padding: 0 2px; text-align: center; }
+html.mn-profil .pf-step-dot {
+  position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px dashed rgba(241, 232, 212, .3); background: var(--pf-paper); color: var(--mn-ivoire-3);
+}
+html.mn-profil .pf-step.on .pf-step-dot {
+  border: 0; color: #120E06; background: var(--mn-foil); background-size: 220% 100%;
+  box-shadow: 0 0 0 1px rgba(244, 220, 146, .5), 0 8px 22px -8px rgba(201, 162, 74, .8);
+}
+html.mn-profil .pf-step.now .pf-step-dot::after {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid var(--mn-or-clair); opacity: 0;
+  animation: pf-ping 2.2s ease-out 1.4s 4;
+}
+html.mn-profil .pf-step-l {
+  max-width: 100%; margin-top: 10px; font-family: 'Geist', var(--mn-mono); font-weight: 500; font-size: 9.5px; line-height: 1.25; letter-spacing: 0;
+  color: var(--pf-mute); overflow-wrap: anywhere; -webkit-hyphens: auto; hyphens: auto;
+}
+@media (min-width: 640px) {
+  html.mn-profil .pf-step-l { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9px; letter-spacing: .06em; }
+}
+html.mn-profil .pf-step.on .pf-step-l { color: var(--mn-ivoire); }
+html.mn-profil .pf-step-t { margin-top: 4px; font-size: 9.5px; line-height: 1.3; color: var(--pf-mute); }
+@media (max-width: 639px) {
+  html.mn-profil .pf-step-dot { width: 40px; height: 40px; }
+  html.mn-profil .pf-route-base { top: 19px; }
+  html.mn-profil .pf-route-fill { top: 19px; }
+}
+html.mn-profil .pf-track-box { margin-top: 22px; padding-top: 16px; border-top: 1px dashed rgba(201, 162, 74, .24); }
+html.mn-profil .pf-track-k {
+  display: flex; align-items: center; gap: 8px; color: var(--mn-or);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9.5px; letter-spacing: .24em; text-transform: uppercase;
+}
+html.mn-profil .pf-track-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin-top: 10px; }
+html.mn-profil .pf-track-num { font-size: 13px; letter-spacing: .08em; color: var(--mn-ivoire); overflow-wrap: anywhere; }
+html.mn-profil .pf-track-link {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 0; text-decoration: none;
+  border-bottom: 1px solid var(--mn-or); color: var(--mn-or-clair);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+}
+html.mn-profil .pf-track-link:hover { color: #FFF6DC; border-bottom-color: var(--mn-or-clair); }
+html.mn-profil .pf-track-link:focus-visible { outline: 1px solid var(--mn-or-clair); outline-offset: 3px; }
+html.mn-profil .pf-track-deliv { display: flex; align-items: flex-start; gap: 10px; color: var(--mn-or); }
+html.mn-profil .pf-track-type { font-size: 12.5px; color: var(--mn-ivoire-2); }
+html.mn-profil .pf-track-addr { margin: 4px 0 0; font-family: var(--mn-serif); font-style: italic; font-size: 17px; line-height: 1.35; color: var(--mn-ivoire); }
+
+/* ---------------------------------------------------------------- registre : tampons d'encre dorée */
+html.mn-profil .pf-orders { display: flex; flex-direction: column; }
+html.mn-profil .pf-order + .pf-order { border-top: 1px dashed rgba(201, 162, 74, .22); }
+html.mn-profil .pf-order-btn {
+  display: flex; align-items: center; gap: clamp(16px, 4vw, 36px); width: 100%; padding: 18px 4px;
+  border: 0; border-radius: 2px; background: transparent; color: inherit; text-align: left; cursor: pointer;
+  transition: background-color .3s;
+}
+html.mn-profil .pf-order-btn:hover { background-color: rgba(201, 162, 74, .035); }
+html.mn-profil .pf-order-btn:focus-visible { outline: 1px solid var(--mn-or-clair); outline-offset: 2px; }
+@media (min-width: 640px) {
+  html.mn-profil .pf-order:nth-child(even) .pf-order-btn { flex-direction: row-reverse; text-align: right; }
+  html.mn-profil .pf-order:nth-child(even) .pf-order-info { align-items: flex-end; }
+}
+html.mn-profil .pf-order-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+html.mn-profil .pf-order-k { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9px; letter-spacing: .3em; text-transform: uppercase; color: var(--mn-or); }
+html.mn-profil .pf-order-n { max-width: 100%; font-family: var(--mn-serif); font-style: italic; font-size: clamp(21px, 5vw, 28px); line-height: 1.1; color: var(--mn-ivoire); overflow-wrap: anywhere; }
+html.mn-profil .pf-order-date { font-size: 11.5px; letter-spacing: .04em; color: var(--mn-ivoire-2); }
+html.mn-profil .pf-order-st { margin-top: 2px; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--pf-ink); }
+html.mn-profil .pf-order-more {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding-bottom: 3px;
+  border-bottom: 1px solid rgba(201, 162, 74, .5); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--mn-or-clair);
+}
+
+html.mn-profil .pf-stamp {
+  --pf-size: clamp(118px, 32vw, 138px);
+  position: relative; flex: none; display: block; width: var(--pf-size); height: var(--pf-size); border-radius: 50%;
+  color: var(--pf-ink); transform: rotate(var(--tilt, 0deg));
+  background: radial-gradient(circle, rgba(201, 162, 74, .1), rgba(201, 162, 74, .03) 62%, transparent 72%);
+}
+html.mn-profil .pf-stamp-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke: currentColor; }
+html.mn-profil .pf-stamp-ring .o { stroke-width: 2.6; stroke-dasharray: 34 1.4 18 2.2 52 1 26 1.8 40 1.2; }
+html.mn-profil .pf-stamp-ring .m { stroke-width: .8; opacity: .8; }
+html.mn-profil .pf-stamp-ring .i { stroke-width: 1.6; stroke-dasharray: .1 3.1; stroke-linecap: round; }
+html.mn-profil .pf-stamp-ring .arc {
+  fill: currentColor; stroke: none;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 7.2px; letter-spacing: .4px;
+}
+html.mn-profil .pf-stamp-c { position: absolute; left: 0; right: 0; top: 25%; display: flex; flex-direction: column; align-items: center; line-height: 1; }
+html.mn-profil .pf-stamp-c .d { font-family: var(--mn-serif); font-style: italic; font-size: clamp(17px, 4.6vw, 20px); white-space: nowrap; }
+html.mn-profil .pf-stamp-c .y { margin-top: 3px; padding-left: .3em; font-size: 8.5px; letter-spacing: .3em; opacity: .85; }
+/* montant : tient dans le cercle pointillé intérieur (≈ 59 % du tampon), même à 375 px avec 4 chiffres avant la virgule */
+html.mn-profil .pf-stamp-c .a { margin-top: 5px; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: clamp(9px, 2.5vw, 12px); letter-spacing: 0; white-space: nowrap; }
+html.mn-profil .pf-stamp-c .a[data-len="long"] { font-size: clamp(8px, 2.15vw, 10.5px); }
+html.mn-profil .pf-stamp-st {
+  position: absolute; left: -9%; right: -9%; top: 64%; padding: 4px 4px 3px; text-align: center; white-space: nowrap;
+  border-top: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; background: var(--pf-paper);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 8.5px; line-height: 1.2; letter-spacing: .12em; text-transform: uppercase;
+}
+html.mn-profil .pf-stamp::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid currentColor; opacity: 0; pointer-events: none;
+}
+
+/* détail : livre de comptes */
+html.mn-profil .pf-ledger {
+  margin: 0 0 18px; padding: 18px clamp(14px, 3vw, 24px) 20px;
+  border-left: 2px solid rgba(201, 162, 74, .45);
+  background: linear-gradient(90deg, rgba(201, 162, 74, .07), rgba(201, 162, 74, .015));
+}
+html.mn-profil .pf-ledger-t {
+  margin: 0 0 12px; font-family: var(--mn-wide); font-style: normal; font-stretch: 125%; font-weight: 800; font-size: 9.5px;
+  letter-spacing: .28em; text-transform: uppercase; color: var(--mn-or);
+}
+html.mn-profil .pf-ledger-lines { display: flex; flex-direction: column; gap: 9px; }
+html.mn-profil .pf-ledger-line { display: flex; align-items: baseline; gap: 8px; font-size: 13px; }
+html.mn-profil .pf-ledger-name { min-width: 0; color: var(--mn-ivoire-2); overflow-wrap: anywhere; }
+html.mn-profil .pf-ledger-dots { flex: 1; min-width: 14px; border-bottom: 1px dotted rgba(241, 232, 212, .24); transform: translateY(-4px); }
+html.mn-profil .pf-ledger-px { flex: none; color: var(--mn-ivoire); font-variant-numeric: tabular-nums; }
+html.mn-profil .pf-ledger-total {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--mn-ligne);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .26em; text-transform: uppercase; color: var(--mn-ivoire);
+}
+html.mn-profil .pf-ledger-sum { font-family: var(--mn-serif); font-style: italic; font-stretch: 100%; font-weight: 500; font-size: 24px; letter-spacing: 0; text-transform: none; color: var(--mn-or-clair); }
+html.mn-profil .pf-ledger-act { padding-top: 12px; }
+html.mn-profil .pf-ledger-empty { margin: 0; font-size: 13px; color: var(--pf-mute); }
+html.mn-profil .pf-reg-empty { margin: 0; padding: 28px 0 12px; text-align: center; font-family: var(--mn-serif); font-style: italic; font-size: 18px; color: var(--mn-ivoire-2); }
+
+/* ---------------------------------------------------------------- registre professionnel */
+html.mn-profil .pf-pro-card {
+  position: relative; display: flex; align-items: flex-start; gap: 18px; padding: 20px;
+  border: 1px solid var(--mn-ligne); background: linear-gradient(160deg, rgba(201, 162, 74, .08), rgba(6, 5, 8, .55));
+}
+html.mn-profil .pf-wax {
+  flex: none; display: grid; place-items: center; width: 74px; height: 74px;
+  border-radius: 48% 52% 50% 50% / 52% 47% 53% 48%;
+}
+html.mn-profil .pf-wax span { font-family: var(--mn-serif); font-style: italic; font-size: 22px; line-height: 1; color: #2A1F0B; text-shadow: 0 1px 0 rgba(255, 240, 200, .55); }
+html.mn-profil .pf-pro-txt { flex: 1; min-width: 0; }
+html.mn-profil .pf-pro-t { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--mn-serif); font-style: italic; font-size: 21px; line-height: 1.2; color: var(--mn-ivoire); }
+html.mn-profil .pf-pro-t svg { color: var(--mn-or); flex: none; }
+html.mn-profil .pf-pro-s { margin: 4px 0 0; font-size: 12.5px; color: var(--mn-ivoire-2); overflow-wrap: anywhere; }
+html.mn-profil .pf-pro-vat { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 4px; }
+html.mn-profil .pf-pro-vat .pf-pro-s { margin: 0; }
+html.mn-profil .pf-pro-note { margin: 10px 0 0; font-size: 12.5px; color: var(--mn-or-clair); }
+html.mn-profil .pf-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px;
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 8.5px; letter-spacing: .18em; text-transform: uppercase;
+}
+html.mn-profil .pf-chip-ok { color: #120E06; background: var(--mn-or-clair); }
+html.mn-profil .pf-chip-wait { color: var(--mn-or-clair); border: 1px dashed rgba(244, 220, 146, .55); }
+html.mn-profil .pf-pro-wait { margin-top: 12px; }
+html.mn-profil .pf-pro-ico { flex: none; width: 26px; height: 26px; margin-top: 2px; color: var(--mn-ivoire-2); }
+html.mn-profil .pf-pro-delay { color: var(--mn-or-clair); }
+html.mn-profil .pf-rubber {
+  position: absolute; top: -15px; right: 14px; padding: 5px 10px; transform: rotate(-7deg);
+  border: 2px solid rgba(244, 220, 146, .6); border-radius: 3px; background: var(--pf-paper);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 900; font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: rgba(244, 220, 146, .8);
+}
+
+/* ---------------------------------------------------------------- colophon */
+html.mn-profil .pf-colophon { display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: clamp(22px, 5vh, 46px); text-align: center; }
+html.mn-profil .pf-fin { display: flex; align-items: center; gap: 14px; margin: 0; font-family: var(--mn-serif); font-style: italic; font-size: 20px; color: var(--mn-or-clair); }
+html.mn-profil .pf-fin span { font-size: 10px; font-style: normal; color: var(--mn-or); }
+html.mn-profil main .pf-signout {
+  min-height: 44px; padding: 0 18px; border-radius: 0; background: transparent; border-bottom: 1px solid rgba(241, 232, 212, .26);
+  font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--mn-ivoire-2);
+  transition: color .3s, border-color .3s;
+}
+html.mn-profil main .pf-signout:hover { background: transparent; color: #E8907F; border-bottom-color: #E8907F; }
+html.mn-profil .pf-colo { margin: 0; font-size: 9.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--pf-mute); }
+
+/* ---------------------------------------------------------------- chargement */
+html.mn-profil .pf-loading { background: radial-gradient(ellipse 60% 40% at 50% 42%, rgba(201, 162, 74, .08), transparent 70%), var(--mn-nuit); }
+html.mn-profil .pf-loading-in { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+html.mn-profil .pf-loading-emb { width: 72px; height: auto; animation: pf-breathe 2.4s ease-in-out infinite; }
+html.mn-profil .pf-loading-t { margin: 0; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .36em; text-transform: uppercase; color: var(--mn-or); }
+
+/* ---------------------------------------------------------------- apparitions au défilement */
+html.mn-profil [data-pf-reveal] { transform-origin: 50% 0; transition: opacity .8s var(--mn-ease), transform 1.15s var(--mn-ease); }
+html.mn-profil .pf-armed [data-pf-reveal]:not(.is-in) { opacity: 0; transform: perspective(1400px) translateY(46px) rotateX(-11deg); }
+html.mn-profil .pf-armed [data-pf-stamp]:not(.is-in) { opacity: 0; }
+/* --pf-d (posé par CarnetReveal) = attente que la page soit posée (jusqu'à 0,55 s) + décalage tampon par tampon */
+html.mn-profil .pf-armed [data-pf-stamp].is-in { animation: pf-print .85s calc(.4s + var(--pf-d, 0ms)) cubic-bezier(.2, .7, .3, 1) both; }
+html.mn-profil .pf-armed [data-pf-stamp].is-in::after { animation: pf-splash .9s calc(.75s + var(--pf-d, 0ms)) ease-out both; }
+html.mn-profil .pf-armed .pf-loyal.is-in .pf-punches li.on .pf-hole { animation: pf-punch .55s calc(.55s + var(--i, 0) * 90ms) cubic-bezier(.2, .8, .3, 1.3) both; }
+html.mn-profil .pf-armed .pf-pro.is-in .pf-wax { animation: pf-press .75s .5s cubic-bezier(.2, .8, .3, 1.2) both; }
+
+@keyframes pf-fade { from { opacity: 0; } }
+@keyframes pf-book-center { from { transform: translateX(0); } }
+@keyframes pf-band {
+  0% { opacity: 1; transform: translateZ(5px); }
+  30% { opacity: 1; transform: translateZ(5px) translateX(-3px); }
+  100% { opacity: 0; transform: translateZ(5px) translateX(72px); }
+}
+@keyframes pf-open {
+  0% { transform: translateZ(2px) rotateY(0deg); animation-timing-function: ease-out; }
+  14% { transform: translateZ(2px) rotateY(-9deg); animation-timing-function: cubic-bezier(.55, .02, .2, 1); }
+  100% { transform: translateZ(2px) rotateY(-180deg); }
+}
+@keyframes pf-engrave {
+  from { opacity: 0; transform: translateY(-.32em) scale(1.45) rotate(-7deg); }
+  60% { opacity: 1; }
+}
+@keyframes pf-draw { from { transform: scaleX(0); } }
+@keyframes pf-swing {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(7deg); }
+  55% { transform: rotate(-4.5deg); }
+  80% { transform: rotate(1.8deg); }
+  100% { transform: rotate(0deg); }
+}
+@keyframes pf-drip { 0% { transform: scaleY(0); } 50% { transform: scaleY(1); } 100% { transform: scaleY(1); opacity: 0; } }
+@keyframes pf-print {
+  0% { opacity: 0; transform: rotate(calc(var(--tilt, 0deg) - 22deg)) scale(2.1); }
+  45% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(.9); }
+  70% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(1.04); }
+  100% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(1); }
+}
+@keyframes pf-splash { from { opacity: .55; transform: scale(.9); } to { opacity: 0; transform: scale(1.45); } }
+@keyframes pf-punch { from { opacity: 0; transform: scale(1.8) rotate(-30deg); } }
+@keyframes pf-press { from { opacity: 0; transform: scale(1.6) rotate(-24deg); } 60% { opacity: 1; transform: scale(.94) rotate(2deg); } }
+@keyframes pf-ping { from { opacity: .8; transform: scale(1); } to { opacity: 0; transform: scale(1.6); } }
+@keyframes pf-breathe { 0%, 100% { opacity: .55; transform: scale(.97); } 50% { opacity: 1; transform: scale(1); } }
+
+/* ---------------------------------------------------------------- réduire les animations : état final immobile */
+@media (prefers-reduced-motion: reduce) {
+  html.mn-profil .pf-beam,
+  html.mn-profil .pf-book,
+  html.mn-profil .pf-cover,
+  html.mn-profil .pf-band,
+  html.mn-profil .pf-ch,
+  html.mn-profil .pf-name-rule,
+  html.mn-profil .pf-signet,
+  html.mn-profil .pf-hint,
+  html.mn-profil .pf-hint i,
+  html.mn-profil .pf-loading-emb,
+  html.mn-profil .pf-step.now .pf-step-dot::after { animation: none; }
+  html.mn-profil [data-pf-reveal] { transition: none; }
+}
+
+/* ---------------------------------------------------------------- impression / PDF : pages jamais vues quand même imprimées */
+@media print {
+  html.mn-profil .pf-armed [data-pf-reveal] { opacity: 1 !important; transform: none !important; transition: none !important; }
+  html.mn-profil .pf-armed [data-pf-stamp] { opacity: 1 !important; animation: none !important; } /* garde l'inclinaison du tampon */
+  html.mn-profil .pf-armed [data-pf-stamp]::after { animation: none !important; }
+}

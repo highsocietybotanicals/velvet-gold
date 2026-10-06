@@ -4,6 +4,9 @@ import { Order, ORDER_STATUS } from "@/hooks/useOrders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
+// Habillage « carnet du membre » (espace Mon profil) : bordereau de la commande en cours, fil d'or des étapes.
+// Styles dans src/components/minuit/areas/profil/profil.css. Données et calculs d'origine conservés.
+
 interface OrderTrackingProps {
   order: Order;
 }
@@ -34,42 +37,46 @@ const OrderTracking = ({ order }: OrderTrackingProps) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Package className="w-5 h-5 text-primary" />
-          <h2 className="font-display text-lg text-foreground">Commande en cours</h2>
+    <section className="pf-page pf-track" data-pf-reveal="" aria-labelledby="pf-track-t">
+      <header className="pf-page-head pf-track-head">
+        <div>
+          <p className="pf-kick">
+            <Package className="w-4 h-4" aria-hidden="true" />
+            <span>Bordereau</span>
+          </p>
+          <h2 id="pf-track-t" className="pf-h2">Commande en cours</h2>
         </div>
-        <span className="text-sm text-muted-foreground">{order.display_order_number || `#${order.order_number}`}</span>
-      </div>
+        <span className="pf-docket">{order.display_order_number || `#${order.order_number}`}</span>
+      </header>
 
       {/* Status badge */}
-      <div className="flex items-center gap-2 mb-6">
-        <span className={`text-sm font-medium ${statusInfo.color}`}>
+      <div className="pf-track-status">
+        <span className="pf-st" data-status={order.status}>
           {statusInfo.label}
         </span>
         {order.delivery_date && (
-          <span className="text-sm text-muted-foreground">
+          <span className="pf-track-date">
             • Livraison prévue le {format(new Date(order.delivery_date), "d MMMM", { locale: fr })}
             {order.delivery_time && ` (${order.delivery_time})`}
           </span>
         )}
       </div>
 
-      {/* Progress steps */}
-      <div className="relative">
+      {/* Progress steps : fil d'or */}
+      <div className="pf-route">
         {/* Line */}
-        <div className="absolute top-5 left-5 right-5 h-0.5 bg-muted" />
+        <div className="pf-route-base" aria-hidden="true" />
         <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: currentStep / (STEPS.length - 1) }}
+          viewport={{ once: true }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="absolute top-5 left-5 h-0.5 bg-primary"
-          style={{ maxWidth: "calc(100% - 40px)" }}
+          className="pf-route-fill"
+          aria-hidden="true"
         />
 
         {/* Steps */}
-        <div className="relative flex justify-between">
+        <div className="pf-steps">
           {STEPS.map((step, index) => {
             const Icon = step.icon;
             const isActive = index <= currentStep;
@@ -77,27 +84,19 @@ const OrderTracking = ({ order }: OrderTrackingProps) => {
             const timestamp = getStatusTime(step.key);
 
             return (
-              <div key={step.key} className="flex flex-col items-center">
+              <div key={step.key} className={`pf-step${isActive ? " on" : ""}${isCurrent ? " now" : ""}`}>
                 <motion.div
                   initial={{ scale: 0.8 }}
                   animate={{ scale: isCurrent ? 1.1 : 1 }}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
-                    isActive
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : "bg-muted border-muted-foreground/30 text-muted-foreground"
-                  }`}
+                  className="pf-step-dot"
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-5 h-5" aria-hidden="true" />
                 </motion.div>
-                <span
-                  className={`mt-2 text-xs text-center ${
-                    isActive ? "text-foreground font-medium" : "text-muted-foreground"
-                  }`}
-                >
+                <span className="pf-step-l">
                   {step.label}
                 </span>
                 {timestamp && (
-                  <span className="text-[10px] text-muted-foreground mt-0.5">
+                  <span className="pf-step-t">
                     {timestamp}
                   </span>
                 )}
@@ -109,21 +108,21 @@ const OrderTracking = ({ order }: OrderTrackingProps) => {
 
       {/* Tracking info */}
       {(order as any).tracking_number && (
-        <div className="mt-6 pt-4 border-t border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <Truck className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">Suivi Colissimo</span>
+        <div className="pf-track-box">
+          <div className="pf-track-k">
+            <Truck className="w-4 h-4" aria-hidden="true" />
+            <span>Suivi Colissimo</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-mono text-muted-foreground">{(order as any).tracking_number}</span>
+          <div className="pf-track-row">
+            <span className="pf-track-num">{(order as any).tracking_number}</span>
             <a
               href={(order as any).tracking_url || `https://www.laposte.fr/outils/suivre-vos-envois?code=${(order as any).tracking_number}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline flex items-center gap-1"
+              className="pf-track-link"
             >
               Suivre mon colis
-              <MapPin className="w-3 h-3" />
+              <MapPin className="w-3 h-3" aria-hidden="true" />
             </a>
           </div>
         </div>
@@ -131,19 +130,19 @@ const OrderTracking = ({ order }: OrderTrackingProps) => {
 
       {/* Delivery info */}
       {order.delivery_type && (
-        <div className="mt-4 pt-4 border-t border-border flex items-start gap-2">
-          <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
-          <div className="text-sm">
-            <span className="text-muted-foreground">
+        <div className="pf-track-box pf-track-deliv">
+          <MapPin className="w-4 h-4" aria-hidden="true" />
+          <div>
+            <span className="pf-track-type">
               {order.delivery_type === "postal" ? "Livraison postale" : order.delivery_type === "personal" ? "Remise en main propre" : order.delivery_type}
             </span>
             {order.delivery_address && (
-              <p className="text-foreground mt-1">{order.delivery_address}</p>
+              <p className="pf-track-addr">{order.delivery_address}</p>
             )}
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

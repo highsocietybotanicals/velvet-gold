@@ -1,17 +1,23 @@
+// Mon profil — « Le carnet du membre » (DA Minuit Carat) : couverture de cuir qui s'ouvre sur la page de garde,
+// commandes en tampons d'encre dorée, coordonnées sur papier noir réglé.
+// Logique d'origine conservée telle quelle (profil, sauvegarde, demande pro, TVA, commandes, déconnexion).
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { User, Building2, Phone, MapPin, Loader2, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrders } from "@/hooks/useOrders";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LoyaltyCard from "@/components/LoyaltyCard";
 import OrderTracking from "@/components/OrderTracking";
 import OrderHistory from "@/components/OrderHistory";
+import { useMinuitSkin } from "@/components/minuit/useMinuitSkin";
+import { CarnetCover, CarnetReveal, EngravedName, PfEmblem } from "@/components/minuit/areas/profil/Carnet";
+import "@/components/minuit/areas/profil/profil.css";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -48,6 +54,9 @@ const ProfilePage = () => {
     }
   }, [profile]);
 
+  // Habillage « Minuit Carat » de l'espace (classes mn-skin et mn-profil sur <html>)
+  useMinuitSkin("profil");
+
   // Redirect if not logged in
   if (!loading && !user) {
     navigate("/auth");
@@ -56,8 +65,12 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background flex items-center justify-center pf-loading">
+        <div className="pf-loading-in">
+          <PfEmblem className="pf-loading-emb" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="pf-loading-t">Ouverture du carnet</p>
+        </div>
       </div>
     );
   }
@@ -106,313 +119,362 @@ const ProfilePage = () => {
   // Check if user is classic (not pro or pro not validated)
   const isClassicUser = !isPro || !isProValidated;
 
+  // Affichage seulement : nom gravé sur la page de garde et date d'entrée du compte
+  const memberName = profile?.full_name?.trim() || "Membre de la maison";
+  const joined = user?.created_at ? new Date(user.created_at) : null;
+  const memberSince = joined && !Number.isNaN(joined.getTime()) ? format(joined, "MMMM yyyy", { locale: fr }) : null;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pf-root">
       <Header />
-      
-      <main className="pt-32 pb-20">
-        <div className="container mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-2xl mx-auto"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="font-display text-3xl text-primary mb-2">
-                  Mon Profil
-                </h1>
-                <p className="text-muted-foreground">
-                  {profile?.email}
-                </p>
-              </div>
-              {isPro && isProValidated && (
-                <div className="flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full">
-                  <CheckCircle className="w-4 h-4" />
-                  <span className="text-sm font-medium">Compte PRO</span>
-                </div>
-              )}
-              {profile?.siret && !isProValidated && (
-                <div className="flex items-center gap-2 bg-amber-500/20 text-amber-500 px-4 py-2 rounded-full">
-                  <Clock className="w-4 h-4" />
-                  <span className="text-sm font-medium">Pro en attente</span>
-                </div>
-              )}
-            </div>
 
-            {/* Loyalty Card - Only for classic users */}
-            {isClassicUser && (
-              <LoyaltyCard
-                qualifyingOrdersCount={profile?.qualifying_orders_count ?? 0}
-                freeGramsAvailable={profile?.free_grams_available ?? 0}
-              />
-            )}
-
-            {/* Current Order Tracking */}
-            {!ordersLoading && currentOrder && (
-              <OrderTracking order={currentOrder} />
-            )}
-
-            {/* Order History */}
-            {!ordersLoading && orderHistory && orderHistory.length > 0 && (
-              <div className="mb-6">
-                <OrderHistory orders={orderHistory} />
-              </div>
-            )}
-
-            {/* Personal Info */}
-            <div className="bg-card border border-border rounded-xl p-6 mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <User className="w-5 h-5 text-primary" />
-                <h2 className="font-display text-lg text-foreground">Informations Personnelles</h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Nom complet</label>
-                  <Input
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Jean Dupont"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Téléphone</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="06 12 34 56 78"
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <Separator className="my-4" />
-
-              <div className="flex items-center gap-2 mb-4">
-                <MapPin className="w-5 h-5 text-primary" />
-                <h3 className="font-medium text-foreground">Adresse de livraison</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Adresse</label>
-                  <Input
-                    value={addressLine1}
-                    onChange={(e) => setAddressLine1(e.target.value)}
-                    placeholder="123 Rue Example"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Complément</label>
-                  <Input
-                    value={addressLine2}
-                    onChange={(e) => setAddressLine2(e.target.value)}
-                    placeholder="Appartement, étage..."
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">Code postal</label>
-                    <Input
-                      value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value)}
-                      placeholder="75001"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">Ville</label>
-                    <Input
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="Paris"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                onClick={handleSaveProfile}
-                disabled={saving}
-                className="mt-6 btn-luxury"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Enregistrer"
-                )}
-              </Button>
-            </div>
-
-            {/* Pro Section */}
-            <div className="bg-card border border-border rounded-xl p-6 mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-5 h-5 text-primary" />
-                <h2 className="font-display text-lg text-foreground">Espace Professionnel</h2>
-              </div>
-
-              {isPro && isProValidated ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/30 rounded-lg">
-                    <CheckCircle className="w-6 h-6 text-primary" />
-                    <div>
-                      <p className="font-medium text-foreground">Compte Pro validé</p>
-                      <p className="text-sm text-muted-foreground">
-                        {profile?.company_name} - SIRET: {profile?.siret}
-                      </p>
-                      {profile?.vat_number && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-sm text-muted-foreground">
-                            TVA: {profile.vat_number}
-                          </p>
-                          {profile?.is_vat_validated ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary rounded-full text-xs font-medium">
-                              <CheckCircle className="w-3 h-3" />
-                              Validée
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-500 rounded-full text-xs font-medium">
-                              <Clock className="w-3 h-3" />
-                              En attente
-                            </span>
-                          )}
+      {/* data-fx-off : le carnet gère ses propres animations (le kit hsb-fx ne découpe ni n'anime ces titres et sections) */}
+      <main className="pf-main" data-fx-off="">
+        <CarnetReveal className="pf-carnet">
+          {/* ---------- Le carnet : couverture de cuir et page de garde ---------- */}
+          <section className="pf-hero" aria-labelledby="pf-title">
+            <div className="pf-beam" aria-hidden="true" />
+            <div className="pf-stage">
+              <div className="pf-book">
+                <div className="pf-block">
+                  <div className="pf-garde">
+                    <PfEmblem className="pf-garde-emb" />
+                    <h1 id="pf-title" className="pf-h1">
+                      Mon Profil
+                    </h1>
+                    <EngravedName className="pf-name" text={memberName} />
+                    <p className="pf-email">
+                      {profile?.email}
+                    </p>
+                    {memberSince && <p className="pf-since">Membre depuis {memberSince}</p>}
+                    <div className="pf-badges">
+                      {isPro && isProValidated && (
+                        <div className="pf-badge pf-badge-pro">
+                          <CheckCircle className="w-4 h-4" aria-hidden="true" />
+                          <span>Compte PRO</span>
                         </div>
                       )}
-                      <p className="text-sm text-primary mt-2">
-                        {profile?.is_vat_validated 
-                          ? "✓ Vous bénéficiez de prix HT exclusifs"
-                          : profile?.vat_number
-                            ? "Votre TVA est en cours de validation par notre équipe"
-                            : "Ajoutez votre numéro de TVA pour des prix HT"
-                        }
-                      </p>
+                      {profile?.siret && !isProValidated && (
+                        <div className="pf-badge pf-badge-wait">
+                          <Clock className="w-4 h-4" aria-hidden="true" />
+                          <span>Pro en attente</span>
+                        </div>
+                      )}
                     </div>
+                    <p className="pf-garde-foot" aria-hidden="true">Maison de nuit · Collection N° 26</p>
                   </div>
-                  
-                  {/* TVA form for Pro users */}
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">
-                      N° TVA intracommunautaire
-                    </label>
-                    <div className="flex gap-2">
-                      <Input
-                        value={vatNumber}
-                        onChange={(e) => setVatNumber(e.target.value)}
-                        placeholder="FR12345678901"
-                        maxLength={14}
-                      />
-                      <Button
-                        onClick={async () => {
-                          const vatClean = vatNumber.replace(/\s/g, "").toUpperCase();
-                          if (vatClean && !/^[A-Z]{2}[A-Z0-9]{2,12}$/.test(vatClean)) {
-                            setProError("Format de TVA invalide");
-                            return;
-                          }
-                          await updateProfile({ vat_number: vatClean || null });
-                          setProError(null);
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        Enregistrer
-                      </Button>
-                    </div>
-                    {proError && (
-                      <p className="text-destructive text-sm">{proError}</p>
-                    )}
-                  </div>
+                  <span className="pf-signet" aria-hidden="true" />
                 </div>
-              ) : profile?.siret ? (
-                <div className="flex items-center gap-3 p-4 bg-muted/50 border border-border rounded-lg">
-                  <Clock className="w-6 h-6 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium text-foreground">Demande en cours</p>
-                    <p className="text-sm text-muted-foreground">
+                <CarnetCover />
+              </div>
+              <span className="pf-floor" aria-hidden="true" />
+            </div>
+            <p className="pf-hint" aria-hidden="true"><i />Feuilleter le carnet</p>
+          </section>
+
+          {/* Loyalty Card - Only for classic users */}
+          {isClassicUser && (
+            <LoyaltyCard
+              qualifyingOrdersCount={profile?.qualifying_orders_count ?? 0}
+              freeGramsAvailable={profile?.free_grams_available ?? 0}
+            />
+          )}
+
+          {/* Current Order Tracking */}
+          {!ordersLoading && currentOrder && (
+            <OrderTracking order={currentOrder} />
+          )}
+
+          {/* Order History */}
+          {!ordersLoading && orderHistory && orderHistory.length > 0 && (
+            <div className="pf-slot">
+              <OrderHistory orders={orderHistory} />
+            </div>
+          )}
+
+          {/* Personal Info */}
+          <section className="pf-page pf-sheet" data-pf-reveal="" aria-labelledby="pf-perso-t">
+            <header className="pf-page-head">
+              <p className="pf-kick">
+                <User className="w-4 h-4" aria-hidden="true" />
+                <span>Coordonnées</span>
+              </p>
+              <h2 id="pf-perso-t" className="pf-h2">Informations Personnelles</h2>
+            </header>
+
+            <div className="pf-grid2">
+              <div className="pf-field">
+                <label htmlFor="pf-fullname">Nom complet</label>
+                <Input
+                  id="pf-fullname"
+                  className="pf-input"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Jean Dupont"
+                />
+              </div>
+              <div className="pf-field">
+                <label htmlFor="pf-phone">Téléphone</label>
+                <div className="relative">
+                  <Phone className="pf-in-ico" aria-hidden="true" />
+                  <Input
+                    id="pf-phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="06 12 34 56 78"
+                    className="pl-10 pf-input pf-input-ico"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pf-orn" aria-hidden="true"><span>✦</span></div>
+
+            <div className="pf-subhead">
+              <MapPin className="w-4 h-4" aria-hidden="true" />
+              <h3>Adresse de livraison</h3>
+            </div>
+
+            <div className="pf-stack">
+              <div className="pf-field">
+                <label htmlFor="pf-addr1">Adresse</label>
+                <Input
+                  id="pf-addr1"
+                  className="pf-input"
+                  value={addressLine1}
+                  onChange={(e) => setAddressLine1(e.target.value)}
+                  placeholder="123 Rue Example"
+                />
+              </div>
+              <div className="pf-field">
+                <label htmlFor="pf-addr2">Complément</label>
+                <Input
+                  id="pf-addr2"
+                  className="pf-input"
+                  value={addressLine2}
+                  onChange={(e) => setAddressLine2(e.target.value)}
+                  placeholder="Appartement, étage..."
+                />
+              </div>
+              <div className="pf-grid2 pf-grid2-keep">
+                <div className="pf-field">
+                  <label htmlFor="pf-cp">Code postal</label>
+                  <Input
+                    id="pf-cp"
+                    className="pf-input"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder="75001"
+                  />
+                </div>
+                <div className="pf-field">
+                  <label htmlFor="pf-city">Ville</label>
+                  <Input
+                    id="pf-city"
+                    className="pf-input"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Paris"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleSaveProfile}
+              disabled={saving}
+              className="mt-6 btn-luxury pf-save"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Enregistrer"
+              )}
+            </Button>
+          </section>
+
+          {/* Pro Section */}
+          <section className="pf-page pf-sheet pf-pro" data-pf-reveal="" aria-labelledby="pf-pro-t">
+            <header className="pf-page-head">
+              <p className="pf-kick">
+                <Building2 className="w-4 h-4" aria-hidden="true" />
+                <span>Registre professionnel</span>
+              </p>
+              <h2 id="pf-pro-t" className="pf-h2">Espace Professionnel</h2>
+            </header>
+
+            {isPro && isProValidated ? (
+              <div className="pf-stack">
+                <div className="pf-pro-card pf-pro-ok">
+                  <span className="pf-wax" aria-hidden="true"><span>Pro</span></span>
+                  <div className="pf-pro-txt">
+                    <p className="pf-pro-t">
+                      <CheckCircle className="w-4 h-4" aria-hidden="true" />
+                      Compte Pro validé
+                    </p>
+                    <p className="pf-pro-s">
                       {profile?.company_name} - SIRET: {profile?.siret}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Validation sous 48h ouvrées
+                    {profile?.vat_number && (
+                      <div className="pf-pro-vat">
+                        <p className="pf-pro-s">
+                          TVA: {profile.vat_number}
+                        </p>
+                        {profile?.is_vat_validated ? (
+                          <span className="pf-chip pf-chip-ok">
+                            <CheckCircle className="w-3 h-3" aria-hidden="true" />
+                            Validée
+                          </span>
+                        ) : (
+                          <span className="pf-chip pf-chip-wait">
+                            <Clock className="w-3 h-3" aria-hidden="true" />
+                            En attente
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <p className="pf-pro-note">
+                      {profile?.is_vat_validated
+                        ? "✓ Vous bénéficiez de prix HT exclusifs"
+                        : profile?.vat_number
+                          ? "Votre TVA est en cours de validation par notre équipe"
+                          : "Ajoutez votre numéro de TVA pour des prix HT"
+                      }
                     </p>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Vous êtes un professionnel ? Accédez à des tarifs exclusifs en validant votre compte.
-                  </p>
 
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">Nom de l'entreprise</label>
+                {/* TVA form for Pro users */}
+                <div className="pf-field">
+                  <label htmlFor="pf-vat">
+                    N° TVA intracommunautaire
+                  </label>
+                  <div className="pf-inline">
                     <Input
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="Ma Société SARL"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">SIRET (14 chiffres)</label>
-                    <Input
-                      value={siret}
-                      onChange={(e) => setSiret(e.target.value)}
-                      placeholder="123 456 789 00012"
-                      maxLength={17}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">
-                      N° TVA intracommunautaire <span className="text-xs">(optionnel)</span>
-                    </label>
-                    <Input
+                      id="pf-vat"
+                      className="pf-input"
                       value={vatNumber}
                       onChange={(e) => setVatNumber(e.target.value)}
                       placeholder="FR12345678901"
                       maxLength={14}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Renseignez votre TVA pour bénéficier de prix HT
-                    </p>
+                    <Button
+                      onClick={async () => {
+                        const vatClean = vatNumber.replace(/\s/g, "").toUpperCase();
+                        if (vatClean && !/^[A-Z]{2}[A-Z0-9]{2,12}$/.test(vatClean)) {
+                          setProError("Format de TVA invalide");
+                          return;
+                        }
+                        await updateProfile({ vat_number: vatClean || null });
+                        setProError(null);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="pf-btn-line"
+                    >
+                      Enregistrer
+                    </Button>
                   </div>
-
                   {proError && (
-                    <div className="flex items-center gap-2 text-destructive text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      {proError}
-                    </div>
+                    <p className="pf-err" role="alert">{proError}</p>
                   )}
-
-                  <Button
-                    onClick={handleProSubmit}
-                    disabled={proSubmitting}
-                    className="btn-luxury-outline"
-                  >
-                    {proSubmitting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      "Soumettre ma demande Pro"
-                    )}
-                  </Button>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : profile?.siret ? (
+              <div className="pf-pro-card pf-pro-wait">
+                <span className="pf-rubber" aria-hidden="true">En attente</span>
+                <Clock className="pf-pro-ico" aria-hidden="true" />
+                <div className="pf-pro-txt">
+                  <p className="pf-pro-t">Demande en cours</p>
+                  <p className="pf-pro-s">
+                    {profile?.company_name} - SIRET: {profile?.siret}
+                  </p>
+                  <p className="pf-pro-s pf-pro-delay">
+                    Validation sous 48h ouvrées
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="pf-stack">
+                <p className="pf-lede">
+                  Vous êtes un professionnel ? Accédez à des tarifs exclusifs en validant votre compte.
+                </p>
 
-            {/* Sign Out */}
-            <div className="flex justify-center">
-              <Button
-                variant="ghost"
-                onClick={handleSignOut}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                Se déconnecter
-              </Button>
-            </div>
-          </motion.div>
-        </div>
+                <div className="pf-field">
+                  <label htmlFor="pf-company">Nom de l'entreprise</label>
+                  <Input
+                    id="pf-company"
+                    className="pf-input"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="Ma Société SARL"
+                  />
+                </div>
+
+                <div className="pf-field">
+                  <label htmlFor="pf-siret">SIRET (14 chiffres)</label>
+                  <Input
+                    id="pf-siret"
+                    className="pf-input"
+                    value={siret}
+                    onChange={(e) => setSiret(e.target.value)}
+                    placeholder="123 456 789 00012"
+                    maxLength={17}
+                  />
+                </div>
+
+                <div className="pf-field">
+                  <label htmlFor="pf-vat-req">
+                    N° TVA intracommunautaire <span className="pf-opt">(optionnel)</span>
+                  </label>
+                  <Input
+                    id="pf-vat-req"
+                    className="pf-input"
+                    value={vatNumber}
+                    onChange={(e) => setVatNumber(e.target.value)}
+                    placeholder="FR12345678901"
+                    maxLength={14}
+                  />
+                  <p className="pf-help">
+                    Renseignez votre TVA pour bénéficier de prix HT
+                  </p>
+                </div>
+
+                {proError && (
+                  <div className="pf-err" role="alert">
+                    <AlertCircle className="w-4 h-4" aria-hidden="true" />
+                    {proError}
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleProSubmit}
+                  disabled={proSubmitting}
+                  className="btn-luxury-outline pf-btn-line pf-btn-wide"
+                >
+                  {proSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Soumettre ma demande Pro"
+                  )}
+                </Button>
+              </div>
+            )}
+          </section>
+
+          {/* Sign Out */}
+          <div className="pf-colophon" data-pf-reveal="">
+            <p className="pf-fin" aria-hidden="true"><span>✦</span> Fin du carnet <span>✦</span></p>
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className="pf-signout"
+            >
+              Se déconnecter
+            </Button>
+            <p className="pf-colo">High Society Botanicals · Maison française · Abbaretz (44)</p>
+          </div>
+        </CarnetReveal>
       </main>
 
       <Footer />

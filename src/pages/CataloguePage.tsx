@@ -6,14 +6,18 @@ import { accessories } from "@/data/accessories";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ProductCard from "@/components/ProductCard";
-import Title3D from "@/components/Title3D";
+import { useMinuitSkin } from "@/components/minuit/useMinuitSkin";
+import CoffreVault from "@/components/minuit/areas/coffre/CoffreVault";
+import CoffreLocker from "@/components/minuit/areas/coffre/CoffreLocker";
+import { LITE } from "@/components/minuit/areas/coffre/useInViewAttr";
+import "@/components/minuit/areas/coffre/coffre.css";
 
 type ViewMode = "grid" | "list";
 type SortOption = "name" | "price-asc" | "price-desc" | "cbd";
 type CategoryFilter = "all" | ProductCategory | "accessoire" | "force-noire" | "exotique";
 
 const CataloguePage = () => {
+  useMinuitSkin("coffre");
   const { all: allProducts, forceNoire: forceNoireProducts, exotique: exotiqueProducts } = useCatalogProducts();
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -22,7 +26,7 @@ const CataloguePage = () => {
   const [showFilters, setShowFilters] = useState(false);
 
 
-  
+
 
   const filteredProducts = useMemo(() => {
     if (category === "accessoire") return [];
@@ -118,40 +122,42 @@ const CataloguePage = () => {
   const totalResults = filteredProducts.length + filteredAccessories.length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`cf-page min-h-screen${LITE ? " cf-lite" : ""}`}>
       <Header />
 
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-6">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-          >
-            <Title3D as="h1" className="mb-4 text-4xl md:text-5xl">Le Coffre</Title3D>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Découvrez notre collection complète de fleurs, résines CBD et accessoires
-              d'exception, sélectionnés avec soin pour les connaisseurs.
-            </p>
-          </motion.div>
+      {/* data-fx-off : la salle des coffres gère ses propres animations (porte, casiers) */}
+      <main className="cf-main" data-fx-off="">
+        {/* Header : la porte du coffre s'ouvre sur le titre */}
+        <CoffreVault />
+
+        <div className="cf-wrap" id="casiers">
+          <div className="cf-sec-hd">
+            <div>
+              <p className="cf-kicker">Collection N° 26</p>
+              <h2 className="cf-h2">
+                <span className="a">Les</span> <span className="b">casiers</span>
+              </h2>
+            </div>
+            <p className="cf-sec-lead">Chaque casier renferme un lot. Ouvrez-le pour choisir votre grammage sur sa fiche.</p>
+          </div>
 
           {/* Toolbar */}
-          <div className="flex flex-wrap gap-4 items-center justify-between mb-8">
+          <div className="cf-console">
             {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <div className="cf-search">
+              <Search className="cf-search-ico" aria-hidden="true" />
               <input
                 type="text"
                 placeholder="Rechercher un produit..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-full focus:outline-none focus:border-primary transition-colors"
+                aria-label="Rechercher un produit"
+                className="cf-in"
               />
             </div>
 
             {/* Category tabs - Accessoires masqué temporairement */}
-            <div className="flex max-w-full items-center gap-2 overflow-x-auto rounded-full border border-border bg-card p-1 [scrollbar-width:none]">
+            <div className="cf-tabs">
               {[
                 { key: "all", label: "Tous" },
                 { key: "fleur", label: "Fleurs" },
@@ -163,11 +169,8 @@ const CataloguePage = () => {
                 <button
                   key={cat.key}
                   onClick={() => setCategory(cat.key as CategoryFilter)}
-                  className={`shrink-0 px-4 py-2 rounded-full text-sm transition-all ${
-                    category === cat.key
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  aria-pressed={category === cat.key}
+                  className={`cf-tab${category === cat.key ? " is-on" : ""}`}
                 >
                   {cat.label}
                 </button>
@@ -175,42 +178,30 @@ const CataloguePage = () => {
             </div>
 
             {/* View & Filter */}
-            <div className="flex items-center gap-2">
+            <div className="cf-knobs">
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 aria-label={showFilters ? "Masquer les filtres" : "Afficher les filtres"}
                 aria-pressed={showFilters}
-                className={`p-3 rounded-full border transition-all ${
-                  showFilters
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border hover:border-primary"
-                }`}
+                className="cf-knob"
               >
-                <Filter className="w-5 h-5" />
+                <Filter aria-hidden="true" />
               </button>
               <button
                 onClick={() => setViewMode("grid")}
                 aria-label="Afficher en grille"
                 aria-pressed={viewMode === "grid"}
-                className={`p-3 rounded-full border transition-all ${
-                  viewMode === "grid"
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border hover:border-primary"
-                }`}
+                className="cf-knob"
               >
-                <Grid className="w-5 h-5" />
+                <Grid aria-hidden="true" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 aria-label="Afficher en liste"
                 aria-pressed={viewMode === "list"}
-                className={`p-3 rounded-full border transition-all ${
-                  viewMode === "list"
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border hover:border-primary"
-                }`}
+                className="cf-knob"
               >
-                <List className="w-5 h-5" />
+                <List aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -222,18 +213,19 @@ const CataloguePage = () => {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden mb-8"
+                className="cf-drawer"
               >
-                <div className="bg-card border border-border rounded-xl p-6">
-                  <div className="flex flex-wrap gap-6">
+                <div className="cf-drawer-in">
+                  <div className="cf-drawer-row">
                     <div>
-                      <label className="text-sm text-muted-foreground block mb-2">
+                      <label htmlFor="cf-sort" className="cf-sort-label">
                         Trier par
                       </label>
                       <select
+                        id="cf-sort"
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as SortOption)}
-                        className="px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:border-primary"
+                        className="cf-sort"
                       >
                         <option value="name">Nom</option>
                         <option value="price-asc">Prix croissant</option>
@@ -250,7 +242,7 @@ const CataloguePage = () => {
           </AnimatePresence>
 
           {/* Results count */}
-          <p className="text-muted-foreground mb-6">
+          <p className="cf-count">
             {totalResults} produit{totalResults > 1 ? "s" : ""} trouvé{totalResults > 1 ? "s" : ""}
           </p>
 
@@ -259,14 +251,14 @@ const CataloguePage = () => {
             layout
             className={
               viewMode === "grid"
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                : "flex flex-col gap-4"
+                ? "cf-grid"
+                : "cf-list"
             }
           >
             <AnimatePresence mode="popLayout">
               {/* Flowers & Resins */}
               {filteredProducts.map((product, index) => (
-                <ProductCard key={product.id} product={product} index={index} layout={viewMode} />
+                <CoffreLocker key={product.id} product={product} index={index} layout={viewMode} />
               ))}
 
               {/* Accessories - Masqué temporairement - rupture de stock */}
@@ -277,8 +269,12 @@ const CataloguePage = () => {
           </motion.div>
 
           {totalResults === 0 && (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">
+            <div className="cf-empty">
+              <div className="cf-empty-box" aria-hidden="true">
+                <span className="door" />
+                <span className="lamp" />
+              </div>
+              <p className="cf-empty-t">
                 Aucun produit trouvé
               </p>
               <button
@@ -286,7 +282,7 @@ const CataloguePage = () => {
                   setCategory("all");
                   setSearchQuery("");
                 }}
-                className="mt-4 btn-luxury-outline"
+                className="cf-reset"
               >
                 Réinitialiser les filtres
               </button>
