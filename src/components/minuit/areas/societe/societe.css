@@ -145,6 +145,7 @@ html.mn-societe .so-cue {
   font-size: 9.5px; letter-spacing: .36em; text-transform: uppercase; color: var(--mn-ivoire-2); white-space: nowrap;
 }
 html.mn-societe .so-cue i { display: block; width: 1px; height: 38px; background: linear-gradient(var(--mn-or-clair), transparent); transform-origin: top; animation: so-drip 2.4s ease-in-out infinite; }
+html.mn-societe .so-root.is-cue-off .so-cue i { animation-play-state: paused; } /* hors écran : la boucle s'arrête (useManifesto) */
 @keyframes so-drip { 0% { transform: scaleY(0); } 50% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
 
 /* arrivée du prologue : les lignes du titre montent de leur fente, le reste suit */
@@ -167,6 +168,9 @@ html.mn-societe .so-root.is-armed.is-ready .so-cue { opacity: 1; transition: opa
 html.mn-societe .so-ch {
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: center;
   padding: clamp(72px, 16vh, 160px) var(--mn-gut); scroll-margin-top: 80px;
+  /* pas de contain ici (ni sur l'arche, la vitrine, la coda) : essayé, il recale le contenu au pixel entier
+     (texte et image décalés de moins d'un pixel, anticrénelage différent) sans rien faire gagner : rien n'y
+     déclenche de mise en page pendant le défilement. Pas de content-visibility : la hauteur est mesurée en JS. */
 }
 @media (min-width: 900px) {
   html.mn-societe .so-ch { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(16px, 2vw, 32px); min-height: 100vh; min-height: 100svh; }
@@ -252,12 +256,17 @@ html.mn-societe .so-shutter-lock::after {
   content: ""; position: absolute; left: 50%; top: 6px; width: 5px; height: 10px; transform: translateX(-50%);
   border-radius: 3px 3px 1px 1px; background: #1a1306;
 }
-html.mn-societe .so-root.is-armed .so-plate.is-open .so-shutter { animation: so-lift 1.7s cubic-bezier(.6, .05, .2, 1) forwards; }
+/* la levée n'anime que transform (elle tourne sur le compositeur) ; le rideau est masqué à la fin
+   par une transition de visibility retardée de la même durée, hors des images clés */
+html.mn-societe .so-root.is-armed .so-plate.is-open .so-shutter {
+  animation: so-lift 1.7s cubic-bezier(.6, .05, .2, 1) forwards;
+  visibility: hidden; transition: visibility 0s linear 1.7s;
+}
 @keyframes so-lift {
   0% { transform: translateY(0); }
   10% { transform: translateY(-6%); }
   19% { transform: translateY(-3.5%); }
-  100% { transform: translateY(-104%); visibility: hidden; }
+  100% { transform: translateY(-104%); }
 }
 
 /* ---- I · plaque de laiton ---- */
@@ -382,7 +391,7 @@ html.mn-societe .so-neon { position: relative; font-family: var(--mn-neon); font
 html.mn-societe .so-neon > span { display: block; }
 html.mn-societe .so-neon-off { color: rgba(255, 243, 209, .12); -webkit-text-stroke: 1px rgba(244, 220, 146, .28); }
 html.mn-societe .so-neon-on {
-  position: absolute; left: 0; right: 0; top: 0; color: #FFF3D1; opacity: 0; will-change: opacity;
+  position: absolute; left: 0; right: 0; top: 0; color: #FFF3D1; opacity: 0; /* pas de will-change : calque créé le temps du clignotement */
   text-shadow: 0 0 2px #fff6dc, 0 0 10px #F4DC92, 0 0 24px #C9A24A, 0 0 56px rgba(201, 162, 74, .65), 0 0 110px rgba(201, 162, 74, .35);
 }
 html.mn-societe .so-root.is-powered .so-neon-on { animation: so-flick 2.4s steps(1) .15s both; }

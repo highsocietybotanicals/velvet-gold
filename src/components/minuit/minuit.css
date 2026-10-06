@@ -24,7 +24,13 @@
 @keyframes mc-foil { to { background-position: -220% 0; } }
 /* écran tactile : feuille d'or fixe (l'animer repeint le texte à chaque image) */
 @media (hover: none) { .mc .foil { animation: none; background-position: 18% 0; } }
+/* bureau : la feuille d'or reste animée comme avant ; elle est mise en pause quand sa section est hors
+   écran (règle data-idle ci-dessous). Pas de couche dédiée (will-change) : mesuré, elle faisait passer le
+   texte voisin en lissage gris au lieu du lissage sous-pixel. */
 .mc.lite .lot-vis img { animation: none; }
+/* hors écran (data-idle posé par MinuitHome) : boucles décoratives en pause, elles repartent au même point */
+.mc .hero[data-idle] .neon, .mc .hero[data-idle] .hint i, .mc [data-idle] .foil,
+.mc .band[data-idle] .band-in, .mc .collection[data-idle] .lot-vis img { animation-play-state: paused; }
 .mc .neon { font-family: var(--neon); font-weight: 400; color: #FFF3D1; text-shadow: 0 0 2px #fff6dc, 0 0 10px #F4DC92, 0 0 24px #C9A24A, 0 0 56px rgba(201, 162, 74, .65), 0 0 110px rgba(201, 162, 74, .35); }
 .mc .mono-s { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ivoire-2); }
 .mc .btn-or { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .8em; min-height: 52px; padding: 0 28px; font-family: var(--wide); font-stretch: 125%; font-weight: 800; font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: #120E06; background: var(--foil); background-size: 200% 100%; border-radius: 2px; text-decoration: none; transition: background-position .9s var(--ease), box-shadow .4s; box-shadow: 0 0 0 1px rgba(244, 220, 146, .4), 0 18px 40px -18px rgba(201, 162, 74, .8); }
@@ -140,13 +146,19 @@ html.lenis, html.lenis body { height: auto; }
 .mc.is-desk .track { overflow: visible; padding: 0 var(--gut); will-change: transform; align-items: stretch; height: min(calc(100vh - 110px), 780px); }
 .mc .intro { flex: none; width: min(84vw, 520px); scroll-snap-align: start; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding-right: 40px; }
 .mc .filters { display: flex; flex-wrap: wrap; gap: 8px; }
-.mc .chip { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding: 9px 14px; border: 1px solid rgba(241, 232, 212, .16); border-radius: 40px; color: var(--ivoire-2); transition: all .3s; white-space: nowrap; }
+.mc .chip { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding: 9px 14px; border: 1px solid rgba(241, 232, 212, .16); border-radius: 40px; color: var(--ivoire-2); transition: border-color .3s, color .3s, background-color .3s, outline-color .3s, outline-offset .3s, outline-width .3s; white-space: nowrap; }
 .mc .chip:hover { border-color: var(--or); color: var(--ivoire); }
 .mc .chip[aria-pressed="true"] { background: var(--ivoire); color: var(--nuit); border-color: var(--ivoire); }
 .mc .lot { position: relative; flex: none; width: min(80vw, 400px); scroll-snap-align: center; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 18px; isolation: isolate; }
 .mc.is-desk .lot { width: clamp(320px, 27vw, 420px); }
 .mc .lot::before { content: ""; position: absolute; left: 50%; top: -6%; width: 130%; height: 74%; transform: translateX(-50%); background: linear-gradient(180deg, rgba(255, 232, 170, .26), rgba(255, 232, 170, .06) 60%, transparent 92%); clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%); z-index: -1; opacity: .85; }
 .mc .lot .num { position: absolute; top: 6%; left: 50%; transform: translateX(-50%); font-family: var(--serif); font-style: italic; font-size: clamp(120px, 13vw, 190px); line-height: 1; color: transparent; -webkit-text-stroke: 1px rgba(201, 162, 74, .38); z-index: -1; user-select: none; }
+/* Le flottement reste sur l'image (dans la pile de .lot-vis, que sa perspective isole). Porté par
+   .lot-vis, il faisait passer le texte des cartes dans une couche composée (chevauchement supposé d'une
+   animation) : lettres plus floues, mesuré à la capture. Le gain vient de la pause hors écran (data-idle).
+   Ombre portée : sur appareil modeste (.lite) l'image ne flotte pas, le drop-shadow y est donc fixe. Ailleurs
+   il suit la silhouette du lot : une tache radiale changerait sa forme, et un flottement porté par une
+   enveloppe (ombre rastérisée une fois) a été mesuré plus coûteux (6 cartes composées par chevauchement). */
 .mc .lot-vis { position: relative; height: clamp(220px, 34vh, 330px); display: grid; place-items: end center; perspective: 900px; }
 .mc .lot-vis img { max-height: 100%; max-width: 100%; object-fit: contain; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .25s ease-out; filter: drop-shadow(0 30px 30px rgba(0, 0, 0, .6)); animation: mc-float 6s ease-in-out infinite; }
 @keyframes mc-float { 0%, 100% { translate: 0 0 } 50% { translate: 0 -10px } }
@@ -165,6 +177,10 @@ html.lenis, html.lenis body { height: auto; }
 .mc .outro { flex: none; width: min(80vw, 380px); display: flex; flex-direction: column; justify-content: center; gap: 18px; padding-left: 40px; scroll-snap-align: center; }
 .mc .wave { position: absolute; left: 0; top: 30%; height: 120px; pointer-events: none; overflow: visible; }
 .mc .wave path { fill: none; stroke: var(--or); stroke-width: 1.4; filter: drop-shadow(0 0 6px rgba(244, 220, 146, .9)); }
+/* bureau : le fil se redessine à chaque image de défilement (stroke-dashoffset). Dans sa propre couche,
+   il ne fait plus rerastériser la bande des cartes qu'il traverse. */
+.mc.is-desk .wave { will-change: transform; }
+.mc.is-desk .collection[data-idle] .wave { will-change: auto; }
 
 /* ---- grille des carats ---- */
 .mc .grille { padding-bottom: clamp(80px, 12vh, 140px); }
@@ -172,7 +188,7 @@ html.lenis, html.lenis body { height: auto; }
 @media (max-width: 899px) { .mc .gr { grid-template-columns: minmax(0, 1fr); } }
 .mc .gr-pick { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
 .mc .gr-w { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 22px; }
-.mc .wbtn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px 12px; border: 1px solid rgba(241, 232, 212, .12); border-radius: 2px; transition: all .3s; min-width: 0; }
+.mc .wbtn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px 12px; border: 1px solid rgba(241, 232, 212, .12); border-radius: 2px; transition: border-color .3s, background-color .3s, box-shadow .3s, outline-color .3s, outline-offset .3s, outline-width .3s; min-width: 0; }
 .mc .wbtn b { font-family: var(--serif); font-weight: 500; font-size: clamp(17px, 2vw, 24px); }
 .mc .wbtn b span { font-size: .6em; }
 .mc .wbtn small { font-size: 9.5px; letter-spacing: .06em; color: var(--ivoire-3); white-space: nowrap; }
@@ -180,6 +196,9 @@ html.lenis, html.lenis body { height: auto; }
 .mc .wbtn[aria-checked="true"] { border-color: var(--or-clair); background: rgba(201, 162, 74, .1); box-shadow: inset 0 0 0 1px rgba(244, 220, 146, .3); }
 .mc .wbtn.gift::after { content: "✦"; position: absolute; top: 4px; right: 6px; font-size: 9px; color: var(--or); }
 @media (max-width: 560px) { .mc .gr-w { grid-template-columns: repeat(4, 1fr); } .mc .wbtn small { font-size: 10px; } }
+/* barres : la hauteur ne s'anime qu'au clic sur un lot (0,6 s, 7 éléments, coût négligeable). Ni scaleY
+   (il déformerait le dégradé à 100° et la lueur de la barre active) ni contain (arrondi sous-pixel des
+   sommets des barres mesuré différent) : laissées telles quelles. */
 .mc .bars { display: flex; align-items: flex-end; gap: 6px; height: 130px; margin-top: 26px; padding-bottom: 4px; border-bottom: 1px solid var(--ligne); }
 .mc .bars div { flex: 1; position: relative; min-height: 6px; background: linear-gradient(180deg, rgba(244, 220, 146, .55), rgba(201, 162, 74, .12)); transition: height .6s var(--ease); }
 .mc .bars div.on { background: var(--foil); box-shadow: 0 0 22px rgba(201, 162, 74, .5); }
@@ -204,6 +223,9 @@ html.lenis, html.lenis body { height: auto; }
 .mc .m-txt p { margin-top: 22px; max-width: 360px; color: var(--ivoire-2); font-size: 13.5px; }
 .mc .arch { position: relative; aspect-ratio: 7 / 9; width: 100%; border-radius: 50% 50% 0 0 / 38% 38% 0 0; overflow: hidden; border: 1px solid rgba(201, 162, 74, .5); box-shadow: 0 0 0 8px var(--nuit), 0 0 0 9px rgba(201, 162, 74, .25), 0 40px 120px -40px rgba(201, 162, 74, .5); }
 .mc .arch img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(calc(1.18 - var(--mp, 0) * .18)); }
+/* maison loin de l'écran (data-idle posé par MinuitHome) : les couches de l'arche sont rendues au GPU,
+   elles reviennent 120 px avant que la section n'apparaisse (mémoire des vieux téléphones) */
+.mc .maison[data-idle] .arch img, .mc .maison[data-idle] .shutter { will-change: auto; }
 .mc .shutter { position: absolute; inset: 0; transform: translateY(calc(var(--mp, 0) * -100%)); background: repeating-linear-gradient(180deg, #2b2621 0 14px, #16130f 14px 17px, #3a332b 17px 18px, #1f1b17 18px 22px); display: grid; place-items: center; will-change: transform; }
 .mc .shutter::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 14px; background: linear-gradient(180deg, #8a6d2e, #3d3017); box-shadow: 0 6px 20px rgba(201, 162, 74, .5); }
 .mc .shutter .stamp { position: absolute; bottom: 22%; right: 12%; transform: rotate(-8deg); font-family: var(--serif); font-style: italic; font-size: clamp(18px, 2vw, 26px); color: var(--or-clair); }
@@ -256,6 +278,37 @@ html.lenis, html.lenis body { height: auto; }
 .mc .final h2 { font-size: clamp(40px, 7vw, 104px); line-height: .95; font-weight: 400; }
 .mc .final h2 .choc { display: block; font-size: .8em; margin-top: .08em; }
 .mc .final p { max-width: 520px; margin: 24px auto 30px; text-shadow: 0 1px 14px rgba(0, 0, 0, .95), 0 0 2px rgba(0, 0, 0, .8); }
+
+/* ---- appareils tactiles (téléphones, tablettes) : même rendu, moins de travail ----
+   Réservé au tactile : ces navigateurs lissent toujours le texte en niveaux de gris, donc confinement et
+   couches n'y changent rien à l'œil (captures comparées). Sur ordinateur, le lissage sous-pixel du texte
+   aurait changé dans les zones confinées : le bureau garde exactement l'ancien rendu. */
+@media (hover: none) {
+  /* cartes décorées : une invalidation à l'intérieur ne recalcule ni ne repeint le reste de la page */
+  .mc .band, .mc .ticket, .mc .preuve, .mc .arch { contain: layout paint style; }
+  /* arche : l'échelle suit le défilement (--mp). L'image a sa propre couche, le GPU la redimensionne au
+     lieu de rééchantillonner la photo à chaque image. Boîte à 118 % et échelle ≤ 1 : même taille
+     affichée (1,18 → 1), même cadrage, le GPU ne fait que réduire. */
+  .mc .arch img { inset: -9%; width: 118%; height: 118%; max-width: none; transform: scale(calc((1.18 - var(--mp, 0) * .18) / 1.18)); will-change: transform; }
+  /* Sommelier et final : rendu sauté tant qu'ils sont loin de l'écran. Seulement ces deux sections, car
+     aucune cible de go() n'est en dessous : une hauteur d'attente au-dessus de #sommelier fausserait
+     l'arrivée du défilement doux. Hauteur d'attente = celle du CONTENU rendu (le padding s'y ajoute),
+     mesurée section affichée (Chrome headless, polices chargées, DPR 1,5 / 2 / 3 identiques) :
+     390×844 : Sommelier 1 440,2 px, final 366,9 px (375 : 1 439 / 367 ; 412 : 1 429 / 367) ;
+     600 à 834 px : 1 044 à 1 190 / 322 à 351 ; 1 024×768 : 823 / 374. « auto » garde ensuite la vraie
+     hauteur. Largeur d'attente nulle (bloc en flux). Première valeur : repli sans « auto ». */
+  .mc .sommelier, .mc .final { content-visibility: auto; }
+  .mc .sommelier { contain-intrinsic-size: 0 1440px; contain-intrinsic-size: auto 0 auto 1440px; }
+  .mc .final { contain-intrinsic-size: 0 367px; contain-intrinsic-size: auto 0 auto 367px; }
+}
+@media (hover: none) and (min-width: 600px) and (max-width: 899px) {
+  .mc .sommelier { contain-intrinsic-size: 0 1090px; contain-intrinsic-size: auto 0 auto 1090px; }
+  .mc .final { contain-intrinsic-size: 0 345px; contain-intrinsic-size: auto 0 auto 345px; }
+}
+@media (hover: none) and (min-width: 900px) {
+  .mc .sommelier { contain-intrinsic-size: 0 820px; contain-intrinsic-size: auto 0 auto 820px; }
+  .mc .final { contain-intrinsic-size: 0 380px; contain-intrinsic-size: auto 0 auto 380px; }
+}
 
 /* photo de repli sur fond noir (tant qu'un détourage manque) : le noir disparaît, les bords fondent */
 .mc img.is-photo { mix-blend-mode: lighten; -webkit-mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 58%, transparent 78%); mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 58%, transparent 78%); }

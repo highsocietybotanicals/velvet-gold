@@ -23,7 +23,9 @@ html.mn-sommelier .sm-cave {
 html.mn-sommelier .sm-cave *, html.mn-sommelier .sm-cave *::before, html.mn-sommelier .sm-cave *::after { box-sizing: border-box; }
 html.mn-sommelier .sm-cave a:focus-visible, html.mn-sommelier .sm-cave button:focus-visible { outline: 1px solid var(--mn-or-clair); outline-offset: 4px; }
 
-html.mn-sommelier .sm-decor { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+/* décor : même boîte que la zone découpée de la cave (inset 0) ; containment strict = aucun effet visuel,
+   ses calculs de mise en page et de peinture restent isolés du reste de la page */
+html.mn-sommelier .sm-decor { position: absolute; inset: 0; z-index: -1; pointer-events: none; contain: strict; }
 
 /* voûtes en enfilade vers le fond de la cave */
 html.mn-sommelier .sm-vaults { position: absolute; left: 50%; bottom: 12%; width: min(1500px, 175vw); height: 94%; transform: translateX(-50%); }
@@ -89,8 +91,12 @@ html.mn-sommelier .sm-cave h1.sm-title { margin: 16px 0 0; display: flex; flex-d
 html.mn-sommelier .sm-title-neon {
   font-family: var(--mn-neon); font-style: normal; font-weight: 400; font-size: clamp(22px, 3.2vw, 36px); letter-spacing: .16em;
   color: #FFF3D1; text-shadow: 0 0 2px #FFF6DC, 0 0 10px #F4DC92, 0 0 24px #E3A04E, 0 0 52px rgba(227, 160, 78, .6);
-  animation: sm-neon-on 2.2s steps(1) .3s both, sm-hum 7s ease-in-out 3s infinite;
+  animation: sm-neon-on 2.2s steps(1) .3s both;
 }
+/* bourdonnement sur un élément à part : deux animations d'opacité sur le même élément empêchent Chrome de
+   confier la seconde à la carte graphique (recalcul de style à chaque image tant que le titre est visible).
+   Opacités multipliées : allumage (1 une fois fini) × bourdonnement = exactement l'ancien rendu. */
+html.mn-sommelier .sm-title-hum { display: block; animation: sm-hum 7s ease-in-out 3s infinite; }
 html.mn-sommelier .sm-title-foil {
   font-family: var(--mn-serif); font-style: italic; font-weight: 400; font-size: clamp(54px, 10vw, 128px); letter-spacing: -.02em;
   padding: 0 .1em .08em; background: var(--mn-foil); background-size: 220% 100%; background-position: 18% 0;
@@ -168,8 +174,9 @@ html.mn-sommelier .sm-car.on .sm-seg-lit { opacity: 1; }
 html.mn-sommelier .sm-car-l { font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 8.4px; letter-spacing: 2.2px; fill: var(--mn-ivoire-3); transition: fill .6s ease .5s; }
 html.mn-sommelier .sm-car.on .sm-car-l { fill: var(--mn-or-clair); }
 
-html.mn-sommelier .sm-poly { opacity: 0; transform: scale(.35); transform-box: view-box; transform-origin: 50% 50%; transition: opacity .8s ease 1.5s, transform 1.2s var(--mn-ease) 1.5s; }
-html.mn-sommelier .has-lot .sm-poly { opacity: 1; transform: none; }
+/* profil du lot : calque HTML dans le calque des familles (tourne avec lui) ; apparition composée */
+html.mn-sommelier .sm-w-poly { position: absolute; inset: 0; opacity: 0; transform: scale(.35); transition: opacity .8s ease 1.5s, transform 1.2s var(--mn-ease) 1.5s; }
+html.mn-sommelier .has-lot .sm-w-poly { opacity: 1; transform: none; }
 html.mn-sommelier .sm-poly-grid { fill: none; stroke: rgba(201, 162, 74, .24); stroke-width: .6; stroke-dasharray: 2 3; }
 html.mn-sommelier .sm-poly-shape { stroke: #F4DC92; stroke-width: 1.4; stroke-linejoin: round; }
 html.mn-sommelier .sm-poly-dot { fill: #F4DC92; stroke: #0B0809; stroke-width: 1.2; }
@@ -257,20 +264,23 @@ html.mn-sommelier .sm-seal-w { display: none; }
   html.mn-sommelier .sm-seal-w.has-car::before { opacity: .7; }
   html.mn-sommelier .sm-seal-w.has-nez::before { opacity: 1; }
   html.mn-sommelier .sm-seal-w svg { position: relative; display: block; width: 100%; height: 100%; overflow: visible; }
+  /* calques superposés du sceau (même boîte que le cadran, même ordre de peinture) */
+  html.mn-sommelier .sm-sw-l { position: absolute; inset: 0; display: block; }
 }
 @media (max-width: 359px) {
   html.mn-sommelier .sm-seal-w { width: 62px; height: 62px; top: -28px; }
 }
 html.mn-sommelier .sm-sw-hair { fill: none; stroke: rgba(201, 162, 74, .6); stroke-width: 3; }
 html.mn-sommelier .sm-sw-tick { fill: none; stroke: rgba(244, 220, 146, .6); stroke-width: 4; }
-html.mn-sommelier .sm-sw-fam, html.mn-sommelier .sm-sw-car, html.mn-sommelier .sm-sw-star { transform-box: view-box; transform-origin: 50% 50%; }
+/* .sm-sw-fam / .sm-sw-car / .sm-sw-star : calques HTML carrés, pivot au centre (= centre du viewBox) */
 html.mn-sommelier .sm-sw-fam { transform: rotate(var(--rf, 0deg)); transition: transform 2.1s cubic-bezier(.3, .05, .15, 1); }
 html.mn-sommelier .sm-sw-car { transform: rotate(var(--rc, 0deg)); transition: transform 1.7s cubic-bezier(.3, .05, .15, 1); }
 html.mn-sommelier .sm-sw-seg { fill: rgba(255, 236, 200, .035); stroke: rgba(201, 162, 74, .5); stroke-width: 3; }
 html.mn-sommelier .sm-sw-lit { opacity: 0; transition: opacity .9s ease .7s; }
 html.mn-sommelier .sm-sw-car .sm-sw-lit { fill: rgba(244, 220, 146, .34); transition-delay: .5s; }
 html.mn-sommelier .sm-seal-w .on .sm-sw-lit { opacity: 1; }
-html.mn-sommelier .sm-sw-star { fill: #F4DC92; transition: transform 1.2s var(--mn-ease) 1.4s; }
+html.mn-sommelier .sm-sw-star { transition: transform 1.2s var(--mn-ease) 1.4s; }
+html.mn-sommelier .sm-sw-star path { fill: #F4DC92; }
 html.mn-sommelier .sm-seal-w.has-lot .sm-sw-star { transform: rotate(45deg) scale(1.2); }
 html.mn-sommelier .sm-sw-needle { fill: #F4DC92; stroke: #0A080B; stroke-width: 5; stroke-linejoin: round; }
 
@@ -309,14 +319,20 @@ html.mn-sommelier .sm-dish {
   position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) 40px; align-items: center; gap: 0 14px;
   width: 100%; padding: 18px 8px 18px 2px; margin: 0; text-align: left; font: inherit; color: var(--mn-ivoire);
   background: transparent; border: 0; border-bottom: 1px solid rgba(201, 162, 74, .16); border-radius: 0; cursor: pointer;
-  -webkit-tap-highlight-color: transparent; transition: background-color .4s;
+  -webkit-tap-highlight-color: transparent; isolation: isolate;
 }
+/* fond de survol pré-peint (même teinte, sous le filet du bas comme l'ancien background-color) :
+   fondu d'opacité au lieu d'une transition de couleur de fond repeinte à chaque image */
+html.mn-sommelier .sm-dish::before {
+  content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; bottom: -1px; pointer-events: none;
+  background: rgba(244, 220, 146, .035); opacity: 0; transition: opacity .4s;
+}
+html.mn-sommelier .sm-dish:hover::before { opacity: 1; }
 html.mn-sommelier .sm-dish::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
   background: linear-gradient(90deg, transparent, var(--mn-or-clair), transparent);
   transform: scaleX(0); transition: transform .7s var(--mn-ease);
 }
-html.mn-sommelier .sm-dish:hover { background-color: rgba(244, 220, 146, .035); }
 html.mn-sommelier .sm-dish:hover::after, html.mn-sommelier .sm-dish:focus-visible::after, html.mn-sommelier .sm-dish.is-sel::after { transform: scaleX(1); }
 html.mn-sommelier .sm-dish:focus-visible { outline-offset: 2px; }
 html.mn-sommelier .sm-dish-no { font-family: var(--mn-serif); font-style: italic; font-size: 20px; line-height: 1; color: var(--mn-or); text-align: center; }
@@ -417,8 +433,12 @@ html.mn-sommelier .sm-lot {
   position: absolute; left: 10%; right: 10%; top: 15%; bottom: 17%; display: flex; align-items: flex-end; justify-content: center;
   animation: sm-lot-in 1s var(--mn-ease) 2s both;
 }
+/* enveloppe = même boîte et même alignement que .sm-lot ; c'est elle qui flotte (détourage seulement),
+   l'image et son ombre portée restent fixes dedans : le filtre est peint une fois, pas à chaque image */
+html.mn-sommelier .sm-lot-f { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; }
+html.mn-sommelier .sm-lot-f.cut { animation: sm-float 6s ease-in-out 3.2s infinite; }
 html.mn-sommelier .sm-lot img { display: block; }
-html.mn-sommelier .sm-lot img.cut { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 26px 24px rgba(0, 0, 0, .65)); animation: sm-float 6s ease-in-out 3.2s infinite; }
+html.mn-sommelier .sm-lot img.cut { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 26px 24px rgba(0, 0, 0, .65)); }
 html.mn-sommelier .sm-lot img.ph {
   align-self: center; width: 78%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 50%;
   border: 1px solid rgba(244, 220, 146, .6); box-shadow: 0 0 0 6px rgba(10, 8, 11, .9), 0 0 0 7px rgba(201, 162, 74, .3), 0 30px 60px -20px rgba(0, 0, 0, .9);
@@ -510,22 +530,38 @@ html.mn-sommelier .sm-trust li::before { content: "✦"; color: var(--mn-or); }
 }
 
 /* ---------------- boucles : en pause hors écran, figées sur téléphone modeste ---------------- */
+/* Une boucle qui tourne fait recalculer son style à chaque image : chaque groupe ne tourne que s'il est
+   lui-même à l'écran (is-live posé par live.ts sur la cave, le halo, le néon, la colonne de la roue, la niche). */
 html.mn-sommelier .sm-cave:not(.is-live) .sm-title-neon,
+html.mn-sommelier .sm-cave:not(.is-live) .sm-title-hum,
 html.mn-sommelier .sm-cave:not(.is-live) .sm-glow,
 html.mn-sommelier .sm-cave:not(.is-live) .sm-motes i,
 html.mn-sommelier .sm-cave:not(.is-live) .sm-w-halo,
 html.mn-sommelier .sm-cave:not(.is-live) .sm-w-ticks,
 html.mn-sommelier .sm-cave:not(.is-live) .sm-candle .flame,
 html.mn-sommelier .sm-cave:not(.is-live) .sm-candle .glow,
-html.mn-sommelier .sm-cave:not(.is-live) .sm-lot img.cut { animation-play-state: paused; }
+html.mn-sommelier .sm-cave:not(.is-live) .sm-lot-f,
+html.mn-sommelier .sm-glow:not(.is-live),
+html.mn-sommelier .sm-wheel-col:not(.is-live) .sm-w-halo,
+html.mn-sommelier .sm-wheel-col:not(.is-live) .sm-w-ticks,
+html.mn-sommelier .sm-wheel-col:not(.is-live) .sm-candle .flame,
+html.mn-sommelier .sm-wheel-col:not(.is-live) .sm-candle .glow,
+html.mn-sommelier .sm-decant:not(.is-live) .sm-lot-f { animation-play-state: paused; }
+/* néon hors écran (carte ou roue lue plus bas) : l'allumage d'entrée se joue, seul le bourdonnement s'arrête */
+html.mn-sommelier .sm-title-neon:not(.is-live) .sm-title-hum { animation-play-state: paused; }
+/* téléphone modeste seulement (.lite) : grande roue hors écran (elle est sous la carte pendant le questionnaire),
+   ses changements d'état (rotations, segments allumés, profil) s'appliquent sans transition ; à l'écran
+   (ou à moins de 160 px), tout se joue comme avant. Hors .lite, les transitions se jouent toujours : une visiteuse
+   qui descend vers la roue juste après son choix voit la fin de l'animation, comme dans la référence. */
+html.mn-sommelier .sm-cave.lite .sm-wheel-col:not(.is-live) .sm-wheel * { transition: none; }
 
 html.mn-sommelier .sm-cave.lite .sm-glow,
 html.mn-sommelier .sm-cave.lite .sm-w-halo,
 html.mn-sommelier .sm-cave.lite .sm-w-ticks,
 html.mn-sommelier .sm-cave.lite .sm-candle .flame,
 html.mn-sommelier .sm-cave.lite .sm-candle .glow,
-html.mn-sommelier .sm-cave.lite .sm-lot img.cut { animation: none; will-change: auto; }
-html.mn-sommelier .sm-cave.lite .sm-title-neon { animation: sm-neon-on 2.2s steps(1) .3s both; }
+html.mn-sommelier .sm-cave.lite .sm-lot-f,
+html.mn-sommelier .sm-cave.lite .sm-title-hum { animation: none; will-change: auto; }
 html.mn-sommelier .sm-cave.lite .sm-motes { display: none; }
 
 /* ---------------- mouvement réduit : état final, sans animation ---------------- */

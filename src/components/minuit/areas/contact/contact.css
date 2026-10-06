@@ -20,14 +20,21 @@ html.mn-contact .mnc-front {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='48'%3E%3Cpath d='M0 .5h120M0 24.5h120M30.5 0v24M90.5 0v24M.5 24v24M60.5 24v24' fill='none' stroke='%23C9A24A' stroke-opacity='.055'/%3E%3C/svg%3E") 0 0 / 120px 48px,
     linear-gradient(180deg, #0B090D 0%, var(--mn-nuit) 80%);
 }
-/* halo du néon sur le mur : s'allume avec l'enseigne */
-html.mn-contact .mnc-front::before {
-  content: ""; position: absolute; z-index: -1; pointer-events: none;
+/* halo du néon sur le mur : s'allume avec l'enseigne.
+   Allumage (mnc-flick) et bourdonnement (mnc-hum) sur deux éléments emboîtés : deux animations d'opacité sur le même
+   élément ne peuvent pas être confiées au compositeur (Chrome : « incompatible animations ») et le bourdonnement
+   recalculait alors les styles à chaque image, sans fin. Même rendu : l'allumage finit à 1, le bourdonnement part de 1. */
+html.mn-contact .mnc-halo {
+  position: absolute; z-index: -1; pointer-events: none;
   left: var(--halo-x, 50%); top: var(--halo-y, 150px);
   width: min(980px, 170vw); height: min(640px, 112vw); transform: translate(-50%, -50%);
+  animation: mnc-flick 2.2s steps(1) .25s both;
+}
+html.mn-contact .mnc-halo::before {
+  content: ""; position: absolute; inset: 0;
   background: radial-gradient(closest-side, rgba(244, 220, 146, .17), rgba(176, 97, 214, .09) 52%, transparent 80%);
   will-change: opacity;
-  animation: mnc-flick 2.2s steps(1) .25s both, mnc-hum 6s ease-in-out 3.4s infinite;
+  animation: mnc-hum 6s ease-in-out 3.4s infinite;
 }
 html.mn-contact .mnc-front::after {
   content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
@@ -69,18 +76,22 @@ html.mn-contact .mnc-screw:nth-of-type(1) { top: 9px; left: 9px; }
 html.mn-contact .mnc-screw:nth-of-type(2) { top: 9px; right: 9px; }
 html.mn-contact .mnc-screw:nth-of-type(3) { bottom: 9px; left: 9px; }
 html.mn-contact .mnc-screw:nth-of-type(4) { bottom: 9px; right: 9px; }
-html.mn-contact .mnc-neon { display: block; font-family: var(--mn-neon); font-weight: 400; line-height: 1; white-space: nowrap; will-change: opacity; }
+html.mn-contact .mnc-neon { display: block; font-family: var(--mn-neon); font-weight: 400; line-height: 1; white-space: nowrap; }
+/* comme le halo : l'allumage sur .mnc-neon, le bourdonnement sur .mnc-glow (enfant unique), tous deux composés */
+html.mn-contact .mnc-glow { display: block; will-change: opacity; }
 html.mn-contact .mnc-neon-a {
   font-size: clamp(60px, 18vw, 112px); letter-spacing: .01em; color: #FFF4D6;
   text-shadow: 0 0 2px #FFF7E0, 0 0 9px #F4DC92, 0 0 22px #C9A24A, 0 0 48px rgba(201, 162, 74, .7), 0 0 96px rgba(201, 162, 74, .35);
-  animation: mnc-flick 2.2s steps(1) .25s both, mnc-hum 6s ease-in-out 3.4s infinite;
+  animation: mnc-flick 2.2s steps(1) .25s both;
 }
+html.mn-contact .mnc-neon-a > .mnc-glow { animation: mnc-hum 6s ease-in-out 3.4s infinite; }
 html.mn-contact .mnc-neon-b {
-  display: flex; align-items: center; gap: .2em; align-self: flex-end; margin-top: -.04em;
+  display: flex; align-self: flex-end; margin-top: -.04em;
   font-size: clamp(42px, 12.5vw, 76px); color: #FBEFFF;
   text-shadow: 0 0 2px #fff, 0 0 9px #E2B8F5, 0 0 22px #B061D6, 0 0 48px rgba(176, 97, 214, .75), 0 0 96px rgba(176, 97, 214, .4);
-  animation: mnc-flick-b 2.4s steps(1) 1s both, mnc-hum 7.5s ease-in-out 4.2s infinite;
+  animation: mnc-flick-b 2.4s steps(1) 1s both;
 }
+html.mn-contact .mnc-neon-b > .mnc-glow { display: flex; align-items: center; gap: .2em; animation: mnc-hum 7.5s ease-in-out 4.2s infinite; }
 html.mn-contact .mnc-moon { display: block; width: .6em; height: .6em; fill: none; stroke: #FBEFFF; stroke-width: 2.4; stroke-linejoin: round; filter: drop-shadow(0 0 3px #E2B8F5) drop-shadow(0 0 10px #B061D6); }
 html.mn-contact .mnc-bad { display: inline-block; animation: mnc-buzz 6s steps(1) 5s infinite; }
 html.mn-contact .mnc-board-cap {
@@ -135,6 +146,7 @@ html.mn-contact .mnc-frame {
 html.mn-contact .mnc-glass {
   position: relative; height: 0; padding-bottom: 83.75%; overflow: hidden; isolation: isolate;
   border-radius: 50% 50% 0 0 / 30% 30% 0 0; background: #0B0806;
+  contain: layout; /* pas « paint » : mesuré, il décale d'un demi-pixel l'arc doré, les lames et l'hygiaphone */
 }
 /* reflets fixes de la vitre et ombre intérieure du cadre */
 html.mn-contact .mnc-glass::after {
@@ -256,8 +268,8 @@ html.mn-contact .mnc-booth-col[data-seen] .mnc-lamp { animation: mnc-lamp 1.2s s
 html.mn-contact .mnc-booth-col[data-seen] .mnc-out { animation: mnc-out .8s var(--mn-ease) .9s both; }
 html.mn-contact .mnc-booth-col[data-seen] .mnc-glint { animation: mnc-glint 1.5s var(--mn-ease) 1.75s backwards; }
 /* survol : la sonnette retinte */
-html.mn-contact .mnc-bell:hover .mnc-bell-top { animation: mnc-ring-h .9s ease-out; }
-html.mn-contact .mnc-bell:hover .mnc-h i { animation: mnc-wave-h 1s ease-out both; }
+html.mn-contact .mnc-bell:hover .mnc-bell-top { animation: mnc-ring .9s ease-out; }
+html.mn-contact .mnc-bell:hover .mnc-h i { animation: mnc-wave 1s ease-out both; }
 html.mn-contact .mnc-bell:hover .mnc-h i + i { animation-delay: .2s; }
 
 /* ---------------- 5. la carte de visite gravée ---------------- */
@@ -271,6 +283,7 @@ html.mn-contact .mnc-card {
     linear-gradient(125deg, #7D6936 0%, #F4DC92 20%, #9C7A35 42%, #FBE7A6 60%, #7D6936 80%, #E9C977 100%) border-box;
   box-shadow: 0 36px 60px -28px #000, 0 20px 70px -40px rgba(201, 162, 74, .6);
   transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .5s var(--mn-ease);
+  contain: layout; /* idem vitre : « paint » décalait la gravure d'un demi-pixel */
 }
 html.mn-contact .mnc-card > * { position: relative; }
 html.mn-contact .mnc-guilloche {
@@ -311,12 +324,20 @@ html.mn-contact .mnc-card-lines span { min-width: 0; overflow-wrap: anywhere; }
 html.mn-contact .mnc-mail { -webkit-user-select: all; user-select: all; }
 html.mn-contact .mnc-card-social { display: flex; gap: 12px; margin-top: 22px; }
 html.mn-contact .mnc-card-social a {
-  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
   color: var(--mn-or-clair); border: 1px solid rgba(201, 162, 74, .5);
   background: radial-gradient(circle at 35% 30%, rgba(244, 220, 146, .12), transparent 70%);
-  transition: color .3s, box-shadow .3s, transform .4s var(--mn-ease);
+  /* z-index 0 au repos (même ordre de peinture que auto), 1 au survol, gardé 0,4 s à la sortie (durée du transform) :
+     comme dans l'original, la pastille survolée reste au-dessus de sa voisine pendant tout le fondu de sa lueur */
+  z-index: 0; transition: color .3s, transform .4s var(--mn-ease), z-index 0s .4s;
 }
-html.mn-contact .mnc-card-social a:hover { color: #120E06; background: var(--mn-foil) 30% 0 / 200% 100%; box-shadow: 0 0 24px rgba(201, 162, 74, .45); transform: translateY(-2px); }
+/* lueur de survol pré-dessinée : fondu d'opacité au lieu d'une transition de box-shadow (repeint de la carte) */
+html.mn-contact .mnc-card-social a::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 50%; pointer-events: none;
+  box-shadow: 0 0 24px rgba(201, 162, 74, .45); opacity: 0; transition: opacity .3s;
+}
+html.mn-contact .mnc-card-social a:hover { z-index: 1; transition-delay: 0s; color: #120E06; background: var(--mn-foil) 30% 0 / 200% 100%; transform: translateY(-2px); }
+html.mn-contact .mnc-card-social a:hover::after { opacity: 1; }
 html.mn-contact .mnc-card-social svg { width: 18px; height: 18px; }
 /* petits téléphones : la carte gagne un peu de largeur, la ligne de fonction tient sur une ligne */
 @media (max-width: 479px) {
@@ -336,6 +357,7 @@ html.mn-contact .mnc-plate {
     radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #C9A24A 0 2px, transparent 2.6px),
     linear-gradient(170deg, rgba(201, 162, 74, .09), rgba(10, 8, 12, .94) 52%);
   box-shadow: 0 0 0 4px var(--mn-nuit), 0 0 0 5px rgba(201, 162, 74, .14);
+  contain: layout; /* idem vitre : « paint » décalait les pointillés et le texte d'un demi-pixel */
 }
 @media (min-width: 900px) { html.mn-contact .mnc-plate { justify-self: start; } }
 html.mn-contact .mnc-plate-t { margin-bottom: 8px; text-align: center; font-family: var(--mn-wide); font-stretch: 125%; font-weight: 800; font-size: 10px; letter-spacing: .36em; text-transform: uppercase; color: var(--mn-or); }
@@ -429,7 +451,21 @@ html.mn-contact .mnc-ribbon {
 }
 html.mn-contact .mnc-ribbon-a { transform: rotate(24deg); }
 html.mn-contact .mnc-ribbon-b { transform: rotate(-16deg); }
-html.mn-contact .mnc-seal { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transform: rotate(-12deg); filter: drop-shadow(0 7px 7px rgba(0, 0, 0, .65)); }
+html.mn-contact .mnc-seal { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transform: rotate(-12deg); }
+/* ombre pré-dessinée (ContactDecor, SHADOW) : décalage 7 px et σ 3,5 px CSS, convertis en unités SVG (cachet / 112).
+   --sdy = 7 × 112 / T ; --sg = 3,5 × 112 / T / 45,5 (rayon du contour), T = taille du cachet en px.
+   Cachet de 96 px sous 370 px d'écran, 26vw jusqu'à 523 px, 136 px au-delà. Entre les deux, un palier par écart de
+   ~6 % de taille, T prise au milieu (moyenne géométrique) : écart au drop-shadow d'origine ≤ 3 % (≤ 0,22 px). */
+html.mn-contact .mnc-seal-wrap { --sg: .0897; --sdy: 8.17px; }
+@media (min-width: 370px) { html.mn-contact .mnc-seal-wrap { --sg: .0873; --sdy: 7.95px; } } /* T 98,6 */
+@media (min-width: 389px) { html.mn-contact .mnc-seal-wrap { --sg: .0828; --sdy: 7.54px; } } /* T 104 */
+@media (min-width: 412px) { html.mn-contact .mnc-seal-wrap { --sg: .0781; --sdy: 7.11px; } } /* T 110,3 */
+@media (min-width: 437px) { html.mn-contact .mnc-seal-wrap { --sg: .0736; --sdy: 6.70px; } } /* T 117,1 */
+@media (min-width: 464px) { html.mn-contact .mnc-seal-wrap { --sg: .0693; --sdy: 6.30px; } } /* T 124,4 */
+@media (min-width: 493px) { html.mn-contact .mnc-seal-wrap { --sg: .0653; --sdy: 5.94px; } } /* T 132 */
+@media (min-width: 523px) { html.mn-contact .mnc-seal-wrap { --sg: .0634; --sdy: 5.77px; } } /* T 136 */
+html.mn-contact .mnc-seal-sh { transform: translate(0, var(--sdy)); }
+html.mn-contact .mnc-seal-sh use { fill: #000; transform-origin: 50px 50px; transform: scale(calc(1 + var(--n) * var(--sg))); }
 html.mn-contact .mnc-seal-hi { color: rgba(255, 238, 190, .55); }
 html.mn-contact .mnc-seal-emb { color: #4E3A14; }
 html.mn-contact .mnc-seal-ring { position: absolute; inset: 8%; border-radius: 50%; border: 2px solid rgba(244, 220, 146, .8); opacity: 0; pointer-events: none; }
@@ -441,18 +477,46 @@ html.mn-contact .mnc-seal-wrap[data-seen] .mnc-seal-ring { animation: mnc-shock 
 html.mn-contact .mnc-seal-wrap[data-seen] .mnc-specks i { animation: mnc-speck .85s cubic-bezier(.2, .7, .3, 1) .63s; }
 
 /* ---------------- boucles : en pause hors écran, coupées sur petit téléphone ---------------- */
-html.mn-contact .mnc-front:not([data-vis])::before,
+html.mn-contact .mnc-front:not([data-vis]) .mnc-halo,
+html.mn-contact .mnc-front:not([data-vis]) .mnc-halo::before,
 html.mn-contact .mnc-front:not([data-vis]) .mnc-sign,
-html.mn-contact .mnc-front:not([data-vis]) .mnc-neon-a,
-html.mn-contact .mnc-front:not([data-vis]) .mnc-neon-b,
+html.mn-contact .mnc-front:not([data-vis]) .mnc-neon,
+html.mn-contact .mnc-front:not([data-vis]) .mnc-glow,
 html.mn-contact .mnc-front:not([data-vis]) .mnc-bad,
-html.mn-contact .mnc-front:not([data-vis]) .mnc-sheen { animation-play-state: paused; }
+html.mn-contact .mnc-front:not([data-vis]) .mnc-sheen,
+/* plus fin : les BOUCLES de l'enseigne et de son halo s'arrêtent dès que l'enseigne sort de l'écran (NeonSign), le
+   reflet dès que le guichet en sort. L'allumage (.mnc-halo, .mnc-neon, fini, composé) n'est pas concerné : comme dans
+   l'original, il se termine même si l'on descend aussitôt, et l'enseigne est allumée au retour. */
+html.mn-contact .mnc-front[data-sign-off] .mnc-halo::before,
+html.mn-contact .mnc-front[data-sign-off] .mnc-sign,
+html.mn-contact .mnc-front[data-sign-off] .mnc-glow,
+html.mn-contact .mnc-front[data-sign-off] .mnc-bad,
+html.mn-contact .mnc-booth-col:not([data-vis]) .mnc-sheen { animation-play-state: paused; }
+/* appareil modeste : l'allumage seul, plus aucune boucle ; halo et néons sans calque réservé ; cachet sans paillettes */
 html.mn-contact .mnc-front[data-lite] .mnc-sign,
 html.mn-contact .mnc-front[data-lite] .mnc-bad,
-html.mn-contact .mnc-front[data-lite] .mnc-sheen { animation: none; }
-html.mn-contact .mnc-front[data-lite]::before,
-html.mn-contact .mnc-front[data-lite] .mnc-neon-a { animation: mnc-flick 2.2s steps(1) .25s both; }
-html.mn-contact .mnc-front[data-lite] .mnc-neon-b { animation: mnc-flick-b 2.4s steps(1) 1s both; }
+html.mn-contact .mnc-front[data-lite] .mnc-sheen,
+html.mn-contact .mnc-front[data-lite] .mnc-halo::before,
+html.mn-contact .mnc-front[data-lite] .mnc-glow { animation: none; will-change: auto; }
+html.mn-contact .mnc-seal-wrap[data-lite] .mnc-specks { display: none; }
+
+/* téléphone : une animation d'entrée en « both » reste en vigueur après sa fin et garde son calque composé
+   pour toujours (mesuré : ~14 calques). Leur dernière image valant l'état de base, « backwards » donne le même rendu
+   et rend les calques. Pas sur ordinateur : redessiné hors de son calque, le texte y passerait en ClearType.
+   Gardés en « both » (redessinés hors calque, ils bougeaient d'un pixel ou gagnaient en netteté) : sonnette,
+   rideau, cachet. */
+@media (max-width: 899px) and (pointer: coarse) {
+  html.mn-contact .mnc-rv,
+  html.mn-contact .mnc-sub::before,
+  html.mn-contact .mnc-sub::after,
+  html.mn-contact .mnc-booth-col[data-seen] .mnc-bell-waves:not(.mnc-h) i,
+  html.mn-contact .mnc-booth-col[data-seen] .mnc-lamp,
+  html.mn-contact .mnc-booth-col[data-seen] .mnc-out,
+  html.mn-contact .mnc-desk[data-seen] .mnc-flourish,
+  html.mn-contact .mnc-halo,
+  html.mn-contact .mnc-neon-a,
+  html.mn-contact .mnc-neon-b { animation-fill-mode: backwards; }
+}
 
 /* ---------------- images clés ---------------- */
 @keyframes mnc-flick { 0% { opacity: 0 } 8% { opacity: .9 } 10% { opacity: .1 } 14% { opacity: 1 } 22% { opacity: .25 } 26% { opacity: 1 } 60% { opacity: .85 } 62%, 100% { opacity: 1 } }
@@ -464,9 +528,7 @@ html.mn-contact .mnc-front[data-lite] .mnc-neon-b { animation: mnc-flick-b 2.4s 
 @keyframes mnc-draw { from { transform: scaleX(0); } }
 @keyframes mnc-press { 0%, 100% { transform: none } 40% { transform: translateY(38%) } }
 @keyframes mnc-ring { 0%, 100% { transform: none } 14% { transform: rotate(7deg) } 28% { transform: rotate(-6deg) } 44% { transform: rotate(4.5deg) } 60% { transform: rotate(-3deg) } 78% { transform: rotate(1.5deg) } }
-@keyframes mnc-ring-h { 0%, 100% { transform: none } 14% { transform: rotate(7deg) } 28% { transform: rotate(-6deg) } 44% { transform: rotate(4.5deg) } 60% { transform: rotate(-3deg) } 78% { transform: rotate(1.5deg) } }
 @keyframes mnc-wave { 0% { opacity: 0; transform: scale(.3) } 12% { opacity: .9 } 100% { opacity: 0; transform: scale(1) } }
-@keyframes mnc-wave-h { 0% { opacity: 0; transform: scale(.3) } 12% { opacity: .9 } 100% { opacity: 0; transform: scale(1) } }
 @keyframes mnc-shut { 0% { transform: none } 12% { transform: translateY(4%) } 100% { transform: translateY(-101%) } }
 @keyframes mnc-lamp { 0% { opacity: 0 } 20% { opacity: .7 } 28% { opacity: .15 } 40% { opacity: 1 } 52% { opacity: .5 } 60%, 100% { opacity: 1 } }
 @keyframes mnc-out { 0% { transform: translateY(-105%) } 70% { transform: translateY(2.5%) } 100% { transform: none } }

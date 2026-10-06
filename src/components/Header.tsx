@@ -11,7 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import logo from "@/assets/logo.jpeg";
+// Logo affiché en 48 px : 96 / 192 / 288 px selon la densité d'écran (×1, ×2, ×3) au lieu du JPEG de 1000 px.
+import logo from "@/assets/logo.jpeg?w=96&quality=90&format=webp";
+import logo2x from "@/assets/logo.jpeg?w=192&quality=90&format=webp";
+import logo3x from "@/assets/logo.jpeg?w=288&quality=90&format=webp";
+const logoSrcSet = `${logo} 1x, ${logo2x} 2x, ${logo3x} 3x`;
 
 const navLinks = [
   { href: "/", label: "Accueil" },
@@ -79,7 +83,11 @@ const Header = () => {
             <Link to="/" className="flex items-center gap-3">
               <img
                 src={logo}
+                srcSet={logoSrcSet}
                 alt="High Society Botanicals"
+                width={48}
+                height={48}
+                decoding="async"
                 className="w-12 h-12 object-contain rounded"
               />
               <div className="hidden md:block">

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
+import { shareableProductImage } from "@/lib/responsiveProductImage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -163,8 +164,8 @@ const SocialMediaManager = () => {
   const getProductImageUrl = (productId: string): string | null => {
     const product = allProducts.find(p => p.id === productId);
     if (!product) return null;
-    // Product images are imported assets — build absolute URL
-    return product.image;
+    // Product images are imported assets (WebP) — services externes : variante JPEG
+    return shareableProductImage(product.image);
   };
 
   const handleGenerateSeries = async () => {
@@ -178,7 +179,7 @@ const SocialMediaManager = () => {
         cbdPercentage: p.cbdPercentage,
         mood: p.mood,
         terpenes: p.terpenes,
-        imageUrl: `${window.location.origin}${p.image}`,
+        imageUrl: `${window.location.origin}${shareableProductImage(p.image)}`,
       }));
 
       const { data, error } = await supabase.functions.invoke("social-content", {
@@ -269,7 +270,7 @@ const SocialMediaManager = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `hsb-post-${Date.now()}.png`;
+      a.download = `hsb-post-${Date.now()}.${(blob.type.split("/")[1] || "png").replace("jpeg", "jpg")}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -304,7 +305,7 @@ const SocialMediaManager = () => {
         name: p.name,
         category: p.category,
         description: p.description,
-        imageUrl: `${window.location.origin}${p.image}`,
+        imageUrl: `${window.location.origin}${shareableProductImage(p.image)}`,
       }));
 
       // Build absolute URL of the reference product photo (site image)

@@ -17,6 +17,7 @@ const ContactPage = () => {
         <EmblemSprite />
 
         <Live tag="section" className="mnc-front" threshold={0} labelledBy="mnc-t">
+          <span className="mnc-halo" aria-hidden="true" />
           <div className="mnc-grid">
             <NeonSign />
 

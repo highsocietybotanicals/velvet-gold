@@ -1,4 +1,5 @@
 import { useEffect, useRef, type CSSProperties } from "react";
+import { isLowEnd } from "@/components/minuit/minuitData";
 
 export interface ProTickerItem {
   id: string;
@@ -20,6 +21,9 @@ const ProTicker = ({ items }: { items: ProTickerItem[] }) => {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Téléphone modeste : boucle décorative retirée, bandeau figé et défilable au doigt (voir pro.css).
+    const fine = window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 900px)").matches;
+    if (!fine && isLowEnd()) { el.classList.add("is-lite"); return; }
     if (!("IntersectionObserver" in window)) { el.classList.add("is-live"); return; }
     const io = new IntersectionObserver(([e]) => el.classList.toggle("is-live", e.isIntersecting));
     io.observe(el);

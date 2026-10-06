@@ -40,3 +40,38 @@ export const useInViewAttr = (ref: RefObject<Element>, enabled = true) => {
     };
   }, [ref, enabled]);
 };
+
+// Entrée des casiers : un second observateur partagé, mêmes réglages que l'ancien
+// whileInView de framer-motion (viewport { once: true, margin: "-50px" }, seuil 0).
+// Il pose data-in une seule fois ; l'animation elle-même est en CSS (coffre.css, cf-lk-in),
+// donc jouée par le compositeur et non image par image en JavaScript.
+let revealIo: IntersectionObserver | null = null;
+const revealObserver = () => {
+  if (!revealIo) {
+    revealIo = new IntersectionObserver(
+      (entries, o) =>
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          e.target.setAttribute("data-in", "");
+          o.unobserve(e.target);
+        }),
+      { rootMargin: "-50px", threshold: 0 },
+    );
+  }
+  return revealIo;
+};
+
+/** enabled = false (mouvement réduit) : l'élément est montré tout de suite, sans entrée. */
+export const useRevealOnce = (ref: RefObject<Element>, enabled = true) => {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || el.hasAttribute("data-in")) return;
+    if (!enabled || typeof IntersectionObserver === "undefined") {
+      el.setAttribute("data-in", "");
+      return;
+    }
+    const o = revealObserver();
+    o.observe(el);
+    return () => o.unobserve(el);
+  }, [ref, enabled]);
+};

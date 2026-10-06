@@ -3,10 +3,11 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import emblemRaw from "@/assets/brand/hsb-emblem.svg?raw";
-import mango from "@/assets/flowers/mango-x-ice-real.jpg";
-import platinum from "@/assets/flowers/platinum-og-real.jpg";
-import lemon from "@/assets/resins/lemon-punch-hash-real.jpg";
-import bhm from "@/assets/resins/bhm-real.jpg";
+// WebP à la taille d'origine (w=1200 est borné par vite-imagetools à la largeur source) : les w/h déclarés ci-dessous restent exacts.
+import mango from "@/assets/flowers/mango-x-ice-real.jpg?w=1200&quality=82&format=webp";
+import platinum from "@/assets/flowers/platinum-og-real.jpg?w=1200&quality=82&format=webp";
+import lemon from "@/assets/resins/lemon-punch-hash-real.jpg?w=1200&quality=82&format=webp";
+import bhm from "@/assets/resins/bhm-real.jpg?w=1200&quality=82&format=webp";
 import { mountLevitation, type LevitationProduct } from "./levitationEngine";
 import "./levitation-hero.css";
 

@@ -16,9 +16,12 @@ import TerpeneRadar from "@/components/TerpeneRadar";
 import ProductReviews from "@/components/ProductReviews";
 import { calculatePrice, getGifts } from "@/lib/pricing";
 import { getPochonImage, getPochonLabel } from "@/data/accessories";
-import { LOT_ORDER, WEIGHTS, cutSources, edito, eur, gfmt, typeLabel } from "@/components/minuit/minuitData";
+import { LOT_ORDER, WEIGHTS, cutSources, edito, eur, gfmt, isLowEnd, typeLabel } from "@/components/minuit/minuitData";
 import "@/components/minuit/minuit.css";
 import "@/components/minuit/minuitProduct.css";
+
+/** Téléphone modeste (≤ 899 px + isLowEnd) : boucles purement décoratives retirées (classe lite). Calculé une fois. */
+const LITE = typeof window !== "undefined" && !!window.matchMedia?.("(max-width: 899px)").matches && isLowEnd();
 
 // Calculate similarity between two products based on terpenes
 const calculateTerpeneSimilarity = (
@@ -162,6 +165,16 @@ const ProductPage = () => {
     return () => io.disconnect();
   }, [product?.id, product?.isOutOfStock]);
 
+  // Boucles décoratives (flottement du lot, feuille d'or) en pause hors écran : attribut data-off posé hors React (aucun rendu)
+  useEffect(() => {
+    const page = vitRef.current?.closest(".mcp-page");
+    if (!page || typeof IntersectionObserver === "undefined") return;
+    const els = page.querySelectorAll<HTMLElement>(".mcp-arch, .mcp .foil");
+    const io = new IntersectionObserver((entries) => entries.forEach((en) => en.target.toggleAttribute("data-off", !en.isIntersecting)));
+    els.forEach((el) => io.observe(el));
+    return () => { io.disconnect(); els.forEach((el) => el.removeAttribute("data-off")); };
+  }, [product?.id, product?.isOutOfStock, catalogLoading]);
+
   const handlePresetClick = (weight: number) => {
     setSelectedWeight(weight);
     setCustomWeight(weight.toString());
@@ -240,7 +253,7 @@ const ProductPage = () => {
       <Header />
 
       {/* data-fx-off : la fiche gère ses propres animations (le kit hsb-fx décalerait la vitrine) */}
-      <main className="mc mcp mcp-main" data-fx-off="">
+      <main className={`mc mcp mcp-main${LITE ? " lite" : ""}`} data-fx-off="">
         <nav className="mcp-crumb" aria-label="Fil d'Ariane">
           <button onClick={() => navigate(-1)}>← Retour</button>
           <span className="mono-s">Collection N° 26 · {typeLabel(product)}</span>
@@ -255,7 +268,8 @@ const ProductPage = () => {
               ) : (
                 <>
                   <div className="mcp-stage">
-                    <LotImg key={product.id} p={product} alt={`${product.name}, ${typeLabel(product).toLowerCase()} CBD`} draggable={false} />
+                    {/* image principale (LCP) : priorité réseau haute ; attribut HTML en minuscules (React 18 ne connaît pas fetchPriority) */}
+                    <LotImg key={product.id} p={product} alt={`${product.name}, ${typeLabel(product).toLowerCase()} CBD`} draggable={false} {...{ fetchpriority: "high" }} />
                   </div>
                   <span className="mcp-ring" aria-hidden="true" />
                 </>
@@ -345,7 +359,7 @@ const ProductPage = () => {
                 <button ref={ctaRef} className="btn-or" onClick={handleAddToCart}>Ajouter {gfmt(selectedWeight)} · {eur(total)}</button>
 
                 <div className="mcp-pochon">
-                  <img src={pochonImage} alt={pochonLabel} loading="lazy" />
+                  <img src={pochonImage} width={48} height={48} alt={pochonLabel} loading="lazy" decoding="async" />
                   <p><b>{pochonLabel} inclus</b>Votre lot voyage scellé, colis discret.</p>
                   <Link className="btn-line" to="/#accessoires">Un pochon en plus ?</Link>
                 </div>

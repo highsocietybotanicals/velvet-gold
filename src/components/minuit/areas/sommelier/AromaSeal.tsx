@@ -1,6 +1,7 @@
 // Sceau de la carte (téléphone et tablette) : la roue des arômes en réduction, accrochée au coin de la carte,
 // pour que la visiteuse voie la roue tourner et s'allumer pendant qu'elle lit la carte, la grande roue étant
 // alors hors de l'écran. Purement visuel (aria-hidden), mêmes positions que la grande roue, sans texte gravé.
+// Les anneaux qui tournent sont des calques HTML (rotation composée par la carte graphique, comme la grande roue).
 import { useId, type CSSProperties } from "react";
 import type { Product } from "@/data/products";
 import { FAMILIES } from "./cave";
@@ -27,21 +28,25 @@ const AromaSeal = ({ intention, taste, product, caracs }: Props) => {
     .filter(Boolean)
     .join(" ");
 
+  // calques HTML superposés dans l'ordre de peinture d'origine (cadran, familles, caractères, étoile, aiguille) :
+  // les rotations portent sur les calques (composées), plus sur des <g> SVG repeints à chaque image
   return (
     <span className={cls} style={style} aria-hidden="true">
       <svg viewBox="0 0 400 400" focusable="false">
-        <defs>
-          <linearGradient id={`${uid}g`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#7D6936" />
-            <stop offset=".3" stopColor="#F4DC92" />
-            <stop offset=".55" stopColor="#B8913E" />
-            <stop offset=".8" stopColor="#FBE7A6" />
-            <stop offset="1" stopColor="#9C7A35" />
-          </linearGradient>
-        </defs>
         <circle className="sm-sw-hair" cx={C} cy={C} r={194} />
         <path className="sm-sw-tick" d={TICKS} />
-        <g className="sm-sw-fam">
+      </svg>
+      <span className="sm-sw-l sm-sw-fam">
+        <svg viewBox="0 0 400 400" focusable="false">
+          <defs>
+            <linearGradient id={`${uid}g`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#7D6936" />
+              <stop offset=".3" stopColor="#F4DC92" />
+              <stop offset=".55" stopColor="#B8913E" />
+              <stop offset=".8" stopColor="#FBE7A6" />
+              <stop offset="1" stopColor="#9C7A35" />
+            </linearGradient>
+          </defs>
           {FAMILIES.map((fam, i) => {
             const d = sector(112, 162, i * 90 + 2, i * 90 + 88);
             return (
@@ -51,8 +56,10 @@ const AromaSeal = ({ intention, taste, product, caracs }: Props) => {
               </g>
             );
           })}
-        </g>
-        <g className="sm-sw-car">
+        </svg>
+      </span>
+      <span className="sm-sw-l sm-sw-car">
+        <svg viewBox="0 0 400 400" focusable="false">
           {caracs.map((c, i) => {
             const d = sector(62, 104, i * 90 - 43, i * 90 + 43);
             return (
@@ -62,10 +69,18 @@ const AromaSeal = ({ intention, taste, product, caracs }: Props) => {
               </g>
             );
           })}
-        </g>
-        <path className="sm-sw-star" d={STAR} />
-        <path className="sm-sw-needle" d="M184 0L216 0L200 40Z" />
-      </svg>
+        </svg>
+      </span>
+      <span className="sm-sw-l sm-sw-star">
+        <svg viewBox="0 0 400 400" focusable="false">
+          <path d={STAR} />
+        </svg>
+      </span>
+      <span className="sm-sw-l">
+        <svg viewBox="0 0 400 400" focusable="false">
+          <path className="sm-sw-needle" d="M184 0L216 0L200 40Z" />
+        </svg>
+      </span>
     </span>
   );
 };

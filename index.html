@@ -3,9 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- fond nuit avant l'arrivée du CSS (aucun flash blanc) ; remplacé ensuite par la même couleur du thème -->
+    <style>body{background-color:hsl(260 23% 3%)}</style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,800;125,900&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400;1,6..96,500&family=Geist+Mono:wght@300;400;500;600&family=Geist:wght@300;400;500;600&family=Poiret+One&display=swap" />
+    <!-- Polices : mêmes familles, mêmes fichiers woff2 (une police variable par famille), mêmes bornes de graisse
+         exprimées en plages (800..900, 400..500, 300..600) → feuille 2,5× plus légère ; chargée sans bloquer le rendu -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,800..900&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..500;1,6..96,400..500&family=Geist+Mono:wght@300..600&family=Geist:wght@300..600&family=Poiret+One&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,800..900&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..500;1,6..96,400..500&family=Geist+Mono:wght@300..600&family=Geist:wght@300..600&family=Poiret+One&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,800..900&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..500;1,6..96,400..500&family=Geist+Mono:wght@300..600&family=Geist:wght@300..600&family=Poiret+One&display=swap" /></noscript>
     <!-- TODO: Set the document title to the name of your application -->
     <title>High Society Botanicals — Fleurs & Résines CBD Haute Couture</title>
     <meta name="description" content="Maison française de fleurs et résines CBD premium, cultivées Indoor pour connaisseurs exigeants. Sélection raffinée, service Sommelier et livraison discrète." />

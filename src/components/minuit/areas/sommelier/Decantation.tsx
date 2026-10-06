@@ -1,10 +1,13 @@
 // Décantation : une carafe se remplit d'or liquide sous la niche, puis s'efface pour révéler le lot
 // (détourage via cutSources, avec repli sur la photo produit). Animation CSS jouée une seule fois au montage ;
 // en mouvement réduit, l'état final (le lot) s'affiche directement.
-import { useId, useMemo, useState } from "react";
+// Le lot détouré flotte via une enveloppe : l'image et son ombre portée (filtre) sont peintes une seule fois
+// dans le calque qui bouge, au lieu de réappliquer le filtre à chaque image. Flottement en pause hors écran.
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Product } from "@/data/products";
 import { cutSources, typeLabel } from "@/components/minuit/minuitData";
 import { lotNumber } from "./cave";
+import { observeLive } from "./live";
 
 // silhouette de la carafe (col étroit, panse large) dans un viewBox 200 × 330 décalé vers le haut
 const BODY =
@@ -19,18 +22,21 @@ const WAVE = (() => {
 const LotImg = ({ p }: { p: Product }) => {
   const srcs = useMemo(() => cutSources(p), [p]);
   const [i, setI] = useState(0);
+  const kind = srcs[i] === p.image ? "ph" : "cut";
   return (
-    <img
-      src={srcs[i]}
-      alt={`${p.name}, ${typeLabel(p).toLowerCase()} CBD`}
-      decoding="async"
-      draggable={false}
-      className={srcs[i] === p.image ? "ph" : "cut"}
-      onError={(e) => {
-        if (i + 1 < srcs.length) setI(i + 1);
-        else if (!e.currentTarget.src.endsWith("/placeholder.svg")) e.currentTarget.src = "/placeholder.svg";
-      }}
-    />
+    <span className={`sm-lot-f ${kind}`}>
+      <img
+        src={srcs[i]}
+        alt={`${p.name}, ${typeLabel(p).toLowerCase()} CBD`}
+        decoding="async"
+        draggable={false}
+        className={kind}
+        onError={(e) => {
+          if (i + 1 < srcs.length) setI(i + 1);
+          else if (!e.currentTarget.src.endsWith("/placeholder.svg")) e.currentTarget.src = "/placeholder.svg";
+        }}
+      />
+    </span>
   );
 };
 
@@ -38,8 +44,11 @@ const Decantation = ({ p }: { p: Product }) => {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   // lot hors collection : une étoile gravée plutôt qu'un numéro qu'il n'a pas
   const num = lotNumber(p);
+  // décor : le flottement du lot ne tourne que lorsque la niche est à l'écran
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => (ref.current ? observeLive([ref.current]) : undefined), []);
   return (
-    <div className="sm-decant">
+    <div className="sm-decant" ref={ref}>
       <div className="sm-niche">
         <span className={`sm-niche-num${num ? "" : " is-star"}`} aria-hidden="true">{num ?? "✦"}</span>
         <span className="sm-niche-beam" aria-hidden="true" />

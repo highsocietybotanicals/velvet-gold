@@ -31,6 +31,14 @@ const useMark = <T extends HTMLElement>(threshold: number, fallbackMs = 0) => {
     if (!el) return;
     if (isLowEnd()) el.setAttribute("data-lite", "");
     const seen = () => el.setAttribute("data-seen", "");
+    // Déjà à l'écran au montage : marquage immédiat. L'observateur peut tarder (onglet en arrière-plan, page chargée
+    // pendant une transition) et l'allumage de l'enseigne ne doit jamais attendre.
+    const r0 = el.getBoundingClientRect();
+    if (r0.height > 0 && r0.bottom > 0 && r0.top < window.innerHeight) {
+      el.setAttribute("data-vis", "");
+      const ratio0 = (Math.min(r0.bottom, window.innerHeight) - Math.max(r0.top, 0)) / r0.height;
+      if (ratio0 >= threshold - 0.01) seen();
+    }
     if (typeof IntersectionObserver === "undefined") {
       seen();
       el.setAttribute("data-vis", "");
@@ -79,28 +87,53 @@ export const Live = ({ tag = "div", className, threshold = 0.2, fallbackMs = 0, 
 };
 
 /* ---------- enseigne néon « Ouvert la nuit » ---------- */
-export const NeonSign = () => (
-  <div className="mnc-sign" aria-hidden="true">
-    <span className="mnc-wire mnc-wire-l" />
-    <span className="mnc-wire mnc-wire-r" />
-    <div className="mnc-board">
-      <i className="mnc-screw" />
-      <i className="mnc-screw" />
-      <i className="mnc-screw" />
-      <i className="mnc-screw" />
-      <span className="mnc-neon mnc-neon-a">Ouvert</span>
-      <span className="mnc-neon mnc-neon-b">
-        <svg className="mnc-moon" viewBox="0 0 40 40">
-          <path d="M24 5.5A15 15 0 1 0 34.5 24A12 12 0 0 1 24 5.5Z" />
-        </svg>
-        <span>
-          la nui<span className="mnc-bad">t</span>
+/* Sur téléphone la façade fait plus de deux écrans : on lit la carte, enseigne hors champ.
+   Les boucles de l'enseigne et de son halo ne tournent donc que si l'enseigne est à l'écran
+   (marge de 160 px : le halo déborde de l'enseigne) — data-sign-off posé sur la façade. */
+export const NeonSign = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    const front = el?.closest<HTMLElement>(".mnc-front");
+    if (!el || !front || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => front.toggleAttribute("data-sign-off", !entries[entries.length - 1].isIntersecting),
+      { rootMargin: "160px 0px" },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      front.removeAttribute("data-sign-off");
+    };
+  }, []);
+  return (
+    <div ref={ref} className="mnc-sign" aria-hidden="true">
+      <span className="mnc-wire mnc-wire-l" />
+      <span className="mnc-wire mnc-wire-r" />
+      <div className="mnc-board">
+        <i className="mnc-screw" />
+        <i className="mnc-screw" />
+        <i className="mnc-screw" />
+        <i className="mnc-screw" />
+        {/* .mnc-neon s'allume (scintillement), .mnc-glow bourdonne : une seule animation d'opacité par élément */}
+        <span className="mnc-neon mnc-neon-a">
+          <span className="mnc-glow">Ouvert</span>
         </span>
-      </span>
-      <span className="mnc-board-cap">High Society · Collection N° 26</span>
+        <span className="mnc-neon mnc-neon-b">
+          <span className="mnc-glow">
+            <svg className="mnc-moon" viewBox="0 0 40 40">
+              <path d="M24 5.5A15 15 0 1 0 34.5 24A12 12 0 0 1 24 5.5Z" />
+            </svg>
+            <span>
+              la nui<span className="mnc-bad">t</span>
+            </span>
+          </span>
+        </span>
+        <span className="mnc-board-cap">High Society · Collection N° 26</span>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ---------- sonnette de comptoir ---------- */
 const Bell = () => (
@@ -159,6 +192,9 @@ export const Guichet = () => (
 /* ---------- carte de visite gravée, glissée sous la vitre ---------- */
 export const EngravedCard = ({ children }: { children: ReactNode }) => {
   const ref = useRef<HTMLDivElement>(null);
+  /* Mesuré (perf/contact, trace Chrome) : laissé tel quel. Chrome aligne pointermove sur l'image : ce
+     getBoundingClientRect lit des styles déjà à jour (0 recalcul forcé). Le déplacer dans un rAF le faisait
+     passer APRÈS les autres rAF de la page (curseur…) qui salissent les styles : +25 % de recalculs. */
   const move = (ev: ReactPointerEvent<HTMLDivElement>) => {
     if (ev.pointerType !== "mouse") return;
     const el = ref.current;
@@ -212,6 +248,25 @@ const SEAL_PATH = (() => {
 })();
 const SPECKS = [0, 52, 104, 155, 208, 258, 310];
 
+/* Ombre portée du cachet, pré-dessinée (remplace filter: drop-shadow(0 7px 7px rgba(0,0,0,.65)), qui obligeait
+   le compositeur à recalculer un flou à chaque image du coup de tampon) : 21 copies du contour, agrandies par
+   quart d'écart-type de -2,5 σ à +2,5 σ et superposées, reproduisent le profil gaussien du flou (σ = 3,5 px).
+   Chaque copie a l'opacité qui donne, bande par bande, 65 % × Φ(-d/σ). Pas (σ) et décalage (7 px) sont
+   convertis en unités SVG selon la taille du cachet : voir --sg / --sdy dans contact.css. Raster unique. */
+const SHADOW = (() => {
+  // fonction de répartition de la loi normale (Abramowitz-Stegun 7.1.26, erreur < 1,5e-7)
+  const phi = (x: number) => {
+    const z = Math.abs(x) / Math.SQRT2;
+    const t = 1 / (1 + 0.3275911 * z);
+    const erf = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-z * z);
+    return x >= 0 ? (1 + erf) / 2 : (1 - erf) / 2;
+  };
+  const n = 21;
+  // transmission voulue dans la bande j (milieu de bande à (-2,625 + 0,25 j) σ du contour)
+  const tr = (j: number) => (j >= n ? 1 : 1 - 0.65 * phi(2.625 - 0.25 * j));
+  return Array.from({ length: n }, (_, j) => ({ n: -2.5 + 0.25 * j, a: (1 - tr(j) / tr(j + 1)).toFixed(4) }));
+})();
+
 export const WaxSeal = () => {
   const ref = useMark<HTMLDivElement>(0.6);
   return (
@@ -236,7 +291,13 @@ export const WaxSeal = () => {
             <stop offset=".7" stopColor="#B8913E" />
             <stop offset="1" stopColor="#8A6A2A" />
           </radialGradient>
+          <path id="mnc-seal-p" d={SEAL_PATH} />
         </defs>
+        <g className="mnc-seal-sh">
+          {SHADOW.map((s) => (
+            <use key={s.n} href="#mnc-seal-p" fillOpacity={s.a} style={{ "--n": s.n } as CSSProperties} />
+          ))}
+        </g>
         <path d={SEAL_PATH} fill="url(#mnc-wax)" />
         <circle cx="50" cy="50" r="34.6" fill="none" stroke="rgba(255,240,200,.38)" strokeWidth=".8" />
         <circle cx="50" cy="50" r="33.4" fill="url(#mnc-wax-in)" stroke="rgba(74,54,18,.75)" strokeWidth="1.6" />

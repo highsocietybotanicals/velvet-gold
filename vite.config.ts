@@ -18,4 +18,19 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // build.target : défaut de Vite 5 ('modules' = es2020 + navigateurs à modules ES) — déjà es2020, inchangé.
+  build: {
+    rollupOptions: {
+      output: {
+        // Bibliothèques stables à part : un déploiement du site ne force plus à retélécharger React ni Supabase.
+        // Rollup range aussi dans le même morceau toutes leurs dépendances non attribuées (pas d'import croisé).
+        manualChunks(id: string) {
+          if (id.includes("commonjsHelpers")) return "vendor-react"; // aides CJS de React : avec React, pas dans le bundle du site
+          if (!id.includes("node_modules")) return;
+          if (/node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom|@remix-run[\\/]router)[\\/]/.test(id)) return "vendor-react";
+          if (/node_modules[\\/](@supabase|@tanstack)[\\/]/.test(id)) return "vendor-data";
+        },
+      },
+    },
+  },
 }));

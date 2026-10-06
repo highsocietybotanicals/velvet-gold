@@ -95,6 +95,17 @@ export const CarnetCover = () => (
 );
 
 /**
+ * Animations à usage unique du carnet (profil.css) : leur dernière image est l'état de base de l'élément.
+ * Exception volontaire : la gravure du nom (pf-engrave) reste en place. Ses lettres partent à l'échelle 1,45 ;
+ * le navigateur les garde peintes à cette échelle tant que l'animation existe, et sous le halo doré de l'ordinateur
+ * ce rendu (reflets de la feuille d'or) changerait légèrement si on la retirait.
+ */
+const ONE_SHOT = new Set([
+  "pf-fade", "pf-book-center", "pf-band", "pf-open", "pf-draw", "pf-swing", "pf-drip",
+  "pf-print", "pf-splash", "pf-punch", "pf-press",
+]);
+
+/**
  * Révèle les pages du carnet (feuillet qui se pose) et imprime les tampons un à un
  * quand ils entrent à l'écran. Un seul IntersectionObserver ; les éléments ajoutés plus tard
  * (commandes chargées, détails ouverts) sont repérés par un MutationObserver.
@@ -150,6 +161,22 @@ export const CarnetReveal = ({ className, children }: { className?: string; chil
       mo.disconnect();
       root.classList.remove("pf-armed");
     };
+  }, []);
+
+  // Une animation à usage unique qui vient de finir est retirée (classe pf-done) : rien ne change à l'écran,
+  // mais il ne reste aucune animation active (ni calque gardé pour rien, ni style recalculé pour elle).
+  // Un seul écouteur pour tout le carnet ; le tampon attend son éclaboussure (::after), qui finit après l'impression.
+  useLayoutEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const onEnd = (e: AnimationEvent) => {
+      if (!ONE_SHOT.has(e.animationName)) return;
+      const el = e.target as Element;
+      if (el.hasAttribute("data-pf-stamp") && e.animationName !== "pf-splash") return;
+      el.classList.add("pf-done");
+    };
+    root.addEventListener("animationend", onEnd);
+    return () => root.removeEventListener("animationend", onEnd);
   }, []);
 
   return (

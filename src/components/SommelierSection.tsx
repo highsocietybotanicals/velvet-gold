@@ -145,7 +145,9 @@ const SommelierSection = () => {
           <header className="sm-head">
             <p className="sm-kick sm-up">Conseil Personnalisé · Collection N° 26</p>
             <h1 id="sm-title" className="sm-title">
-              <span className="sm-title-neon">La cave du</span>{" "}
+              {/* néon : allumage sur l'enveloppe, bourdonnement sur le texte (deux éléments, pour que le
+                  bourdonnement passe à la carte graphique au lieu d'occuper le fil principal à chaque image) */}
+              <span className="sm-title-neon"><span className="sm-title-hum">La cave du</span></span>{" "}
               <span className="sm-title-foil sm-up sm-d1">Sommelier</span>
             </h1>
             <span className="sm-rule sm-up sm-d2" aria-hidden="true"><i /></span>

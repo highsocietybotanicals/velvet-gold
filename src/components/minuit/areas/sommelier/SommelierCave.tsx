@@ -1,8 +1,10 @@
 // « La cave du Sommelier » : la section et son décor (voûtes, casiers, lueur de bougie, sol, poussières d'or).
-// Purement visuel. Les boucles décoratives ne tournent que lorsque la cave est à l'écran (classe is-live),
+// Purement visuel. Les boucles décoratives ne tournent que lorsque leur groupe est à l'écran (classe is-live
+// sur la cave, le halo, le néon et la colonne de la roue : sur téléphone la roue est sous la carte),
 // et restent figées sur un téléphone modeste (classe lite) ou si la visiteuse réduit les animations (CSS).
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { isLowEnd } from "@/components/minuit/minuitData";
+import { observeLive } from "./live";
 import "./sommelier.css";
 
 // poussières d'or (ordinateur seulement, voir le CSS)
@@ -24,13 +26,8 @@ const SommelierCave = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (typeof IntersectionObserver === "undefined") {
-      el.classList.add("is-live");
-      return;
-    }
-    const io = new IntersectionObserver(([e]) => el.classList.toggle("is-live", e.isIntersecting));
-    io.observe(el);
-    return () => io.disconnect();
+    // éléments à classe constante uniquement (React ne réécrit pas leur className) : la cave, le halo, le néon, la colonne de la roue
+    return observeLive([el, ...el.querySelectorAll(".sm-glow, .sm-title-neon, .sm-wheel-col")]);
   }, []);
 
   return (

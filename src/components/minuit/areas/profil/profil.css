@@ -126,10 +126,11 @@ html.mn-profil .pf-garde-foot {
   font-size: 9.5px; letter-spacing: .32em; text-transform: uppercase; color: var(--mn-ivoire-3);
 }
 
-/* signet de satin violet glissé entre les pages : il ne dépasse qu'en pied du carnet */
+/* signet de satin violet glissé entre les pages : il ne dépasse qu'en pied du carnet
+   (pas d'ombre portée : le clip-path la découperait entièrement, elle ne se voyait pas) */
 html.mn-profil .pf-signet {
   position: absolute; right: 24%; top: calc(100% - 3px); width: 13px; height: 52px; pointer-events: none;
-  transform-origin: 50% 0; box-shadow: 0 6px 14px -6px rgba(0, 0, 0, .8);
+  transform-origin: 50% 0;
   background: linear-gradient(90deg, #2c1338, #6d3388 42%, #B061D6 52%, #4d2361);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 9px), 0 100%);
   animation: pf-swing 2.6s 2.6s ease-in-out both;
@@ -449,12 +450,31 @@ html.mn-profil .pf-track-addr { margin: 4px 0 0; font-family: var(--mn-serif); f
 /* ---------------------------------------------------------------- registre : tampons d'encre dorée */
 html.mn-profil .pf-orders { display: flex; flex-direction: column; }
 html.mn-profil .pf-order + .pf-order { border-top: 1px dashed rgba(201, 162, 74, .22); }
+/* registre long : les lignes hors écran (tampon SVG + texte en arc) ne sont ni mises en page ni peintes avant d'approcher.
+   Hauteur réservée = tampon + 36 px (ligne repliée). Marge de découpe 120 px : tout le tampon tient dedans à chaque image de
+   son impression (départ ×2,1 incliné : bandeau jusqu'à ≈117 px hors de la ligne), éclaboussure et contour de focus compris.
+   Seulement sur moteur Chrome (Chrome, Edge, Samsung Internet), où cette marge s'applique au confinement ; Safari ne la connaît
+   pas, Firefox (non vérifié) est exclu par prudence : ils gardent le rendu d'origine sans confinement. */
+@supports (overflow-clip-margin: 1px) and (not (-moz-appearance: none)) {
+  @media screen {
+    html.mn-profil .pf-order {
+      content-visibility: auto; overflow-clip-margin: 120px;
+      contain-intrinsic-block-size: auto calc(clamp(118px, 32vw, 138px) + 36px);
+    }
+  }
+}
 html.mn-profil .pf-order-btn {
+  position: relative; isolation: isolate;
   display: flex; align-items: center; gap: clamp(16px, 4vw, 36px); width: 100%; padding: 18px 4px;
   border: 0; border-radius: 2px; background: transparent; color: inherit; text-align: left; cursor: pointer;
-  transition: background-color .3s;
 }
-html.mn-profil .pf-order-btn:hover { background-color: rgba(201, 162, 74, .035); }
+/* survol : le voile doré est pré-peint sous le contenu et n'apparaît qu'en fondu d'opacité
+   (la ligne et son tampon ne sont plus repeints à chaque image) */
+html.mn-profil .pf-order-btn::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: rgba(201, 162, 74, .035); opacity: 0; transition: opacity .3s;
+}
+html.mn-profil .pf-order-btn:hover::before { opacity: 1; }
 html.mn-profil .pf-order-btn:focus-visible { outline: 1px solid var(--mn-or-clair); outline-offset: 2px; }
 @media (min-width: 640px) {
   html.mn-profil .pf-order:nth-child(even) .pf-order-btn { flex-direction: row-reverse; text-align: right; }
@@ -582,6 +602,25 @@ html.mn-profil .pf-armed [data-pf-stamp].is-in { animation: pf-print .85s calc(.
 html.mn-profil .pf-armed [data-pf-stamp].is-in::after { animation: pf-splash .9s calc(.75s + var(--pf-d, 0ms)) ease-out both; }
 html.mn-profil .pf-armed .pf-loyal.is-in .pf-punches li.on .pf-hole { animation: pf-punch .55s calc(.55s + var(--i, 0) * 90ms) cubic-bezier(.2, .8, .3, 1.3) both; }
 html.mn-profil .pf-armed .pf-pro.is-in .pf-wax { animation: pf-press .75s .5s cubic-bezier(.2, .8, .3, 1.2) both; }
+
+/* animation à usage unique déjà jouée (classe pf-done posée par CarnetReveal à sa fin) : retirée, le navigateur
+   n'a plus à garder ces éléments sur des calques à part (les tampons, partis à l'échelle 2,1, y restaient à vie).
+   La dernière image de chacune est l'état de base de l'élément, donc rien ne bouge à l'écran ;
+   seule exception, recopiée ici : la goutte du « Feuilleter » finit effacée. La gravure du nom n'est pas retirée (voir Carnet.tsx). */
+html.mn-profil .pf-done,
+html.mn-profil [data-pf-stamp].pf-done::after { animation: none !important; }
+html.mn-profil .pf-hint i.pf-done { opacity: 0; }
+/* une animation de transform finie laisse la matrice identité (et non « none ») : on la garde telle quelle
+   (simple nœud de transformation, aucun calque) */
+html.mn-profil .pf-name-rule.pf-done,
+html.mn-profil .pf-signet.pf-done,
+html.mn-profil .pf-hint i.pf-done,
+html.mn-profil .pf-hole.pf-done,
+html.mn-profil .pf-wax.pf-done { transform: matrix(1, 0, 0, 1, 0, 0); }
+/* l'élastique finit transparent, et sur téléphone la couverture ouverte est hors champ, dos tourné, verso masqué :
+   on les cache pour que le navigateur libère leurs calques 3D (rendu identique) */
+html.mn-profil .pf-band.pf-done { visibility: hidden; }
+@media (max-width: 959px) { html.mn-profil .pf-cover.pf-done { visibility: hidden; } }
 
 @keyframes pf-fade { from { opacity: 0; } }
 @keyframes pf-book-center { from { transform: translateX(0); } }

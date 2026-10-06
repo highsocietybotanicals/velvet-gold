@@ -17,6 +17,8 @@ const SEL = {
   reveal: 'main section, [data-fx~="reveal"]',
   parallax: '.product-card img, [data-fx~="parallax"]',
   interactive: 'a, button, [role="button"], input, select, textarea, label, .product-card',
+  // boucles décoratives infinies définies dans index.css : mises en pause hors écran
+  loop: '.title-3d > span, .shimmer, .particle, .hero-film-grain, .emblem-hint i',
 };
 const EXCLUDE = '.lh-root, [data-fx-off], [data-radix-popper-content-wrapper], [role="dialog"], nav[aria-label="admin"], .admin';
 
@@ -31,6 +33,12 @@ export function startHsbFx() {
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches; // souris
   document.documentElement.classList.add('hsb-fx', fine ? 'hsb-fx-mouse' : 'hsb-fx-touch');
   if (reduce) { document.documentElement.classList.add('hsb-fx-reduced'); return; }
+
+  // téléphone modeste (même règle que isLowEnd de minuitData, écran ≤ 899 px) : les boucles purement
+  // décoratives de index.css sont retirées (html.hsb-lite, voir hsb-fx.css) ; rien ne change ailleurs
+  const nav = navigator;
+  const lowEnd = (nav.hardwareConcurrency || 8) <= 4 || (nav.deviceMemory || 8) <= 4 || !!(nav.connection && nav.connection.saveData);
+  if (lowEnd && matchMedia('(max-width: 899px)').matches) document.documentElement.classList.add('hsb-lite');
 
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
   const done = new WeakSet();
@@ -56,15 +64,17 @@ export function startHsbFx() {
       el.style.setProperty('--ry', `${(cx * 11).toFixed(2)}deg`);
       el.style.setProperty('--gx', `${(50 + cx * 50).toFixed(1)}%`);
       el.style.setProperty('--gy', `${(50 + cy * 50).toFixed(1)}%`);
-      if (!hover && Math.abs(cx) < 0.002 && Math.abs(cy) < 0.002) { delTick(f); el.classList.remove('fx-tilting'); }
+      if (!hover) { if (Math.abs(cx) < 0.002 && Math.abs(cy) < 0.002) { delTick(f); el.classList.remove('fx-tilting'); } }
+      else if (Math.abs(tx - cx) < 0.0005 && Math.abs(ty - cy) < 0.0005) delTick(f); // souris immobile sur la carte : position atteinte, la boucle s'arrête
     };
     el.addEventListener('pointerenter', () => { hover = true; el.classList.add('fx-tilting'); addTick(f); });
     el.addEventListener('pointermove', (e) => {
       const r = el.getBoundingClientRect();
       tx = clamp((e.clientX - r.left) / r.width - 0.5, -0.5, 0.5) * 2;
       ty = clamp((e.clientY - r.top) / r.height - 0.5, -0.5, 0.5) * 2;
+      addTick(f);
     });
-    el.addEventListener('pointerleave', () => { hover = false; tx = 0; ty = 0; });
+    el.addEventListener('pointerleave', () => { hover = false; tx = 0; ty = 0; addTick(f); });
   }
 
   /* ---------------- 2. magnetic buttons + shine ---------------- */
@@ -75,14 +85,16 @@ export function startHsbFx() {
     const f = () => {
       cx += (tx - cx) * 0.18; cy += (ty - cy) * 0.18;
       el.style.setProperty('--mx', `${cx.toFixed(2)}px`); el.style.setProperty('--my', `${cy.toFixed(2)}px`);
-      if (!hover && Math.abs(cx) < 0.05 && Math.abs(cy) < 0.05) delTick(f);
+      if (!hover) { if (Math.abs(cx) < 0.05 && Math.abs(cy) < 0.05) delTick(f); }
+      else if (Math.abs(tx - cx) < 0.02 && Math.abs(ty - cy) < 0.02) delTick(f); // souris immobile sur le bouton : la boucle s'arrête
     };
     el.addEventListener('pointerenter', () => { hover = true; addTick(f); });
     el.addEventListener('pointermove', (e) => {
       const r = el.getBoundingClientRect();
       tx = (e.clientX - (r.left + r.width / 2)) * 0.28; ty = (e.clientY - (r.top + r.height / 2)) * 0.4;
+      addTick(f);
     });
-    el.addEventListener('pointerleave', () => { hover = false; tx = 0; ty = 0; });
+    el.addEventListener('pointerleave', () => { hover = false; tx = 0; ty = 0; addTick(f); });
   }
 
   /* ---------------- 3. titles: letters flip up in 3D ---------------- */
@@ -112,29 +124,53 @@ export function startHsbFx() {
     el.classList.add('fx-reveal'); io.observe(el);
   }
 
+  /* ---------------- 4 bis. boucles décoratives : en pause hors écran ---------------- */
+  // une animation infinie hors écran continue de coûter (compositeur, batterie) : on la fige tant qu'elle n'est pas visible
+  const loopIO = new IntersectionObserver((entries) => {
+    entries.forEach((e) => e.target.classList.toggle('fx-offscreen', !e.isIntersecting));
+  }, { rootMargin: '15% 0px' });
+  function pauseOffscreen(el) { loopIO.observe(el); }
+
   /* ---------------- 6. gold scroll progress bar ---------------- */
   const progress = document.createElement('div'); progress.className = 'fx-progress'; progress.setAttribute('aria-hidden', 'true');
   document.body.appendChild(progress);
 
   /* ---------------- 5. parallax (images inside cards) ---------------- */
   // calculé seulement quand la page défile (aucune boucle permanente : zéro travail au repos, utile sur les vieux téléphones)
-  const para = new Set();
+  // aucune liste de toutes les images (elle les garderait en mémoire après une navigation) : seules les proches sont retenues
+  const near = new Set(); // images parallax proches de l'écran : les seules mesurées pendant le défilement
+  const paraIO = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.target.isConnected) { near.delete(e.target); paraIO.unobserve(e.target); return; } // image démontée : oubliée
+      if (e.isIntersecting) near.add(e.target); else near.delete(e.target);
+    });
+  }, { rootMargin: '50% 0px' }); // marge d'une demi-hauteur d'écran : une image est toujours « proche » avant d'entrer
   let scrollQueued = false;
+  let lastBar = '';
+  const pyWrites = [];
   const onScrollFx = () => {
     scrollQueued = false;
-    const y = scrollY, vh = innerHeight;
-    para.forEach((img) => {
-      if (!img.isConnected) { para.delete(img); return; }
+    // 1) toutes les lectures d'abord (aucun recalcul forcé entre deux mesures)…
+    const y = scrollY, vh = innerHeight, sh = document.documentElement.scrollHeight;
+    near.forEach((img) => {
+      if (!img.isConnected) { near.delete(img); paraIO.unobserve(img); return; }
       const r = img.getBoundingClientRect(); if (r.bottom < 0 || r.top > vh) return;
       const p = (r.top + r.height / 2 - vh / 2) / vh; // -0.5 … 0.5
-      img.style.setProperty('--py', `${(p * -18).toFixed(1)}px`);
+      pyWrites.push(img, `${(p * -18).toFixed(1)}px`);
     });
-    progress.style.transform = `scaleX(${clamp(y / Math.max(1, document.documentElement.scrollHeight - vh), 0, 1).toFixed(4)})`;
+    // 2) …puis les écritures, seulement si la valeur change
+    for (let i = 0; i < pyWrites.length; i += 2) {
+      const img = pyWrites[i], v = pyWrites[i + 1];
+      if (img.__fxPy !== v) { img.__fxPy = v; img.style.setProperty('--py', v); }
+    }
+    pyWrites.length = 0;
+    const bar = `scaleX(${clamp(y / Math.max(1, sh - vh), 0, 1).toFixed(4)})`;
+    if (bar !== lastBar) { lastBar = bar; progress.style.transform = bar; }
   };
   const queueScroll = () => { if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(onScrollFx); } };
   addEventListener('scroll', queueScroll, { passive: true });
   addEventListener('resize', queueScroll);
-  function parallax(el) { el.classList.add('fx-parallax'); para.add(el); queueScroll(); }
+  function parallax(el) { el.classList.add('fx-parallax'); near.add(el); paraIO.observe(el); queueScroll(); }
 
   /* ---------------- 7. golden cursor (mouse only) ---------------- */
   if (fine) {
@@ -142,31 +178,40 @@ export function startHsbFx() {
     const ring = document.createElement('div'); ring.className = 'fx-cursor-ring';
     [dot, ring].forEach((n) => { n.setAttribute('aria-hidden', 'true'); document.body.appendChild(n); });
     let mx = -100, my = -100, rx = -100, ry = -100, big = 0, bigT = 0;
+    const cursorTick = () => {
+      rx += (mx - rx) * 0.2; ry += (my - ry) * 0.2; big += (bigT - big) * 0.18;
+      dot.style.transform = `translate3d(${mx}px,${my}px,0)`;
+      ring.style.transform = `translate3d(${rx}px,${ry}px,0) scale(${(1 + big * 1.25).toFixed(3)})`;
+      ring.style.opacity = String(0.55 + big * 0.35);
+      // anneau arrivé (écart < 0,1 px, taille stable) : la boucle s'arrête jusqu'au prochain mouvement de souris
+      if (Math.abs(mx - rx) < 0.1 && Math.abs(my - ry) < 0.1 && Math.abs(bigT - big) < 0.001) delTick(cursorTick);
+    };
     addEventListener('pointermove', (e) => {
       mx = e.clientX; my = e.clientY;
       const t = e.target instanceof Element ? e.target.closest(SEL.interactive) : null;
       bigT = t && !excluded(t) ? 1 : 0;
       document.documentElement.classList.toggle('fx-cursor-on', true);
+      addTick(cursorTick);
     }, { passive: true });
     document.addEventListener('pointerleave', () => document.documentElement.classList.remove('fx-cursor-on'));
     addEventListener('pointerdown', () => ring.classList.add('fx-press'));
     addEventListener('pointerup', () => ring.classList.remove('fx-press'));
-    addTick(() => {
-      rx += (mx - rx) * 0.2; ry += (my - ry) * 0.2; big += (bigT - big) * 0.18;
-      dot.style.transform = `translate3d(${mx}px,${my}px,0)`;
-      ring.style.transform = `translate3d(${rx}px,${ry}px,0) scale(${(1 + big * 1.25).toFixed(3)})`;
-      ring.style.opacity = String(0.55 + big * 0.35);
-    });
+    addTick(cursorTick);
   }
 
   /* ---------------- 8. gold burst on every click/tap ---------------- */
   // calque plein écran masqué au repos : sinon le téléphone le recompose à chaque image pour rien
   const burst = document.createElement('canvas'); burst.className = 'fx-burst'; burst.setAttribute('aria-hidden', 'true');
   burst.style.visibility = 'hidden';
+  // mémoire de dessin allouée seulement pendant les éclats (plein écran × densité = 3 à 16 Mo), rendue après 3 s
+  // sans éclat (des touchers rapprochés réutilisent le même calque au lieu de le réallouer à chaque fois)
+  burst.width = 0; burst.height = 0;
   document.body.appendChild(burst);
   const bx = burst.getContext('2d'); let sparks = [];
-  const sizeBurst = () => { const d = Math.min(devicePixelRatio || 1, fine ? 2 : 1.5); burst.width = innerWidth * d; burst.height = innerHeight * d; bx.setTransform(d, 0, 0, d, 0, 0); };
-  sizeBurst(); addEventListener('resize', sizeBurst);
+  let burstSized = false;
+  let burstRelease = 0;
+  const sizeBurst = () => { const d = Math.min(devicePixelRatio || 1, fine ? 2 : 1.5); burst.width = innerWidth * d; burst.height = innerHeight * d; bx.setTransform(d, 0, 0, d, 0, 0); burstSized = true; };
+  addEventListener('resize', () => { if (burstSized) sizeBurst(); });
   const drawBurst = () => {
     bx.clearRect(0, 0, innerWidth, innerHeight);
     sparks = sparks.filter((s) => (s.life -= 0.022) > 0);
@@ -175,7 +220,11 @@ export function startHsbFx() {
       bx.globalAlpha = s.life; bx.fillStyle = s.c;
       bx.beginPath(); bx.arc(s.x, s.y, s.r * (0.5 + s.life * 0.5), 0, 6.283); bx.fill();
     }
-    if (!sparks.length) { delTick(drawBurst); bx.clearRect(0, 0, innerWidth, innerHeight); burst.style.visibility = 'hidden'; }
+    if (!sparks.length) {
+      delTick(drawBurst); bx.clearRect(0, 0, innerWidth, innerHeight); burst.style.visibility = 'hidden';
+      clearTimeout(burstRelease);
+      burstRelease = setTimeout(() => { if (!sparks.length) { burst.width = 0; burst.height = 0; burstSized = false; } }, 3000);
+    }
   };
   addEventListener('pointerdown', (e) => {
     const t = e.target instanceof Element ? e.target.closest('a, button, [role="button"], .product-card') : null;
@@ -186,6 +235,7 @@ export function startHsbFx() {
       sparks.push({ x: e.clientX, y: e.clientY, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.5, r: 1 + Math.random() * 2.4, life: 1,
         c: ['#fff1c2', '#f0d68e', '#d4af37', '#b8913f'][i % 4] });
     }
+    if (!burstSized) sizeBurst();
     burst.style.visibility = '';
     addTick(drawBurst);
   }, { passive: true });
@@ -194,14 +244,26 @@ export function startHsbFx() {
   const apply = (root) => {
     const q = (s) => (root.matches?.(s) ? [root] : []).concat([...(root.querySelectorAll?.(s) || [])]);
     const run = (s, fn) => q(s).forEach((el) => { const k = fn.name; if (excluded(el)) return; if (!done.has(el)) done.add(el); else if (el.dataset['fx' + k]) return; el.dataset['fx' + k] = '1'; fn(el); });
-    run(SEL.tilt, tilt); run(SEL.magnet, magnet); run(SEL.split, split); run(SEL.reveal, reveal); run(SEL.parallax, parallax);
+    run(SEL.tilt, tilt); run(SEL.magnet, magnet); run(SEL.split, split); run(SEL.reveal, reveal); run(SEL.parallax, parallax); run(SEL.loop, pauseOffscreen);
   };
   apply(document.body);
-  let queued = [];
+  // nœuds ajoutés regroupés en une passe par image ; on ne parcourt ni un nœud déjà couvert par un ancêtre
+  // du même lot, ni un sous-arbre exclu (data-fx-off, dialogues, admin… : rien n'y serait appliqué de toute façon)
+  let queued = new Set();
   let scheduled = false;
+  const flush = () => {
+    scheduled = false;
+    const list = queued; queued = new Set();
+    list.forEach((n) => {
+      if (!n.isConnected) return;
+      for (let p = n.parentElement; p; p = p.parentElement) if (list.has(p)) return;
+      if (n.closest(EXCLUDE)) return;
+      apply(n);
+    });
+  };
   new MutationObserver((muts) => {
-    muts.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && queued.push(n)));
-    if (queued.length && !scheduled) { scheduled = true; requestAnimationFrame(() => { scheduled = false; const list = queued; queued = []; list.forEach((n) => n.isConnected && apply(n)); }); }
+    for (const m of muts) m.addedNodes.forEach((n) => { if (n.nodeType === 1) queued.add(n); });
+    if (queued.size && !scheduled) { scheduled = true; requestAnimationFrame(flush); }
   }).observe(document.body, { childList: true, subtree: true });
 
   // l'admin est une SPA : si on y entre, on coupe le curseur doré
