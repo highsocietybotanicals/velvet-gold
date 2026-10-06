@@ -2,7 +2,6 @@ import {
   getGammeForProduct,
   getProPricePerGram,
   PRO_TIERS,
-  proTierLabel,
   type PriceTier,
 } from "./margin";
 
@@ -254,8 +253,24 @@ export const computeProCart = (
   };
 };
 
+/**
+ * Libellé de palier affiché au partenaire : tranche de poids seulement. La
+ * remise réelle dépend de la grille de chaque variété (certaines n'en ont pas),
+ * elle est déjà incluse dans les prix affichés.
+ */
 export const tierLabel = (maxG: number | null): string => {
   if (maxG === null) return "—";
-  return proTierLabel(maxG);
+  switch (maxG) {
+    case 99:
+      return "moins de 100 g";
+    case 249:
+      return "100 à 249 g";
+    case 499:
+      return "250 à 499 g";
+    case 999:
+      return "500 à 999 g";
+    default:
+      return "1 kg et plus";
+  }
 };
 

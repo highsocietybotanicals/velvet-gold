@@ -9,6 +9,13 @@ import { useMinuitSkin } from "@/components/minuit/useMinuitSkin";
 import ProMemberCard from "@/components/minuit/areas/pro/ProMemberCard";
 import { ProReveal, ProVelvetRope } from "@/components/minuit/areas/pro/ProDecor";
 import "@/components/minuit/areas/pro/pro.css";
+import Title3D from "@/components/Title3D";
+import {
+  KIT_DEDUCTION_DAYS,
+  KIT_PRICE_HT,
+  KIT_UNITS,
+  PRO_MIN_ORDER_HT,
+} from "@/lib/proOffer";
 
 const arguments_ = [
   {
@@ -39,15 +46,37 @@ const arguments_ = [
   },
   {
     icon: Truck,
-    title: "Tarif dégressif au volume",
-    text: "Le prix au gramme baisse sur l'intégralité de la commande dès que tu franchis un palier.",
+    title: "Ta marge affichée en direct",
+    text: "Dans ton panier pro, le gain HT de chaque ligne s'affiche au prix de revente du site, TVA déduite.",
   },
+];
+
+// Conditions de l'offre revendeur, affichées avant l'inscription
+const conditions = [
+  {
+    title: "Prix pro : 50 % du prix public HT",
+    text: "Tu revends aux prix du site : x2 sur les pochons de 1 g, 2,5 g et 5 g, x1,7 sur le 10 g. Pochon, Boveda 62 % et étiquette inclus, sans supplément.",
+  },
+  {
+    title: `Kit découverte : ${KIT_PRICE_HT} € HT`,
+    text: `${KIT_UNITS} pochons de 1 g, variétés au choix, pour goûter avant de te lancer. Déduit de ta première commande passée dans les ${KIT_DEDUCTION_DAYS} jours.`,
+  },
+  {
+    title: `Minimum ${PRO_MIN_ORDER_HT} € HT, port offert dès 300 € HT`,
+    text: "Règlement par virement à la commande, expédition dès réception. Pas de dépôt-vente, pas d'engagement de volume.",
+  },
+];
+
+const steps = [
+  "Crée ton compte en 2 minutes (e-mail et mot de passe).",
+  "Complète ton dossier : SIRET, numéro de TVA, adresse. Validation sous 24 à 48 h ouvrées.",
+  "Commande en ligne, règle par virement : on expédie dès réception.",
 ];
 
 const ProLandingPage = () => {
   // Habillage « Minuit Carat » de l'espace pro : le salon privé (visuel uniquement).
   useMinuitSkin("pro");
-  const { isPro, isProValidated, profile, isAdmin, isCommercial } = useAuth();
+  const { user, isPro, isProValidated, profile, isAdmin, isCommercial } = useAuth();
   const hasAccess =
     isAdmin || isCommercial || (isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated);
 
@@ -57,7 +86,7 @@ const ProLandingPage = () => {
     if (desc)
       desc.setAttribute(
         "content",
-        "Grille tarifaire revendeur High Society Botanicals : préconditionnés 1 g à 10 g, pochons alu hermétiques, Boveda 62 %, tarifs dégressifs au volume."
+        "Grille tarifaire revendeur High Society Botanicals : préconditionnés 1 g à 10 g, pochons alu hermétiques, Boveda 62 %, prix pro à 50 % du prix public HT."
       );
   }, []);
 
@@ -77,7 +106,7 @@ const ProLandingPage = () => {
               <span className="pr-h1-brand pr-foil">High Society Botanicals</span>
             </h1>
             <p className="pr-lead">
-              Un catalogue dédié, des tarifs au gramme dégressifs selon le volume, et des
+              Un catalogue dédié, un prix d'achat à 50 % du prix public HT, et des
               préconditionnés prêts à poser en vitrine. Réservé aux professionnels disposant d'un SIRET
               et d'un numéro de TVA intracommunautaire.
             </p>
@@ -144,6 +173,48 @@ const ProLandingPage = () => {
             ))}
           </div>
         </ProReveal>
+      </section>
+
+      {/* Conditions et démarche, lisibles avant l'inscription */}
+      <section className="pr-privs" aria-labelledby="pr-cond-t">
+        <div className="pr-sec-hd">
+          <div>
+            <p className="pr-kicker">Conditions partenaire</p>
+            <span id="pr-cond-t">
+              <Title3D>Commander en trois étapes</Title3D>
+            </span>
+          </div>
+          <ol className="pr-sec-aside list-decimal pl-5 space-y-1">
+            {steps.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ol>
+        </div>
+        <div className="pr-privs-grid">
+          {conditions.map((c) => (
+            <Card key={c.title} className="pr-priv">
+              <CardContent className="pr-priv-in">
+                <h3>{c.title}</h3>
+                <p>{c.text}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="pr-cta mt-6">
+          {hasAccess ? (
+            <Button asChild size="lg">
+              <Link to="/pro/catalogue">Accéder au catalogue pro</Link>
+            </Button>
+          ) : user ? (
+            <Button asChild size="lg">
+              <a href="#dossier">Compléter mon dossier</a>
+            </Button>
+          ) : (
+            <Button asChild size="lg">
+              <Link to="/auth?inscription=pro&next=/pro">Créer mon compte pro</Link>
+            </Button>
+          )}
+        </div>
       </section>
 
       {/* Dossier d'admission */}

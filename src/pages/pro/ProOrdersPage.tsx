@@ -136,7 +136,8 @@ const ProOrdersPage = () => {
           <p><span className="text-muted-foreground">IBAN :</span> {BANK_DETAILS.iban}</p>
           <p><span className="text-muted-foreground">BIC :</span> {BANK_DETAILS.bic}</p>
           <p className="pt-1 text-xs text-muted-foreground">
-            Indique le numéro de commande dans le libellé du virement.
+            Indique le numéro de commande dans le libellé du virement : ta commande part dès
+            réception du règlement.
           </p>
         </CardContent>
       </Card>
