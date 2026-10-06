@@ -15,6 +15,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ProTicker from "@/components/minuit/areas/pro/ProTicker";
+import { useProKitStatus } from "@/hooks/useProKitStatus";
+import {
+  KIT_DEDUCTION_DAYS,
+  KIT_PRICE_HT,
+  KIT_UNITS,
+  PRO_MIN_ORDER_HT,
+} from "@/lib/proOffer";
 import { ProBoard, ProFlap, ProNeonSign } from "@/components/minuit/areas/pro/ProDecor";
 import { proThumbSrcSet } from "@/components/minuit/areas/pro/proThumb";
 
@@ -78,6 +85,7 @@ const ProCataloguePage = () => {
   const { totals, products, isLoading } = useProCartTotals();
   const { tiers } = useProPriceTiers();
   const { data: stockMap } = useProStock();
+  const { isStaff, kitAvailable, deductionAvailable } = useProKitStatus();
 
   if (isLoading) {
     return (
@@ -123,16 +131,39 @@ const ProCataloguePage = () => {
         <p>
           Tous les prix sont <strong>HT</strong> (hors TVA 20 %), par gramme, positionnés à
           exactement <strong>50 % du prix public HT</strong> — identiques quel que soit le format,
-          pochon aluminium, Boveda 62 % et étiquette inclus sans supplément. Remise dégressive
-          automatique sur l'ensemble de la commande : <strong>-5 %</strong> dès 100 g,{" "}
-          <strong>-10 %</strong> dès 250 g, <strong>-15 %</strong> dès 500 g, <strong>-20 %</strong>{" "}
-          dès 1 kg. Le prix est plafonné pour te garantir un coefficient de rentabilité minimum de{" "}
+          pochon aluminium, Boveda 62 % et étiquette inclus sans supplément. Sur les variétés qui
+          ont une remise volume, le prix affiché tient compte du poids total de ta commande. Le
+          prix est plafonné pour te garantir un coefficient de rentabilité minimum de{" "}
           <strong>x2</strong> sur les formats 1 g, 2,5 g et 5 g, et <strong>x1,7</strong> sur le
           10 g, en revendant aux <strong>mêmes prix que le site</strong> — coefficient calculé{" "}
           <strong>HT/HT</strong>, TVA collectée déjà déduite. Le gain HT par pochon est indiqué sous
           chaque format. Saisis le nombre de pochons par format.
         </p>
       </div>
+
+      {!isStaff && (
+        <div className="pr-notice">
+          <p>
+            Minimum de commande : <strong>{eur(PRO_MIN_ORDER_HT)} HT</strong>. Règlement par
+            virement à la commande, expédition dès réception.
+            {kitAvailable && (
+              <>
+                {" "}
+                Pour goûter avant de te lancer : choisis <strong>{KIT_UNITS} pochons de 1 g</strong>{" "}
+                (variétés au choix), c'est ton <strong>kit découverte à {eur(KIT_PRICE_HT)} HT</strong>,
+                déduit de ta première commande passée dans les {KIT_DEDUCTION_DAYS} jours.
+              </>
+            )}
+            {deductionAvailable && (
+              <>
+                {" "}
+                Ton kit découverte (<strong>{eur(KIT_PRICE_HT)} HT</strong>) sera déduit de cette
+                commande.
+              </>
+            )}
+          </p>
+        </div>
+      )}
 
       <ProTierBar
         totalWeightG={totals.totalWeightG}

@@ -1,4 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  ALLOWED_FORMATS,
+  KIT_DEDUCTION_PROMO_CODE,
+  KIT_PRICE_HT,
+  KIT_PROMO_CODE,
+  KIT_UNITS,
+  PRO_MIN_ORDER_HT,
+  VAT_RATE,
+  isKitCart,
+  kitStatusFromOrders,
+  proPricePerGram,
+} from "../_shared/proOffer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,33 +18,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// La grille pro est définie par produit dans pro_price_tiers (gamme = product_id)
-const ALLOWED_FORMATS = new Set([1, 2.5, 5, 10]);
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
-// Supplément conditionnement (€/g HT) sur les petits formats
-const FORMAT_SURCHARGE: Record<string, number> = { "1": 1.0, "2.5": 0.6, "5": 0, "10": 0 };
-
-function pricePerGram(
-  tiers: any[],
-  productId: string,
-  totalWeight: number,
-  format: number
-): number | null {
-  const forProduct = tiers
-    .filter((t) => t.gamme === productId)
-    .sort((a, b) => Number(a.tier_max_g) - Number(b.tier_max_g));
-  if (!forProduct.length) return null;
-  let base = Number(forProduct[forProduct.length - 1].price_per_gram);
-  for (const t of forProduct) {
-    if (totalWeight <= Number(t.tier_max_g)) {
-      base = Number(t.price_per_gram);
-      break;
-    }
-  }
-  const surcharge = FORMAT_SURCHARGE[String(format)] ?? 0;
-  return Math.round((base + surcharge) * 100) / 100;
-}
-
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -40,10 +32,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Authentification requise" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Authentification requise" }, 401);
     }
 
     const supabaseAdmin = createClient(
@@ -63,22 +52,14 @@ Deno.serve(async (req) => {
     } = await supabaseUser.auth.getUser();
 
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Session invalide" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Session invalide" }, 401);
     }
 
     const { lines, paymentMethod, notes } = await req.json();
 
     if (!Array.isArray(lines) || lines.length === 0) {
-      return new Response(JSON.stringify({ error: "Panier vide" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Panier vide" }, 400);
     }
-
-    const method = paymentMethod === "physical" ? "physical" : "transfer";
 
     // Vérifier le statut pro validé
     const { data: profile } = await supabaseAdmin
@@ -97,14 +78,15 @@ Deno.serve(async (req) => {
     const isPro = (roles || []).some((r: any) => r.role === "pro");
     const validatedPartner =
       isPro && profile?.is_pro_validated && profile?.is_vat_validated && !!profile?.vat_number;
-    const validated = isAdmin || isCommercial || validatedPartner;
+    const isStaff = isAdmin || isCommercial;
 
-    if (!validated) {
-      return new Response(JSON.stringify({ error: "Compte professionnel non validé" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!isStaff && !validatedPartner) {
+      return json({ error: "Compte professionnel non validé" }, 403);
     }
+
+    // Partenaires : paiement intégral à la commande, par virement.
+    // Le règlement TPE à la remise reste réservé aux commandes saisies par l'équipe.
+    const method = paymentMethod === "physical" && isStaff ? "physical" : "transfer";
 
     // Normaliser les lignes
     const safeLines = lines
@@ -116,55 +98,65 @@ Deno.serve(async (req) => {
       .filter((l: any) => l.productId && ALLOWED_FORMATS.has(l.format) && l.units > 0);
 
     if (!safeLines.length) {
-      return new Response(JSON.stringify({ error: "Lignes invalides" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Lignes invalides" }, 400);
     }
 
     const productIds = [...new Set(safeLines.map((l: any) => l.productId))];
     const { data: dbProducts } = await supabaseAdmin
       .from("products")
-      .select("id, name, category, is_active, is_out_of_stock")
+      .select("id, name, category, price, price_group, is_active, is_out_of_stock")
       .in("id", productIds);
 
     for (const id of productIds) {
       const p = (dbProducts || []).find((d: any) => d.id === id);
       if (!p || p.is_active === false || p.is_out_of_stock === true) {
-        return new Response(JSON.stringify({ error: `Produit indisponible : ${id}` }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: `Produit indisponible : ${id}` }, 400);
       }
     }
+
+    // Historique pro du partenaire : kit découverte et déduction
+    const { data: pastOrders } = await supabaseAdmin
+      .from("orders")
+      .select("created_at, status, promo_code")
+      .eq("user_id", user.id)
+      .eq("order_channel", "pro");
+    const kit = kitStatusFromOrders(pastOrders || []);
+
+    const isKitOrder = !isStaff && kit.kitAvailable && isKitCart(safeLines);
 
     const { data: tiers } = await supabaseAdmin
       .from("pro_price_tiers")
       .select("gamme, tier_max_g, price_per_gram");
 
-    const totalWeight =
-      Math.round(safeLines.reduce((s: number, l: any) => s + l.format * l.units, 0) * 100) / 100;
+    const totalWeight = round2(safeLines.reduce((s: number, l: any) => s + l.format * l.units, 0));
 
     let totalHT = 0;
     const orderItems: any[] = [];
 
     for (const l of safeLines) {
-      const ppg = pricePerGram(tiers || [], l.productId, totalWeight, l.format);
+      const dbProduct = (dbProducts || []).find((d: any) => d.id === l.productId);
+      // Kit découverte : prix forfaitaire réparti sur les 4 pochons de 1 g
+      const ppg = isKitOrder
+        ? round2(KIT_PRICE_HT / KIT_UNITS)
+        : proPricePerGram(
+            tiers || [],
+            l.productId,
+            totalWeight,
+            l.format,
+            Number(dbProduct?.price ?? 0),
+            dbProduct?.price_group ?? "A"
+          );
 
       if (!ppg) {
-        return new Response(JSON.stringify({ error: "Grille tarifaire pro indisponible" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "Grille tarifaire pro indisponible" }, 500);
       }
-      const dbProduct = (dbProducts || []).find((d: any) => d.id === l.productId);
-      const weight = Math.round(l.format * l.units * 100) / 100;
-      const lineTotal = Math.round(weight * ppg * 100) / 100;
+      const weight = round2(l.format * l.units);
+      const lineTotal = round2(weight * ppg);
       totalHT += lineTotal;
 
       orderItems.push({
         product_id: l.productId,
-        product_name: `${dbProduct?.name ?? l.productId} — ${l.format} g x${l.units}`,
+        product_name: `${dbProduct?.name ?? l.productId} — ${l.format} g x${l.units}${isKitOrder ? " (kit découverte)" : ""}`,
         product_type: dbProduct?.category ?? "fleur",
         weight,
         quantity: l.units,
@@ -173,14 +165,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    totalHT = Math.round(totalHT * 100) / 100;
-    const totalTTC = Math.round(totalHT * 1.2 * 100) / 100;
+    totalHT = round2(totalHT);
+
+    if (!isStaff && !isKitOrder && totalHT < PRO_MIN_ORDER_HT) {
+      return json(
+        {
+          error: `Minimum de commande : ${PRO_MIN_ORDER_HT} € HT (panier actuel ${totalHT.toFixed(2)} € HT).`,
+          code: "below_minimum",
+        },
+        400
+      );
+    }
+
+    // Kit découverte déduit de la commande suivante passée dans le mois
+    const deductionHT = !isStaff && !isKitOrder && kit.deductionAvailable ? KIT_PRICE_HT : 0;
+    const payableHT = round2(totalHT - deductionHT);
+    const totalTTC = round2(payableHT * (1 + VAT_RATE));
 
     if (totalTTC <= 0) {
-      return new Response(JSON.stringify({ error: "Montant invalide" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Montant invalide" }, 400);
     }
 
     const deliveryAddress = [
@@ -204,16 +207,15 @@ Deno.serve(async (req) => {
         payment_status: "unpaid",
         order_channel: "pro",
         payment_method: method,
+        promo_code: isKitOrder ? KIT_PROMO_CODE : deductionHT > 0 ? KIT_DEDUCTION_PROMO_CODE : null,
+        promo_discount_amount: deductionHT > 0 ? round2(deductionHT * (1 + VAT_RATE)) : null,
       })
       .select()
       .single();
 
     if (orderError || !order) {
       console.error("Pro order creation error:", orderError);
-      return new Response(JSON.stringify({ error: "Création de la commande impossible" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Création de la commande impossible" }, 500);
     }
 
     await supabaseAdmin
@@ -230,21 +232,33 @@ Deno.serve(async (req) => {
         });
     }
 
-    // Aucun paiement en ligne pour les pros : virement ou paiement physique,
-    // validés manuellement dans l'administration.
-    return new Response(
-      JSON.stringify({
-        orderId: order.id,
-        orderNumber: order.display_order_number,
-        paymentMethod: method,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // Alerte Telegram à l'équipe (sans bloquer la commande)
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-admin-telegram`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId: order.id, eventType: isKitOrder ? "pro_kit" : "pro_order" }),
+      });
+    } catch (e) {
+      console.error("Telegram notify (pro order) failed:", e);
+    }
+
+    // Aucun paiement en ligne pour les pros : virement à la commande (ou TPE
+    // pour les commandes saisies par l'équipe), validé dans l'administration.
+    return json({
+      orderId: order.id,
+      orderNumber: order.display_order_number,
+      paymentMethod: method,
+      totalHT: payableHT,
+      totalTTC,
+      deductionHT,
+      isKit: isKitOrder,
+    });
   } catch (error) {
     console.error("create-pro-order unexpected error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "Internal server error" }, 500);
   }
 });
