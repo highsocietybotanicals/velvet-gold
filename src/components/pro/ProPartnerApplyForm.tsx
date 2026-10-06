@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ProPartnerApplyForm = () => {
-  const { user, profile, updateProfile, refreshProfile } = useAuth();
+  const { user, profile, isPro, isProValidated, updateProfile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -25,6 +25,23 @@ const ProPartnerApplyForm = () => {
     full_name: profile?.full_name ?? "",
     notes: "",
   });
+
+  // Le profil arrive parfois après le premier rendu (juste après l'inscription) :
+  // on complète les champs encore vides sans écraser la saisie.
+  useEffect(() => {
+    if (!profile) return;
+    setForm((f) => ({
+      ...f,
+      company_name: f.company_name || profile.company_name || "",
+      siret: f.siret || profile.siret || "",
+      vat_number: f.vat_number || profile.vat_number || "",
+      address_line1: f.address_line1 || profile.address_line1 || "",
+      postal_code: f.postal_code || profile.postal_code || "",
+      city: f.city || profile.city || "",
+      phone: f.phone || profile.phone || "",
+      full_name: f.full_name || profile.full_name || "",
+    }));
+  }, [profile]);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -43,6 +60,9 @@ const ProPartnerApplyForm = () => {
         .insert({ user_id: user.id, role: "pro" as const });
       // 23505 = déjà pro, on ignore
       if (roleError && (roleError as any).code !== "23505") throw roleError;
+
+      // Alerte Telegram à l'équipe pour une validation rapide (sans bloquer)
+      supabase.functions.invoke("notify-pro-application").catch(() => undefined);
 
       await refreshProfile();
       toast({
@@ -68,10 +88,31 @@ const ProPartnerApplyForm = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Crée ton compte professionnel pour accéder à la grille tarifaire revendeur.
+            Crée ton compte (e-mail et mot de passe), puis complète ton dossier ici : SIRET, numéro
+            de TVA et adresse de livraison. Validation sous 24 à 48 h ouvrées.
           </p>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/auth?inscription=pro&next=/pro">Créer mon compte pro</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/auth?next=/pro">J'ai déjà un compte</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isPro && isProValidated && !!profile?.vat_number && profile?.is_vat_validated) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Compte partenaire actif</CardTitle>
+        </CardHeader>
+        <CardContent>
           <Button asChild>
-            <Link to="/auth">Créer un compte pro</Link>
+            <Link to="/pro/catalogue">Accéder au catalogue pro</Link>
           </Button>
         </CardContent>
       </Card>
@@ -82,6 +123,12 @@ const ProPartnerApplyForm = () => {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Dossier partenaire</CardTitle>
+        {isPro && (
+          <p className="text-sm text-muted-foreground" role="status">
+            Dossier reçu : validation en cours (24 à 48 h ouvrées). Tu peux corriger tes
+            informations ci-dessous.
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">

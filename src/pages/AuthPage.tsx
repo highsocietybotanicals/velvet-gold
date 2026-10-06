@@ -33,6 +33,10 @@ const safeNext = () => {
   return next;
 };
 
+// Lien direct depuis l'espace pro : /auth?inscription=pro ouvre l'inscription professionnelle
+const isProSignupLink = () =>
+  new URLSearchParams(window.location.search).get("inscription") === "pro";
+
 const handleGoogleSignIn = async () => {
   const { error } = await lovable.auth.signInWithOAuth("google", {
     redirect_uri: window.location.origin + (safeNext() ?? "/profil"),
@@ -61,7 +65,8 @@ const AuthPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Registration specific
-  const [accountType, setAccountType] = useState<AccountType>("classic");
+  const [proSignup] = useState(isProSignupLink);
+  const [accountType, setAccountType] = useState<AccountType>(proSignup ? "pro" : "classic");
   const [companyName, setCompanyName] = useState("");
   const [siret, setSiret] = useState("");
   const [vatNumber, setVatNumber] = useState("");
@@ -142,7 +147,7 @@ const AuthPage = () => {
     setEmail("");
     setPassword("");
     setError(null);
-    setAccountType("classic");
+    setAccountType(proSignup ? "pro" : "classic");
     setCompanyName("");
     setSiret("");
     setVatNumber("");
@@ -169,7 +174,7 @@ const AuthPage = () => {
             </div>
 
             <div className="bg-card border border-border rounded-xl p-6">
-              <Tabs defaultValue="login" className="w-full" onValueChange={() => resetForm()}>
+              <Tabs defaultValue={proSignup ? "register" : "login"} className="w-full" onValueChange={() => resetForm()}>
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="login">Connexion</TabsTrigger>
                   <TabsTrigger value="register">Inscription</TabsTrigger>

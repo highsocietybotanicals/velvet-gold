@@ -22,9 +22,30 @@ import {
 import { Loader2, Trash2 } from "lucide-react";
 import { BANK_DETAILS } from "@/lib/bankDetails";
 import { ProPlaque } from "@/components/minuit/areas/pro/ProDecor";
+import { useProKitStatus } from "@/hooks/useProKitStatus";
+import {
+  KIT_DEDUCTION_DAYS,
+  KIT_PRICE_HT,
+  KIT_UNITS,
+  PRO_MIN_ORDER_HT,
+  isKitCart,
+} from "@/lib/proOffer";
+import { VAT_RATE } from "@/lib/proPricing";
 import { embStyle } from "@/components/minuit/areas/pro/proEmblem";
 
 const eur = (n: number) => `${n.toFixed(2)} €`;
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// Message d'erreur renvoyé par la fonction (sinon supabase-js ne donne qu'un « non-2xx »)
+const functionErrorMessage = async (error: any): Promise<string | undefined> => {
+  try {
+    const body = await error?.context?.json?.();
+    if (body?.error) return String(body.error);
+  } catch {
+    /* corps illisible */
+  }
+  return error?.message;
+};
 
 // Date d'établissement du bordereau (affichage seul)
 const todayLabel = () =>
@@ -35,15 +56,27 @@ const ProCartPage = () => {
   const { totals, isLoading } = useProCartTotals();
   const { data: settings } = useProSettings();
   const { user, profile } = useAuth();
+  const { isStaff, kitAvailable, deductionAvailable } = useProKitStatus();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState<"transfer" | "physical" | "quote">("physical");
+  const [mode, setMode] = useState<"transfer" | "physical" | "quote">("transfer");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const franco = settings?.franco_port_seuil_ht ?? 300;
-  const delai = settings?.delai_paiement_jours ?? 30;
+
+  // Conditions partenaire : kit découverte à prix forfaitaire, minimum de
+  // commande, kit déduit de la commande suivante (le serveur fait foi).
+  const isKit = kitAvailable && isKitCart(lines);
+  const goodsHT = isKit ? KIT_PRICE_HT : totals.totalHT;
+  const deductionHT = !isKit && deductionAvailable ? KIT_PRICE_HT : 0;
+  const payableHT = round2(goodsHT - deductionHT);
+  const payableVAT = round2(payableHT * VAT_RATE);
+  const payableTTC = round2(payableHT + payableVAT);
+  const missingForMinimum =
+    !isStaff && !isKit ? round2(Math.max(0, PRO_MIN_ORDER_HT - totals.totalHT)) : 0;
+  const orderBlocked = mode !== "quote" && missingForMinimum > 0;
 
   const submit = async () => {
     if (!user || totals.lines.length === 0) return;
@@ -77,17 +110,20 @@ const ProCartPage = () => {
           notes,
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(await functionErrorMessage(error));
       if ((data as any)?.error) throw new Error((data as any).error);
 
       clearProCart();
 
+      const orderNumber = (data as any)?.orderNumber;
       toast({
         title: "Commande enregistrée",
         description:
-          mode === "transfer"
-            ? `Facture à ${delai} jours — règlement par virement.`
-            : "Règlement par TPE à la remise — le paiement sera validé par HSB.",
+          (data as any)?.paymentMethod === "physical"
+            ? "Règlement par TPE à la remise — le paiement sera validé par HSB."
+            : `Règle ${eur(Number((data as any)?.totalTTC ?? payableTTC))} TTC par virement${
+                orderNumber ? ` (libellé ${orderNumber})` : ""
+              } : expédition dès réception.`,
       });
       navigate("/pro/commandes");
     } catch (err: any) {
@@ -220,16 +256,22 @@ const ProCartPage = () => {
               <span>{totals.totalWeightG} g</span>
             </div>
             <div className="pr-sum-row flex justify-between gap-4">
-              <span className="l">Total HT</span>
-              <span>{eur(totals.totalHT)}</span>
+              <span className="l">{isKit ? `Kit découverte (${KIT_UNITS} × 1 g)` : "Total HT"}</span>
+              <span>{eur(goodsHT)}</span>
             </div>
+            {deductionHT > 0 && (
+              <div className="pr-sum-row flex justify-between gap-4">
+                <span className="l">Kit découverte déduit</span>
+                <span>−{eur(deductionHT)}</span>
+              </div>
+            )}
             <div className="pr-sum-row flex justify-between gap-4">
               <span className="l">TVA 20 %</span>
-              <span>{eur(totals.totalVAT)}</span>
+              <span>{eur(payableVAT)}</span>
             </div>
             <div className="pr-total flex justify-between gap-4">
               <span className="l">Total TTC</span>
-              <span className="v pr-foil">{eur(totals.totalTTC)}</span>
+              <span className="v pr-foil">{eur(payableTTC)}</span>
             </div>
             <div className="pr-sum-note space-y-1">
               <p>
@@ -242,6 +284,18 @@ const ProCartPage = () => {
                 Port offert à partir de {eur(franco)} HT. Briquet + feuilles inclus dans chaque
                 pochon de 10 g, sans supplément.
               </p>
+              {isKit ? (
+                <p>
+                  Kit découverte : {KIT_UNITS} pochons de 1 g au choix pour {eur(KIT_PRICE_HT)} HT,
+                  déduits de ta première commande passée dans les {KIT_DEDUCTION_DAYS} jours.
+                </p>
+              ) : !isStaff ? (
+                <p>
+                  Minimum de commande : {eur(PRO_MIN_ORDER_HT)} HT.
+                  {kitAvailable &&
+                    ` Pour goûter d'abord : ${KIT_UNITS} pochons de 1 g au choix = kit découverte à ${eur(KIT_PRICE_HT)} HT, déduit ensuite.`}
+                </p>
+              ) : null}
             </div>
           </CardContent>
         </Card>
@@ -257,18 +311,20 @@ const ProCartPage = () => {
               <div className="pr-opt flex items-start gap-2">
                 <RadioGroupItem value="transfer" id="m-transfer" className="pr-radio mt-1" />
                 <Label htmlFor="m-transfer" className="pr-opt-l font-normal">
-                  <span>Virement — facture à {delai} jours</span>
+                  <span>Virement à la commande — expédition dès réception</span>
                   <span className="pr-iban mt-1 block">
                     {BANK_DETAILS.holder} · IBAN {BANK_DETAILS.iban} · BIC {BANK_DETAILS.bic}
                   </span>
                 </Label>
               </div>
-              <div className="pr-opt flex items-start gap-2">
-                <RadioGroupItem value="physical" id="m-physical" className="pr-radio mt-1" />
-                <Label htmlFor="m-physical" className="pr-opt-l font-normal">
-                  Carte bancaire par TPE à la remise — mode privilégié
-                </Label>
-              </div>
+              {isStaff && (
+                <div className="pr-opt flex items-start gap-2">
+                  <RadioGroupItem value="physical" id="m-physical" className="pr-radio mt-1" />
+                  <Label htmlFor="m-physical" className="pr-opt-l font-normal">
+                    Carte bancaire par TPE à la remise (commande saisie par l'équipe)
+                  </Label>
+                </div>
+              )}
               <div className="pr-opt flex items-start gap-2">
                 <RadioGroupItem value="quote" id="m-quote" className="pr-radio mt-1" />
                 <Label htmlFor="m-quote" className="pr-opt-l font-normal">
@@ -284,11 +340,20 @@ const ProCartPage = () => {
               onChange={(e) => setNotes(e.target.value)}
             />
 
-            <Button className="w-full" onClick={submit} disabled={submitting}>
+            {orderBlocked && (
+              <p className="text-sm text-muted-foreground" role="status">
+                Encore {eur(missingForMinimum)} HT pour atteindre le minimum de commande (
+                {eur(PRO_MIN_ORDER_HT)} HT).
+              </p>
+            )}
+
+            <Button className="w-full" onClick={submit} disabled={submitting || orderBlocked}>
               {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {mode === "quote"
                 ? "Envoyer la demande de devis"
-                : `Valider la commande — ${eur(totals.totalTTC)} TTC`}
+                : isKit
+                ? `Commander le kit découverte — ${eur(payableTTC)} TTC`
+                : `Valider la commande — ${eur(payableTTC)} TTC`}
             </Button>
           </CardContent>
         </Card>
