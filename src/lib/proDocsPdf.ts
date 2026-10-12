@@ -162,7 +162,7 @@ export function generateProPriceGrid(products: DocProduct[], tiers: PriceTier[])
     ["III. Boveda 62 % inclus",
       "Chaque pochon renferme un régulateur d'humidité Boveda 62 % — la garantie d'une saveur intacte, du départ de nos ateliers jusqu'à la main du client."],
     ["IV. Kit cadeau client offert",
-      "Chaque pochon de 10 g contient un briquet BIC et un paquet de feuilles + carton, offerts au client final. Aucun surcoût sur le tarif partenaire."],
+      "Chaque pochon de 10 g contient un cadeau offert au client final. Aucun surcoût sur le tarif partenaire."],
   ];
   for (const [title, body] of engagements) {
     setFont(doc, 10.5, "bold", GOLD);
@@ -301,7 +301,7 @@ export function generateProPriceGrid(products: DocProduct[], tiers: PriceTier[])
   hLine(doc, y, DARK, 0.4);
   y += 6;
   setFont(doc, 7.5, "normal", GRAY);
-  doc.text("Prix HT par pochon préconditionné, Boveda 62 % et kit cadeau client (briquet BIC + feuilles/carton) inclus.", MARGIN, y);
+  doc.text("Prix HT par pochon préconditionné, Boveda 62 % et cadeau client inclus dans les 10 g.", MARGIN, y);
   doc.text("PV = prix de vente public conseillé TTC, identique au site. Remise volume en plus : -5 % dès 100 g, -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg.", MARGIN, y + 4);
   footer(doc, "IV · Tarifs");
 
@@ -674,7 +674,7 @@ export function generateProGuide(): jsPDF {
     ["1 g", "Achat de découverte, impulsion en caisse."],
     ["2,5 g", "Le format qui tourne le plus vite."],
     ["5 g", "Client régulier, panier moyen confortable."],
-    ["10 g", "Client fidèle. Feuilles slim et briquet intégrés (chapitre 7)."],
+    ["10 g", "Client fidèle. Cadeau client intégré (chapitre 7)."],
   ], [35, 143]);
   box(y, "ARGUMENT CLÉ", "« Vous n'avez rien à préparer, rien à peser, rien à investir en matériel. Vous ouvrez le carton, vous scannez, vous vendez. »");
 
@@ -736,9 +736,9 @@ export function generateProGuide(): jsPDF {
     ["À partir de 1 kg", "-20 %", "Compte majeur ou regroupement de commandes."],
   ], [45, 30, 103]);
   setFont(doc, 10, "bold", DARK);
-  doc.text("3. Feuilles slim et briquet intégrés dès 10 g", MARGIN, y);
+  doc.text("3. Un cadeau client offert dès 10 g", MARGIN, y);
   y += 5;
-  y = para(doc, "Chaque format 10 g part avec les feuilles slim et le briquet inclus. Ce n'est pas un gadget : c'est un remerciement aux clients qui nous font confiance, et un cadeau que le buraliste offre sans que cela lui coûte un centime de marge. Un argument de fidélisation gratuit pour lui.", y);
+  y = para(doc, "Chaque format 10 g part avec un cadeau pour le client. Ce n'est pas un gadget : c'est un remerciement aux clients qui nous font confiance, et un cadeau que le buraliste offre sans que cela lui coûte un centime de marge. Un argument de fidélisation gratuit pour lui.", y);
   y += 4;
   box(y, "LES CHIFFRES EXACTS", "Les prix professionnels HT, le prix public conseillé et le gain HT par format s'affichent en direct dans votre espace commercial, onglet Catalogue, ainsi que dans la grille tarifaire PDF. Utilisez toujours ces valeurs : ne calculez jamais un prix de tête devant un client.");
 
@@ -753,7 +753,7 @@ export function generateProGuide(): jsPDF {
     ["2:00 — 5:00", "L'histoire", "Trois phrases, chapitre 1. Ancien fumeur, lassitude du foin, plus de 200 variétés testées pour une dizaine retenues. C'est ce qui vous différencie du représentant d'à côté."],
     ["5:00 — 8:00", "Le produit", "Trois références maximum. Faites sentir. Montrez le packaging aluminium, le Boveda, les formats préconditionnés, le code-barres. Laissez-le manipuler."],
     ["8:00 — 9:30", "La légalité", "Ouvrez une analyse laboratoire devant lui. GC-MS et GC-FID, molécule par molécule. Rappelez la mention pot-pourri. C'est le moment où il se détend."],
-    ["9:30 — 11:00", "L'argent", "Grille tarifaire en main : prix HT, prix public conseillé, gain par format. Puis les paliers de remise. Puis les feuilles et le briquet offerts dès 10 g."],
+    ["9:30 — 11:00", "L'argent", "Grille tarifaire en main : prix HT, prix public conseillé, gain par format. Puis les paliers de remise. Puis le cadeau client offert dès 10 g."],
     ["11:00 — 12:00", "La conclusion", "Ne demandez jamais « ça vous intéresse ? ». Proposez : « on démarre avec un assortiment de trois références, je vous fais la commande maintenant et je repasse au réassort ? »"],
   ], [26, 26, 126]);
   box(y, "SI IL NE SIGNE PAS AUJOURD'HUI", "Ne repartez jamais les mains vides : récupérez un mail et un nom, laissez la grille tarifaire, déposez des échantillons si c'est pertinent, fixez une date de relance précise et notez-la immédiatement dans l'onglet Prospects de votre espace. Un prospect sans date de relance est un prospect perdu.");
@@ -818,7 +818,7 @@ export function generateProGuide(): jsPDF {
   ];
   for (const b of espace) { y = para(doc, `• ${b}`, y, 9.5); y += 1.5; }
   y += 3;
-  y = box(y, "LES CINQ PHRASES À CONNAÎTRE PAR CŒUR", "1. Marque française de CBD haut de gamme, 100 % indoor.\n2. Plus de 200 variétés testées, une dizaine retenues.\n3. Chaque molécule analysée en laboratoire : GC-MS et GC-FID, rapport disponible.\n4. Préconditionné 1 / 2,5 / 5 / 10 g, aluminium alimentaire, Boveda 62 %, code-barres.\n5. Coefficient 2 en HT, ristournes par volume, feuilles et briquet offerts dès 10 g.");
+  y = box(y, "LES CINQ PHRASES À CONNAÎTRE PAR CŒUR", "1. Marque française de CBD haut de gamme, 100 % indoor.\n2. Plus de 200 variétés testées, une dizaine retenues.\n3. Chaque molécule analysée en laboratoire : GC-MS et GC-FID, rapport disponible.\n4. Préconditionné 1 / 2,5 / 5 / 10 g, aluminium alimentaire, Boveda 62 %, code-barres.\n5. Coefficient 2 en HT, ristournes par volume, un cadeau client offert dès 10 g.");
   y = para(doc, "RAPPEL FINAL — Molécules proposées à usage de pot-pourri uniquement, conformément à la loi française. Aucune promesse d'effet, aucune allégation de santé.", y, 9.5, GOLD, "bold");
   y += 4;
   y = para(doc, "Une question, un doute sur une formulation, un prospect difficile : appelez avant d'improviser. Nous préférons dix minutes au téléphone à une phrase mal dite chez un buraliste.", y, 9.5, GRAY, "italic");

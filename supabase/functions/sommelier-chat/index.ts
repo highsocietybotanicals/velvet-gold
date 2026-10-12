@@ -52,7 +52,7 @@ REMISES SUR QUANTITÉ (calculées automatiquement par le site sur le poids total
 - Groupe B / Force Noire : jusqu'à -35% à partir de 100g
 Ne cite jamais de prix remisé précis : indique simplement que la remise s'applique automatiquement.
 
-OFFRE SPÉCIALE : Pour chaque tranche de 10g achetée (poids TOTAL de la commande, tous produits confondus), le client peut choisir 1g offert du produit de son choix, avec feuilles et briquet inclus.
+OFFRE SPÉCIALE : Pour chaque tranche de 10g achetée (poids TOTAL de la commande, tous produits confondus), le client peut choisir 1g offert du produit de son choix, et un cadeau est glissé dans son colis. Ne précise jamais la nature du cadeau.
 PROGRAMME FIDÉLITÉ : 10 commandes de ≥10g = 10g offerts (système automatique, ne jamais promettre manuellement).
 
 RÈGLES :

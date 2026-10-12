@@ -18,7 +18,7 @@ const PITCH = `Bonjour,
 
 Je suis commercial pour High Society Botanicals, une marque française de CBD haut de gamme (100 % indoor, sélection à la main, THC < 0,3 %, analyse laboratoire disponible sur demande).
 
-Nous proposons aux buralistes une gamme préconditionnée prête à vendre : pochons 1 g, 2,5 g, 5 g et 10 g, humidité maîtrisée par Boveda 62 %, briquet BIC et feuilles slim offerts dans les 10 g.
+Nous proposons aux buralistes une gamme préconditionnée prête à vendre : pochons 1 g, 2,5 g, 5 g et 10 g, humidité maîtrisée par Boveda 62 %, un cadeau client offert dans les 10 g.
 
 Le principe est simple : vous revendez aux mêmes prix que notre site. Chaque variété a un prix professionnel HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g), construit pour vous laisser un coefficient ×2 — et une remise s'ajoute sur le poids total de la commande dès 100 g (-5 %, puis -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg).
 

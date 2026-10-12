@@ -28,7 +28,7 @@ const PriceBlock = ({ p }: { p: Product }) => {
   return (
     <div className="pr">
       <div><small>1 g</small><strong>{eur(priceOf(p, 1))}</strong></div>
-      <div className="hi"><small>10 g</small><strong>{eur(p10)}</strong><em>{eur(p10 / 10)}/g · kit offert</em></div>
+      <div className="hi"><small>10 g</small><strong>{eur(p10)}</strong><em>{eur(p10 / 10)}/g · cadeau offert</em></div>
     </div>
   );
 };
@@ -379,7 +379,7 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
               <div className="total"><strong className="foil">{eur(priceOf(gLot, grid.w))}</strong><span>{gfmt(grid.w)} · soit {eur(priceOf(gLot, grid.w) / grid.w)} le gramme</span></div>
               <p className="save">{savingTxt(gLot, grid.w)}</p>
               <div className="gifts">
-                <span className={giftCount(grid.w) ? "" : "off"}>✦ <b>{giftCount(grid.w) || "Aucun"} kit{giftCount(grid.w) > 1 ? "s" : ""} offert{giftCount(grid.w) > 1 ? "s" : ""}</b> · briquet et feuilles</span>
+                <span className={giftCount(grid.w) ? "" : "off"}>✦ <b>Un cadeau offert dans votre colis dès 10 g</b></span>
                 <span className={giftCount(grid.w) ? "" : "off"}>✦ <b>{giftCount(grid.w) || "Aucun"} échantillon{giftCount(grid.w) > 1 ? "s" : ""} de 1 g</b> au choix</span>
               </div>
               <p className="nudge" dangerouslySetInnerHTML={{ __html: nudgeHtml(gLot, grid.w) }} />
@@ -455,7 +455,7 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
       <section className="final" aria-labelledby="mc-fi-t" style={{ backgroundImage: `radial-gradient(ellipse 46% 50% at 50% 50%, rgba(6,5,8,.82), rgba(6,5,8,.35) 75%, rgba(6,5,8,.6) 100%), url(${AMBIANCE.violette[0]}), url(${AMBIANCE.violette[1]})` }}>
         <p className="kicker">Collection N° 26</p>
         <h2 className="serif-i" id="mc-fi-t">Le premier gramme<span className="choc foil">à 12 €.</span></h2>
-        <p>Dès 10 g, un kit (briquet et feuilles) et un échantillon de 1 g sont offerts, à chaque tranche de 10 g. À la deuxième commande, BIENVENUE15 s'applique tout seul.</p>
+        <p>Un cadeau offert dans votre colis dès 10 g, et un échantillon de 1 g à chaque tranche de 10 g. À la deuxième commande, BIENVENUE15 s'applique tout seul.</p>
         <a className="btn-or" href="#collection" onClick={(e) => { e.preventDefault(); go("collection"); }}>Entrer dans la collection</a>
       </section>
     </div>

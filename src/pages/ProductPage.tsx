@@ -303,7 +303,7 @@ const ProductPage = () => {
             ) : (
               <div className="pr">
                 <div><small>1 g</small><strong>{eur(priceAt(1))}</strong></div>
-                <div className="hi"><small>10 g</small><strong>{eur(priceAt(10))}</strong><em>{eur(priceAt(10) / 10)}/g · kit offert</em></div>
+                <div className="hi"><small>10 g</small><strong>{eur(priceAt(10))}</strong><em>{eur(priceAt(10) / 10)}/g · cadeau offert</em></div>
               </div>
             )}
 
@@ -345,7 +345,7 @@ const ProductPage = () => {
 
                 {!isProWithValidatedVat && (
                   <div className="gifts">
-                    <span className={giftN ? "" : "off"}>✦ <b>{giftN || "Aucun"} kit{giftN > 1 ? "s" : ""} offert{giftN > 1 ? "s" : ""}</b> · briquet BIC et feuilles slim RAW</span>
+                    <span className={giftN ? "" : "off"}>✦ <b>Un cadeau offert dans votre colis dès 10 g</b></span>
                     <span className={giftN ? "" : "off"}>✦ <b>{giftN || "Aucun"} échantillon{giftN > 1 ? "s" : ""} de 1 g</b> au choix</span>
                   </div>
                 )}

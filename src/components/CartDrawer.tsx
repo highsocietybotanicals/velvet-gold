@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package, Leaf, Sparkles, CreditCard, Loader2, Tag, Check, Flame, FileText, ArrowLeft, ArrowRight, Lock } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Package, Leaf, Sparkles, CreditCard, Loader2, Tag, Check, ArrowLeft, ArrowRight, Lock } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useCart, type CartItem, type AccessoryCartItem, type SampleItem } from "@/contexts/CartContext";
@@ -1184,16 +1184,9 @@ const CartDrawer = () => {
                         {/* Gift contents detail */}
                         <div className="space-y-2 pt-2 border-t border-primary/20">
                           <div className="flex items-center gap-3">
-                            <FileText className="w-4 h-4 text-primary shrink-0" />
+                            <Gift className="w-4 h-4 text-primary shrink-0" />
                             <p className="text-sm text-foreground">
-                              {totalGifts.contents.feuillesSlim}x Feuilles Slim + Carton RAW
-                            </p>
-                            <span className="ml-auto text-xs text-green-400 font-semibold tracking-wide">OFFERT</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Flame className="w-4 h-4 text-primary shrink-0" />
-                            <p className="text-sm text-foreground">
-                              {totalGifts.contents.briquetBIC}x Briquet BIC Noir
+                              Un cadeau offert dans votre colis dès 10 g
                             </p>
                             <span className="ml-auto text-xs text-green-400 font-semibold tracking-wide">OFFERT</span>
                           </div>

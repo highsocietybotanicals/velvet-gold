@@ -309,7 +309,7 @@ export function generateProOrderForm(products: FormProduct[]): jsPDF {
 
   // --- Mentions ---
   setFont(doc, 7, "normal", GRAY);
-  doc.text("• Cadeaux inclus dès 10 g : briquet BIC + feuilles slim", MARGIN, y);
+  doc.text("• Un cadeau client offert dès 10 g", MARGIN, y);
   doc.text("• Produits CBD < 0,3 % THC — Analyses laboratoire disponibles sur demande", MARGIN, y + 4);
   y += 9;
 

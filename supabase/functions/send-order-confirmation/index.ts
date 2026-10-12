@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
     const samplesBlock = sampleItemsList.length > 0 ? `<div style="background-color:#1a1a1a;border-radius:8px;padding:20px 24px;margin-bottom:24px;border:1px solid #2a5a2a;"><h3 style="color:#4ade80;font-size:14px;font-weight:500;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;">Echantillons gratuits offerts</h3>${sampleItemsList.map((s: any) => `<p style="color:#e0e0e0;margin:0 0 4px;font-size:14px;">&#127793; ${s.product_name} - 1g <span style="color:#4ade80;font-weight:600;">GRATUIT</span></p>`).join("")}</div>` : "";
 
     // Build gifts section (currently disabled but ready)
-    const giftsBlock = giftItemsList.length > 0 ? `<div style="background-color:#1a1a1a;border-radius:8px;padding:20px 24px;margin-bottom:24px;border:1px solid #3a2a1a;"><h3 style="color:#d4af37;font-size:14px;font-weight:500;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;">Cadeaux offerts</h3>${giftItemsList.map((g: any) => `<p style="color:#e0e0e0;margin:0 0 4px;font-size:14px;">&#127873; ${g.product_name} <span style="color:#d4af37;font-weight:600;">OFFERT</span></p>`).join("")}</div>` : "";
+    const giftsBlock = giftItemsList.length > 0 ? `<div style="background-color:#1a1a1a;border-radius:8px;padding:20px 24px;margin-bottom:24px;border:1px solid #3a2a1a;"><h3 style="color:#d4af37;font-size:14px;font-weight:500;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;">Cadeaux offerts</h3><p style="color:#e0e0e0;margin:0 0 4px;font-size:14px;">&#127873; Un cadeau offert dans votre colis dès 10 g <span style="color:#d4af37;font-weight:600;">OFFERT</span></p></div>` : "";
 
     // Build discount info block
     let discountBlock = "";

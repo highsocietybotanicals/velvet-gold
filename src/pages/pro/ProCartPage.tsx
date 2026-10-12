@@ -281,8 +281,8 @@ const ProCartPage = () => {
                 <span className="g">{eur(totals.resellerMarginTotal)}</span>.
               </p>
               <p>
-                Port offert à partir de {eur(franco)} HT. Briquet + feuilles inclus dans chaque
-                pochon de 10 g, sans supplément.
+                Port offert à partir de {eur(franco)} HT. Un cadeau client offert dans
+                chaque pochon de 10 g, sans supplément.
               </p>
               {isKit ? (
                 <p>

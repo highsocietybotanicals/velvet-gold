@@ -31,7 +31,7 @@ const arguments_ = [
   {
     icon: Gift,
     title: "Cadeaux client inclus",
-    text: "Chaque pochon de 10 g contient un briquet BIC et un paquet de feuilles avec carton. Zéro centime en plus pour toi.",
+    text: "Chaque pochon de 10 g contient un cadeau pour ton client. Zéro centime en plus pour toi.",
   },
   {
     icon: ShieldCheck,

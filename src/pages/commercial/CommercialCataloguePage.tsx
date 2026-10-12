@@ -106,7 +106,7 @@ const ARGUMENTS_CLES = [
   { icon: Leaf, title: "100 % Indoor", text: "Cultures indoor sélectionnées, jamais de CBD industriel bas de gamme." },
   { icon: FlaskConical, title: "Analyses laboratoire", text: "THC < 0,3 %. Analyse laboratoire disponible sur demande, papiers fournis." },
   { icon: ShieldCheck, title: "Préconditionné pro", text: "Pochons 1 g / 2,5 g / 5 g / 10 g avec Boveda 62 %, prêts à vendre en rayon." },
-  { icon: Sparkles, title: "Cadeaux clients", text: "Briquet BIC + feuilles slim offerts dans les pochons 10 g : le client revient." },
+  { icon: Sparkles, title: "Cadeaux clients", text: "Un cadeau client offert dans les pochons 10 g : le client revient." },
 ];
 
 const CommercialCataloguePage = () => {

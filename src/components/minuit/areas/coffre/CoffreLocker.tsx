@@ -220,7 +220,7 @@ const CoffreLocker = forwardRef<HTMLElement, CoffreLockerProps>(({ product, inde
                 <span className="hi">
                   <small>10 g</small>
                   <b>{eur(p10)}</b>
-                  <em>kit offert</em>
+                  <em>cadeau offert</em>
                 </span>
                 <span className="from">
                   À partir de <b>{eur(lowestPerGram)}/g</b>
