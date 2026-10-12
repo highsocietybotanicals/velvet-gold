@@ -117,6 +117,100 @@ function calculateAccessoryPrice(unitPrice: number, quantity: number): number {
   return unitPrice * quantity * (1 - discount);
 }
 
+// Retire une commande que l'on vient de créer quand le paiement ne peut pas être préparé
+// (aucun paiement n'a pu avoir lieu : la cliente n'a pas encore été redirigée vers Viva).
+async function discardUnpayableOrder(supabaseAdmin: any, orderId: string, reason: string) {
+  console.error("Commande retirée avant paiement :", orderId, "—", reason);
+  const { data: order } = await supabaseAdmin
+    .from("orders")
+    .select("user_id, promo_code, total_flower_weight")
+    .eq("id", orderId)
+    .maybeSingle();
+  const { error: itemsError } = await supabaseAdmin.from("order_items").delete().eq("order_id", orderId);
+  if (itemsError) console.error("Suppression des lignes impossible :", itemsError.message);
+  const { data: deleted, error: orderError } = await supabaseAdmin
+    .from("orders")
+    .delete()
+    .eq("id", orderId)
+    .eq("payment_status", "unpaid")
+    .select("id");
+  if (orderError) console.error("Suppression de la commande impossible :", orderError.message);
+  if (order && deleted?.length) await undoOrderCreationCounters(supabaseAdmin, order);
+}
+
+// Les déclencheurs « AFTER INSERT » de orders ont déjà compté la commande retirée :
+// trg_increment_promo_uses (+1 utilisation du code promo) et on_order_created /
+// update_loyalty_counter (+1 commande fidélité pour un client connecté non pro avec ≥ 10 g,
+// remise à 0 et +10 g offerts à la 10e). On annule ces deux effets, sans jamais passer sous 0.
+async function undoOrderCreationCounters(
+  supabaseAdmin: any,
+  order: { user_id: string | null; promo_code: string | null; total_flower_weight: number | null },
+) {
+  try {
+    if (order.promo_code) {
+      const code = String(order.promo_code).toUpperCase();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const { data: promo } = await supabaseAdmin
+          .from("promo_codes")
+          .select("current_uses")
+          .eq("code", code)
+          .maybeSingle();
+        const uses = Number(promo?.current_uses);
+        if (!promo || !Number.isFinite(uses) || uses <= 0) break;
+        const { data: updated, error } = await supabaseAdmin
+          .from("promo_codes")
+          .update({ current_uses: uses - 1 })
+          .eq("code", code)
+          .eq("current_uses", uses)
+          .select("code");
+        if (error) {
+          console.error("Compteur du code promo non corrigé :", code, error.message);
+          break;
+        }
+        if (updated?.length) break; // sinon : modifié entre-temps, on relit une fois
+      }
+    }
+
+    if (order.user_id && Number(order.total_flower_weight) >= 10) {
+      const { data: proRoles, error: roleError } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .eq("user_id", order.user_id)
+        .eq("role", "pro")
+        .limit(1);
+      if (roleError) console.error("Rôle du client illisible, compteur fidélité non corrigé :", roleError.message);
+      else if (!proRoles?.length) {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("qualifying_orders_count, free_grams_available")
+          .eq("id", order.user_id)
+          .maybeSingle();
+        const count = Number(profile?.qualifying_orders_count ?? 0);
+        const grams = Number(profile?.free_grams_available ?? 0);
+        let patch: Record<string, number> | null = null;
+        if (count > 0) patch = { qualifying_orders_count: count - 1 };
+        else if (grams >= 10) patch = { qualifying_orders_count: 9, free_grams_available: grams - 10 }; // 10e commande annulée
+        if (profile && patch) {
+          const { error } = await supabaseAdmin
+            .from("profiles")
+            .update(patch)
+            .eq("id", order.user_id)
+            .eq("qualifying_orders_count", count);
+          if (error) console.error("Compteur fidélité non corrigé :", order.user_id, error.message);
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Correction des compteurs après retrait de commande impossible :", e);
+  }
+}
+
+const jsonError = (message: string, status: number) =>
+  new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -456,6 +550,7 @@ Deno.serve(async (req) => {
       contact_phone: safeContactPhone || null,
       status: "pending",
       payment_status: "unpaid",
+      payment_method: "online",
       relay_point_id: (relayPointId || '').slice(0, 50) || null,
       relay_point_name: (relayPointName || '').slice(0, 200) || null,
       relay_point_address: (relayPointAddress || '').slice(0, 500) || null,
@@ -498,13 +593,20 @@ Deno.serve(async (req) => {
         .insert(orderItems);
 
       if (itemsError) {
+        // Sans ses lignes, la commande serait payée sans que l'on sache quoi préparer.
         console.error("Order items error:", itemsError);
+        await discardUnpayableOrder(supabaseAdmin, order.id, "lignes de commande non enregistrées");
+        return jsonError("Impossible d'enregistrer votre commande. Veuillez réessayer.", 500);
       }
     }
 
     // Create Viva Wallet payment order
     const merchantId = Deno.env.get("VIVA_MERCHANT_ID");
     const apiKey = Deno.env.get("VIVA_API_KEY");
+    if (!merchantId || !apiKey) {
+      await discardUnpayableOrder(supabaseAdmin, order.id, "identifiants Viva absents (VIVA_MERCHANT_ID / VIVA_API_KEY)");
+      return jsonError("Le paiement par carte est momentanément indisponible. Veuillez réessayer plus tard.", 503);
+    }
 
     const vivaAmount = Math.round(serverTotal * 100);
     const credentials = btoa(`${merchantId}:${apiKey}`);
@@ -533,36 +635,44 @@ Deno.serve(async (req) => {
     console.log("Viva response status:", vivaResponse.status, "body:", vivaText);
 
     const orderCodeMatch = vivaText.match(/"OrderCode"\s*:\s*(\d+)/);
-    
+
     let vivaData: any;
     try {
       vivaData = JSON.parse(vivaText);
     } catch {
       console.error("Failed to parse Viva response:", vivaText);
-      return new Response(
-        JSON.stringify({ error: "Erreur du service de paiement. Veuillez reessayer." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      await discardUnpayableOrder(supabaseAdmin, order.id, "réponse Viva illisible");
+      return jsonError("Erreur du service de paiement. Veuillez réessayer.", 502);
     }
 
     if (!vivaResponse.ok || vivaData.ErrorCode !== 0) {
       console.error("Viva error:", vivaData);
-      return new Response(
-        JSON.stringify({ error: "Echec de la creation du paiement. Veuillez reessayer." }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      await discardUnpayableOrder(supabaseAdmin, order.id, "création du paiement refusée par Viva");
+      return jsonError("Échec de la création du paiement. Veuillez réessayer.", 500);
     }
 
-    const orderCode = orderCodeMatch ? orderCodeMatch[1] : String(vivaData.OrderCode);
+    const orderCode = orderCodeMatch ? orderCodeMatch[1] : String(vivaData.OrderCode ?? "");
     console.log("OrderCode (string, precise):", orderCode);
+    if (!/^\d{6,24}$/.test(orderCode)) {
+      await discardUnpayableOrder(supabaseAdmin, order.id, `code de commande Viva inattendu : ${orderCode}`);
+      return jsonError("Erreur du service de paiement. Veuillez réessayer.", 502);
+    }
 
-    await supabaseAdmin
-      .from("orders")
-      .update({ viva_order_code: String(orderCode) })
-      .eq("id", order.id);
+    // Le code Viva est indispensable pour retrouver et vérifier le paiement ensuite
+    // (retour de la cliente, webhook, vérification planifiée) : on ne redirige pas sans lui.
+    let codeSaved = false;
+    for (let attempt = 1; attempt <= 2 && !codeSaved; attempt++) {
+      const { error: codeError } = await supabaseAdmin
+        .from("orders")
+        .update({ viva_order_code: orderCode })
+        .eq("id", order.id);
+      if (codeError) console.error(`Enregistrement du code Viva impossible (essai ${attempt}) :`, codeError.message);
+      else codeSaved = true;
+    }
+    if (!codeSaved) {
+      await discardUnpayableOrder(supabaseAdmin, order.id, "code de commande Viva non enregistré");
+      return jsonError("Impossible de préparer le paiement. Veuillez réessayer.", 500);
+    }
 
     // Deduct free grams if used
     if (userId && validFreeGramsUsed > 0) {

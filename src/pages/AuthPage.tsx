@@ -37,9 +37,17 @@ const safeNext = () => {
 const isProSignupLink = () =>
   new URLSearchParams(window.location.search).get("inscription") === "pro";
 
+// ?retour=panier : après connexion ou inscription, retour à la page d'origine (next) avec le tiroir du panier rouvert.
+const returnTarget = () => {
+  const next = safeNext();
+  if (new URLSearchParams(window.location.search).get("retour") !== "panier") return next;
+  const base = next ?? "/";
+  return `${base}${base.includes("?") ? "&" : "?"}panier=1`;
+};
+
 const handleGoogleSignIn = async () => {
   const { error } = await lovable.auth.signInWithOAuth("google", {
-    redirect_uri: window.location.origin + (safeNext() ?? "/profil"),
+    redirect_uri: window.location.origin + (returnTarget() ?? "/profil"),
   });
   if (error) {
     console.error("Google sign-in error:", error);
@@ -48,7 +56,7 @@ const handleGoogleSignIn = async () => {
 
 const handleAppleSignIn = async () => {
   const { error } = await lovable.auth.signInWithOAuth("apple", {
-    redirect_uri: window.location.origin + (safeNext() ?? "/profil"),
+    redirect_uri: window.location.origin + (returnTarget() ?? "/profil"),
   });
   if (error) {
     console.error("Apple sign-in error:", error);
@@ -73,7 +81,7 @@ const AuthPage = () => {
 
   // Redirect if already logged in
   if (user) {
-    navigate(safeNext() ?? "/profil");
+    navigate(returnTarget() ?? "/profil");
     return null;
   }
 
@@ -121,7 +129,7 @@ const AuthPage = () => {
       if (result.error) {
         setError(result.error.message);
       } else {
-        navigate(safeNext() ?? "/profil");
+        navigate(returnTarget() ?? "/profil");
       }
     } else {
       const proInfo = accountType === "pro" 
@@ -136,7 +144,7 @@ const AuthPage = () => {
       if (result.error) {
         setError(result.error.message);
       } else {
-        navigate(safeNext() ?? "/profil");
+        navigate(returnTarget() ?? "/profil");
       }
     }
 

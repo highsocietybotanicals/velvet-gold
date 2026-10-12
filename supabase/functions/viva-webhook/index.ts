@@ -1,4 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkVivaOrderPaid, parseVivaJson, verifyVivaTransaction, type VivaPaymentCheck } from "../_shared/viva-api.ts";
+import { confirmOrderPayment, runAfterResponse } from "../_shared/order-paid.ts";
+import { notifyAdminsOfOrphanPayment } from "../_shared/admin-order-notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,42 +9,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Viva Wallet production webhook IP allowlist
-// Source: https://developer.viva.com/webhooks-for-payments/
-const VIVA_ALLOWED_IPS = new Set([
-  "51.138.37.238",
-  "13.80.70.181",
-  "13.80.71.223",
-  "13.79.28.70",
-  "94.70.255.73",
-  "94.70.248.18",
-  "83.235.24.226",
-  "20.13.195.185",
-  "94.70.174.36",
-]);
-
-// Viva IP ranges (CIDR /28 = 16 IPs each)
-// 40.127.253.112/28 → .112-.127
-// 51.105.129.192/28 → .192-.207
-function isInCidr28(ip: string, base: string): boolean {
-  const parts = ip.split(".").map(Number);
-  const baseParts = base.split(".").map(Number);
-  if (parts.length !== 4 || baseParts.length !== 4) return false;
-  return (
-    parts[0] === baseParts[0] &&
-    parts[1] === baseParts[1] &&
-    parts[2] === baseParts[2] &&
-    parts[3] >= baseParts[3] &&
-    parts[3] <= baseParts[3] + 15
-  );
-}
-
-function isVivaIp(ip: string): boolean {
-  if (VIVA_ALLOWED_IPS.has(ip)) return true;
-  if (isInCidr28(ip, "40.127.253.112")) return true;
-  if (isInCidr28(ip, "51.105.129.192")) return true;
-  return false;
-}
+// Plus de liste d'adresses IP Viva : quand Viva change d'adresse, les paiements étaient refusés
+// (403) et jamais enregistrés. La sécurité repose sur la relecture de chaque paiement auprès
+// de l'API Viva avec les identifiants marchands (transaction finalisée « F », rattachée à la
+// commande, au bon montant). L'IP est seulement journalisée.
 
 // Simple in-memory rate limiter per IP (resets on cold start)
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
@@ -66,6 +37,16 @@ setInterval(() => {
   }
 }, RATE_LIMIT_WINDOW_MS);
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ORDER_CODE_RE = /^\d{6,24}$/;
+const TRANSACTION_ID_RE = /^[0-9a-f-]{32,36}$/i;
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -74,20 +55,8 @@ Deno.serve(async (req) => {
   // Rate limit by IP
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (isRateLimited(clientIp)) {
-    return new Response(JSON.stringify({ error: "Too many requests" }), {
-      status: 429,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  // IP allowlist check for POST requests (webhook notifications)
-  // GET requests (challenge-response verification) are allowed from any IP
-  if (req.method === "POST" && !isVivaIp(clientIp)) {
-    console.warn("Webhook POST from non-Viva IP rejected:", clientIp);
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.warn("Webhook Viva : trop de requêtes depuis", clientIp);
+    return json({ error: "Too many requests" }, 429);
   }
 
   // Must return the verification key from Viva's API
@@ -114,7 +83,7 @@ Deno.serve(async (req) => {
 
       if (tokenResponse.ok) {
         const tokenData = await tokenResponse.text();
-        console.log("Viva verification token retrieved successfully");
+        console.log("Viva verification token retrieved successfully (IP", clientIp, ")");
         return new Response(tokenData, {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -125,107 +94,52 @@ Deno.serve(async (req) => {
       const verificationKey = Deno.env.get("VIVA_WEBHOOK_VERIFICATION_KEY");
       if (verificationKey) {
         console.log("Using stored verification key as fallback");
-        return new Response(JSON.stringify({ Key: verificationKey }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ Key: verificationKey });
       }
 
       console.error("Failed to get verification token from Viva:", tokenResponse.status);
-      return new Response(JSON.stringify({ error: "Verification token unavailable" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Verification token unavailable" }, 500);
     } catch (err) {
       console.error("Verification error:", err);
-      return new Response(JSON.stringify({ error: "Verification failed" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Verification failed" }, 500);
     }
   }
 
-  try {
-    const body = await req.json();
-    console.log("Viva webhook received:", JSON.stringify(body));
+  if (req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
 
-    const eventTypeId = body.EventTypeId;
-    const eventData = body.EventData;
+  try {
+    // Lecture en texte : les codes de commande Viva (16 chiffres) dépassent la précision
+    // des nombres JavaScript, parseVivaJson les garde intacts.
+    let body: any;
+    try {
+      body = parseVivaJson(await req.text());
+    } catch {
+      console.warn("Webhook Viva : corps illisible (IP", clientIp, ")");
+      return json({ error: "Bad request" }, 400);
+    }
+
+    const eventTypeId = Number(body?.EventTypeId);
+    const eventData = body?.EventData ?? {};
+    const merchantTrns = typeof eventData.MerchantTrns === "string" ? eventData.MerchantTrns.trim() : "";
+    const orderCode = eventData.OrderCode != null ? String(eventData.OrderCode).trim() : "";
+    const transactionId = typeof eventData.TransactionId === "string" ? eventData.TransactionId.trim() : "";
+
+    // Journal sans données personnelles (ni e-mail, ni nom, ni carte)
+    console.log(
+      `Webhook Viva reçu : événement ${eventTypeId || "?"}, IP ${clientIp}, transaction ${transactionId || "?"}, commande Viva ${orderCode || "?"}, référence ${merchantTrns || "?"}, statut ${eventData.StatusId ?? "?"}`,
+    );
+
+    // 1797 = paiement refusé / échoué : journalisé, aucune action (la commande reste « à payer »)
+    if (eventTypeId === 1797) {
+      console.log(`Webhook Viva : paiement échoué pour la référence ${merchantTrns || orderCode || "?"} — aucune action`);
+      return json({ success: true, ignored: "payment_failed_event" });
+    }
 
     // EventTypeId 1796 = Transaction Payment Created (successful payment)
     if (eventTypeId !== 1796) {
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const merchantTrns = eventData?.MerchantTrns; // This is the order ID
-    const transactionId = eventData?.TransactionId;
-
-    if (!merchantTrns) {
-      console.error("No MerchantTrns in webhook");
-      return new Response(JSON.stringify({ error: "Bad request" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Validate merchantTrns is a valid UUID format to prevent enumeration
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(merchantTrns)) {
-      console.error("Invalid MerchantTrns format:", merchantTrns);
-      return new Response(JSON.stringify({ error: "Bad request" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Verify transaction with Viva API
-    const merchantId = Deno.env.get("VIVA_MERCHANT_ID");
-    const apiKey = Deno.env.get("VIVA_API_KEY");
-    const credentials = btoa(`${merchantId}:${apiKey}`);
-
-    const verifyResponse = await fetch(
-      `https://www.vivapayments.com/api/transactions/${transactionId}`,
-      {
-        headers: {
-          Authorization: `Basic ${credentials}`,
-        },
-      }
-    );
-
-    if (!verifyResponse.ok) {
-      console.error("Transaction verification failed, status:", verifyResponse.status);
-      return new Response(JSON.stringify({ error: "Bad request" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const txData = await verifyResponse.json();
-    console.log("Transaction verified, response keys:", Object.keys(txData));
-
-    // SECURITY: Use the amount from the VERIFIED Viva API response, NOT the webhook payload.
-    // The webhook payload can be forged, but the Viva API response is trustworthy.
-    // Viva /api/transactions/ returns amount in cents (e.g. 1500 = €15.00)
-    const vivaAmountCents = txData.Amount;
-    
-    if (typeof vivaAmountCents !== "number" || vivaAmountCents <= 0) {
-      console.error("Invalid amount from Viva API:", vivaAmountCents);
-      return new Response(JSON.stringify({ error: "Bad request" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Also verify the MerchantTrns from the API response matches the webhook's
-    const vivaOrderRef = txData.MerchantTrns;
-    if (vivaOrderRef !== merchantTrns) {
-      console.error("MerchantTrns mismatch: API says", vivaOrderRef, "webhook says", merchantTrns);
-      return new Response(JSON.stringify({ error: "Bad request" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ success: true, ignored: "event_type" });
     }
 
     const supabase = createClient(
@@ -233,104 +147,120 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get order to verify amount
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .select("total_amount")
-      .eq("id", merchantTrns)
-      .single();
-
-    if (orderError || !order) {
-      console.error("Order not found:", merchantTrns);
-      return new Response(JSON.stringify({ error: "Bad request" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Retrouver la commande : MerchantTrns = id de la commande HSB, sinon code de commande Viva.
+    const columns = "id, total_amount, payment_status, viva_order_code, display_order_number";
+    let order: any = null;
+    if (UUID_RE.test(merchantTrns)) {
+      const { data, error } = await supabase.from("orders").select(columns).eq("id", merchantTrns).maybeSingle();
+      if (error) {
+        console.error("Webhook Viva : lecture commande impossible", error.message);
+        return json({ error: "Internal error" }, 500); // Viva renverra l'événement
+      }
+      order = data;
     }
-
-    // Compare: vivaAmountCents is in cents, order.total_amount is in euros
-    const expectedAmountCents = Math.round(order.total_amount * 100);
-    
-    console.log("Amount check: Viva API says", vivaAmountCents, "cents, expected", expectedAmountCents, "cents");
-    
-    if (Math.abs(vivaAmountCents - expectedAmountCents) > 1) {
-      console.error("Amount mismatch: Viva API", vivaAmountCents, "cents vs expected", expectedAmountCents, "cents");
-      return new Response(JSON.stringify({ error: "Bad request" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Also verify the transaction status from the API response, not the webhook
-    // Viva StatusId: "F" = completed/finalized
-    const vivaStatusId = txData.StatusId;
-    if (vivaStatusId === "F") {
-      await supabase
+    if (!order && ORDER_CODE_RE.test(orderCode)) {
+      const { data, error } = await supabase
         .from("orders")
-        .update({
-          payment_status: "paid",
-          status: "preparing",
-        })
-        .eq("id", merchantTrns);
-
-      console.log(`Order ${merchantTrns} marked as paid ✅`);
-
-      // Send confirmation email (fire-and-forget)
-      try {
-        const emailUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-order-confirmation`;
-        fetch(emailUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-          },
-          body: JSON.stringify({ orderId: merchantTrns }),
-        }).catch((e) => console.error("Fire-and-forget email error:", e));
-      } catch (e) {
-        console.error("Email trigger error:", e);
+        .select(columns)
+        .eq("viva_order_code", orderCode)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (error) {
+        console.error("Webhook Viva : lecture commande impossible", error.message);
+        return json({ error: "Internal error" }, 500);
       }
-
-      // Compute mileage for personal delivery (fire-and-forget)
-      try {
-        const mileageUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/compute-mileage`;
-        fetch(mileageUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-          },
-          body: JSON.stringify({ orderId: merchantTrns }),
-        }).catch((e) => console.error("Fire-and-forget mileage error:", e));
-      } catch (e) {
-        console.error("Mileage trigger error:", e);
-      }
-
-      // Notify admin via Telegram (fire-and-forget)
-      try {
-        const tgUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-admin-telegram`;
-        fetch(tgUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-          },
-          body: JSON.stringify({ orderId: merchantTrns, eventType: "paid" }),
-        }).catch((e) => console.error("Telegram notify error:", e));
-      } catch (e) {
-        console.error("Telegram trigger error:", e);
-      }
-    } else {
-      console.log(`Order ${merchantTrns} received but StatusId is: ${eventData.StatusId}`);
+      order = data?.[0] ?? null;
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    if (!order) {
+      // Référence = id d'une commande du site, mais la commande n'existe plus (supprimée comme
+      // panier abandonné avant l'arrivée du paiement) : après confirmation par Viva, on prévient
+      // la gérante pour que le paiement ne soit pas perdu.
+      const claimedCents = Math.round(Number(eventData.Amount) * 100);
+      if (UUID_RE.test(merchantTrns) && TRANSACTION_ID_RE.test(transactionId) && claimedCents > 0) {
+        const orphanCheck = await verifyVivaTransaction(transactionId, {
+          orderId: merchantTrns,
+          orderCode: ORDER_CODE_RE.test(orderCode) ? orderCode : null,
+          expectedCents: claimedCents,
+        });
+        if (orphanCheck.paid) {
+          console.error(
+            `Webhook Viva : PAIEMENT SANS COMMANDE — référence ${merchantTrns}, commande Viva ${orderCode || "?"}, ${claimedCents / 100} € — alerte admin`,
+          );
+          await runAfterResponse(
+            notifyAdminsOfOrphanPayment(supabase, {
+              reference: merchantTrns,
+              vivaOrderCode: ORDER_CODE_RE.test(orderCode) ? orderCode : null,
+              transactionId,
+              amountCents: claimedCents,
+              customerEmail: typeof eventData.Email === "string" ? eventData.Email.slice(0, 255) : null,
+              customerName: typeof eventData.FullName === "string" ? eventData.FullName.slice(0, 200) : null,
+            }),
+            `Webhook Viva : alerte paiement sans commande ${transactionId}`,
+          );
+          return json({ success: true, status: "orphan_payment" });
+        }
+        if (!orphanCheck.reachable) {
+          console.error(`Webhook Viva : commande ${merchantTrns} introuvable et Viva injoignable — ${orphanCheck.detail}`);
+          return json({ error: "Verification unavailable" }, 503); // Viva renverra l'événement
+        }
+      }
+      // Paiement sans commande du site (terminal, lien de paiement…) : rien à faire.
+      console.log("Webhook Viva : aucune commande du site pour cet événement — ignoré");
+      return json({ success: true, ignored: "order_not_found" });
+    }
+
+    const orderLabel = order.display_order_number || order.id;
+
+    // Idempotence : déjà payée → 200 sans rien renvoyer
+    if (order.payment_status === "paid") {
+      console.log(`Webhook Viva : ${orderLabel} déjà payée — aucune action`);
+      return json({ success: true, status: "already_paid" });
+    }
+    if (order.payment_status !== "unpaid") {
+      console.warn(`Webhook Viva : ${orderLabel} a le statut de paiement « ${order.payment_status} » — aucune action`);
+      return json({ success: true, ignored: "payment_status" });
+    }
+
+    // Vérification auprès de l'API Viva (identifiants marchands) — la vraie sécurité.
+    const ref = {
+      orderId: order.id,
+      orderCode: order.viva_order_code ?? (ORDER_CODE_RE.test(orderCode) ? orderCode : null),
+      expectedCents: Math.round(Number(order.total_amount) * 100),
+    };
+    let check: VivaPaymentCheck = { paid: false, reachable: false, detail: "pas d'identifiant de transaction" };
+    if (TRANSACTION_ID_RE.test(transactionId)) {
+      check = await verifyVivaTransaction(transactionId, ref);
+    }
+    if (!check.paid && ref.orderCode) {
+      const byOrder = await checkVivaOrderPaid(ref);
+      check = {
+        ...byOrder,
+        reachable: byOrder.reachable || check.reachable,
+        detail: `${check.detail} | ${byOrder.detail}`,
+      };
+    }
+
+    if (!check.paid) {
+      if (!check.reachable) {
+        // Viva injoignable : erreur temporaire, Viva renverra l'événement (et la vérification
+        // planifiée reconcile-viva-payments rattrapera le paiement).
+        console.error(`Webhook Viva : vérification impossible pour ${orderLabel} — ${check.detail}`);
+        return json({ error: "Verification unavailable" }, 503);
+      }
+      console.error(`Webhook Viva : paiement NON confirmé par l'API Viva pour ${orderLabel} — ${check.detail}`);
+      return json({ error: "Bad request" }, 400);
+    }
+
+    const result = await confirmOrderPayment(supabase, order.id, "viva-webhook", { background: true });
+    if (result.outcome === "error") {
+      // 500 → Viva renverra l'événement ; la vérification planifiée rattrapera aussi.
+      return json({ error: "Internal error" }, 500);
+    }
+    console.log(`Webhook Viva : ${orderLabel} → ${result.outcome} (${check.detail})`);
+    return json({ success: true, status: result.outcome });
   } catch (error) {
     console.error("Webhook error:", error);
-    return new Response(JSON.stringify({ error: "Internal error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "Internal error" }, 500);
   }
 });

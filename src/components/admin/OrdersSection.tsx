@@ -24,6 +24,7 @@ import { fr } from "date-fns/locale";
 import OrderSummaryPrint from "@/components/admin/OrderSummaryPrint";
 import ShippingLabel from "@/components/admin/ShippingLabel";
 import { MolecularLabel } from "@/components/admin/MolecularLabel";
+import { OrderLabelsButton } from "@/components/admin/OrderLabelsButton";
 import { BANK_DETAILS } from "@/lib/bankDetails";
 
 const ORDER_STATUSES = [
@@ -98,9 +99,23 @@ const OrderRow = ({
           {order.order_items?.map((item, idx) => (
             <div key={idx} className="flex items-center gap-1 text-muted-foreground">
               <span>{item.product_name} {item.weight ? `(${item.weight}g)` : `x${item.quantity}`}</span>
-              <MolecularLabel productId={item.product_id} productName={item.product_name} weight={item.weight} />
+              <MolecularLabel
+                productId={item.product_id}
+                productName={item.product_name}
+                productType={item.product_type}
+                weight={item.weight}
+                quantity={item.quantity}
+              />
             </div>
           ))}
+          {!!order.order_items?.length && (
+            <div className="mt-2">
+              <OrderLabelsButton
+                items={order.order_items}
+                orderNumber={order.display_order_number || `HSB-${order.order_number.toString().padStart(4, "0")}`}
+              />
+            </div>
+          )}
         </div>
       </TableCell>
       <TableCell className="font-semibold text-gold">
