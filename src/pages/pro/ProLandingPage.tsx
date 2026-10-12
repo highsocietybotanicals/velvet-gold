@@ -51,7 +51,23 @@ const arguments_ = [
   },
 ];
 
-// Conditions de l'offre revendeur, affichées avant l'inscription
+// Conditions visibles par tout le monde (aucun prix : la grille est réservée aux partenaires validés)
+const conditionsPubliques = [
+  {
+    title: "Tarifs professionnels sur dossier",
+    text: "La grille tarifaire revendeur est communiquée après validation de votre dossier (SIRET et numéro de TVA intracommunautaire).",
+  },
+  {
+    title: "Kit découverte",
+    text: `${KIT_UNITS} pochons de 1 g, variétés au choix, pour goûter avant de vous lancer. Déduit de votre première commande passée dans les ${KIT_DEDUCTION_DAYS} jours.`,
+  },
+  {
+    title: "Sans engagement",
+    text: "Règlement par virement à la commande, expédition dès réception. Pas de dépôt-vente, pas d'engagement de volume.",
+  },
+];
+
+// Conditions complètes de l'offre revendeur : partenaires validés et équipe seulement
 const conditions = [
   {
     title: "Prix pro : 50 % du prix public HT",
@@ -86,7 +102,7 @@ const ProLandingPage = () => {
     if (desc)
       desc.setAttribute(
         "content",
-        "Grille tarifaire revendeur High Society Botanicals : préconditionnés 1 g à 10 g, pochons alu hermétiques, Boveda 62 %, prix pro à 50 % du prix public HT."
+        "Espace revendeur High Society Botanicals : préconditionnés 1 g à 10 g, pochons alu hermétiques, Boveda 62 %. Tarifs professionnels communiqués sur dossier (SIRET et TVA)."
       );
   }, []);
 
@@ -104,9 +120,10 @@ const ProLandingPage = () => {
               <span className="pr-h1-brand pr-foil">High Society Botanicals</span>
             </h1>
             <p className="pr-lead">
-              Un catalogue dédié, un prix d'achat à 50 % du prix public HT, et des
-              préconditionnés prêts à poser en vitrine. Réservé aux professionnels disposant d'un SIRET
-              et d'un numéro de TVA intracommunautaire.
+              {hasAccess
+                ? "Un catalogue dédié, un prix d'achat à 50 % du prix public HT, et des préconditionnés prêts à poser en vitrine."
+                : "Un catalogue dédié, des conditions réservées aux professionnels et des préconditionnés prêts à poser en vitrine. Tarifs communiqués après validation de votre dossier."}{" "}
+              Réservé aux professionnels disposant d'un SIRET et d'un numéro de TVA intracommunautaire.
             </p>
             <div className="pr-cta">
               {hasAccess ? (
@@ -189,7 +206,7 @@ const ProLandingPage = () => {
           </ol>
         </div>
         <div className="pr-privs-grid">
-          {conditions.map((c) => (
+          {(hasAccess ? conditions : conditionsPubliques).map((c) => (
             <Card key={c.title} className="pr-priv">
               <CardContent className="pr-priv-in">
                 <h3>{c.title}</h3>
