@@ -28,6 +28,16 @@ interface ProInfo {
   vatNumber?: string;
 }
 
+// Inscription depuis le tiroir du panier (compte obligatoire pour commander).
+interface CheckoutSignUpInput {
+  email: string;
+  password: string;
+  fullName: string;
+  phone: string;
+  /** Page où revenir si l'e-mail doit d'abord être confirmé (lien reçu par e-mail). */
+  redirectTo?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -48,6 +58,10 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
   submitProRequest: (companyName: string, siret: string) => Promise<{ error: Error | null }>;
+  /** Inscription depuis le panier : enregistre aussi nom et téléphone ; indique si l'e-mail doit d'abord être confirmé. */
+  signUpForCheckout: (input: CheckoutSignUpInput) => Promise<{ error: Error | null; needsEmailConfirmation: boolean }>;
+  /** Envoie un lien de connexion par e-mail (sert de « mot de passe oublié » : un clic connecte la cliente). */
+  sendLoginLink: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -306,6 +320,66 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const signUpForCheckout = async ({ email, password, fullName, phone, redirectTo }: CheckoutSignUpInput) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectTo || window.location.origin,
+          // Conservés dans le compte même si l'e-mail doit d'abord être confirmé (aucune saisie perdue).
+          data: { full_name: fullName, phone },
+        },
+      });
+      if (error) throw error;
+
+      // Confirmation par e-mail active + adresse déjà inscrite : Supabase renvoie un compte « vide » sans erreur.
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        return { error: Object.assign(new Error("User already registered"), { code: "user_already_exists" }), needsEmailConfirmation: false };
+      }
+
+      saveContact({ email, phone, name: fullName, source: "signup" });
+
+      if (!data.session || !data.user) {
+        return { error: null, needsEmailConfirmation: true };
+      }
+
+      // Session immédiate : le profil (créé par handle_new_user) reçoit nom et téléphone tout de suite.
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ full_name: fullName, phone })
+        .eq("id", data.user.id);
+      if (profileError) console.error("Profil non complété après inscription :", profileError);
+      await fetchProfile(data.user.id);
+
+      toast({
+        title: "Compte créé",
+        description: "Bienvenue chez High Society Botanicals.",
+      });
+      return { error: null, needsEmailConfirmation: false };
+    } catch (error) {
+      if (import.meta.env.DEV) console.error("Checkout signup error:", error);
+      return { error: error as Error, needsEmailConfirmation: false };
+    }
+  };
+
+  const sendLoginLink = async (email: string, redirectTo?: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: redirectTo || window.location.origin,
+        },
+      });
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      if (import.meta.env.DEV) console.error("Login link error:", error);
+      return { error: error as Error };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -323,6 +397,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         refreshProfile,
         updateProfile,
         submitProRequest,
+        signUpForCheckout,
+        sendLoginLink,
       }}
     >
       {children}

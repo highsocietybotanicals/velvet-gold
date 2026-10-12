@@ -31,11 +31,15 @@ project_id = "pvwwxpcosiqetsflykmp"
     verify_jwt = true
   [functions.handle-email-events]
     verify_jwt = false
+  [functions.notify-admin-order]
+    verify_jwt = false
   [functions.notify-admin-telegram]
     verify_jwt = false
   [functions.notify-pro-application]
     verify_jwt = true
   [functions.preview-transactional-email]
+    verify_jwt = false
+  [functions.reconcile-viva-payments]
     verify_jwt = false
   [functions.send-abandoned-cart-email]
     verify_jwt = false
