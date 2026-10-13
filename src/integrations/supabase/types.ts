@@ -1552,6 +1552,10 @@ export type Database = {
         Args: { p_direction: number; p_order_id: string }
         Returns: undefined
       }
+      check_reconcile_cron_secret: {
+        Args: { candidate: string }
+        Returns: boolean
+      }
       cleanup_abandoned_orders: { Args: never; Returns: number }
       has_role: {
         Args: {
