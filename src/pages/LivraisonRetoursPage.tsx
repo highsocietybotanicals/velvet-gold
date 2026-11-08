@@ -54,12 +54,15 @@ const LivraisonRetoursPage = () => {
 
               <h3 className="font-display text-lg text-primary/80 mb-3 mt-6">Remise en main propre</h3>
               <p>
-                Disponible dans un <strong className="text-foreground">rayon de 100 km autour de notre entrepôt (Loire-Atlantique, 44)</strong>.
-                Ce mode de livraison est réservé aux :
+                Disponible dans un <strong className="text-foreground">rayon de 100 km autour de notre entrepôt (Loire-Atlantique, 44)</strong>,
+                selon la distance et le poids de la commande :
               </p>
               <ul className="list-disc list-inside mt-3 space-y-2">
-                <li>Clients professionnels (compte Pro validé)</li>
-                <li>Commandes d'un poids total supérieur ou égal à 100g</li>
+                <li>Moins de 10 km : dès 2,5 g</li>
+                <li>Moins de 25 km : dès 5 g</li>
+                <li>Moins de 50 km : dès 50 g</li>
+                <li>Moins de 100 km : dès 100 g</li>
+                <li>Clients professionnels (compte Pro validé) : sans minimum</li>
               </ul>
               <p className="mt-3">
                 Un rendez-vous sera convenu par téléphone ou email après validation de la commande.
