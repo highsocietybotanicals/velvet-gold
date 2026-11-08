@@ -242,7 +242,7 @@ const CheckoutDelivery = ({
               )}
             </span>
             <span className="mt-1 block text-xs text-muted-foreground">
-              Je me déplace chez vous ou au lieu de votre choix (Loire-Atlantique, jusqu'à 100 km) — à partir de{" "}
+              Je me déplace chez vous ou au lieu de votre choix (Loire-Atlantique, jusqu'à 30 km) — à partir de{" "}
               {formatGrams(PERSONAL_MIN_WEIGHT)}
             </span>
             {!personalAllowed && (

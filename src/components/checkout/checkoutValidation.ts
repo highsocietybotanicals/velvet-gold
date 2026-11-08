@@ -2,14 +2,13 @@
 // affichés champ par champ, l'activation du bouton « Payer » et l'adresse transmise au serveur.
 
 export type DeliveryType = "postal" | "personal" | "relay";
-export type PersonalZone = "10" | "25" | "50" | "100" | null;
+export type PersonalZone = "10" | "20" | "30" | null;
 
-// Mêmes zones et mêmes seuils que DeliverySection (livraison personnelle).
+// Zones et seuils de la remise en main propre (mis à jour le 08/11/2026). Au-delà de 30 km : envoi postal.
 export const ZONE_OPTIONS: { value: Exclude<PersonalZone, null>; label: string; min: number }[] = [
   { value: "10", label: "Moins de 10 km", min: 2.5 },
-  { value: "25", label: "Moins de 25 km", min: 5 },
-  { value: "50", label: "Moins de 50 km", min: 50 },
-  { value: "100", label: "Moins de 100 km", min: 100 },
+  { value: "20", label: "Moins de 20 km", min: 5 },
+  { value: "30", label: "Moins de 30 km", min: 10 },
 ];
 export const PERSONAL_MIN_WEIGHT = 2.5;
 
