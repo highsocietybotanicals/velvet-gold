@@ -25,25 +25,29 @@ const MentionsLegalesPage = () => {
             <section>
               <h2 className="font-display text-xl text-foreground mb-4">1. Éditeur du site</h2>
               <p>
-                Le site <strong className="text-foreground">highsocietybotanicals.lovable.app</strong> est édité par :<br />
-                <strong className="text-foreground">SASU High Society Botanicals</strong><br />
+                Le site <strong className="text-foreground">highsocietybotanicals.com</strong> est édité par :<br />
+                <strong className="text-foreground">High Society Botanicals</strong>, société par actions simplifiée à associé unique (SASU)<br />
                 Capital social : 1 €<br />
-                Siège social : Paris, France<br />
-                Email : contact@highsocietybotanicals.com
+                Siège social : 60 rue François 1er, 75008 Paris, France<br />
+                RCS Paris 994 621 910<br />
+                SIRET : 994 621 910 00011<br />
+                TVA intracommunautaire : FR48994621910<br />
+                E-mail : contact@highsocietybotanicals.com
               </p>
             </section>
 
             <section>
-              <h2 className="font-display text-xl text-foreground mb-4">2. Directeur de la publication</h2>
-              <p>Le directeur de la publication est le représentant légal de la société SASU High Society Botanicals.</p>
+              <h2 className="font-display text-xl text-foreground mb-4">2. Directrice de la publication</h2>
+              <p>Maëva Deniaud, présidente de la société High Society Botanicals.</p>
             </section>
 
             <section>
               <h2 className="font-display text-xl text-foreground mb-4">3. Hébergement</h2>
               <p>
                 Le site est hébergé par :<br />
-                Lovable (Lovable Technologies)<br />
-                Les informations de contact de l'hébergeur sont disponibles sur leur site officiel.
+                <strong className="text-foreground">Lovable Labs Sweden AB</strong><br />
+                Regeringsgatan 25, 111 53 Stockholm, Suède<br />
+                E-mail : support@lovable.dev
               </p>
             </section>
 
@@ -69,9 +73,10 @@ const MentionsLegalesPage = () => {
             <section>
               <h2 className="font-display text-xl text-foreground mb-4">6. Produits</h2>
               <p>
-                Tous les produits proposés sur ce site sont des fleurs de collection issues de variétés
-                Cannabis Sativa L. autorisées, conformément à la réglementation en vigueur. Leur teneur
-                en THC est inférieure à 0.3%. La vente est réservée aux personnes majeures (+18 ans).
+                Les produits proposés sur ce site sont des fleurs et des résines de chanvre issues de variétés
+                de Cannabis sativa L. autorisées, vendues comme produits de collection, conformément à la
+                réglementation en vigueur. Leur teneur en THC est inférieure à 0,3 %. La vente est réservée
+                aux personnes majeures (18 ans et plus).
               </p>
             </section>
           </motion.div>
