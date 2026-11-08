@@ -65,6 +65,7 @@ const Footer = () => {
                 { label: "Le Sommelier", href: "/sommelier" },
                 { label: "La Société", href: "/societe" },
                 { label: "Contact", href: "/contact" },
+                { label: "Livraison partout en France", href: "/livraison-cbd-france" },
                 { label: "Fleurs de CBD", href: "/fleurs-cbd" },
                 { label: "Résines de CBD", href: "/resine-cbd" },
                 { label: "CBD à Abbaretz", href: "/cbd-abbaretz" },
