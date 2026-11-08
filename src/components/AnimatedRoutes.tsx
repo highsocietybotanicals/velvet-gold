@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState
 import { Routes, Route, useLocation, type Location } from "react-router-dom";
 import PageTransition, { PagePresenceContext } from "./PageTransition";
 import Index from "@/pages/Index";
+import { LANDINGS } from "@/seo/seoData";
 
 // Lazy load non-critical pages for faster initial load
 const CataloguePage = lazy(() => import("@/pages/CataloguePage"));
@@ -31,6 +32,7 @@ const MentionsLegalesPage = lazy(() => import("@/pages/MentionsLegalesPage"));
 const ConfidentialitePage = lazy(() => import("@/pages/ConfidentialitePage"));
 const CGVPage = lazy(() => import("@/pages/CGVPage"));
 const LivraisonRetoursPage = lazy(() => import("@/pages/LivraisonRetoursPage"));
+const SeoLandingPage = lazy(() => import("@/pages/SeoLandingPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const PaymentSuccessPage = lazy(() => import("@/pages/PaymentSuccessPage"));
 const PaymentFailurePage = lazy(() => import("@/pages/PaymentFailurePage"));
@@ -142,6 +144,9 @@ function renderRoutes(location: Location) {
             <Route path="comptabilite" element={<AdminAccountingPage />} />
             <Route path="commerciaux" element={<AdminCommerciauxPage />} />
           </Route>
+          {LANDINGS.map((l) => (
+            <Route key={l.path} path={l.path} element={<PageTransition><SeoLandingPage /></PageTransition>} />
+          ))}
           <Route path="/mentions-legales" element={<PageTransition><MentionsLegalesPage /></PageTransition>} />
           <Route path="/confidentialite" element={<PageTransition><ConfidentialitePage /></PageTransition>} />
           <Route path="/cgv" element={<PageTransition><CGVPage /></PageTransition>} />

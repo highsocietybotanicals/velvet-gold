@@ -19,7 +19,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sommelier-ch
 const WELCOME_MESSAGE: Message = {
   role: "assistant",
   content:
-    "Bienvenue chez **High Society Botanicals** ✨\n\nJe suis votre Sommelier personnel. Dis-moi ce que tu recherches — détente, énergie, sommeil ou créativité — et je te guiderai vers la variété parfaite !",
+    "Bienvenue chez **High Society Botanicals** ✨\n\nJe suis votre Sommelier personnel. Dites-moi les arômes que vous recherchez — fruités, boisés, épicés ou frais — et je vous guiderai vers la variété qui vous ressemble !",
 };
 
 const ADD_TO_CART_REGEX = /\[ADD_TO_CART:\s*(\{[^}]+\})\s*\]/g;

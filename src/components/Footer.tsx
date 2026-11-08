@@ -65,6 +65,10 @@ const Footer = () => {
                 { label: "Le Sommelier", href: "/sommelier" },
                 { label: "La Société", href: "/societe" },
                 { label: "Contact", href: "/contact" },
+                { label: "Fleurs de CBD", href: "/fleurs-cbd" },
+                { label: "Résines de CBD", href: "/resine-cbd" },
+                { label: "CBD à Abbaretz", href: "/cbd-abbaretz" },
+                { label: "CBD en Loire-Atlantique", href: "/cbd-loire-atlantique" },
               ].map((item) => (
                 <li key={item.label}>
                   <Link

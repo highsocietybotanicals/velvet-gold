@@ -91,9 +91,9 @@ const Header = () => {
                 className="w-12 h-12 object-contain rounded"
               />
               <div className="hidden md:block">
-                <h1 className="font-display text-lg text-primary leading-none">
+                <div className="font-display text-lg text-primary leading-none">
                   High Society
-                </h1>
+                </div>
                 <p className="text-xs text-muted-foreground tracking-widest uppercase">
                   Botanicals
                 </p>
