@@ -90,7 +90,15 @@ export interface SeoLanding {
   intro: string;
   sections: SeoSection[];
   productIds: string[];
+  /** Chaque section est une question : la page reçoit aussi des données FAQPage (même texte que la page). */
+  faq?: boolean;
 }
+
+// Livraison nationale : une seule phrase, reprise sur toutes les pages. Si la livraison devient payante, changer ici
+// ET la section « Combien coûte la livraison ? » plus bas.
+const NATIONAL_SHIPPING =
+  "Envoi Colissimo suivi et offert, à domicile ou en point relais, partout en France métropolitaine, expédié sous 48 à 72 heures ouvrées.";
+const LOCAL_HANDOVER = "Remise en main propre possible autour d'Abbaretz, en Loire-Atlantique.";
 
 const DELIVERY_THRESHOLDS = [
   "À moins de 10 km d'Abbaretz : dès 2,5 g.",
@@ -100,6 +108,70 @@ const DELIVERY_THRESHOLDS = [
 ];
 
 export const LANDINGS: SeoLanding[] = [
+  {
+    path: "/livraison-cbd-france",
+    title: "Fleurs et résines CBD livrées partout en France | HSB",
+    description:
+      "Fleurs et résines de chanvre en ligne : envoi Colissimo suivi et offert, à domicile ou en point relais, partout en France métropolitaine, sous 48 à 72 h.",
+    h1: "Livraison de CBD partout en France",
+    intro:
+      "High Society Botanicals expédie ses fleurs et résines de chanvre partout en France métropolitaine, par Colissimo, à domicile ou en point relais. La livraison est offerte, chaque colis part sous 48 à 72 heures ouvrées après le paiement, et vous recevez un numéro de suivi.",
+    faq: true,
+    sections: [
+      {
+        h2: "Combien coûte la livraison ?",
+        paragraphs: [
+          "Rien : la livraison est offerte, à domicile comme en point relais, quel que soit le grammage. Le total affiché dans le panier est le prix que vous payez.",
+        ],
+      },
+      {
+        h2: "Quels sont les délais ?",
+        paragraphs: [
+          "Votre commande est préparée à Abbaretz, en Loire-Atlantique, et expédiée sous 48 à 72 heures ouvrées après le paiement. Elle voyage ensuite avec La Poste, et le numéro de suivi vous est envoyé par e-mail dès l'expédition.",
+        ],
+      },
+      {
+        h2: "À domicile ou en point relais ?",
+        list: [
+          "Colissimo à domicile : à l'adresse de votre choix, en France métropolitaine.",
+          "Point relais Colissimo : retrait dans un bureau de tabac, un commerce ou un bureau de poste près de chez vous.",
+        ],
+      },
+      {
+        h2: "Le colis est-il discret ?",
+        paragraphs: ["Oui, nos colis partent dans un emballage discret."],
+      },
+      {
+        h2: "Quels sont les prix ?",
+        paragraphs: [
+          "Platinum OG, Mint Kush, Amnesia Signature Oniria, Ice O Lator et Golden CBN se commandent de 1 à 100 g : 12 € le gramme, 80,40 € les 10 g, soit 8,04 € le gramme. Par tranche de 10 g commandés, un échantillon de 1 g vous est offert.",
+        ],
+      },
+      {
+        h2: "Comment payer ?",
+        paragraphs: [
+          "Par carte bancaire, sur une page de paiement sécurisée (Viva Wallet). Un compte client est demandé pour commander : il sert aussi à suivre vos commandes.",
+        ],
+      },
+      {
+        h2: "Les produits sont-ils analysés ?",
+        paragraphs: [
+          "Oui. Chaque variété contient moins de 0,3 % de THC, comme l'exige la loi française, et son analyse de laboratoire est disponible sur demande.",
+        ],
+      },
+      {
+        h2: "Puis-je retourner un produit ?",
+        paragraphs: [
+          "Oui, sous 14 jours après la réception, dans son emballage d'origine non ouvert. Les frais de retour sont à votre charge, et le remboursement intervient sous 14 jours après la réception du retour. Écrivez-nous à contact@highsocietybotanicals.com.",
+        ],
+      },
+      {
+        h2: "Qui peut commander ?",
+        paragraphs: ["Uniquement les personnes majeures : la vente est interdite aux mineurs."],
+      },
+    ],
+    productIds: ["platinum-og", "mint-kush", "amnesia-signature-oniria", "ice-o-lator", "golden-cbn"],
+  },
   {
     path: "/fleurs-cbd",
     title: "Fleurs de CBD : notre sélection de variétés | HSB",
@@ -128,7 +200,7 @@ export const LANDINGS: SeoLanding[] = [
         h2: "Analyses et livraison",
         paragraphs: [
           "Une analyse de laboratoire est disponible sur demande pour chaque variété.",
-          "Envoi postal suivi en France métropolitaine, expédié sous 48 à 72 heures ouvrées, ou remise en main propre autour d'Abbaretz, en Loire-Atlantique.",
+          `${NATIONAL_SHIPPING} ${LOCAL_HANDOVER}`,
         ],
       },
     ],
@@ -160,7 +232,7 @@ export const LANDINGS: SeoLanding[] = [
         h2: "Formats, analyses et livraison",
         paragraphs: [
           "De 1 à 100 g : 12 € le gramme, 80,40 € les 10 g, soit 8,04 € le gramme. Une analyse de laboratoire est disponible sur demande.",
-          "Envoi postal suivi en France métropolitaine, expédié sous 48 à 72 heures ouvrées, ou remise en main propre autour d'Abbaretz, en Loire-Atlantique.",
+          `${NATIONAL_SHIPPING} ${LOCAL_HANDOVER}`,
         ],
       },
     ],
@@ -225,7 +297,7 @@ const STATIC_PAGES: Record<string, { title: string; description: string }> = {
   "/catalogue": {
     title: "Catalogue CBD : fleurs et résines premium | HSB",
     description:
-      "Toutes les fleurs et résines de chanvre de la maison, du gramme aux grands formats. Envoi suivi en France métropolitaine, remise en main propre autour d'Abbaretz (44).",
+      "Toutes les fleurs et résines de chanvre de la maison, du gramme aux grands formats. Envoi Colissimo suivi et offert en France métropolitaine, remise en main propre autour d'Abbaretz (44).",
   },
   "/societe": {
     title: "La Maison : qui nous sommes | High Society Botanicals",
@@ -240,7 +312,7 @@ const STATIC_PAGES: Record<string, { title: string; description: string }> = {
   "/livraison-retours": {
     title: "Livraison et retours | High Society Botanicals",
     description:
-      "Envoi postal suivi en France métropolitaine, expédié sous 48 à 72 h ouvrées. Remise en main propre autour d'Abbaretz (44). Retours sous 14 jours.",
+      "Envoi Colissimo suivi et offert en France métropolitaine, à domicile ou en point relais, expédié sous 48 à 72 h ouvrées. Remise en main propre autour d'Abbaretz (44). Retours sous 14 jours.",
   },
   "/cgv": {
     title: "Conditions générales de vente | High Society Botanicals",
@@ -281,6 +353,17 @@ const productJsonLd = (p: SeoProduct) => ({
   },
 });
 
+// Questions et réponses : exactement le texte visible de la page (exigence de Google pour les données structurées).
+const faqJsonLd = (landing: SeoLanding) => ({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: landing.sections.map((s) => ({
+    "@type": "Question",
+    name: s.h2,
+    acceptedAnswer: { "@type": "Answer", text: [...(s.list ?? []), ...(s.paragraphs ?? [])].join(" ") },
+  })),
+});
+
 const localBusinessJsonLd = () => ({
   "@context": "https://schema.org",
   "@type": "Store",
@@ -306,7 +389,10 @@ export function seoFor(pathname: string): SeoMeta {
       description: landing.description,
       canonical,
       noindex: false,
-      jsonLd: landing.path === "/cbd-abbaretz" ? [localBusinessJsonLd()] : [],
+      jsonLd: [
+        ...(landing.path === "/cbd-abbaretz" ? [localBusinessJsonLd()] : []),
+        ...(landing.faq ? [faqJsonLd(landing)] : []),
+      ],
     };
   }
 
