@@ -102,9 +102,8 @@ const LOCAL_HANDOVER = "Remise en main propre possible autour d'Abbaretz, en Loi
 
 const DELIVERY_THRESHOLDS = [
   "À moins de 10 km d'Abbaretz : dès 2,5 g.",
-  "À moins de 25 km : dès 5 g.",
-  "À moins de 50 km : dès 50 g.",
-  "À moins de 100 km : dès 100 g.",
+  "À moins de 20 km : dès 5 g.",
+  "À moins de 30 km : dès 10 g.",
 ];
 
 export const LANDINGS: SeoLanding[] = [
@@ -242,14 +241,14 @@ export const LANDINGS: SeoLanding[] = [
     path: "/cbd-abbaretz",
     title: "CBD à Abbaretz et Nozay : remise en main propre | HSB",
     description:
-      "Fleurs et résines de chanvre préparées à Abbaretz (44170). Remise en main propre gratuite dès 2,5 g à moins de 10 km, dès 5 g à moins de 25 km. Paiement en ligne ou à la remise.",
+      "Fleurs et résines de chanvre préparées à Abbaretz (44170). Remise en main propre gratuite dès 2,5 g à moins de 10 km, dès 5 g à moins de 20 km. Paiement en ligne ou à la remise.",
     h1: "CBD à Abbaretz et autour de Nozay",
     intro:
       "High Society Botanicals prépare ses commandes à Abbaretz, en Loire-Atlantique. Si vous habitez près d'ici, nous pouvons vous remettre votre commande en main propre, sur rendez-vous et sans frais.",
     sections: [
       {
         h2: "Où, et à partir de quel grammage",
-        list: DELIVERY_THRESHOLDS.slice(0, 2),
+        list: DELIVERY_THRESHOLDS,
         paragraphs: [
           "Nous livrons notamment à Abbaretz, Nozay, Marsac-sur-Don, Saffré, Vay et La Meilleraye-de-Bretagne. Le panier vous propose les zones accessibles selon votre grammage.",
         ],
@@ -278,13 +277,13 @@ export const LANDINGS: SeoLanding[] = [
         h2: "Remise en main propre",
         list: DELIVERY_THRESHOLDS,
         paragraphs: [
-          "Treillières et La Chapelle-sur-Erdre font partie des communes que nous livrons déjà. Pour Nantes, Saint-Nazaire ou Châteaubriant, le seuil dépend de la distance de votre adresse.",
+          "Treillières et La Chapelle-sur-Erdre font partie des communes que nous livrons déjà. Pour Nantes, Saint-Nazaire ou Châteaubriant, tout dépend de la distance de votre adresse : au-delà de 30 km, votre commande part par envoi postal suivi, offert.",
         ],
       },
       {
         h2: "Envoi postal suivi",
         paragraphs: [
-          "Partout dans le département et en France métropolitaine, expédié sous 48 à 72 heures ouvrées. Les frais sont affichés avant la validation de la commande, et le numéro de suivi vous est envoyé par e-mail.",
+          "Partout dans le département et en France métropolitaine, expédié sous 48 à 72 heures ouvrées. La livraison est offerte, et le numéro de suivi vous est envoyé par e-mail.",
         ],
       },
     ],
