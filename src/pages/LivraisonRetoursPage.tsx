@@ -48,7 +48,7 @@ const LivraisonRetoursPage = () => {
               <h2 className="font-display text-xl text-foreground mb-4">1. Modes de livraison</h2>
               <h3 className="font-display text-lg text-primary/80 mb-3">Envoi postal standard</h3>
               <p>
-                Livraison en France métropolitaine via un service d'envoi postal suivi.
+                Livraison en France métropolitaine par Colissimo, à domicile ou en point relais, avec suivi.
                 Les commandes sont expédiées sous 48 à 72 heures ouvrées après confirmation du paiement.
               </p>
 
@@ -72,9 +72,8 @@ const LivraisonRetoursPage = () => {
             <section>
               <h2 className="font-display text-xl text-foreground mb-4">2. Frais de livraison</h2>
               <p>
-                Les frais de livraison sont calculés en fonction du poids de la commande et du mode
-                de livraison choisi. Ils sont affichés avant la validation de la commande.
-                La remise en main propre est gratuite.
+                La livraison est offerte, à domicile comme en point relais, quel que soit le grammage.
+                La remise en main propre est également gratuite.
               </p>
             </section>
 
