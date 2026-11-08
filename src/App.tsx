@@ -11,6 +11,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import AnimatedRoutes from "./components/AnimatedRoutes";
 import ErrorBoundary from "./components/ErrorBoundary";
 import AbandonedPaymentGuard from "./components/AbandonedPaymentGuard";
+import RouteSeo from "./components/RouteSeo";
 
 // Tiroir panier et sommelier : fermés au chargement, chargés juste après le premier rendu (hors du bundle
 // principal : ~190 Ko minifiés de calendrier, date-fns et markdown). Même place dans l'arbre, mêmes props.
@@ -36,6 +37,7 @@ const App = () => (
       <TooltipProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <RouteSeo />
           <AbandonedPaymentGuard />
           <AuthProvider>
             <CartProvider>
