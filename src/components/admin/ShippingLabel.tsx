@@ -21,7 +21,7 @@ const ShippingLabel = ({ order }: ShippingLabelProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  if (order.delivery_type !== "postal") return null;
+  if (order.delivery_type !== "postal" && order.delivery_type !== "relay") return null;
 
   const handleGenerateLabel = async () => {
     setLoading(true);

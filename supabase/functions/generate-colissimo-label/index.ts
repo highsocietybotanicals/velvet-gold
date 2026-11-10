@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
     };
 
     if (isRelay) {
-      serviceConfig.pickupLocationId = order.relay_point_id;
+      serviceConfig.commercialName = SENDER.companyName;
     }
 
     const labelRequest = {
@@ -290,6 +290,7 @@ Deno.serve(async (req) => {
         service: serviceConfig,
         parcel: {
           weight: weightKg,
+          ...(isRelay ? { pickupLocationId: order.relay_point_id } : {}),
         },
         sender: {
           address: {
