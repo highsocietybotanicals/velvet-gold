@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
     };
 
     if (isRelay) {
-      serviceConfig.pickupLocationId = order.relay_point_id;
+      serviceConfig.commercialName = SENDER.companyName;
     }
 
     const labelRequest = {
@@ -290,6 +290,7 @@ Deno.serve(async (req) => {
         service: serviceConfig,
         parcel: {
           weight: weightKg,
+          ...(isRelay ? { pickupLocationId: order.relay_point_id } : {}),
         },
         sender: {
           address: {
@@ -302,12 +303,14 @@ Deno.serve(async (req) => {
         },
         addressee: {
           address: {
-            lastName: recipientName,
+            lastName: recipientName.trim().split(/\s+/).slice(1).join(" ") || recipientName,
+            firstName: recipientName.trim().split(/\s+/)[0] || recipientName,
             line2: address.line2,
             countryCode: "FR",
             city: address.city,
             zipCode: address.zipCode,
             phone: recipientPhone.replace(/\s/g, ""),
+            mobileNumber: recipientPhone.replace(/\s/g, "").replace(/^\+33/, "0"),
             email: recipientEmail,
           },
         },
