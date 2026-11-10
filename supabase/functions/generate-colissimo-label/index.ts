@@ -303,7 +303,8 @@ Deno.serve(async (req) => {
         },
         addressee: {
           address: {
-            lastName: recipientName,
+            lastName: recipientName.trim().split(/\s+/).slice(1).join(" ") || recipientName,
+            firstName: recipientName.trim().split(/\s+/)[0] || recipientName,
             line2: address.line2,
             countryCode: "FR",
             city: address.city,
