@@ -309,6 +309,7 @@ Deno.serve(async (req) => {
             city: address.city,
             zipCode: address.zipCode,
             phone: recipientPhone.replace(/\s/g, ""),
+            mobileNumber: recipientPhone.replace(/\s/g, "").replace(/^\+33/, "0"),
             email: recipientEmail,
           },
         },
