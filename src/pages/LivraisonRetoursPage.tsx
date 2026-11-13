@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Truck, HandCoins, RotateCcw, Clock } from "lucide-react";
+import { SHIPPING_FEE_TEXT, FREE_SHIPPING_FROM_TEXT } from "@/seo/seoData";
 
 const LivraisonRetoursPage = () => {
   return (
@@ -25,8 +26,8 @@ const LivraisonRetoursPage = () => {
             transition={{ delay: 0.1 }}
           >
             {[
-              { icon: Truck, label: "Envoi postal", sub: "France métropolitaine" },
-              { icon: HandCoins, label: "Remise en main propre", sub: "Rayon de 30 km" },
+              { icon: Truck, label: "Colissimo", sub: `${SHIPPING_FEE_TEXT} · offerte dès ${FREE_SHIPPING_FROM_TEXT}` },
+              { icon: HandCoins, label: "Remise en main propre", sub: "Sans frais, autour d'Abbaretz" },
               { icon: Clock, label: "Expédition rapide", sub: "48-72h ouvrées" },
               { icon: RotateCcw, label: "Retours", sub: "14 jours" },
             ].map(({ icon: Icon, label, sub }) => (
@@ -46,33 +47,35 @@ const LivraisonRetoursPage = () => {
           >
             <section>
               <h2 className="font-display text-xl text-foreground mb-4">1. Modes de livraison</h2>
-              <h3 className="font-display text-lg text-primary/80 mb-3">Envoi postal standard</h3>
+              <h3 className="font-display text-lg text-primary/80 mb-3">Colissimo, à domicile ou en point relais</h3>
               <p>
-                Livraison en France métropolitaine par Colissimo, à domicile ou en point relais, avec suivi.
+                Livraison en France métropolitaine par Colissimo suivi, à domicile ou en point relais.
                 Les commandes sont expédiées sous 48 à 72 heures ouvrées après confirmation du paiement.
               </p>
 
               <h3 className="font-display text-lg text-primary/80 mb-3 mt-6">Remise en main propre</h3>
               <p>
-                Disponible dans un <strong className="text-foreground">rayon de 30 km autour de notre entrepôt (Loire-Atlantique, 44)</strong>,
-                selon la distance et le poids de la commande :
+                Possible <strong className="text-foreground">autour de notre entrepôt d'Abbaretz (Loire-Atlantique, 44)</strong>,
+                selon la distance et le poids de fleurs et de résines :
               </p>
               <ul className="list-disc list-inside mt-3 space-y-2">
-                <li>Moins de 10 km : dès 2,5 g</li>
-                <li>Moins de 20 km : dès 5 g</li>
-                <li>Moins de 30 km : dès 10 g</li>
-                <li>Clients professionnels (compte Pro validé) : sans minimum</li>
+                <li>À moins de 10 km : dès 2,5 g</li>
+                <li>À moins de 20 km : dès 5 g</li>
+                <li>À moins de 30 km : dès 10 g</li>
+                <li>Clients professionnels (compte Pro validé) : ces trois zones, sans minimum de poids</li>
               </ul>
               <p className="mt-3">
-                Un rendez-vous sera convenu par téléphone ou email après validation de la commande. Au-delà de 30 km, la commande part par envoi postal suivi, offert.
+                Un rendez-vous sera convenu par téléphone ou email après validation de la commande.
               </p>
             </section>
 
             <section>
               <h2 className="font-display text-xl text-foreground mb-4">2. Frais de livraison</h2>
               <p>
-                La livraison est offerte, à domicile comme en point relais, quel que soit le grammage.
-                La remise en main propre est également gratuite.
+                Colissimo, à domicile ou en point relais : <strong className="text-foreground">{SHIPPING_FEE_TEXT}</strong> pour
+                une commande de moins de {FREE_SHIPPING_FROM_TEXT} de fleurs et de résines.
+                Dès {FREE_SHIPPING_FROM_TEXT}, <strong className="text-foreground">la livraison est offerte</strong>.
+                La remise en main propre est sans frais. Le montant de la livraison est affiché dans le panier, avant le paiement.
               </p>
             </section>
 

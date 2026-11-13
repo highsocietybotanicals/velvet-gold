@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
+import { SHIPPING_FEE_TEXT, FREE_SHIPPING_FROM_TEXT } from "@/seo/seoData";
 
 const CGVPage = () => {
   return (
@@ -46,6 +47,12 @@ const CGVPage = () => {
                 Les prix sont indiqués en euros TTC. High Society Botanicals se réserve le droit de modifier
                 ses prix à tout moment. Les produits sont facturés au tarif en vigueur au moment de la
                 validation de la commande. Des tarifs préférentiels sont appliqués pour les clients professionnels validés.
+              </p>
+              <p className="mt-3">
+                Livraison Colissimo, à domicile ou en point relais, en France métropolitaine : {SHIPPING_FEE_TEXT} TTC
+                pour une commande de moins de {FREE_SHIPPING_FROM_TEXT} de fleurs et de résines, offerte dès {FREE_SHIPPING_FROM_TEXT}.
+                La remise en main propre autour d'Abbaretz (Loire-Atlantique) est sans frais. Le montant de la livraison
+                est affiché dans le panier et compris dans le total payé.
               </p>
             </section>
 

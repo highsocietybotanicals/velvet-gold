@@ -232,7 +232,7 @@ const ProductPage = () => {
     const w = selectedWeight;
     if (w < 10) {
       const p10 = priceAt(10);
-      return { to: 10, html: <>Passez à <b>10 g</b> : <b>{eur(p10)}</b>, soit {eur(p10 / 10)} le gramme (−{Math.round((1 - p10 / (basePrice * 10)) * 100)} %), avec <b>1 kit</b> et <b>1 échantillon de 1 g</b> offerts.</> };
+      return { to: 10, html: <>Passez à <b>10 g</b> : <b>{eur(p10)}</b>, soit {eur(p10 / 10)} le gramme (−{Math.round((1 - p10 / (basePrice * 10)) * 100)} %), avec <b>feuilles avec cartons, briquet</b> et <b>1 g au choix</b> offerts.</> };
     }
     const next = WEIGHTS.find((x) => x > w);
     if (!next) return { to: 0, html: <>Vous êtes au sommet de la grille : <b>{eur(priceAt(w) / w)} le gramme</b>.</> };
@@ -322,6 +322,7 @@ const ProductPage = () => {
                     <button key={w} className={`wbtn${w >= 10 && !isProWithValidatedVat ? " gift" : ""}`} role="radio" aria-checked={w === selectedWeight} onClick={() => handlePresetClick(w)}>
                       <b>{String(w).replace(".", ",")}<span> g</span></b>
                       <small>{eur(priceAt(w))}</small>
+                      {w === 10 && !isProWithValidatedVat && <small className="pop">Le plus choisi</small>}
                     </button>
                   ))}
                 </div>
