@@ -20,7 +20,7 @@ Je suis commercial pour High Society Botanicals, une marque française de CBD ha
 
 Nous proposons aux buralistes une gamme préconditionnée prête à vendre : pochons 1 g, 2,5 g, 5 g et 10 g, humidité maîtrisée par Boveda 62 %, un cadeau client offert dans les 10 g.
 
-Le principe est simple : vous revendez aux mêmes prix que notre site. Chaque variété a un prix professionnel HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g), construit pour vous laisser un coefficient ×2 — et une remise s'ajoute sur le poids total de la commande dès 100 g (-5 %, puis -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg).
+Le principe est simple : vous revendez aux mêmes prix que notre site. Chaque variété a un prix professionnel HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g), construit pour vous laisser un coefficient ×2.
 
 Je peux passer vous déposer des échantillons et la grille tarifaire complète. Quel jour vous arrange ?
 
@@ -85,7 +85,7 @@ const CommercialDocumentsPage = () => {
     {
       key: "grille",
       name: "Grille tarifaire pro — préconditionné",
-      desc: "Prix HT du pochon par variété et par format (1 g / 2,5 g / 5 g / 10 g), prix public conseillé, remises de volume, modalités et RIB. Générée à jour à chaque téléchargement.",
+      desc: "Prix HT du pochon par variété et par format (1 g / 2,5 g / 5 g / 10 g), prix public conseillé, lecture des tarifs, modalités et RIB. Générée à jour à chaque téléchargement.",
       action: () => run("grille", () => downloadProPriceGrid(toDocProducts(), tiers), "Grille tarifaire"),
     },
     {
@@ -124,7 +124,7 @@ const CommercialDocumentsPage = () => {
             </div>
             <p className="text-xs text-muted-foreground">
               À imprimer et remplir au stylo pendant la visite. Prix pro HT fixés par variété,
-              dégressivité volume, coordonnées bancaires préremplies, totaux et signatures.
+              coordonnées bancaires préremplies, totaux et signatures.
             </p>
             <Button variant="outline" size="sm" onClick={handleOrderForm}>
               <Printer className="h-4 w-4 mr-2" /> Télécharger le PDF

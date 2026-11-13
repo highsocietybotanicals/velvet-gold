@@ -243,7 +243,8 @@ const CommercialCataloguePage = () => {
             coefficient x2 garanti sur 1 g / 2,5 g / 5 g, x1,7 sur le 10 g.
           </p>
           <p>
-            Dégressivité volume : -5 % dès 100 g, -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg.
+            Prix fixes par format. Dès 100 g de commande, certaines références ont un tarif
+            dégressif : il se calcule tout seul dans la Facturation. N'annonce jamais une remise de tête.
           </p>
         </CardContent>
       </Card>
