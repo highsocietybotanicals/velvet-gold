@@ -18,9 +18,13 @@ import {
   EMPTY_DETAILS,
   FIELD_IDS,
   FIELD_ORDER,
+  FREE_SHIPPING_FROM_G,
+  SHIPPING_FEE,
+  SHIPPING_FEE_LABEL,
   buildDeliveryAddress,
   cleanSpaces,
   firstErrorField,
+  formatGrams,
   missingSummary,
   normalizePhone,
   tidyPhone,
@@ -676,6 +680,24 @@ const CartDrawer = () => {
         : totalPrice;
   const discountAmount = totalPrice - discountedTotal;
 
+  // Frais de port : Colissimo à domicile ou en point relais, offerts dès 10 g, jamais en main propre ni pour un pro.
+  // Calcul identique au serveur (create-viva-payment) : pro = compte validé + TVA validée ; poids = somme des lignes
+  // fleurs et résines, au moins 0,1 g par ligne (échantillons, cadeaux et accessoires exclus), arrondie au centième.
+  // Ajoutés après le code promo : aucun code ne s'applique dessus.
+  const noShippingFee = isProValidated && !!profile?.vat_number && !!profile?.is_vat_validated;
+  const shippingApplies = !noShippingFee && (deliveryType === "postal" || deliveryType === "relay");
+  const shippingWeight = Math.round(items.reduce((sum, item) => sum + Math.max(0.1, Number(item.weight) || 0), 0) * 100) / 100;
+  const shippingFee = shippingApplies && shippingWeight < FREE_SHIPPING_FROM_G ? SHIPPING_FEE : 0;
+  const payTotal = Math.round((discountedTotal + shippingFee) * 100) / 100;
+  // Grammes qui manquent avant 10 g, arrondis au dixième supérieur (jamais « 0 g » tant que le seuil n'est pas atteint).
+  const gramsTo10 = Math.ceil((FREE_SHIPPING_FROM_G - shippingWeight) * 10 - 1e-9) / 10;
+  const showTo10Bar = !isProWithValidatedVat && !noShippingFee && items.length > 0 && shippingWeight < FREE_SHIPPING_FROM_G;
+  const shippingNote = noShippingFee
+    ? undefined
+    : shippingWeight < FREE_SHIPPING_FROM_G
+      ? `${SHIPPING_FEE_LABEL} · offerte dès ${formatGrams(FREE_SHIPPING_FROM_G)}`
+      : "Livraison offerte";
+
   const canPay = !!user && detailsValid && discountedTotal > 0;
 
   const totalsBlock = (
@@ -704,18 +726,41 @@ const CartDrawer = () => {
           <span className="text-sm text-primary">-{discountAmount.toFixed(2)}€</span>
         </div>
       )}
-      {freeShipping && (
+      {shippingFee > 0 && promoDiscount <= 0 && (
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-sm text-muted-foreground">Articles</span>
+          <span className="text-sm text-muted-foreground">{discountedTotal.toFixed(2)}€</span>
+        </div>
+      )}
+      {shippingApplies ? (
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm text-muted-foreground">
+            Livraison Colissimo
+            {shippingFee > 0 && <span className="text-xs"> · offerte dès {formatGrams(FREE_SHIPPING_FROM_G)}</span>}
+          </span>
+          {shippingFee > 0 ? (
+            <span className="text-sm text-foreground">{shippingFee.toFixed(2)}€</span>
+          ) : (
+            <span className="text-sm text-primary font-medium">OFFERTE</span>
+          )}
+        </div>
+      ) : freeShipping ? (
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-primary">🚚 Livraison</span>
           <span className="text-sm text-primary font-medium">OFFERTE</span>
         </div>
-      )}
+      ) : null}
       <div className="flex justify-between items-center">
         <span className="text-muted-foreground">Total</span>
         <span className="font-display text-2xl text-primary">
-          {discountedTotal.toFixed(2)}€
+          {payTotal.toFixed(2)}€
         </span>
       </div>
+      {shippingFee > 0 && step === "cart" && (
+        <p className="text-xs text-muted-foreground mt-1">
+          Remise en main propre autour d'Abbaretz (44) : sans frais, au choix à l'étape Livraison.
+        </p>
+      )}
       {isProActive && (
         <p className="text-xs text-primary mt-1">Prix professionnel appliqué</p>
       )}
@@ -838,6 +883,7 @@ const CartDrawer = () => {
                   onFieldBlur={handleFieldBlur}
                   ctx={{ isProActive: personalIsProActive, totalFlowerWeight }}
                   accountEmail={user?.email ?? profile?.email ?? null}
+                  shippingNote={shippingNote}
                 />
               ) : items.length === 0 && accessoryItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
@@ -851,6 +897,18 @@ const CartDrawer = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
+                  {/* Coup de pouce vers 10 g : cadeaux et livraison offerte */}
+                  {showTo10Bar && (
+                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/30 text-sm text-foreground">
+                      <p>
+                        Plus que <b>{formatGrams(gramsTo10)}</b> pour recevoir des feuilles avec cartons, un briquet et 1 g
+                        au choix offerts{shippingApplies ? ", et la livraison offerte" : ""}.
+                      </p>
+                      <div className="h-1.5 mt-2 rounded bg-muted" aria-hidden="true">
+                        <div className="h-1.5 rounded bg-primary" style={{ width: `${Math.min(100, shippingWeight * 10)}%` }} />
+                      </div>
+                    </div>
+                  )}
                   {/* FLOWERS SECTION */}
                   {items.length > 0 && (
                     <div>
@@ -940,6 +998,23 @@ const CartDrawer = () => {
                                     <Plus className="w-3 h-3" />
                                   </button>
                                 </div>
+                                {!useProPricing && !isProWithValidatedVat && item.weight < 10 && (() => {
+                                  const p10 = calculateItemPrice(item.product.price, 10, item.product.priceGroup || "A", item.product.id).finalPrice;
+                                  const newTotal = totalFlowerWeight - item.weight + 10;
+                                  const newGift = Math.floor(newTotal / 10) > Math.floor(totalFlowerWeight / 10);
+                                  const freesShipping = shippingFee > 0 && newTotal >= FREE_SHIPPING_FROM_G;
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={() => updateWeight(item.product.id, 10)}
+                                      className="mt-2 text-xs text-primary underline text-left"
+                                    >
+                                      Passer à 10 g · {p10.toFixed(2)}€ ({(p10 / 10).toFixed(2)}€/g)
+                                      {newGift ? " · feuilles avec cartons, briquet et 1 g au choix offerts" : ""}
+                                      {freesShipping ? " · livraison offerte" : ""}
+                                    </button>
+                                  );
+                                })()}
                               </div>
                               <div className="flex flex-col items-end gap-1">
                                 <button
@@ -1287,7 +1362,7 @@ const CartDrawer = () => {
             {hasItems && step === "account" && (
               <div className="px-6 py-4 border-t border-border flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Total de votre panier</span>
-                <span className="font-display text-xl text-primary">{discountedTotal.toFixed(2)}€</span>
+                <span className="font-display text-xl text-primary">{payTotal.toFixed(2)}€</span>
               </div>
             )}
 
@@ -1299,7 +1374,7 @@ const CartDrawer = () => {
                   items={items}
                   accessoryItems={accessoryItems}
                   sampleItems={sampleItems}
-                  totalPrice={discountedTotal}
+                  totalPrice={payTotal}
                   totalFlowerWeight={totalFlowerWeight}
                   deliveryType={deliveryType}
                   details={details}
