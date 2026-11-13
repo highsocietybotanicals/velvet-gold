@@ -9,32 +9,26 @@ export type ProGamme = string;
 
 /**
  * Paliers de volume (borne haute en grammes) de la grille pro.
- * La dégressivité est un pourcentage uniforme appliqué au prix de base :
- * -5 % dès 100 g, -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg.
+ * Le prix de chaque palier est celui de la table `pro_price_tiers` (un €/g par produit
+ * et par palier), ensuite plafonné par le coefficient du revendeur (voir proPricing.ts).
+ * Il n'y a PAS de remise uniforme en % : l'ancien barème -5 / -10 / -15 / -20 % n'était
+ * écrit que dans les PDF et n'a jamais été calculé par le site (retiré le 14/11/2026).
  */
 export const PRO_TIERS = [99, 249, 499, 999, 999999] as const;
 
-/** Remise associée à chaque palier (borne haute en g -> % de remise) */
-export const TIER_DISCOUNT: Record<number, number> = {
-  99: 0,
-  249: 5,
-  499: 10,
-  999: 15,
-  999999: 20,
-};
-
+/** Libellé d'un palier dans l'admin (tranche de poids de la commande, sans promesse de remise). */
 export const proTierLabel = (maxG: number): string => {
   switch (maxG) {
     case 99:
       return "moins de 100 g — tarif de base";
     case 249:
-      return "dès 100 g — remise 5 %";
+      return "de 100 à 249 g";
     case 499:
-      return "dès 250 g — remise 10 %";
+      return "de 250 à 499 g";
     case 999:
-      return "dès 500 g — remise 15 %";
+      return "de 500 à 999 g";
     default:
-      return "dès 1 kg — remise 20 %";
+      return "1 kg et plus";
   }
 };
 

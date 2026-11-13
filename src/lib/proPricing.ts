@@ -134,9 +134,10 @@ export interface FormatPriceRow {
 }
 
 /**
- * Tarifs pro par format pour une variété. Le prix de chaque format est FIXE
- * (il ne dépend pas du volume commandé) ; la dégressivité volume (-5/-10/-15/-20 %)
- * s'applique ensuite au poids total du panier via `totalWeightG`.
+ * Tarifs pro par format pour une variété. Sans `totalWeightG`, c'est le prix de base
+ * (commande de moins de 100 g). Avec `totalWeightG`, le €/g est celui du palier de la
+ * table `pro_price_tiers` pour ce produit, toujours plafonné par le coefficient du
+ * revendeur : il n'y a pas de remise uniforme en % (certaines variétés n'en ont aucune).
  */
 export const proFormatPrices = (
   tiers: PriceTier[],

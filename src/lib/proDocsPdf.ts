@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import { PRO_TIERS, TIER_DISCOUNT, type PriceTier } from "./margin";
+import { type PriceTier } from "./margin";
 import { PRO_FORMATS, proFormatPrices } from "./proPricing";
 import type { PriceGroup } from "@/data/products";
 import { BANK_DETAILS } from "./bankDetails";
@@ -116,8 +116,6 @@ function darkCover(doc: jsPDF, title: string, subtitle: string, lines: string[])
 }
 
 // ---------- utilitaires données ----------
-const TIER_WEIGHTS = [50, 100, 250, 500, 1000]; // poids représentatif de chaque palier
-const TIER_COL_LABELS = ["jusqu’à 100 g", "dès 100 g", "dès 250 g", "dès 500 g", "dès 1 kg"];
 
 function familleLabel(p: DocProduct): string {
   if (p.isExotique) return "Exotique";
@@ -173,59 +171,40 @@ export function generateProPriceGrid(products: DocProduct[], tiers: PriceTier[])
   }
   footer(doc, "II · Engagement");
 
-  // --- Barème ---
+  // --- Lecture des tarifs ---
+  // Pas de barème de remise en % : le site ne l'applique pas (les prix par palier viennent
+  // de la table pro_price_tiers, plafonnés par le coefficient du revendeur).
   doc.addPage();
   y = 24;
-  spacedTitle(doc, "Barème partenaire", y);
+  spacedTitle(doc, "Lecture des tarifs", y);
   y += 10;
   setFont(doc, 11, "bold", DARK);
-  doc.text("Grille de remises dégressives", PAGE_W / 2, y, { align: "center" });
+  doc.text("Un prix fixe par variété et par format", PAGE_W / 2, y, { align: "center" });
   y += 5;
   setFont(doc, 9, "normal", GRAY);
-  doc.text("Prix professionnel HT fixe par variété. La remise s'applique sur le poids total de la commande,", PAGE_W / 2, y, { align: "center" });
-  doc.text("tous produits confondus.", PAGE_W / 2, y + 4.5, { align: "center" });
-  y += 16;
+  doc.text("Prix professionnel HT du pochon, détaillé à la page suivante.", PAGE_W / 2, y, { align: "center" });
+  y += 14;
 
-  // Tableau des paliers depuis les vraies données
-  const colW = [60, 55, 55];
   let cx = MARGIN;
-  fillRect(doc, MARGIN, y, CONTENT_W, 8, GOLD);
-  setFont(doc, 8.5, "bold", WHITE);
-  doc.text("VOLUME COMMANDÉ", cx + 3, y + 5.5); cx += colW[0];
-  doc.text("PALIER", cx + 3, y + 5.5); cx += colW[1];
-  doc.text("REMISE", cx + colW[2] - 3, y + 5.5, { align: "right" });
-  y += 8;
-
-  const palierNames = ["Palier découverte", "Palier confirmé", "Palier privilège", "Palier majeur", "Palier maison"];
-  PRO_TIERS.forEach((tierMax, i) => {
-    const discount = TIER_DISCOUNT[tierMax] ?? 0;
-    if (i % 2 === 1) fillRect(doc, MARGIN, y, CONTENT_W, 8, [247, 243, 234]);
-    cx = MARGIN;
-    setFont(doc, 9, "normal", DARK);
-    doc.text(TIER_COL_LABELS[i], cx + 3, y + 5.5); cx += colW[0];
-    doc.text(palierNames[i] ?? "", cx + 3, y + 5.5); cx += colW[1];
-    setFont(doc, 9, "bold", discount > 0 ? GOLD : DARK);
-    doc.text(discount > 0 ? `-${discount} %` : "tarif de base", cx + colW[2] - 3, y + 5.5, { align: "right" });
-    hLine(doc, y + 8, LIGHT, 0.2);
-    y += 8;
-  });
-  y += 8;
-
-  setFont(doc, 10, "bold", GOLD);
-  doc.text("LECTURE DU BARÈME", MARGIN, y);
-  y += 5;
-  y = para(doc,
-    "Les prix partenaire sont fixes : un prix HT par variété ET par format de pochon (1 g, 2,5 g, 5 g, 10 g). Ils ne changent pas selon la taille de la commande.",
-    y, 9.5);
-  y += 3;
-  y = para(doc,
-    "La remise de volume s'applique en plus, sur le poids total de la commande, tous formats et toutes variétés confondus. Exemple : 40 pochons de 2,5 g d'une variété et 10 pochons de 10 g d'une autre font 200 g au total, donc -5 % sur l'ensemble du bon de commande.",
-    y, 9.5);
-  y += 4;
+  const lecture: Array<[string, string]> = [
+    ["Le prix du pochon",
+      "Chaque variété a un prix professionnel HT par format de pochon (1 g, 2,5 g, 5 g, 10 g). Le total d'une ligne est le prix du pochon multiplié par le nombre de pochons."],
+    ["Votre marge",
+      "Vous revendez au prix public conseillé, identique à celui du site. Le prix professionnel est construit pour un coefficient ×2 sur les formats 1 g, 2,5 g et 5 g, et ×1,7 sur le 10 g (prix public HT divisé par prix d'achat HT)."],
+    ["Commande de 100 g et plus",
+      "Certaines références ont un tarif dégressif selon le poids total de la commande. Le prix exact s'affiche dans votre espace professionnel et figure sur votre devis."],
+  ];
+  for (const [title, body] of lecture) {
+    setFont(doc, 10, "bold", GOLD);
+    doc.text(title.toUpperCase(), MARGIN, y);
+    y += 5;
+    y = para(doc, body, y, 9.5);
+    y += 6;
+  }
   y = para(doc,
     "Aucun frais de conditionnement · Kit cadeau client inclus dans chaque 10 g.",
     y, 9.5, GRAY, "italic");
-  footer(doc, "III · Barème");
+  footer(doc, "III · Lecture des tarifs");
 
   // --- Tarifs par variété et par format ---
   const cName = 50;
@@ -302,7 +281,7 @@ export function generateProPriceGrid(products: DocProduct[], tiers: PriceTier[])
   y += 6;
   setFont(doc, 7.5, "normal", GRAY);
   doc.text("Prix HT par pochon préconditionné, Boveda 62 % et cadeau client inclus dans les 10 g.", MARGIN, y);
-  doc.text("PV = prix de vente public conseillé TTC, identique au site. Remise volume en plus : -5 % dès 100 g, -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg.", MARGIN, y + 4);
+  doc.text("PV = prix de vente public conseillé TTC, identique au site. Dès 100 g de commande : tarif dégressif sur certaines références (espace pro ou devis).", MARGIN, y + 4);
   footer(doc, "IV · Tarifs");
 
   // --- Modalités ---
@@ -509,7 +488,7 @@ export async function generateProCatalogue(products: DocProduct[], tiers: PriceT
     });
     setFont(doc, 6.5, "italic", GRAY);
     doc.text(
-      "Prix fixes par format. Remise volume en plus sur le poids total de la commande : -5 % dès 100 g, -10 % dès 250 g, -15 % dès 500 g, -20 % dès 1 kg.",
+      "Prix fixes par format. Dès 100 g de commande : tarif dégressif sur certaines références, prix exact dans l'espace pro ou sur devis.",
       tabX, tabY + 4
     );
 
@@ -583,7 +562,7 @@ export function generateProGuide(): jsPDF {
     "EN UNE LIGNE",
     "CBD haut de gamme 100 % indoor, préconditionné, prêt à vendre.",
     "Chaque molécule analysée en laboratoire (GC-MS / GC-FID).",
-    "Marge revendeur organisée à ×2 HT, ristournes par volume.",
+    "Marge revendeur organisée à ×2 HT, prix fixes par format.",
     "Plus de 200 variétés testées, une dizaine retenues.",
     "",
     "Document interne réservé aux commerciaux mandatés par High Society Botanicals.",
@@ -602,7 +581,7 @@ export function generateProGuide(): jsPDF {
     ["4. Culture & packaging", "Indoor, aluminium alimentaire, Boveda, formats.", "Argument mise en rayon"],
     ["5. Légalité & analyses", "GC-MS / GC-FID, analyses par molécule.", "Rassurer"],
     ["6. Mention obligatoire", "Usage pot-pourri, cadre de langage.", "À respecter en permanence"],
-    ["7. L'offre revendeur", "Marge ×2 HT, ristournes, cadeaux 10 g.", "Négociation"],
+    ["7. L'offre revendeur", "Marge ×2 HT, prix fixes par format, cadeaux 10 g.", "Négociation"],
     ["8. Le pitch", "Déroulé minuté d'une visite.", "Sur le terrain"],
     ["9. Objections", "Réponses courtes + preuves.", "Sur le terrain"],
     ["10. Rémunération", "Tranches sur les nouveaux clients, 10 % sur les réassorts, prime.", "Votre suivi"],
@@ -719,22 +698,19 @@ export function generateProGuide(): jsPDF {
 
   // ---------- 07 L'offre revendeur ----------
   newPage();
-  y = chapterHead("07", "L'offre revendeur", "Marge ×2 HT, ristournes, cadeaux clients");
+  y = chapterHead("07", "L'offre revendeur", "Marge ×2 HT, prix fixes, cadeaux clients");
   y = para(doc, "Le buraliste ne vous achète pas un produit : il vous achète une rentabilité. Voici les trois piliers de l'offre.", y);
   y += 4;
   y = box(y, "1. MARGE ORGANISÉE À ×2 HT", "Nos tarifs professionnels sont construits pour que le commerçant réalise au minimum un coefficient 2 en HT, en revendant au même prix public que notre site. Il n'a pas à casser les prix, il n'a pas à inventer sa grille : il applique le prix public conseillé et sa marge est là.");
   setFont(doc, 10, "bold", DARK);
-  doc.text("2. Ristournes par volume", MARGIN, y);
+  doc.text("2. Des prix fixes par format", MARGIN, y);
   y += 5;
-  y = para(doc, "Chaque variété a un prix HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g) : ce prix ne change jamais. En plus, une remise s'applique sur le poids total de la commande, tous formats et toutes variétés additionnés :", y);
-  y += 3;
-  y = table(y, ["Palier de commande", "Remise", "Argument"], [
-    ["Moins de 100 g", "tarif de base", "Le prix HT du pochon affiché par variété."],
-    ["À partir de 100 g", "-5 %", "Le palier d'entrée réaliste pour une première vraie commande."],
-    ["À partir de 250 g", "-10 %", "Point de vente qui tourne, réassort régulier."],
-    ["À partir de 500 g", "-15 %", "Partenaire installé, plusieurs familles en rayon."],
-    ["À partir de 1 kg", "-20 %", "Compte majeur ou regroupement de commandes."],
-  ], [45, 30, 103]);
+  y = para(doc, "Chaque variété a un prix HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g) : c'est le prix de la grille tarifaire. Il n'y a pas de remise en pourcentage sur l'ensemble d'une commande.", y);
+  y += 2;
+  y = para(doc, "À partir de 100 g, certaines références ont un tarif dégressif selon le poids total de la commande. Le prix exact se calcule tout seul dans votre espace commercial (onglet Facturation) et dans l'espace pro du client.", y);
+  y += 2;
+  y = para(doc, "N'annoncez jamais une remise de tête : donnez le prix affiché, ou proposez un devis.", y, 9.5, DARK, "bold");
+  y += 5;
   setFont(doc, 10, "bold", DARK);
   doc.text("3. Un cadeau client offert dès 10 g", MARGIN, y);
   y += 5;
@@ -753,7 +729,7 @@ export function generateProGuide(): jsPDF {
     ["2:00 — 5:00", "L'histoire", "Trois phrases, chapitre 1. Ancien fumeur, lassitude du foin, plus de 200 variétés testées pour une dizaine retenues. C'est ce qui vous différencie du représentant d'à côté."],
     ["5:00 — 8:00", "Le produit", "Trois références maximum. Faites sentir. Montrez le packaging aluminium, le Boveda, les formats préconditionnés, le code-barres. Laissez-le manipuler."],
     ["8:00 — 9:30", "La légalité", "Ouvrez une analyse laboratoire devant lui. GC-MS et GC-FID, molécule par molécule. Rappelez la mention pot-pourri. C'est le moment où il se détend."],
-    ["9:30 — 11:00", "L'argent", "Grille tarifaire en main : prix HT, prix public conseillé, gain par format. Puis les paliers de remise. Puis le cadeau client offert dès 10 g."],
+    ["9:30 — 11:00", "L'argent", "Grille tarifaire en main : prix HT, prix public conseillé, gain par format. Puis le cadeau client offert dès 10 g."],
     ["11:00 — 12:00", "La conclusion", "Ne demandez jamais « ça vous intéresse ? ». Proposez : « on démarre avec un assortiment de trois références, je vous fais la commande maintenant et je repasse au réassort ? »"],
   ], [26, 26, 126]);
   box(y, "SI IL NE SIGNE PAS AUJOURD'HUI", "Ne repartez jamais les mains vides : récupérez un mail et un nom, laissez la grille tarifaire, déposez des échantillons si c'est pertinent, fixez une date de relance précise et notez-la immédiatement dans l'onglet Prospects de votre espace. Un prospect sans date de relance est un prospect perdu.");
@@ -818,7 +794,7 @@ export function generateProGuide(): jsPDF {
   ];
   for (const b of espace) { y = para(doc, `• ${b}`, y, 9.5); y += 1.5; }
   y += 3;
-  y = box(y, "LES CINQ PHRASES À CONNAÎTRE PAR CŒUR", "1. Marque française de CBD haut de gamme, 100 % indoor.\n2. Plus de 200 variétés testées, une dizaine retenues.\n3. Chaque molécule analysée en laboratoire : GC-MS et GC-FID, rapport disponible.\n4. Préconditionné 1 / 2,5 / 5 / 10 g, aluminium alimentaire, Boveda 62 %, code-barres.\n5. Coefficient 2 en HT, ristournes par volume, un cadeau client offert dès 10 g.");
+  y = box(y, "LES CINQ PHRASES À CONNAÎTRE PAR CŒUR", "1. Marque française de CBD haut de gamme, 100 % indoor.\n2. Plus de 200 variétés testées, une dizaine retenues.\n3. Chaque molécule analysée en laboratoire : GC-MS et GC-FID, rapport disponible.\n4. Préconditionné 1 / 2,5 / 5 / 10 g, aluminium alimentaire, Boveda 62 %, code-barres.\n5. Coefficient 2 en HT, prix fixes par format, un cadeau client offert dès 10 g.");
   y = para(doc, "RAPPEL FINAL — Molécules proposées à usage de pot-pourri uniquement, conformément à la loi française. Aucune promesse d'effet, aucune allégation de santé.", y, 9.5, GOLD, "bold");
   y += 4;
   y = para(doc, "Une question, un doute sur une formulation, un prospect difficile : appelez avant d'improviser. Nous préférons dix minutes au téléphone à une phrase mal dite chez un buraliste.", y, 9.5, GRAY, "italic");

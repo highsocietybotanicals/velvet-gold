@@ -1,5 +1,4 @@
 import jsPDF from "jspdf";
-import { PRO_TIERS, TIER_DISCOUNT, proTierLabel } from "./margin";
 import { BANK_DETAILS } from "./bankDetails";
 
 // A4 portrait: 210 × 297 mm
@@ -256,23 +255,21 @@ export function generateProOrderForm(products: FormProduct[]): jsPDF {
   );
   y += 5;
 
-  // --- Volume discount scale ---
+  // --- Commande de 100 g et plus ---
+  // Pas de barème de remise en % : le site ne l'applique pas (prix par palier de la table
+  // pro_price_tiers, plafonnés par le coefficient du revendeur).
   setFont(doc, 7.5, "bold", GOLD);
-  doc.text("REMISE VOLUME (sur le poids total de la commande, tous formats confondus)", MARGIN, y);
+  doc.text("COMMANDE DE 100 g ET PLUS", MARGIN, y);
   y += 4;
   setFont(doc, 7, "normal", DARK);
-
-  const tierLabels: string[] = [];
-  for (let i = 0; i < PRO_TIERS.length; i++) {
-    const tierMax = PRO_TIERS[i];
-    const discount = TIER_DISCOUNT[tierMax] ?? 0;
-    tierLabels.push(proTierLabel(tierMax));
-  }
-  doc.text(tierLabels.join("  |  "), MARGIN, y);
+  doc.text(
+    "Certaines références ont un tarif dégressif selon le poids total de la commande (tous pochons additionnés).",
+    MARGIN, y
+  );
   y += 4;
   setFont(doc, 6.5, "italic", GRAY);
   doc.text(
-    "Additionner les grammes de tous les pochons (ex. 40 x 2,5 g + 10 x 10 g = 200 g, soit remise 5 %), puis appliquer la remise au total HT.",
+    "Le prix exact s'affiche dans l'espace pro et figure sur le devis : c'est lui qui sert au calcul du Total HT.",
     MARGIN, y
   );
   y += 6;
