@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { allProducts } from "@/data/products";
 import { accessories } from "@/data/accessories";
 import { useProducts } from "@/hooks/useProducts";
-import { calculateCumulativeItemPrice } from "@/lib/pricing";
+import { calculateCumulativeItemPrice, getGroupWeights } from "@/lib/pricing";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -204,16 +204,14 @@ const ManualOrderCreator = () => {
   const getAccessory = (productId: string) => accessories.find(a => a.id === productId);
   const isAccessory = (productId: string) => !!getAccessory(productId);
 
-  /** Poids cumulé par groupe de prix (fleurs + résines, hors accessoires) */
-  const groupWeights = lines.reduce<Record<string, number>>((acc, l) => {
-    if (!l.productId || l.weight <= 0) return acc;
-    if (isAccessory(l.productId)) return acc;
-    const g = getProductGroup(l.productId);
-    acc[g] = (acc[g] || 0) + l.weight;
-    return acc;
-  }, {});
+  /** Poids cumulé de toute la commande (fleurs + résines, hors accessoires) : même règle que le panier du site */
+  const groupWeights: Record<string, number> = getGroupWeights(
+    lines
+      .filter((l) => l.productId && l.weight > 0 && !isAccessory(l.productId))
+      .map((l) => ({ weight: l.weight, priceGroup: getProductGroup(l.productId) })),
+  );
 
-  /** Tarif automatique (grille dégressive cumulée par groupe, ou prix unitaire accessoire) */
+  /** Tarif automatique (palier du poids cumulé, au prix de la gamme de chaque produit, ou prix unitaire accessoire) */
   const autoLineTotal = (line: OrderLine) => {
     if (!line.productId || line.weight <= 0) return 0;
     const acc = getAccessory(line.productId);
