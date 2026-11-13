@@ -7,7 +7,7 @@ import { useCart, type CartItem, type AccessoryCartItem, type SampleItem } from 
 import { useAuth } from "@/contexts/AuthContext";
 import { useProPrices } from "@/hooks/useProPrices";
 import { Input } from "@/components/ui/input";
-import { calculateItemPrice, getDiscountLabel, getGifts, calculateAccessoryPrice, calculateProItemPrice } from "@/lib/pricing";
+import { calculateItemPrice, calculateCumulativeItemPrice, getGroupWeights, getDiscountLabel, getGifts, calculateAccessoryPrice, calculateProItemPrice } from "@/lib/pricing";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
@@ -282,6 +282,14 @@ const CartDrawer = () => {
   const samplesChosen = sampleItems.length;
   const samplesRemaining = sampleAllowance - samplesChosen;
 
+  // Poids cumulé de tout le panier (hors lignes au prix pro) : 5 g + 5 g = chaque variété à son prix des 10 g.
+  // Même calcul que supabase/functions/create-viva-payment/index.ts.
+  const groupWeights = getGroupWeights(
+    items
+      .filter((item) => !(isProActive && getProPrice(item.product.id) !== null))
+      .map((item) => ({ weight: item.weight, priceGroup: item.product.priceGroup })),
+  );
+
   // Calculate total price based on Pro status
   const totalPrice =
     items.reduce((sum, item) => {
@@ -291,8 +299,9 @@ const CartDrawer = () => {
         const { finalPrice } = calculateProItemPrice(proPrice, item.weight);
         return sum + finalPrice;
       } else {
-        // Regular: with weight-based discounts
-        const { finalPrice } = calculateItemPrice(item.product.price, item.weight, item.product.priceGroup || "A", item.product.id);
+        // Regular: palier de prix selon le poids cumulé de la gamme
+        const group = item.product.priceGroup || "A";
+        const { finalPrice } = calculateCumulativeItemPrice(item.product.price, item.weight, groupWeights[group], group, item.product.id);
         return sum + finalPrice;
       }
     }, 0) +
@@ -918,15 +927,25 @@ const CartDrawer = () => {
                           Fleurs ({totalFlowerWeight.toFixed(1)}g)
                         </h3>
                       </div>
+                      {!isProWithValidatedVat && (
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Les poids se cumulent entre toutes les variétés : 5 g + 5 g = chacune au prix des 10 g.
+                        </p>
+                      )}
                       <div className="space-y-3">
                         {items.map((item) => {
                           const proPrice = getProPrice(item.product.id);
                           const useProPricing = isProActive && proPrice !== null;
 
+                          const group = item.product.priceGroup || "A";
+                          // Poids qui fixe le palier de prix : celui de la gamme, jamais moins que la ligne
+                          const cumulWeight = Math.max(groupWeights[group] || 0, item.weight);
+                          const isCumulated = !useProPricing && cumulWeight > item.weight;
+
                           const priceInfo = useProPricing
                             ? calculateProItemPrice(proPrice, item.weight)
-                            : calculateItemPrice(item.product.price, item.weight, item.product.priceGroup || "A", item.product.id);
-                          const discountLabel = useProPricing ? null : getDiscountLabel(item.weight, item.product.priceGroup || "A", item.product.id, item.product.price);
+                            : calculateCumulativeItemPrice(item.product.price, item.weight, cumulWeight, group, item.product.id);
+                          const discountLabel = useProPricing ? null : getDiscountLabel(cumulWeight, group, item.product.id, item.product.price);
                           const hasDiscount = !useProPricing && 'discount' in priceInfo && (priceInfo as { discount: number }).discount > 0;
 
                           return (
@@ -958,7 +977,10 @@ const CartDrawer = () => {
                                   {useProPricing ? (
                                     <span className="text-primary font-medium">{proPrice}€/g PRO</span>
                                   ) : (
-                                    <>{item.product.price}€/g</>
+                                    <>
+                                      {item.product.price}€/g
+                                      {isCumulated && <> · prix des {formatGrams(cumulWeight)} cumulés</>}
+                                    </>
                                   )}
                                 </p>
 
@@ -998,7 +1020,7 @@ const CartDrawer = () => {
                                     <Plus className="w-3 h-3" />
                                   </button>
                                 </div>
-                                {!useProPricing && !isProWithValidatedVat && item.weight < 10 && (() => {
+                                {!useProPricing && !isProWithValidatedVat && cumulWeight < 10 && (() => {
                                   const p10 = calculateItemPrice(item.product.price, 10, item.product.priceGroup || "A", item.product.id).finalPrice;
                                   const newTotal = totalFlowerWeight - item.weight + 10;
                                   const newGift = Math.floor(newTotal / 10) > Math.floor(totalFlowerWeight / 10);
