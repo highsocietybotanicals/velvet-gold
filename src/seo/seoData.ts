@@ -94,11 +94,12 @@ export interface SeoLanding {
   faq?: boolean;
 }
 
-// Livraison nationale : une seule phrase, reprise sur toutes les pages. Si la livraison devient payante, changer ici
-// ET la section « Combien coûte la livraison ? » plus bas.
-const NATIONAL_SHIPPING =
-  "Envoi Colissimo suivi et offert, à domicile ou en point relais, partout en France métropolitaine, expédié sous 48 à 72 heures ouvrées.";
-const LOCAL_HANDOVER = "Remise en main propre possible autour d'Abbaretz, en Loire-Atlantique.";
+// Livraison nationale : une seule phrase, reprise sur toutes les pages. Montant et seuil des textes : changer ici
+// SEULEMENT ces deux valeurs, ET le montant du panier (CartDrawer.tsx) et du serveur (create-viva-payment), qui calculent le port.
+export const SHIPPING_FEE_TEXT = "5,90 €";
+export const FREE_SHIPPING_FROM_TEXT = "10 g";
+const NATIONAL_SHIPPING = `Livraison Colissimo suivie ${SHIPPING_FEE_TEXT}, à domicile ou en point relais, partout en France métropolitaine. Offerte dès ${FREE_SHIPPING_FROM_TEXT} de fleurs et de résines. Expédiée sous 48 à 72 heures ouvrées.`;
+const LOCAL_HANDOVER = "Remise en main propre sans frais autour d'Abbaretz, en Loire-Atlantique.";
 
 const DELIVERY_THRESHOLDS = [
   "À moins de 10 km d'Abbaretz : dès 2,5 g.",
@@ -110,17 +111,15 @@ export const LANDINGS: SeoLanding[] = [
   {
     path: "/livraison-cbd-france",
     title: "Fleurs et résines CBD livrées partout en France | HSB",
-    description:
-      "Fleurs et résines de chanvre en ligne : envoi Colissimo suivi et offert, à domicile ou en point relais, partout en France métropolitaine, sous 48 à 72 h.",
+    description: `Fleurs et résines de chanvre en ligne : livraison Colissimo ${SHIPPING_FEE_TEXT}, offerte dès ${FREE_SHIPPING_FROM_TEXT}, à domicile ou en point relais, partout en France métropolitaine.`,
     h1: "Livraison de CBD partout en France",
-    intro:
-      "High Society Botanicals expédie ses fleurs et résines de chanvre partout en France métropolitaine, par Colissimo, à domicile ou en point relais. La livraison est offerte, chaque colis part sous 48 à 72 heures ouvrées après le paiement, et vous recevez un numéro de suivi.",
+    intro: `High Society Botanicals expédie ses fleurs et résines de chanvre partout en France métropolitaine, par Colissimo, à domicile ou en point relais. La livraison coûte ${SHIPPING_FEE_TEXT} et elle est offerte dès ${FREE_SHIPPING_FROM_TEXT}. Chaque colis part sous 48 à 72 heures ouvrées après le paiement, et vous recevez un numéro de suivi.`,
     faq: true,
     sections: [
       {
         h2: "Combien coûte la livraison ?",
         paragraphs: [
-          "Rien : la livraison est offerte, à domicile comme en point relais, quel que soit le grammage. Le total affiché dans le panier est le prix que vous payez.",
+          `${SHIPPING_FEE_TEXT} pour une commande de moins de ${FREE_SHIPPING_FROM_TEXT}, à domicile comme en point relais. Dès ${FREE_SHIPPING_FROM_TEXT} de fleurs et de résines, elle est offerte. La remise en main propre autour d'Abbaretz est sans frais. Le total affiché dans le panier comprend la livraison : c'est le prix que vous payez.`,
         ],
       },
       {
@@ -143,7 +142,7 @@ export const LANDINGS: SeoLanding[] = [
       {
         h2: "Quels sont les prix ?",
         paragraphs: [
-          "Platinum OG, Mint Kush, Amnesia Signature Oniria, Ice O Lator et Golden CBN se commandent de 1 à 100 g : 12 € le gramme, 80,40 € les 10 g, soit 8,04 € le gramme. Par tranche de 10 g commandés, un échantillon de 1 g vous est offert.",
+          "Platinum OG, Mint Kush, Amnesia Signature Oniria, Ice O Lator et Golden CBN se commandent de 1 à 100 g : 12 € le gramme, 80,40 € les 10 g, soit 8,04 € le gramme. Par tranche de 10 g commandés, des feuilles avec cartons, un briquet et 1 g au choix vous sont offerts.",
         ],
       },
       {
@@ -192,7 +191,7 @@ export const LANDINGS: SeoLanding[] = [
         h2: "Du gramme aux grands formats",
         paragraphs: [
           "Chaque variété se choisit de 1 à 100 g, et le prix au gramme baisse avec le format : 12 € le gramme, 80,40 € les 10 g, soit 8,04 € le gramme.",
-          "Par tranche de 10 g commandés, un échantillon de 1 g vous est offert.",
+          "Par tranche de 10 g commandés, des feuilles avec cartons, un briquet et 1 g au choix vous sont offerts.",
         ],
       },
       {
@@ -277,13 +276,13 @@ export const LANDINGS: SeoLanding[] = [
         h2: "Remise en main propre",
         list: DELIVERY_THRESHOLDS,
         paragraphs: [
-          "Treillières et La Chapelle-sur-Erdre font partie des communes que nous livrons déjà. Pour Nantes, Saint-Nazaire ou Châteaubriant, tout dépend de la distance de votre adresse : au-delà de 30 km, votre commande part par envoi postal suivi, offert.",
+          `Treillières et La Chapelle-sur-Erdre font partie des communes que nous livrons déjà. Pour Nantes, Saint-Nazaire ou Châteaubriant, tout dépend de la distance de votre adresse : au-delà de 30 km, votre commande part par Colissimo suivi, à ${SHIPPING_FEE_TEXT}, offert dès ${FREE_SHIPPING_FROM_TEXT}.`,
         ],
       },
       {
         h2: "Envoi postal suivi",
         paragraphs: [
-          "Partout dans le département et en France métropolitaine, expédié sous 48 à 72 heures ouvrées. La livraison est offerte, et le numéro de suivi vous est envoyé par e-mail.",
+          `Partout dans le département et en France métropolitaine, expédié sous 48 à 72 heures ouvrées. La livraison coûte ${SHIPPING_FEE_TEXT}, elle est offerte dès ${FREE_SHIPPING_FROM_TEXT}, et le numéro de suivi vous est envoyé par e-mail.`,
         ],
       },
     ],
@@ -295,8 +294,7 @@ const STATIC_PAGES: Record<string, { title: string; description: string }> = {
   "/": { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION },
   "/catalogue": {
     title: "Catalogue CBD : fleurs et résines premium | HSB",
-    description:
-      "Toutes les fleurs et résines de chanvre de la maison, du gramme aux grands formats. Envoi Colissimo suivi et offert en France métropolitaine, remise en main propre autour d'Abbaretz (44).",
+    description: `Toutes les fleurs et résines de chanvre de la maison, du gramme aux grands formats. Livraison Colissimo ${SHIPPING_FEE_TEXT}, offerte dès ${FREE_SHIPPING_FROM_TEXT}, remise en main propre autour d'Abbaretz (44).`,
   },
   "/societe": {
     title: "La Maison : qui nous sommes | High Society Botanicals",
@@ -310,8 +308,7 @@ const STATIC_PAGES: Record<string, { title: string; description: string }> = {
   },
   "/livraison-retours": {
     title: "Livraison et retours | High Society Botanicals",
-    description:
-      "Envoi Colissimo suivi et offert en France métropolitaine, à domicile ou en point relais, expédié sous 48 à 72 h ouvrées. Remise en main propre autour d'Abbaretz (44). Retours sous 14 jours.",
+    description: `Livraison Colissimo ${SHIPPING_FEE_TEXT}, offerte dès ${FREE_SHIPPING_FROM_TEXT}, à domicile ou en point relais en France métropolitaine. Remise en main propre sans frais autour d'Abbaretz (44). Retours sous 14 jours.`,
   },
   "/cgv": {
     title: "Conditions générales de vente | High Society Botanicals",
