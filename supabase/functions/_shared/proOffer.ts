@@ -16,14 +16,15 @@ export const KIT_DEDUCTION_PROMO_CODE = "KIT-DECOUVERTE-DEDUIT";
 
 // ---------- Prix public TTC (copie de src/lib/pricing.ts) ----------
 
+// Grille du 13/11/2026 (base 12 €/g) : 10 g = 65 €, 25 g = 150 €, 50 g = 275 €, 100 g = 500 €.
 const WEIGHT_TIERS_A = [
   { min: 0, max: 2.49, discount: 0 },
   { min: 2.5, max: 4.99, discount: 0.17 },
   { min: 5, max: 9.99, discount: 0.25 },
-  { min: 10, max: 24.99, discount: 0.33 },
-  { min: 25, max: 49.99, discount: 0.4 },
-  { min: 50, max: 99.99, discount: 0.45 },
-  { min: 100, max: Infinity, discount: 0.5 },
+  { min: 10, max: 24.99, discount: 1 - 6.5 / 12 },
+  { min: 25, max: 49.99, discount: 0.5 },
+  { min: 50, max: 99.99, discount: 1 - 5.5 / 12 },
+  { min: 100, max: Infinity, discount: 1 - 5 / 12 },
 ];
 
 const WEIGHT_TIERS_B = [
