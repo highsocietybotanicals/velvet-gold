@@ -262,6 +262,36 @@ export const calculateCumulativeItemPrice = (
   };
 };
 
+// ============================================
+// POIDS CUMULÉS DU PANIER (depuis le 13/11/2026)
+// Règle de Maëva : le palier de prix dépend du poids cumulé de TOUT le panier, même entre
+// deux gammes, et chaque variété est comptée au prix au gramme de SA gamme pour ce palier.
+// Exemple : Amnesia 5 g + Mango X Ice 5 g = 10 g en tout, donc 5 g d'Amnesia au prix
+// des 10 g (6,50 €/g) et 5 g de Mango X Ice à son prix des 10 g.
+// Même règle dans la commande manuelle de l'admin (ManualOrderCreator) et dans
+// supabase/functions/create-viva-payment/index.ts : toujours changer les deux ensemble.
+// CUMUL_TOUT_LE_PANIER = false : le cumul ne se fait plus qu'à l'intérieur d'une gamme (A ou B).
+// ============================================
+export const CUMUL_TOUT_LE_PANIER = true;
+
+export const getGroupWeights = (
+  lines: { weight: number; priceGroup?: PriceGroup | null }[],
+): Record<PriceGroup, number> => {
+  const acc: Record<PriceGroup, number> = { A: 0, B: 0 };
+  for (const l of lines) {
+    const w = Number(l.weight);
+    if (!w || w <= 0 || isNaN(w)) continue;
+    acc[l.priceGroup === "B" ? "B" : "A"] += w;
+  }
+  const a = Math.round(acc.A * 100) / 100;
+  const b = Math.round(acc.B * 100) / 100;
+  if (CUMUL_TOUT_LE_PANIER) {
+    const all = Math.round((a + b) * 100) / 100;
+    return { A: all, B: all };
+  }
+  return { A: a, B: b };
+};
+
 
 // Calculate accessory price with bulk discount
 export const calculateAccessoryPrice = (unitPrice: number, quantity: number): AccessoryPriceInfo => {
