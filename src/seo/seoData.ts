@@ -142,7 +142,7 @@ export const LANDINGS: SeoLanding[] = [
       {
         h2: "Quels sont les prix ?",
         paragraphs: [
-          "Platinum OG, Mint Kush, Amnesia Signature Oniria, Ice O Lator et Golden CBN se commandent de 1 à 100 g : 12 € le gramme, 80,40 € les 10 g, soit 8,04 € le gramme. Par tranche de 10 g commandés, des feuilles avec cartons, un briquet et 1 g au choix vous sont offerts.",
+          "Platinum OG, Mint Kush, Amnesia Signature Oniria, Ice O Lator et Golden CBN se commandent de 1 à 100 g : 12 € le gramme, 65 € les 10 g, soit 6,50 € le gramme. Par tranche de 10 g commandés, des feuilles avec cartons, un briquet et 1 g au choix vous sont offerts.",
         ],
       },
       {
@@ -190,7 +190,7 @@ export const LANDINGS: SeoLanding[] = [
       {
         h2: "Du gramme aux grands formats",
         paragraphs: [
-          "Chaque variété se choisit de 1 à 100 g, et le prix au gramme baisse avec le format : 12 € le gramme, 80,40 € les 10 g, soit 8,04 € le gramme.",
+          "Chaque variété se choisit de 1 à 100 g, et le prix au gramme baisse avec le format : 12 € le gramme, 65 € les 10 g, soit 6,50 € le gramme.",
           "Par tranche de 10 g commandés, des feuilles avec cartons, un briquet et 1 g au choix vous sont offerts.",
         ],
       },
@@ -229,7 +229,7 @@ export const LANDINGS: SeoLanding[] = [
       {
         h2: "Formats, analyses et livraison",
         paragraphs: [
-          "De 1 à 100 g : 12 € le gramme, 80,40 € les 10 g, soit 8,04 € le gramme. Une analyse de laboratoire est disponible sur demande.",
+          "De 1 à 100 g : 12 € le gramme, 65 € les 10 g, soit 6,50 € le gramme. Une analyse de laboratoire est disponible sur demande.",
           `${NATIONAL_SHIPPING} ${LOCAL_HANDOVER}`,
         ],
       },
