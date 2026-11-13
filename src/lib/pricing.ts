@@ -37,16 +37,19 @@ export interface AccessoryPriceInfo {
 
 // ============================================
 // GROUPE A - CBD Classiques (Base 12€/g)
-// Calé sur le book Vitrine TTC : 1g=12, 2.5g=25, 5g=45, 10g=80
+// Grille du 13/11/2026 (base 12 €/g) : 1 g = 12 €, 2,5 g = 24,90 €, 5 g = 45 €,
+// 10 g = 65 € (6,50 €/g), 25 g = 150 € (6 €/g), 50 g = 275 € (5,50 €/g), 100 g = 500 € (5 €/g).
+// Mêmes valeurs, écrites de la même façon, dans supabase/functions/create-viva-payment/index.ts
+// et supabase/functions/_shared/proOffer.ts : toujours changer les trois ensemble.
 // ============================================
 export const WEIGHT_TIERS_A: WeightTier[] = [
   { min: 0, max: 2.49, discount: 0, label: "0%" },
   { min: 2.5, max: 4.99, discount: 0.17, label: "-17%" },
   { min: 5, max: 9.99, discount: 0.25, label: "-25%" },
-  { min: 10, max: 24.99, discount: 0.33, label: "-33%" },
-  { min: 25, max: 49.99, discount: 0.40, label: "-40%" },
-  { min: 50, max: 99.99, discount: 0.45, label: "-45%" },
-  { min: 100, max: Infinity, discount: 0.50, label: "-50%" },
+  { min: 10, max: 24.99, discount: 1 - 6.5 / 12, label: "-46%" },
+  { min: 25, max: 49.99, discount: 0.50, label: "-50%" },
+  { min: 50, max: 99.99, discount: 1 - 5.5 / 12, label: "-54%" },
+  { min: 100, max: Infinity, discount: 1 - 5 / 12, label: "-58%" },
 ];
 
 // ============================================
