@@ -74,8 +74,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@lovable.dev/email-js": "0.1.0",
     "@lovable.dev/vite-plugin-dev-server-bridge": "^1.0.2",
     "@lovable.dev/vite-plugin-hmr-gate": "^1.8.0",
+    "@react-email/components": "0.0.22",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",

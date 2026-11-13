@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
 
     // Do not include arrival_address (PII) in response
     const { arrival_address: _omit, departure_address: _omit2, ...safePayload } = payload;
-    return new Response(JSON.stringify({ success: true, status, ...safePayload }), {
+    return new Response(JSON.stringify({ success: true, ...safePayload }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
