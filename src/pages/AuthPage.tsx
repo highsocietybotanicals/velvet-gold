@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, User, Building2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { lovable } from "@/integrations/lovable/index";
+import { authErrorMessage } from "@/components/checkout/checkoutValidation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -65,12 +66,15 @@ const handleAppleSignIn = async () => {
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, sendLoginLink } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // « Mot de passe oublié ? » : on envoie un lien de connexion (même principe que dans le panier).
+  const [forgotMode, setForgotMode] = useState(false);
+  const [linkSentTo, setLinkSentTo] = useState<string | null>(null);
 
   // Registration specific
   const [proSignup] = useState(isProSignupLink);
@@ -151,10 +155,37 @@ const AuthPage = () => {
     setLoading(false);
   };
 
+  const handleSendLink = async () => {
+    setError(null);
+    const address = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+      setError("Veuillez entrer votre adresse e-mail");
+      return;
+    }
+    setLoading(true);
+    // Le lien ramène sur cette page : une fois connecté, elle renvoie vers le profil (ou la page d'origine).
+    const { error: linkError } = await sendLoginLink(
+      address,
+      `${window.location.origin}/auth${window.location.search}`,
+    );
+    setLoading(false);
+    if (linkError) {
+      const { kind, message } = authErrorMessage(linkError);
+      // Adresse inconnue : même réponse qu'en cas de succès (on ne révèle pas qui a un compte).
+      if (kind !== "unknown_user") {
+        setError(message);
+        return;
+      }
+    }
+    setLinkSentTo(email.trim());
+  };
+
   const resetForm = () => {
     setEmail("");
     setPassword("");
     setError(null);
+    setForgotMode(false);
+    setLinkSentTo(null);
     setAccountType(proSignup ? "pro" : "classic");
     setCompanyName("");
     setSiret("");
@@ -189,6 +220,11 @@ const AuthPage = () => {
                 </TabsList>
 
                 <TabsContent value="login" className="space-y-4">
+                  {forgotMode && (
+                    <p className="text-sm text-muted-foreground">
+                      Indiquez votre e-mail : nous vous envoyons un lien de connexion. Un clic, et vous êtes connecté.
+                    </p>
+                  )}
                   <div className="space-y-2">
                     <label className="text-sm text-muted-foreground">Email</label>
                     <div className="relative">
@@ -203,6 +239,7 @@ const AuthPage = () => {
                     </div>
                   </div>
 
+                  {!forgotMode && (
                   <div className="space-y-2">
                     <label className="text-sm text-muted-foreground">Mot de passe</label>
                     <div className="relative">
@@ -223,6 +260,7 @@ const AuthPage = () => {
                       </button>
                     </div>
                   </div>
+                  )}
 
                   {error && (
                     <div className="flex items-center gap-2 text-destructive text-sm">
@@ -231,17 +269,42 @@ const AuthPage = () => {
                     </div>
                   )}
 
+                  {linkSentTo && (
+                    <p className="text-sm text-primary/80 bg-primary/10 p-3 rounded-lg">
+                      Si un compte existe pour <strong className="break-all">{linkSentTo}</strong>, un lien de connexion vient de partir.
+                      Pensez à regarder vos courriers indésirables.
+                    </p>
+                  )}
+
+                  {!linkSentTo && (
                   <Button
-                    onClick={() => handleSubmit("login")}
+                    onClick={() => (forgotMode ? handleSendLink() : handleSubmit("login"))}
                     disabled={loading}
                     className="w-full btn-luxury"
                   >
                     {loading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : forgotMode ? (
+                      "Recevoir le lien"
                     ) : (
                       "Se connecter"
                     )}
                   </Button>
+                  )}
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotMode((f) => !f);
+                        setLinkSentTo(null);
+                        setError(null);
+                      }}
+                      className="min-h-[44px] px-2 text-xs text-primary underline underline-offset-4 hover:text-primary/80"
+                    >
+                      {forgotMode ? "Revenir au mot de passe" : "Mot de passe oublié ?"}
+                    </button>
+                  </div>
 
                   <div className="relative my-4">
                     <div className="absolute inset-0 flex items-center">
