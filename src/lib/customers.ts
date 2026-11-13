@@ -130,9 +130,11 @@ export const initials = (name: string): string => {
 /** An order counts only when paid and not cancelled. */
 export const isCountedOrder = (o: RawOrder) => o.payment_status === "paid" && o.status !== "cancelled";
 
-/** A paid product line (excludes free gifts). */
+/** A paid product line (excludes free gifts and the shipping fee line). */
 export const isPaidItem = (it: RawItem) =>
-  Number(it.total_price) > 0 && !(it.product_name || "").toLowerCase().startsWith("gift-");
+  Number(it.total_price) > 0 &&
+  it.product_type !== "livraison" &&
+  !(it.product_name || "").toLowerCase().startsWith("gift-");
 
 /* ---------------- Dates (Europe/Paris) ---------------- */
 
