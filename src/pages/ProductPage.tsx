@@ -348,6 +348,7 @@ const ProductPage = () => {
                   <div className="gifts">
                     <span className={giftN ? "" : "off"}>✦ <b>Un cadeau offert dans votre colis dès 10 g</b></span>
                     <span className={giftN ? "" : "off"}>✦ <b>{giftN || "Aucun"} échantillon{giftN > 1 ? "s" : ""} de 1 g</b> au choix</span>
+                    <span>✦ <b>Poids cumulables</b> : dans le panier, 5 g + 5 g de deux variétés = chacune au prix des 10 g</span>
                   </div>
                 )}
                 {nudge && (
