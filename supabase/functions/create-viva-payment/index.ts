@@ -112,6 +112,41 @@ function calculateItemPrice(basePrice: number, weight: number, priceGroup: strin
   return basePrice * weight * (1 - tier.discount);
 }
 
+// POIDS CUMULÉS DU PANIER (depuis le 13/11/2026), règle de Maëva : le palier de prix dépend du
+// poids cumulé de TOUT le panier, même entre deux gammes, et chaque variété est comptée au prix
+// au gramme de SA gamme pour ce palier. Exemple : Amnesia 5 g + Mango X Ice 5 g = 10 g en tout,
+// donc chacune à son prix des 10 g. Même règle et mêmes arrondis que src/lib/pricing.ts
+// (getGroupWeights, calculateCumulativeItemPrice) : toujours changer les deux ensemble.
+// CUMUL_TOUT_LE_PANIER = false : le cumul ne se fait plus qu'à l'intérieur d'une gamme (A ou B).
+const CUMUL_TOUT_LE_PANIER = true;
+
+function getGroupWeights(lines: { weight: number; priceGroup: string }[]): Record<string, number> {
+  const acc: Record<string, number> = { A: 0, B: 0 };
+  for (const l of lines) {
+    const w = Number(l.weight);
+    if (!w || w <= 0 || isNaN(w)) continue;
+    acc[l.priceGroup === "B" ? "B" : "A"] += w;
+  }
+  const a = Math.round(acc.A * 100) / 100;
+  const b = Math.round(acc.B * 100) / 100;
+  if (CUMUL_TOUT_LE_PANIER) {
+    const all = Math.round((a + b) * 100) / 100;
+    return { A: all, B: all };
+  }
+  return { A: a, B: b };
+}
+
+function calculateCumulativeItemPrice(basePrice: number, weight: number, cumulativeWeight: number, priceGroup: string, productId?: string): number {
+  if (!weight || weight <= 0) return 0;
+  const cumul = Math.max(cumulativeWeight || 0, weight);
+  if (productId && FORCE_NOIRE_RATIOS[productId]) {
+    const cumulTotal = calculateForceNoirePrice(productId, cumul, basePrice);
+    if (cumulTotal !== null) return (cumul > 0 ? cumulTotal / cumul : 0) * weight;
+  }
+  const tier = getDiscountTier(cumul, priceGroup);
+  return basePrice * weight * (1 - tier.discount);
+}
+
 
 function calculateProItemPrice(proPrice: number, weight: number): number {
   if (!weight || weight <= 0) return 0;
@@ -212,6 +247,8 @@ async function undoOrderCreationCounters(
   }
 }
 
+const FUNCTION_VERSION = "create-viva-payment 2026-11-13.3 (poids cumulés)";
+
 const jsonError = (message: string, status: number) =>
   new Response(JSON.stringify({ error: message }), {
     status,
@@ -221,6 +258,12 @@ const jsonError = (message: string, status: number) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+  // Contrôle de version après un déploiement (aucune donnée, aucun effet)
+  if (req.method === "GET") {
+    return new Response(JSON.stringify({ version: FUNCTION_VERSION }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -308,10 +351,17 @@ Deno.serve(async (req) => {
     if (productItemIds.length > 0) {
       const { data } = await supabaseAdmin
         .from("products")
-        .select("id, price, category, is_active, is_out_of_stock")
+        .select("id, price, category, is_active, is_out_of_stock, price_group")
         .in("id", productItemIds);
       dbProducts = data || [];
     }
+
+    // Gamme de prix d'un produit : celle de la base (comme le site), sinon l'ancienne liste.
+    const priceGroupOf = (productId: string): string => {
+      const g = dbProducts.find((p: any) => p.id === productId)?.price_group;
+      if (g === "A" || g === "B") return g;
+      return GROUP_B_PRODUCT_IDS.has(productId) ? "B" : "A";
+    };
 
     let proPriceMap: Record<string, number> = {};
     if (isProActive && productItemIds.length > 0) {
@@ -326,6 +376,13 @@ Deno.serve(async (req) => {
 
     let serverTotal = 0;
     const serverItems: any[] = [];
+
+    // Poids cumulé par gamme de prix, hors accessoires et hors lignes au prix pro
+    const groupWeights = getGroupWeights(
+      items
+        .filter((i: any) => i.productType !== "accessoire" && !(isProActive && proPriceMap[i.productId]))
+        .map((i: any) => ({ weight: Math.max(0.1, Number(i.weight) || 0), priceGroup: priceGroupOf(i.productId) })),
+    );
 
     for (const item of items) {
       const isAccessory = item.productType === "accessoire";
@@ -366,8 +423,8 @@ Deno.serve(async (req) => {
         }
 
         const weight = Math.max(0.1, Number(item.weight) || 0);
-        const priceGroup = GROUP_B_PRODUCT_IDS.has(item.productId) ? "B" : "A";
-        
+        const priceGroup = priceGroupOf(item.productId);
+
         let itemTotal: number;
         let unitPrice: number;
 
@@ -376,7 +433,7 @@ Deno.serve(async (req) => {
           itemTotal = calculateProItemPrice(proPrice, weight);
           unitPrice = proPrice;
         } else {
-          itemTotal = calculateItemPrice(dbProduct.price, weight, priceGroup, item.productId);
+          itemTotal = calculateCumulativeItemPrice(dbProduct.price, weight, groupWeights[priceGroup], priceGroup, item.productId);
           unitPrice = dbProduct.price;
         }
 
