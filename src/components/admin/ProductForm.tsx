@@ -203,7 +203,7 @@ const ProductForm = ({ open, onOpenChange, product, initialProPrice }: Props) =>
             <Select value={form.price_group} onValueChange={(v) => update("price_group", v as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="A">Groupe A (standard, jusqu'à -50%)</SelectItem>
+                <SelectItem value="A">Groupe A (standard, jusqu'à -58%)</SelectItem>
                 <SelectItem value="B">Groupe B (premium, jusqu'à -35%)</SelectItem>
               </SelectContent>
             </Select>
