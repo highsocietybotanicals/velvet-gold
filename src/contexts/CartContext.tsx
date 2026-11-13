@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Product } from "@/data/products";
-import { calculateItemPrice, calculateAccessoryPrice } from "@/lib/pricing";
+import { calculateCumulativeItemPrice, getGroupWeights, calculateAccessoryPrice } from "@/lib/pricing";
 import { useProducts } from "@/hooks/useProducts";
 
 // Define Accessory interface locally to avoid circular dependency
@@ -227,11 +227,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const totalItems = items.length + accessoryItems.length + sampleItems.length;
   const totalFlowerWeight = items.reduce((sum, item) => sum + item.weight, 0);
   
-  const totalPrice = 
-    // Flower prices (pass priceGroup for correct tier discounts)
+  // Poids cumulé de tout le panier : 5 g + 5 g = chaque variété à son prix des 10 g
+  const groupWeights = getGroupWeights(
+    items.map((item) => ({ weight: item.weight, priceGroup: item.product.priceGroup })),
+  );
+
+  const totalPrice =
+    // Flower prices (palier de prix selon le poids cumulé de la gamme)
     items.reduce((sum, item) => {
       const priceGroup = item.product.priceGroup || "A";
-      const { finalPrice } = calculateItemPrice(item.product.price, item.weight, priceGroup, item.product.id);
+      const { finalPrice } = calculateCumulativeItemPrice(item.product.price, item.weight, groupWeights[priceGroup], priceGroup, item.product.id);
       return sum + finalPrice;
     }, 0) +
     // Accessory prices
