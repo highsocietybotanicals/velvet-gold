@@ -64,6 +64,8 @@ interface CheckoutDeliveryProps {
   onFieldBlur: (field: DetailField) => void;
   ctx: DeliveryContext;
   accountEmail: string | null;
+  /** Prix de l'envoi Colissimo à afficher sous « domicile » et « point relais » (absent pour un pro : pas de port). */
+  shippingNote?: string;
 }
 
 const SectionTitle = ({ icon, children }: { icon: ReactNode; children: ReactNode }) => (
@@ -115,6 +117,7 @@ const CheckoutDelivery = ({
   onFieldBlur,
   ctx,
   accountEmail,
+  shippingNote,
 }: CheckoutDeliveryProps) => {
   const personalAllowed = canUsePersonalDelivery(ctx);
 
@@ -202,6 +205,7 @@ const CheckoutDelivery = ({
           <span>
             <span className="block font-medium text-foreground">Envoi postal à domicile</span>
             <span className="mt-1 block text-xs text-muted-foreground">Expédition sous 48 h par La Poste</span>
+            {shippingNote && <span className="mt-1 block text-xs text-primary">{shippingNote}</span>}
           </span>
         </label>
 
@@ -220,6 +224,7 @@ const CheckoutDelivery = ({
             <span className="mt-1 block text-xs text-muted-foreground">
               Retrait dans un bureau de tabac, un commerce ou un bureau de poste
             </span>
+            {shippingNote && <span className="mt-1 block text-xs text-primary">{shippingNote}</span>}
           </span>
         </label>
 
@@ -245,6 +250,7 @@ const CheckoutDelivery = ({
               Je me déplace chez vous ou au lieu de votre choix (Loire-Atlantique, jusqu'à 30 km) — à partir de{" "}
               {formatGrams(PERSONAL_MIN_WEIGHT)}
             </span>
+            {shippingNote && personalAllowed && <span className="mt-1 block text-xs text-primary">Sans frais</span>}
             {!personalAllowed && (
               <span className="mt-2 flex items-center gap-1 text-xs text-amber-400">
                 <AlertCircle className="h-3 w-3" aria-hidden="true" />

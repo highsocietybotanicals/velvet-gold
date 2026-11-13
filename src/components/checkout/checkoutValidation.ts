@@ -12,6 +12,13 @@ export const ZONE_OPTIONS: { value: Exclude<PersonalZone, null>; label: string; 
 ];
 export const PERSONAL_MIN_WEIGHT = 2.5;
 
+// Frais de port Colissimo (TTC), à domicile ou en point relais : offerts dès FREE_SHIPPING_FROM_G grammes de fleurs
+// et de résines. Jamais en remise en main propre, jamais pour un pro validé. Le serveur (create-viva-payment) a sa
+// propre copie de ces deux nombres, et les textes du site ont la leur (seoData.ts) : changer les trois endroits ensemble.
+export const SHIPPING_FEE = 5.9;
+export const FREE_SHIPPING_FROM_G = 10;
+export const SHIPPING_FEE_LABEL = `${SHIPPING_FEE.toFixed(2).replace(".", ",")} €`;
+
 export interface CheckoutDetails {
   fullName: string;
   phone: string;
