@@ -48,7 +48,7 @@ RÉSINES :
 ${resins || "- Aucune résine disponible actuellement"}
 
 REMISES SUR QUANTITÉ (calculées automatiquement par le site sur le poids total) :
-- Groupe A : jusqu'à -50% à partir de 100g
+- Groupe A : jusqu'à -58% à partir de 100g
 - Groupe B / Force Noire : jusqu'à -35% à partir de 100g
 Ne cite jamais de prix remisé précis : indique simplement que la remise s'applique automatiquement.
 
