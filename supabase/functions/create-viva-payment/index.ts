@@ -81,6 +81,12 @@ function calculateForceNoirePrice(productId: string, weight: number, basePrice: 
 const ACCESSORY_BULK_THRESHOLD = 10;
 const ACCESSORY_BULK_DISCOUNT = 0.33;
 
+// Frais de port (TTC) pour un envoi postal ou en point relais, offerts dès FREE_SHIPPING_FROM_G grammes
+// de fleurs et résines. Jamais en remise en main propre, jamais pour les pros. Le panier du site a sa
+// copie de ces deux nombres (src/components/checkout/checkoutValidation.ts) : changer les deux ensemble.
+const SHIPPING_FEE = 5.9;
+const FREE_SHIPPING_FROM_G = 10;
+
 const GROUP_B_PRODUCT_IDS = new Set(["911-og-indoor", "blue-mango-indoor", "haribo", "heisenberg", "mango-x-ice", "piatella", "lemon-punch-hash", "bubble-hash-maturer"]);
 
 const ACCESSORY_PRICES: Record<string, number> = {
@@ -528,6 +534,22 @@ Deno.serve(async (req) => {
         serverTotal = Math.round((serverTotal - promoDiscountAmount) * 100) / 100;
         validPromoCode = code;
       }
+    }
+
+    // Frais de port : ajoutés APRÈS le code promo (aucun code ne s'applique dessus).
+    // Poids = fleurs + résines payées (échantillons et cadeaux exclus), arrondi au centième.
+    const shippingWeight = Math.round(serverFlowerWeight * 100) / 100;
+    if ((deliveryType === "postal" || deliveryType === "relay") && !isProActive && shippingWeight < FREE_SHIPPING_FROM_G) {
+      serverTotal += SHIPPING_FEE;
+      serverItems.push({
+        product_id: "frais-de-port",
+        product_name: "Livraison Colissimo",
+        product_type: "livraison",
+        weight: null,
+        quantity: 1,
+        unit_price: SHIPPING_FEE,
+        total_price: SHIPPING_FEE,
+      });
     }
 
     serverTotal = Math.round(serverTotal * 100) / 100;
