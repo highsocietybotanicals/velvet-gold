@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
     const itemRows = billedItems
       .map((item: any) => {
         const weightOrQty = item.weight ? `${item.weight}g` : `x${item.quantity || 1}`;
-        const typeLabel = item.product_type === "fleur" ? "Fleur" : item.product_type === "resine" ? "Resine" : item.product_type === "accessoire" ? "Accessoire" : item.product_type;
+        const typeLabel = item.product_type === "fleur" ? "Fleur" : item.product_type === "resine" ? "Resine" : item.product_type === "accessoire" ? "Accessoire" : item.product_type === "livraison" ? "Livraison" : item.product_type;
         return `<tr><td style="padding:12px 16px;border-bottom:1px solid #2a2a2a;color:#e0e0e0;">${item.product_name}</td><td style="padding:12px 16px;border-bottom:1px solid #2a2a2a;color:#999;text-align:center;">${typeLabel}</td><td style="padding:12px 16px;border-bottom:1px solid #2a2a2a;color:#e0e0e0;text-align:center;">${weightOrQty}</td><td style="padding:12px 16px;border-bottom:1px solid #2a2a2a;color:#e0e0e0;text-align:right;">${Number(item.unit_price).toFixed(2)} EUR</td><td style="padding:12px 16px;border-bottom:1px solid #2a2a2a;color:#d4af37;text-align:right;font-weight:600;">${Number(item.total_price).toFixed(2)} EUR</td></tr>`;
       })
       .join("");
