@@ -53,6 +53,8 @@ export function useLabelResolver() {
     const out: ResolvedLines = { lines: [], skippedProducts: [], skippedOthers: 0, noBarcode: [] };
 
     for (const item of items) {
+      // Ligne « Livraison Colissimo » (frais de port) : ni produit, ni cadeau, rien à signaler.
+      if (item.product_type === "livraison") continue;
       const customPath = paths[item.product_id];
       const units = labelUnitsForLine(
         { productId: item.product_id, weight: item.weight, quantity: item.quantity },
