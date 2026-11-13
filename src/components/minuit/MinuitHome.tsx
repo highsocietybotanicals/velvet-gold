@@ -37,7 +37,7 @@ const giftCount = (w: number) => Math.floor(w / 10);
 const nudgeHtml = (p: Product, w: number) => {
   if (w < 10) {
     const p10 = priceOf(p, 10);
-    return `Passez à <b>10 g</b> : <b>${eur(p10)}</b>, soit ${eur(p10 / 10)} le gramme (−${Math.round((1 - p10 / (p.price * 10)) * 100)} %), avec <b>1 kit</b> et <b>1 échantillon de 1 g</b> offerts.`;
+    return `Passez à <b>10 g</b> : <b>${eur(p10)}</b>, soit ${eur(p10 / 10)} le gramme (−${Math.round((1 - p10 / (p.price * 10)) * 100)} %), avec <b>feuilles avec cartons, briquet</b> et <b>1 g au choix</b> offerts.`;
   }
   const next = WEIGHTS.find((x) => x > w);
   if (!next) return `Vous êtes au sommet de la grille : <b>${eur(priceOf(p, w) / w)} le gramme</b>.`;
