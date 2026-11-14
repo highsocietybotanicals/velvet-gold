@@ -66,7 +66,7 @@ export const EDITO: Record<string, Edito> = {
   "golden-cbn": { gamme: "Classique", notes: "Trois cannabinoïdes réunis. Notes épicées et boisées.", mol: "CBD 25 · CBN 10 · CBG 10", tags: ["gourmand"] },
   "blue-mango-indoor": { gamme: "Force Noire", short: "Blue Mango", notes: "Mangue et notes tropicales. Culture indoor.", mol: "Élixir Noir 50 %", tags: ["fruite"] },
   "lemon-punch-hash": { gamme: "Force Noire", notes: "Robe claire, texture sèche, poudreuse et friable.", mol: "HE 12 %", tags: ["frais"] },
-  piatella: { gamme: "Force Noire", notes: "Texture fondante d'une rare intensité, arômes gourmands.", mol: "CBDX 70 %", tags: ["gourmand"] },
+  piatella: { gamme: "Force Noire", notes: "Texture fondante, arômes gourmands.", mol: "CBDX 70 %", tags: ["gourmand"] },
   "bubble-hash-maturer": { gamme: "Exotique", notes: "Bubble Hash Maturer : teinte crème, texture compacte.", mol: "HE 24 %", tags: ["gourmand"] },
   "mango-x-ice": { gamme: "Exotique", notes: "Mangue mûre, fraîcheur glacée, bud dense givré.", mol: "HE+ 12 %", tags: ["fruite"], vedette: "Lot n° 10 · Grand final" },
 };
