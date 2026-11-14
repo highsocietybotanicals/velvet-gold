@@ -20,7 +20,7 @@ Je suis commercial pour High Society Botanicals, une marque française de CBD ha
 
 Nous proposons aux buralistes une gamme préconditionnée prête à vendre : pochons 1 g, 2,5 g, 5 g et 10 g, humidité maîtrisée par Boveda 62 %, un cadeau client offert dans les 10 g.
 
-Le principe est simple : vous revendez aux mêmes prix que notre site. Chaque variété a un prix professionnel HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g), construit pour vous laisser un coefficient ×2.
+Le principe est simple : vous revendez aux mêmes prix que notre site. Chaque variété a un prix professionnel HT fixe par format de pochon (1 g, 2,5 g, 5 g, 10 g), construit pour vous laisser un coefficient ×2 sur les 1 g, 2,5 g et 5 g, et ×1,7 sur le 10 g.
 
 Je peux passer vous déposer des échantillons et la grille tarifaire complète. Quel jour vous arrange ?
 
