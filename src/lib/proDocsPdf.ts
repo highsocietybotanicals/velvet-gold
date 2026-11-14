@@ -562,7 +562,7 @@ export function generateProGuide(): jsPDF {
     "EN UNE LIGNE",
     "CBD haut de gamme 100 % indoor, préconditionné, prêt à vendre.",
     "Chaque molécule analysée en laboratoire (GC-MS / GC-FID).",
-    "Marge revendeur organisée à ×2 HT, prix fixes par format.",
+    "Coefficient revendeur ×2 HT (×1,7 sur le 10 g), prix fixes par format.",
     "Plus de 200 variétés testées, une dizaine retenues.",
     "",
     "Document interne réservé aux commerciaux mandatés par High Society Botanicals.",
@@ -581,7 +581,7 @@ export function generateProGuide(): jsPDF {
     ["4. Culture & packaging", "Indoor, aluminium alimentaire, Boveda, formats.", "Argument mise en rayon"],
     ["5. Légalité & analyses", "GC-MS / GC-FID, analyses par molécule.", "Rassurer"],
     ["6. Mention obligatoire", "Usage pot-pourri, cadre de langage.", "À respecter en permanence"],
-    ["7. L'offre revendeur", "Marge ×2 HT, prix fixes par format, cadeaux 10 g.", "Négociation"],
+    ["7. L'offre revendeur", "Coefficient ×2 HT (×1,7 sur le 10 g), prix fixes, cadeaux.", "Négociation"],
     ["8. Le pitch", "Déroulé minuté d'une visite.", "Sur le terrain"],
     ["9. Objections", "Réponses courtes + preuves.", "Sur le terrain"],
     ["10. Rémunération", "Tranches sur les nouveaux clients, 10 % sur les réassorts, prime.", "Votre suivi"],
@@ -698,10 +698,10 @@ export function generateProGuide(): jsPDF {
 
   // ---------- 07 L'offre revendeur ----------
   newPage();
-  y = chapterHead("07", "L'offre revendeur", "Marge ×2 HT, prix fixes, cadeaux clients");
+  y = chapterHead("07", "L'offre revendeur", "Coefficient ×2 HT (×1,7 sur le 10 g), prix fixes, cadeaux clients");
   y = para(doc, "Le buraliste ne vous achète pas un produit : il vous achète une rentabilité. Voici les trois piliers de l'offre.", y);
   y += 4;
-  y = box(y, "1. MARGE ORGANISÉE À ×2 HT", "Nos tarifs professionnels sont construits pour que le commerçant réalise au minimum un coefficient 2 en HT, en revendant au même prix public que notre site. Il n'a pas à casser les prix, il n'a pas à inventer sa grille : il applique le prix public conseillé et sa marge est là.");
+  y = box(y, "1. COEFFICIENT ×2 HT, ×1,7 SUR LE 10 G", "Nos tarifs professionnels sont construits pour que le commerçant réalise un coefficient 2 en HT sur les pochons de 1 g, 2,5 g et 5 g, et un coefficient 1,7 sur le pochon de 10 g, en revendant au même prix public que notre site. Il n'a pas à casser les prix, il n'a pas à inventer sa grille : il applique le prix public conseillé et sa marge est là.");
   setFont(doc, 10, "bold", DARK);
   doc.text("2. Des prix fixes par format", MARGIN, y);
   y += 5;
@@ -724,7 +724,7 @@ export function generateProGuide(): jsPDF {
   y = para(doc, "Un buraliste vous accorde rarement plus de dix à quinze minutes, et il sera interrompu par ses clients. Ce déroulé est fait pour ça : chaque étape se tient debout, en quelques phrases.", y);
   y += 4;
   y = table(y, ["Temps", "Étape", "Ce que vous faites"], [
-    ["0:00 — 0:30", "L'accroche", "« Bonjour, je suis [prénom], je représente High Society Botanicals, une marque française de CBD haut de gamme, 100 % indoor et préconditionné. Je passe vous montrer une gamme courte qui tourne et qui vous laisse un coefficient 2. »"],
+    ["0:00 — 0:30", "L'accroche", "« Bonjour, je suis [prénom], je représente High Society Botanicals, une marque française de CBD haut de gamme, 100 % indoor et préconditionné. Je passe vous montrer une gamme courte qui tourne, avec un coefficient 2 sur les pochons de 1 g à 5 g. »"],
     ["0:30 — 2:00", "Les questions", "Vendez-vous déjà du CBD ? Depuis quand ? Qu'est-ce qui part le mieux ? Qu'est-ce qui dort en rayon ? Qu'est-ce qui vous freine ? Écoutez : ses réponses vous donnent la famille à présenter."],
     ["2:00 — 5:00", "L'histoire", "Trois phrases, chapitre 1. Ancien fumeur, lassitude du foin, plus de 200 variétés testées pour une dizaine retenues. C'est ce qui vous différencie du représentant d'à côté."],
     ["5:00 — 8:00", "Le produit", "Trois références maximum. Faites sentir. Montrez le packaging aluminium, le Boveda, les formats préconditionnés, le code-barres. Laissez-le manipuler."],
@@ -738,7 +738,7 @@ export function generateProGuide(): jsPDF {
   newPage();
   y = chapterHead("09", "Objections & réponses", "Une réponse courte, une preuve");
   y = table(y, ["Objection", "Réponse courte", "Votre preuve"], [
-    ["« C'est trop cher. »", "Le prix public est le même que celui des boutiques premium, et votre marge est de ×2 HT. Le vrai coût, c'est un produit pas cher qui dort en rayon.", "Grille tarifaire : gain HT affiché par format."],
+    ["« C'est trop cher. »", "Le prix public est le même que celui des boutiques premium, et votre coefficient est de ×2 HT sur les 1 g, 2,5 g et 5 g, ×1,7 sur le 10 g. Le vrai coût, c'est un produit pas cher qui dort en rayon.", "Grille tarifaire : gain HT affiché par format."],
     ["« J'ai déjà un fournisseur. »", "Parfait, gardez-le. Prenez trois références chez nous et comparez la rotation sur un mois. C'est votre clientèle qui tranchera.", "Assortiment d'essai, échantillons."],
     ["« Le CBD ne tourne pas chez moi. »", "Souvent parce que la qualité ne fidélise pas. Un client déçu ne revient pas. Une gamme courte et testée fait revenir.", "Chapitre 2 : 200 variétés testées, une dizaine retenues."],
     ["« C'est vraiment légal ? »", "Chaque molécule est analysée en laboratoire par chromatographie gazeuse couplée à la spectrométrie de masse et à un détecteur à ionisation de flamme. Vous avez le rapport.", "Analyse PDF ouverte devant lui."],
@@ -794,7 +794,7 @@ export function generateProGuide(): jsPDF {
   ];
   for (const b of espace) { y = para(doc, `• ${b}`, y, 9.5); y += 1.5; }
   y += 3;
-  y = box(y, "LES CINQ PHRASES À CONNAÎTRE PAR CŒUR", "1. Marque française de CBD haut de gamme, 100 % indoor.\n2. Plus de 200 variétés testées, une dizaine retenues.\n3. Chaque molécule analysée en laboratoire : GC-MS et GC-FID, rapport disponible.\n4. Préconditionné 1 / 2,5 / 5 / 10 g, aluminium alimentaire, Boveda 62 %, code-barres.\n5. Coefficient 2 en HT, prix fixes par format, un cadeau client offert dès 10 g.");
+  y = box(y, "LES CINQ PHRASES À CONNAÎTRE PAR CŒUR", "1. Marque française de CBD haut de gamme, 100 % indoor.\n2. Plus de 200 variétés testées, une dizaine retenues.\n3. Chaque molécule analysée en laboratoire : GC-MS et GC-FID, rapport disponible.\n4. Préconditionné 1 / 2,5 / 5 / 10 g, aluminium alimentaire, Boveda 62 %, code-barres.\n5. Coefficient 2 en HT (1,7 sur le 10 g), prix fixes par format, un cadeau client offert dès 10 g.");
   y = para(doc, "RAPPEL FINAL — Molécules proposées à usage de pot-pourri uniquement, conformément à la loi française. Aucune promesse d'effet, aucune allégation de santé.", y, 9.5, GOLD, "bold");
   y += 4;
   y = para(doc, "Une question, un doute sur une formulation, un prospect difficile : appelez avant d'improviser. Nous préférons dix minutes au téléphone à une phrase mal dite chez un buraliste.", y, 9.5, GRAY, "italic");
