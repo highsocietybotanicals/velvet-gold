@@ -71,7 +71,7 @@ function buildPage(shell: string, pagePath: string): string {
   return html.replace(/<!--seo-fallback-->[\s\S]*?<!--\/seo-fallback-->/, () => fallbackBody(pagePath));
 }
 
-// Écrit un fichier HTML par page publique (dist/catalogue.html, dist/produit/platinum-og.html…).
+// Écrit un fichier HTML par page publique, sous deux formes (dist/catalogue.html et dist/catalogue/index.html…).
 // Si l'hébergeur ne les sert pas, il retombe sur index.html : le site marche comme avant.
 export function seoPrerender(): Plugin {
   let outDir = "dist";
@@ -88,9 +88,13 @@ export function seoPrerender(): Plugin {
 
       for (const pagePath of INDEXABLE_PATHS) {
         if (pagePath === "/") continue;
-        const file = path.join(outDir, `${pagePath.slice(1)}.html`);
-        fs.mkdirSync(path.dirname(file), { recursive: true });
-        fs.writeFileSync(file, buildPage(shell, pagePath));
+        const html = buildPage(shell, pagePath);
+        // Deux formes du même fichier : « page.html » et « page/index.html ». L'hébergeur ne sert pas « /page » depuis
+        // « page.html » (vu le 15/11/2026 : il renvoie index.html) ; la forme en dossier est celle qu'un hébergeur statique sert sans extension.
+        for (const file of [path.join(outDir, `${pagePath.slice(1)}.html`), path.join(outDir, pagePath.slice(1), "index.html")]) {
+          fs.mkdirSync(path.dirname(file), { recursive: true });
+          fs.writeFileSync(file, html);
+        }
       }
 
       // index.html sert aussi de repli à toutes les autres adresses : le texte de l'accueil s'y retire tout seul.
