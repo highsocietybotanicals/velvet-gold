@@ -628,7 +628,7 @@ export function generateProGuide(): jsPDF {
   y += 4;
   y = table(y, ["Famille", "Ce que c'est", "À qui la proposer"], [
     ["Classique", "Fleurs indoor CBD, profils équilibrés, goûts reconnaissables.", "Cœur de gamme. Point d'entrée idéal pour un buraliste qui débute sur le CBD."],
-    ["Force Noire", "Gamme haute intensité, dominante sombre, profils puissants.", "Clientèle avertie qui recherche du caractère et une offre premium."],
+    ["Force Noire", "Gamme de caractère, dominante sombre, profils affirmés.", "Clientèle avertie qui recherche du caractère et une offre premium."],
     ["Exotique", "Pièces d'exception, variétés et résines rares, rotation limitée.", "Effet nouveauté. Sert à créer l'événement et à faire revenir les curieux."],
   ], [30, 72, 76]);
   y = para(doc, "Fleurs — cœur de l'offre, toutes familles confondues, cultivées en intérieur.", y);
