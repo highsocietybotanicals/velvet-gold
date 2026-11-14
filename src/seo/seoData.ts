@@ -473,11 +473,47 @@ export interface SeoMeta {
   jsonLd: object[];
 }
 
+// Visuel affiché en tête de fiche : mêmes fichiers que CUT_FILE dans src/components/minuit/minuitData.ts (les deux listes vont ensemble).
+const PRODUCT_IMAGE_BASE = "https://pvwwxpcosiqetsflykmp.supabase.co/storage/v1/object/public/social-media/site-minuit/";
+const PRODUCT_IMAGE_FILE: Record<string, string> = {
+  "platinum-og": "cut-platinum-og.webp",
+  "mint-kush": "cut-mint-kush.webp",
+  "amnesia-signature-oniria": "cut-amnesia.webp",
+  "ice-o-lator": "cut-ice-o-lator.webp",
+  "golden-cbn": "cut-golden-cbn.webp",
+};
+
+// Montant du port lu dans le texte affiché ("5,90 €" → 5.9) : une seule valeur à changer.
+const SHIPPING_FEE_EUR = Number(SHIPPING_FEE_TEXT.replace(/[^\d,]/g, "").replace(",", "."));
+
+// Livraison de l'offre affichée (1 g, donc sous le seuil du port offert) : mêmes faits que NATIONAL_SHIPPING.
+const shippingDetailsJsonLd = () => ({
+  "@type": "OfferShippingDetails",
+  shippingRate: { "@type": "MonetaryAmount", value: SHIPPING_FEE_EUR, currency: "EUR" },
+  shippingDestination: { "@type": "DefinedRegion", addressCountry: "FR" },
+  // « Expédiée sous 48 à 72 heures ouvrées ». Le délai du transporteur n'est pas écrit sur le site : il n'est pas déclaré ici.
+  deliveryTime: {
+    "@type": "ShippingDeliveryTime",
+    handlingTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 3, unitCode: "DAY" },
+  },
+});
+
+// Retours : mêmes faits que la question « Puis-je retourner un produit ? » (14 jours, frais de retour à la charge du client).
+const returnPolicyJsonLd = () => ({
+  "@type": "MerchantReturnPolicy",
+  applicableCountry: "FR",
+  returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+  merchantReturnDays: 14,
+  returnMethod: "https://schema.org/ReturnByMail",
+  returnFees: "https://schema.org/ReturnFeesCustomerResponsibility",
+});
+
 const productJsonLd = (p: SeoProduct) => ({
   "@context": "https://schema.org",
   "@type": "Product",
   name: p.name,
   description: p.text,
+  ...(PRODUCT_IMAGE_FILE[p.id] ? { image: PRODUCT_IMAGE_BASE + PRODUCT_IMAGE_FILE[p.id] } : {}),
   category: p.category === "fleur" ? "Fleur de chanvre" : "Résine de chanvre",
   brand: { "@type": "Brand", name: SITE_NAME },
   offers: {
@@ -487,6 +523,8 @@ const productJsonLd = (p: SeoProduct) => ({
     priceCurrency: "EUR",
     availability: "https://schema.org/InStock",
     seller: { "@type": "Organization", name: SITE_NAME },
+    shippingDetails: shippingDetailsJsonLd(),
+    hasMerchantReturnPolicy: returnPolicyJsonLd(),
   },
 });
 
