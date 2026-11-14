@@ -19,6 +19,26 @@ import { getPochonImage, getPochonLabel } from "@/data/accessories";
 import { LOT_ORDER, WEIGHTS, cutSources, edito, eur, gfmt, isLowEnd, typeLabel } from "@/components/minuit/minuitData";
 import "@/components/minuit/minuit.css";
 import "@/components/minuit/minuitProduct.css";
+import { SEO_PRODUCTS } from "@/seo/seoData";
+
+/** Questions fréquentes de la fiche : même texte que les données structurées (src/seo/seoData.ts). Rien si la fiche n'en a pas. */
+const ProductQuestions = ({ id }: { id: string }) => {
+  const questions = SEO_PRODUCTS.find((p) => p.id === id)?.questions ?? [];
+  if (!questions.length) return null;
+  return (
+    <section className="container mx-auto px-6 max-w-3xl py-12" aria-labelledby="mcp-faq-t">
+      <h2 id="mcp-faq-t" className="font-display text-2xl text-foreground mb-8 text-center">Questions fréquentes</h2>
+      <div className="space-y-6 text-muted-foreground font-body text-sm leading-relaxed">
+        {questions.map((x) => (
+          <div key={x.q}>
+            <h3 className="font-display text-base text-foreground mb-2">{x.q}</h3>
+            <p>{x.a}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
 
 /** Téléphone modeste (≤ 899 px + isLowEnd) : boucles purement décoratives retirées (classe lite). Calculé une fois. */
 const LITE = typeof window !== "undefined" && !!window.matchMedia?.("(max-width: 899px)").matches && isLowEnd();
@@ -414,6 +434,8 @@ const ProductPage = () => {
       <div className="container mx-auto px-6 mcp-reviews">
         <ProductReviews productId={product.id} />
       </div>
+
+      <ProductQuestions id={product.id} />
 
       {similarProducts.length > 0 && (
         <section id="veine" className="mc mcp mcp-veine" data-fx-off="" aria-labelledby="mcp-veine-t">
