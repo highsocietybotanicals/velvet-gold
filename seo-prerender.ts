@@ -31,7 +31,12 @@ function fallbackBody(pagePath: string): string {
         )
         .join("");
   } else if (product) {
-    main = `<h1>${esc(product.name)}</h1><p>${esc(product.text)}</p>`;
+    main =
+      `<h1>${esc(product.name)}</h1><p>${esc(product.text)}</p>` +
+      (product.questions.length
+        ? `<h2>Questions fréquentes</h2>` +
+          product.questions.map((x) => `<h3>${esc(x.q)}</h3><p>${esc(x.a)}</p>`).join("")
+        : "");
   } else if (pagePath === "/") {
     main = `<h1>${esc(SITE_NAME)}</h1><p>${esc(seo.description)}</p>`;
   } else {
