@@ -11,7 +11,7 @@ import { LITE, useInViewAttr } from "./useInViewAttr";
 const BOLTS = Array.from({ length: 12 }, (_, i) => i);
 const SPOKES = [0, 1, 2];
 const ENGRAVE = "HSB · COLLECTION N° 26 · HSB · COLLECTION N° 26 · ";
-const FACTS = ["Sélection à la main", "THC < 0,3 %", "Expédition discrète 48 h"];
+const FACTS = ["Sélection à la main", "THC < 0,3 %", "Expédition discrète, 48 à 72 h ouvrées"];
 const SEEN_KEY = "hsb-coffre-ouvert";
 
 /** Lu une seule fois, avant le premier rendu, pour que la séquence abrégée parte dès la première image. */
