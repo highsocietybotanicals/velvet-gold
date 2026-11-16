@@ -173,7 +173,7 @@ const DeliverySection = ({
             <div>
               <p className="font-medium text-foreground">Envoi postal à domicile</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Expédition sous 48h par La Poste
+                Expédition sous 48 à 72 h ouvrées par La Poste
               </p>
             </div>
           </div>

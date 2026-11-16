@@ -152,7 +152,7 @@ const AboutSection = () => {
                   </p>
                   <ul className="so-ticket">
                     <li><span>Le pochon</span><b>Scellé, damas noir et or</b></li>
-                    <li><span>L'expédition</span><b>Discrète, en 48&nbsp;h</b></li>
+                    <li><span>L'expédition</span><b>Discrète, sous 48 à 72&nbsp;h ouvrées</b></li>
                     <li><span>En main propre</span><b>Autour du 44</b></li>
                     <li><span>Par tranche de 10&nbsp;g</span><b>Un cadeau offert dans votre colis dès 10&nbsp;g, et un échantillon de 1&nbsp;g</b></li>
                   </ul>

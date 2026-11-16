@@ -25,6 +25,8 @@ const RouteSeo = () => {
     setMeta("property", "og:description", seo.description);
     setMeta("name", "twitter:title", seo.title);
     setMeta("name", "twitter:description", seo.description);
+    setMeta("property", "og:image", seo.image);
+    setMeta("name", "twitter:image", seo.image);
     if (seo.canonical) setMeta("property", "og:url", seo.canonical);
 
     let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
