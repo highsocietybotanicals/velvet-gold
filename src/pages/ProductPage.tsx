@@ -88,7 +88,7 @@ const GAMME_TXT: Record<string, string> = {
   "Nectar Divin": "La réserve de la maison : quelques lots d'exception, sortis au compte-gouttes.",
 };
 
-const TRUST = ["THC < 0,3 %", "Expédition discrète 48 h", "Main propre autour du 44", "Paiement sécurisé"];
+const TRUST = ["THC < 0,3 %", "Expédition discrète, 48 à 72 h ouvrées", "Main propre autour du 44", "Paiement sécurisé"];
 
 /** Détourage du lot (bucket, puis code), sinon photo produit en plein cadre. */
 const LotImg = ({ p, className, ...rest }: { p: Product } & ImgHTMLAttributes<HTMLImageElement>) => {

@@ -70,7 +70,7 @@ const ContactPage = () => {
             <div className="mnc-plate mnc-rv mnc-d4">
               <p className="mnc-plate-t">Au tableau du guichet</p>
               <dl>
-                <div><dt>Expédition</dt><dd>discrète, 48&nbsp;h</dd></div>
+                <div><dt>Expédition</dt><dd>discrète, 48 à 72&nbsp;h ouvrées</dd></div>
                 <div><dt>Main propre</dt><dd>autour du&nbsp;44</dd></div>
                 <div><dt>Analyse laboratoire</dt><dd>sur demande</dd></div>
                 <div><dt>Tous les 10&nbsp;g</dt><dd>kit et 1&nbsp;g offerts</dd></div>
@@ -103,7 +103,7 @@ const ContactPage = () => {
               <ol className="mnc-list">
                 <li><b>une commande</b>&nbsp;: son numéro et le nom indiqué à l'achat&nbsp;;</li>
                 <li><b>une analyse laboratoire</b>&nbsp;: le nom du lot concerné (disponible sur demande)&nbsp;;</li>
-                <li><b>une livraison</b>&nbsp;: votre ville, pour une expédition discrète en 48&nbsp;h ou une remise en main propre autour du&nbsp;44&nbsp;;</li>
+                <li><b>une livraison</b>&nbsp;: votre ville, pour une expédition discrète sous 48 à 72&nbsp;h ouvrées ou une remise en main propre autour du&nbsp;44&nbsp;;</li>
                 <li><b>un établissement</b>&nbsp;: son nom et sa ville, pour un échange entre professionnels.</li>
               </ol>
               <p>Avec nos salutations distinguées,</p>
