@@ -204,7 +204,7 @@ const CheckoutDelivery = ({
           <RadioDot checked={deliveryType === "postal"} />
           <span>
             <span className="block font-medium text-foreground">Envoi postal à domicile</span>
-            <span className="mt-1 block text-xs text-muted-foreground">Expédition sous 48 h par La Poste</span>
+            <span className="mt-1 block text-xs text-muted-foreground">Expédition sous 48 à 72 h ouvrées par La Poste</span>
             {shippingNote && <span className="mt-1 block text-xs text-primary">{shippingNote}</span>}
           </span>
         </label>
