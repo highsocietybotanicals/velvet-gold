@@ -94,4 +94,4 @@ export const isLowEnd = () => {
   return (n.hardwareConcurrency || 8) <= 4 || (n.deviceMemory || 8) <= 4 || !!n.connection?.saveData;
 };
 
-export const BAND = ["Analysé en laboratoire","THC < 0,3 %", "Expédition discrète 48 h", "Main propre autour du 44", "Kit et échantillon offerts dès 10 g", "Paiement sécurisé", "Réservé aux majeurs"];
+export const BAND = ["Analysé en laboratoire","THC < 0,3 %", "Expédition discrète, 48 à 72 h ouvrées", "Main propre autour du 44", "Kit et échantillon offerts dès 10 g", "Paiement sécurisé", "Réservé aux majeurs"];

@@ -413,8 +413,8 @@ const MinuitHome = ({ onEnter }: { onEnter: () => void }) => {
         <article className="preuve rv"><Img srcs={AMBIANCE.givree} alt="Tête de fleur CBD couverte de trichomes blancs, sur un socle de marbre noir" loading="lazy" /><p className="kicker">Sélection</p><h3>Trié à la main</h3><p>Des têtes denses, givrées jusqu'au cœur. Chaque lot est choisi à l'œil, gramme après gramme, avant d'entrer dans la collection.</p></article>
         <article className={`preuve${pouchFail ? "" : " preuve-3d"} rv`} ref={pouchRef}>
           {pouchFail ? <img src={AMBIANCE.pochonPhoto} alt="Le pochon High Society" loading="lazy" /> : <canvas ref={pouchCanvas} aria-label="Le Pochon Royal High Society en 3D" />}
-          <p className="kicker">Le Pochon Royal</p><h3>Damas noir et or, 48 h</h3>
-          <p>Votre lot voyage dans notre pochon scellé. Colis discret par La Poste ou en point relais, et livraison en main propre autour du 44.</p>
+          <p className="kicker">Le Pochon Royal</p><h3>Damas noir et or</h3>
+          <p>Votre lot voyage dans notre pochon scellé. Colis discret par La Poste ou en point relais, expédié sous 48 à 72 heures ouvrées, et livraison en main propre autour du 44.</p>
           {!pouchFail && <small className="turn">↻ Faites-le tourner</small>}
         </article>
         <article className="preuve rv"><Img srcs={AMBIANCE.trichomes} alt="Macro de trichomes sur une fleur violette naturelle" loading="lazy" /><p className="kicker">Transparence</p><h3>Analysé en labo</h3><p>Analyse laboratoire disponible sur demande. THC inférieur à 0,3 %, conforme à la réglementation française.</p></article>
