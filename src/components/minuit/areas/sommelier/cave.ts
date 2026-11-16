@@ -67,7 +67,7 @@ export const CAVE_TRUST = [
   "Sélection à la main",
   "THC < 0,3 %",
   "Analyse laboratoire sur demande",
-  "Expédition discrète 48 h",
+  "Expédition discrète, 48 à 72 h ouvrées",
   "Main propre autour du 44",
   "Réservé aux majeurs",
 ];
