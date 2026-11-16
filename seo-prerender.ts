@@ -61,6 +61,9 @@ function buildPage(shell: string, pagePath: string): string {
   html = setContent(html, /(<meta property="og:url" content=")[^"]*(")/, seo.canonical ?? "");
   html = setContent(html, /(<meta name="twitter:title" content=")[^"]*(")/, seo.title);
   html = setContent(html, /(<meta name="twitter:description" content=")[^"]*(")/, seo.description);
+  // Aperçu d'un lien partagé : la photo du produit sur les fiches, le logo ailleurs.
+  html = setContent(html, /(<meta property="og:image" content=")[^"]*(")/, seo.image);
+  html = setContent(html, /(<meta name="twitter:image" content=")[^"]*(")/, seo.image);
 
   const head =
     `<link rel="canonical" href="${seo.canonical}" />` +
