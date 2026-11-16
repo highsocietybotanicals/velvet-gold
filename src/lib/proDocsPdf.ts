@@ -295,7 +295,7 @@ export function generateProPriceGrid(products: DocProduct[], tiers: PriceTier[])
 
   const modalites: Array<[string, string]> = [
     ["Commande minimum", "50 g toutes références confondues, en préconditionné (multiples de 10 g)."],
-    ["Délais", "Expédition sous 24 à 48 h ouvrées après réception du règlement."],
+    ["Délais", "Expédition sous 48 à 72 h ouvrées après réception du règlement."],
     ["Livraison", "Colissimo suivi & assuré ou remise en main propre sur la région Grand Ouest."],
     ["Règlement", "Carte bancaire (à privilégier) ou virement bancaire. Aucun règlement en espèces ni par chèque."],
     ["Traçabilité", "Certificats d'analyse et documentation légale fournis sur simple demande."],
