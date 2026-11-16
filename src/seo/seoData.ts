@@ -471,6 +471,8 @@ export interface SeoMeta {
   canonical: string | null;
   noindex: boolean;
   jsonLd: object[];
+  /** Image de l'aperçu quand le lien est partagé (og:image, twitter:image). */
+  image: string;
 }
 
 // Visuel affiché en tête de fiche : mêmes fichiers que CUT_FILE dans src/components/minuit/minuitData.ts (les deux listes vont ensemble).
@@ -482,6 +484,12 @@ const PRODUCT_IMAGE_FILE: Record<string, string> = {
   "ice-o-lator": "cut-ice-o-lator.webp",
   "golden-cbn": "cut-golden-cbn.webp",
 };
+
+// Aperçu d'un lien partagé (WhatsApp, Instagram, Facebook…). Par défaut : le logo, même adresse que dans index.html.
+const DEFAULT_SHARE_IMAGE =
+  "https://storage.googleapis.com/gpt-engineer-file-uploads/4yU0VmKMEkROHeN819I6VFRfxVn2/uploads/1769042271271-logo luxe.jpeg";
+// Fiches des Classiques : une image 1200 x 630 par fiche, dans public/og (mêmes découpes que PRODUCT_IMAGE_FILE).
+const shareImage = (p: SeoProduct) => (PRODUCT_IMAGE_FILE[p.id] ? `${SITE_URL}/og/${p.id}.jpg` : DEFAULT_SHARE_IMAGE);
 
 // Montant du port lu dans le texte affiché ("5,90 €" → 5.9) : une seule valeur à changer.
 const SHIPPING_FEE_EUR = Number(SHIPPING_FEE_TEXT.replace(/[^\d,]/g, "").replace(",", "."));
@@ -567,7 +575,7 @@ export function seoFor(pathname: string): SeoMeta {
   const canonical = `${SITE_URL}${path === "/" ? "/" : path}`;
 
   const page = STATIC_PAGES[path];
-  if (page) return { ...page, canonical, noindex: false, jsonLd: [] };
+  if (page) return { ...page, canonical, noindex: false, jsonLd: [], image: DEFAULT_SHARE_IMAGE };
 
   const landing = LANDINGS.find((l) => l.path === path);
   if (landing) {
@@ -580,6 +588,7 @@ export function seoFor(pathname: string): SeoMeta {
         ...(landing.path === "/cbd-abbaretz" ? [localBusinessJsonLd()] : []),
         ...(landing.faq ? [faqJsonLd(landing)] : []),
       ],
+      image: DEFAULT_SHARE_IMAGE,
     };
   }
 
@@ -591,10 +600,11 @@ export function seoFor(pathname: string): SeoMeta {
       canonical,
       noindex: false,
       jsonLd: [productJsonLd(product), ...(product.questions.length ? [questionsJsonLd(product.questions)] : [])],
+      image: shareImage(product),
     };
   }
 
-  return { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, canonical: null, noindex: true, jsonLd: [] };
+  return { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, canonical: null, noindex: true, jsonLd: [], image: DEFAULT_SHARE_IMAGE };
 }
 
 /** Toutes les adresses à montrer à Google : sitemap et fichiers HTML pré-construits. */
